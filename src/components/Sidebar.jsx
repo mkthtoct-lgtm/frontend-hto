@@ -6,7 +6,12 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
         </button>
         <div className="app-navbar-brand">
           <a className="navbar-brand-logo" href="index-2.html">
-            <img src="/assets/images/logo.svg" alt="UrbanHub Admin Dashboard" />
+            <img
+              src="/assets/images/logo-HTO.png"
+              alt="UrbanHub Admin Dashboard"
+              width="40"
+              height="40"
+            />
           </a>
           <a className="navbar-brand-mini visible-light" href="index-2.html">
             <img src="/assets/images/logo-text.svg" alt="UrbanHub Admin Dashboard" />
@@ -18,7 +23,14 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
         <nav className="app-navbar" data-simplebar>
           <ul className="menubar">
             <li className="menu-item menu-arrow">
-              <a className="menu-link" href="#">
+              <a
+                className={`menu-link ${currentPage === "dashboard" ? "active" : ""}`}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("dashboard");
+                }}
+              >
                 <i className="icon-house"></i>
                 <span className="menu-label">Dashboard</span>
               </a>
@@ -26,7 +38,7 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                 <li className="menu-item">
                   <a
                     className={`menu-link ${currentPage === "dashboard" ? "active" : ""}`}
-                    href="#"
+                    href="index-2.html"
                     onClick={(e) => {
                       e.preventDefault();
                       onNavigate?.("dashboard");
@@ -82,7 +94,7 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                 </li>
               </ul>
             </li>
-            <li className="menu-item">
+            {/* <li className="menu-item">
               <a className="menu-link" href="chat.html">
                 <i className="icon-message-square-text"></i>
                 <span className="menu-label">Chat</span>
@@ -93,8 +105,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                 <i className="icon-calendar-days"></i>
                 <span className="menu-label">Calendar</span>
               </a>
-            </li>
-            <li className="menu-item menu-arrow">
+            </li> */}
+
+            {/* <li className="menu-item menu-arrow">
               <a
                 className="menu-link"
                 href="#"
@@ -120,8 +133,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li className="menu-item menu-arrow">
+            </li> */}
+
+            {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-file"></i>
                 <span className="menu-label">Pages</span>
@@ -148,8 +162,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li className="menu-item menu-arrow">
+            </li>  */}
+
+            {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-circle-user-round"></i>
                 <span className="menu-label">Authentication</span>
@@ -176,8 +191,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li className="menu-item menu-arrow">
+            </li> */}
+            
+            {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-folder-open"></i>
                 <span className="menu-label">UI Components</span>
@@ -294,8 +310,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li className="menu-item menu-arrow">
+            </li> */}
+
+            {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-star"></i>
                 <span className="menu-label">Icons</span>
@@ -317,7 +334,9 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </a>
                 </li>
               </ul>
-            </li>
+            </li> */}
+
+            {/* Tài Liệu & Biểu Mẫu */}
             <li className="menu-item menu-arrow">
               <a
                 className={`menu-link ${currentPage === "documents" ? "active" : ""}`}
@@ -369,7 +388,8 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                 </li>
               </ul>
             </li>
-            <li className="menu-item menu-arrow">
+
+            {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-table-2"></i>
                 <span className="menu-label">Table</span>
@@ -459,7 +479,7 @@ export const Sidebar = ({ onNavigate, currentPage }) => {
                   </ul>
                 </li>
               </ul>
-            </li>
+            </li> */}
           </ul>
         </nav>
         <div className="app-footer">

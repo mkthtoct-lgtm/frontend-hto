@@ -8,7 +8,12 @@ export const Header = () => {
             </button>
             <div className="app-header-brand">
               <a className="navbar-brand-logo" href="index-2.html">
-                <img src="/assets/images/logo.svg" alt="UrbanHub Admin Dashboard" />
+                <img
+                  src="/assets/images/logo-HTO.png"
+                  alt="UrbanHub Admin Dashboard"
+                  width="40"
+                  height="40"
+                />
               </a>
               <a className="navbar-brand-mini visible-light" href="index-2.html">
                 <img src="/assets/images/logo-text.svg" alt="UrbanHub Admin Dashboard" />
