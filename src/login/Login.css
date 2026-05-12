@@ -42,71 +42,88 @@
   transition: all 0.3s ease;
 }
 
-/* Tablet & Mobile Optimization (Fluid Scaling) */
+/* Tablet & Mobile Optimization (Nội dung TO RÕ RÀNG) */
 @media (max-width: 1024px) {
   .login-container {
-    padding: 0;
-    background-color: #ffffff;
-    align-items: flex-start;
+    padding: 10px; /* Giảm lề ngoài tối thiểu */
+    background-color: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
   }
 
   [data-bs-theme="dark"] .login-container {
-    background-color: #1a1d21;
+    background-color: #0f1114;
   }
 
   .login-card {
-    max-width: 100% !important;
+    max-width: 500px; /* Thêm max-width để không bị quá bè trên máy tính bảng */
     width: 100%;
-    min-height: 100vh;
-    padding: clamp(40px, 8vw, 80px) clamp(20px, 5vw, 50px);
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
+    min-height: auto;
+    padding: clamp(40px, 10vw, 60px) clamp(20px, 6vw, 40px); /* Giảm nhẹ padding ngang để form rộng hơn */
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .login-logo {
-    height: clamp(45px, 8vw, 70px);
-    margin-bottom: clamp(20px, 4vw, 40px);
+    height: clamp(60px, 15vw, 90px); /* Logo cực to */
+    margin-bottom: 40px;
   }
 
   .login-title {
-    font-size: clamp(22px, 6vw, 36px);
-    margin-top: 10px;
-    line-height: 1.2;
+    font-size: clamp(30px, 9vw, 42px); /* Tiêu đề khổng lồ cho dễ đọc */
+    margin-top: 5px;
+    margin-bottom: 15px;
+    letter-spacing: -0.5px;
   }
 
   .login-subtitle {
-    font-size: clamp(14px, 2.5vw, 18px);
-    margin-bottom: clamp(25px, 5vw, 50px);
+    font-size: clamp(16px, 4vw, 20px); /* Chữ mô tả to hơn */
+    margin-bottom: 50px;
+    line-height: 1.6;
+    color: #495057;
   }
 
   .form-label {
-    font-size: clamp(13px, 2.2vw, 16px);
-    margin-bottom: 8px;
+    font-size: clamp(16px, 3.5vw, 19px); /* Label to rõ */
+    margin-bottom: 15px;
+    font-weight: 700;
   }
 
-  /* Fluid Input Scaling */
+  /* Ô nhập liệu TO và CHỮ TO */
   .form-control {
-    font-size: clamp(16px, 2.5vw, 18px);
-    padding: clamp(14px, 3vw, 22px) clamp(16px, 3.5vw, 25px);
-    border-radius: clamp(8px, 2vw, 14px);
+    font-size: clamp(16px, 3.5vw, 19px) !important; /* Chữ trong ô to ra */
+    padding: clamp(20px, 4vw, 26px) clamp(20px, 4vw, 30px) !important; /* Ô nhập mập mạp hơn */
+    border-radius: 16px;
+    border-width: 2px; /* Viền đậm hơn cho rõ */
   }
 
-  /* Fluid Button Scaling */
+  /* Nút bấm cực đại */
   .btn-login {
-    padding: clamp(14px, 3vw, 22px);
-    font-size: clamp(16px, 2.8vw, 20px);
-    border-radius: clamp(8px, 2vw, 14px);
-    margin-top: clamp(20px, 4vw, 40px);
+    padding: clamp(16px, 4vw, 22px);
+    font-size: clamp(16px, 3.8vw, 20px);
+    font-weight: 700;
+    border-radius: 14px;
+    margin-top: 30px;
+    letter-spacing: 0.5px;
+    text-transform: none; /* Trả về bình thường cho dễ đọc */
   }
 
   .auth-links {
-    margin-top: clamp(30px, 6vw, 60px);
-    font-size: clamp(13px, 2.5vw, 17px);
+    margin-top: 60px;
+    font-size: clamp(16px, 3.5vw, 19px);
   }
 
   .password-wrapper .toggle-password {
-    right: clamp(12px, 3vw, 20px);
+    right: 25px;
+    transform: translateY(-50%) scale(1.3); /* Phóng to icon con mắt */
+  }
+
+  .field-error {
+    font-size: 14px;
+    margin-top: 10px;
   }
 }
 
