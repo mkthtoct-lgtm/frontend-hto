@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
-  // State quản lý việc đóng/mở menu con
-  const [openMenu, setOpenMenu] = useState("");
+  // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
+  const [openMenu, setOpenMenu] = useState("sanpham");
 
   return (
     <aside className="app-menubar" id="menubar">
@@ -37,84 +37,258 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
           </span>
         </a>
       </div>
+      
       <nav className="app-navbar" data-simplebar>
-        <ul className="menubar">
+        <ul className="menubar list-unstyled" style={{ padding: "0 12px" }}>
           
-          {/* --- DASHBOARD --- */}
-          <li className="menu-item">
+          {/* --- 1. DASHBOARD --- */}
+          <li className="menu-item mb-2">
             <a
-              className={`menu-link ${currentPage === "dashboard" ? "active" : ""}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
+              style={{ textDecoration: "none" }}
               onClick={(e) => {
                 e.preventDefault();
                 onNavigate?.("dashboard");
               }}
             >
-              <i className="icon-house"></i>
-              <span className="menu-label">Dashboard</span>
+              {/* Khung xám đồng nhất chứa Icon */}
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Dashboard</span>
             </a>
-            <ul className="menu-inner">
-              <li className="menu-item">
-                <a
-                  className={`menu-link ${currentPage === "dashboard" ? "active" : ""}`}
-                  href="/index-2.html"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.("dashboard");
-                  }}
-                >
-                  <span className="menu-label">Dashboard</span>
+          </li>
+
+          {/* --- 2. SẢN PHẨM --- */}
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              role="button"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("sanpham"); // Click vào thẻ a chỉ chuyển trang
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Sản phẩm</span>
+              {/* Click vùng mũi tên này mới xổ xuống */}
+              <span
+                style={{ cursor: "pointer", padding: "4px" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation(); // Chặn lan truyền click
+                  setOpenMenu(openMenu === "sanpham" ? "" : "sanpham");
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "sanpham" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            
+            <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "sanpham" ? "block" : "none", paddingLeft: "52px" }}>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "duhocduc" || currentPage === "dashboard" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("duhocduc"); }}>
+                  Du học - Đức
                 </a>
               </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/index-3.html">
-                  <span className="menu-label">Agent Dashboard</span>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "dinhcu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("dinhcu"); }}>
+                  Định cư
                 </a>
               </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/index-4.html">
-                  <span className="menu-label">Analytics Dashboard</span>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "visa" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("visa"); }}>
+                  Visa
                 </a>
               </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/add-agent.html">
-                  <span className="menu-label">Add Agents</span>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "daotaongonngu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("daotaongonngu"); }}>
+                  Đào tạo ngôn ngữ
                 </a>
               </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/all-agents.html">
-                  <span className="menu-label">All Agents</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/agent-profile.html">
-                  <span className="menu-label">Agent Profile</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/add-property.html">
-                  <span className="menu-label">Add Property</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/property-list.html">
-                  <span className="menu-label">Property List</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/property-grid.html">
-                  <span className="menu-label">Property Grid</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/property-details.html">
-                  <span className="menu-label">Property Details</span>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("nophosoonline"); }}>
+                  Nộp hồ sơ online
                 </a>
               </li>
             </ul>
           </li>
+
+          {/* --- 3. NGHIỆP VỤ --- */}
+          <li className="menu-item mb-2 mt-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "nghiepvu" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              role="button"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("nghiepvu");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Nghiệp vụ</span>
+              <span
+                style={{ cursor: "pointer", padding: "4px" }}
+                onClick={(e) => {
+                  e.preventDefault(); e.stopPropagation(); setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "nghiepvu" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            {/* Dummy submenu cho Nghiệp vụ nếu cần mở rộng sau này */}
+            <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "nghiepvu" ? "block" : "none", paddingLeft: "52px" }}>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Quản lý chung</a></li>
+            </ul>
+          </li>
+
+          {/* --- 4. HỖ TRỢ --- */}
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "hotro" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              role="button"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("hotro");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Hỗ trợ</span>
+              <span
+                style={{ cursor: "pointer", padding: "4px" }}
+                onClick={(e) => {
+                  e.preventDefault(); e.stopPropagation(); setOpenMenu(openMenu === "hotro" ? "" : "hotro");
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "hotro" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "hotro" ? "block" : "none", paddingLeft: "52px" }}>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Tạo Ticket</a></li>
+            </ul>
+          </li>
+
+          {/* --- 5. Q&A - HỖ TRỢ 24/7 --- */}
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "qna" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => { e.preventDefault(); onNavigate?.("qna"); }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Q&A - Hỗ trợ 24/7</span>
+            </a>
+          </li>
+
+          {/* --- 6. TIN TỨC & SỰ KIỆN --- */}
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "tintuc" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => { e.preventDefault(); onNavigate?.("tintuc"); }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Tin tức & Sự kiện</span>
+            </a>
+          </li>
+
+          {/* --- 7. TÀI LIỆU & BIỂU MẪU --- */}
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "documents" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              role="button"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("documents");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Tài liệu & Biểu mẫu</span>
+              {/* Vùng bấm xổ menu con */}
+              <span
+                style={{ cursor: "pointer", padding: "4px" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setOpenMenu(openMenu === "documents" ? "" : "documents");
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "documents" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </a>
+            <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "documents" ? "block" : "none", paddingLeft: "52px", marginTop: "4px" }}>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-elements.html">Form Elements</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-floating.html">Form floating</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-input-group.html">Form input group</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-layout.html">Form layout</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-validation.html">Form validation</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/flatpickr.html">Flatpickr</a></li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/tagify.html">Tagify</a></li>
+            </ul>
+          </li>
+
+          {/* ========================================================================= */}
+          {/* TOÀN BỘ CÁC ĐOẠN COMMENT CŨ GIỮ NGUYÊN BÊN DƯỚI (ĐÃ FIX LỖI /) */}
+          {/* ========================================================================= */}
           
-          {/* --- CÁC ĐOẠN COMMENT ĐÃ ĐƯỢC GIỮ LẠI (VÀ THÊM DẤU / VÀO LINK ĐỂ CHỐNG LỖI) --- */}
           {/* <li className="menu-item">
               <a className="menu-link" href="/chat.html">
                 <i className="icon-message-square-text"></i>
@@ -129,30 +303,14 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
             </li> */}
 
           {/* <li className="menu-item menu-arrow">
-              <a
-                className="menu-link"
-                href="#"
-                role="button"
-              >
+              <a className="menu-link" href="#" role="button">
                 <i className="icon-mail-open"></i>
                 <span className="menu-label">Email</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/email/inbox.html">
-                    <span className="menu-label">Inbox</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/email/compose.html">
-                    <span className="menu-label">Compose</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/email/read-email.html">
-                    <span className="menu-label">Read email</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/email/inbox.html"><span className="menu-label">Inbox</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/email/compose.html"><span className="menu-label">Compose</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/email/read-email.html"><span className="menu-label">Read email</span></a></li>
               </ul>
             </li> */}
 
@@ -162,26 +320,10 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                 <span className="menu-label">Pages</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/pages/pricing.html">
-                    <span className="menu-label">Pricing</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/pages/faq.html">
-                    <span className="menu-label">FAQ's</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/pages/coming-soon.html">
-                    <span className="menu-label">Coming Soon</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/pages/error-404.html">
-                    <span className="menu-label">Error 404</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/pages/pricing.html"><span className="menu-label">Pricing</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/pages/faq.html"><span className="menu-label">FAQ's</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/pages/coming-soon.html"><span className="menu-label">Coming Soon</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/pages/error-404.html"><span className="menu-label">Error 404</span></a></li>
               </ul>
             </li>  */}
 
@@ -191,26 +333,10 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                 <span className="menu-label">Authentication</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/authentication/login.html">
-                    <span className="menu-label">Login</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/authentication/register.html">
-                    <span className="menu-label">Register</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/authentication/forgot-password.html">
-                    <span className="menu-label">Forgot Password</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/authentication/new-password.html">
-                    <span className="menu-label">New Password</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/authentication/login.html"><span className="menu-label">Login</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/authentication/register.html"><span className="menu-label">Register</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/authentication/forgot-password.html"><span className="menu-label">Forgot Password</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/authentication/new-password.html"><span className="menu-label">New Password</span></a></li>
               </ul>
             </li> */}
 
@@ -220,116 +346,28 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                 <span className="menu-label">UI Components</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/accordion.html">
-                    <span className="menu-label">Accordion</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/alerts.html">
-                    <span className="menu-label">Alerts</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/badge.html">
-                    <span className="menu-label">Badge</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/breadcrumb.html">
-                    <span className="menu-label">Breadcrumb</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/buttons.html">
-                    <span className="menu-label">Buttons</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/typography.html">
-                    <span className="menu-label">Typography</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/button-group.html">
-                    <span className="menu-label">Button Group</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/card.html">
-                    <span className="menu-label">Card</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/collapse.html">
-                    <span className="menu-label">Collapse</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/carousel.html">
-                    <span className="menu-label">Carousel</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/dropdowns.html">
-                    <span className="menu-label">Dropdowns</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/modal.html">
-                    <span className="menu-label">Modal</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/list-group.html">
-                    <span className="menu-label">List Group</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/tabs.html">
-                    <span className="menu-label">Tabs</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/offcanvas.html">
-                    <span className="menu-label">Offcanvas</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/pagination.html">
-                    <span className="menu-label">Pagination</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/popovers.html">
-                    <span className="menu-label">Popovers</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/progress.html">
-                    <span className="menu-label">Progress</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/scrollspy.html">
-                    <span className="menu-label">Scrollspy</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/spinners.html">
-                    <span className="menu-label">Spinners</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/toasts.html">
-                    <span className="menu-label">Toasts</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/components/tooltips.html">
-                    <span className="menu-label">Tooltips</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/components/accordion.html"><span className="menu-label">Accordion</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/alerts.html"><span className="menu-label">Alerts</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/badge.html"><span className="menu-label">Badge</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/breadcrumb.html"><span className="menu-label">Breadcrumb</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/buttons.html"><span className="menu-label">Buttons</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/typography.html"><span className="menu-label">Typography</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/button-group.html"><span className="menu-label">Button Group</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/card.html"><span className="menu-label">Card</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/collapse.html"><span className="menu-label">Collapse</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/carousel.html"><span className="menu-label">Carousel</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/dropdowns.html"><span className="menu-label">Dropdowns</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/modal.html"><span className="menu-label">Modal</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/list-group.html"><span className="menu-label">List Group</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/tabs.html"><span className="menu-label">Tabs</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/offcanvas.html"><span className="menu-label">Offcanvas</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/pagination.html"><span className="menu-label">Pagination</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/popovers.html"><span className="menu-label">Popovers</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/progress.html"><span className="menu-label">Progress</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/scrollspy.html"><span className="menu-label">Scrollspy</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/spinners.html"><span className="menu-label">Spinners</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/toasts.html"><span className="menu-label">Toasts</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/components/tooltips.html"><span className="menu-label">Tooltips</span></a></li>
               </ul>
             </li> */}
 
@@ -339,141 +377,45 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                 <span className="menu-label">Icons</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/icons/flaticon.html">
-                    <span className="menu-label">Flaticon</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/icons/lucide.html">
-                    <span className="menu-label">Lucide</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/icons/fontawesome.html">
-                    <span className="menu-label">Font Awesome</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/icons/flaticon.html"><span className="menu-label">Flaticon</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/icons/lucide.html"><span className="menu-label">Lucide</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/icons/fontawesome.html"><span className="menu-label">Font Awesome</span></a></li>
               </ul>
             </li> */}
 
-          {/* --- TÀI LIỆU & BIỂU MẪU --- */}
-          <li className="menu-item">
-            <a
-              className={`menu-link ${currentPage === "documents" ? "active" : ""}`}
-              href="#"
-              role="button"
-              style={{ display: "flex", alignItems: "center" }}
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigate?.("documents");
-                setOpenMenu(openMenu === "documents" ? "" : "documents");
-              }}
-            >
-              <i className="icon-file-text"></i>
-              <span className="menu-label" style={{ flex: 1 }}>Tài Liệu & Biểu Mẫu</span>
-              <svg 
-                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transform: openMenu === "documents" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </a>
-            
-            <ul className="menu-inner" style={{ display: openMenu === "documents" ? "block" : "none" }}>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/form-elements.html">
-                  <span className="menu-label">Form Elements</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/form-floating.html">
-                  <span className="menu-label">Form floating</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/form-input-group.html">
-                  <span className="menu-label">Form input group</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/form-layout.html">
-                  <span className="menu-label">Form layout</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/form-validation.html">
-                  <span className="menu-label">Form validation</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/flatpickr.html">
-                  <span className="menu-label">Flatpickr</span>
-                </a>
-              </li>
-              <li className="menu-item">
-                <a className="menu-link" href="/forms/tagify.html">
-                  <span className="menu-label">Tagify</span>
-                </a>
-              </li>
-            </ul>
-          </li>
-
-          {/* CÁC ĐOẠN COMMENT GIỮ NGUYÊN NHƯ BAN ĐẦU (PHẦN DƯỚI CÙNG) */}
           {/* <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-table-2"></i>
                 <span className="menu-label">Table</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/table/tables-basic.html">
-                    <span className="menu-label">Table</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/table/tables-datatable.html">
-                    <span className="menu-label">Datatable</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/table/tables-basic.html"><span className="menu-label">Table</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/table/tables-datatable.html"><span className="menu-label">Datatable</span></a></li>
               </ul>
             </li>
+            
             <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-chart-pie"></i>
                 <span className="menu-label">Charts</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/chart/apexchart.html">
-                    <span className="menu-label">Apex Chart</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/chart/chartjs.html">
-                    <span className="menu-label">Chart JS</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/chart/apexchart.html"><span className="menu-label">Apex Chart</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/chart/chartjs.html"><span className="menu-label">Chart JS</span></a></li>
               </ul>
             </li>
+            
             <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-map-pinned"></i>
                 <span className="menu-label">Maps</span>
               </a>
               <ul className="menu-inner">
-                <li className="menu-item">
-                  <a className="menu-link" href="/maps/jsvectormap.html">
-                    <span className="menu-label">JS Vector Map</span>
-                  </a>
-                </li>
-                <li className="menu-item">
-                  <a className="menu-link" href="/maps/leaflet.html">
-                    <span className="menu-label">Leaflet</span>
-                  </a>
-                </li>
+                <li className="menu-item"><a className="menu-link" href="/maps/jsvectormap.html"><span className="menu-label">JS Vector Map</span></a></li>
+                <li className="menu-item"><a className="menu-link" href="/maps/leaflet.html"><span className="menu-label">Leaflet</span></a></li>
               </ul>
             </li>
+            
             <li className="menu-item">
               <a className="menu-link" href="#">
                 <i className="icon-badge-percent"></i>
@@ -481,6 +423,7 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                 <span className="badge badge-sm rounded-pill bg-secondary ms-2 float-end">5</span>
               </a>
             </li>
+            
             <li className="menu-item menu-arrow">
               <a className="menu-link" href="#" role="button">
                 <i className="icon-layers"></i>
@@ -492,21 +435,9 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
                     <span className="menu-label">Multi Level 2</span>
                   </a>
                   <ul className="menu-inner">
-                    <li className="menu-item">
-                      <a className="menu-link" href="#">
-                        <span className="menu-label">Multi Level 3</span>
-                      </a>
-                    </li>
-                    <li className="menu-item">
-                      <a className="menu-link" href="#">
-                        <span className="menu-label">Multi Level 3</span>
-                      </a>
-                    </li>
-                    <li className="menu-item">
-                      <a className="menu-link" href="#">
-                        <span className="menu-label">Multi Level 3</span>
-                      </a>
-                    </li>
+                    <li className="menu-item"><a className="menu-link" href="#"><span className="menu-label">Multi Level 3</span></a></li>
+                    <li className="menu-item"><a className="menu-link" href="#"><span className="menu-label">Multi Level 3</span></a></li>
+                    <li className="menu-item"><a className="menu-link" href="#"><span className="menu-label">Multi Level 3</span></a></li>
                   </ul>
                 </li>
               </ul>
