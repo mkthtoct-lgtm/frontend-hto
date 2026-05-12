@@ -5,11 +5,13 @@ import { Footer } from "./components/Footer";
 import { DocumentsPage } from "./components/DocumentsPage";
 import { LoginPage } from "./login/LoginPage";
 import { RegisterPage } from "./login/RegisterPage";
+import { ForgotPasswordPage } from "./login/ForgotPasswordPage";
+import { NewPasswordPage } from "./login/NewPasswordPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login"); // 'login' hoặc 'register'
+  const [authMode, setAuthMode] = useState("login"); // 'login', 'register', 'forgot', 'new-password'
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 
@@ -68,11 +70,33 @@ function App() {
   };
 
   if (!user) {
-    return authMode === "login" ? (
-      <LoginPage onLogin={handleLogin} onSwitchToRegister={() => setAuthMode("register")} />
-    ) : (
-      <RegisterPage onRegister={handleLogin} onSwitchToLogin={() => setAuthMode("login")} />
-    );
+    if (authMode === "login") {
+      return <LoginPage 
+        onLogin={handleLogin} 
+        onSwitchToRegister={() => setAuthMode("register")} 
+        onSwitchToForgot={() => setAuthMode("forgot")}
+      />;
+    }
+    if (authMode === "register") {
+      return <RegisterPage 
+        onRegister={handleLogin} 
+        onSwitchToLogin={() => setAuthMode("login")} 
+      />;
+    }
+    if (authMode === "forgot") {
+      return <ForgotPasswordPage 
+        onSwitchToLogin={() => setAuthMode("login")} 
+        onSwitchToNewPassword={() => {
+          console.log("Switching to new-password");
+          setAuthMode("new-password");
+        }}
+      />;
+    }
+    if (authMode === "new-password") {
+      return <NewPasswordPage 
+        onSwitchToLogin={() => setAuthMode("login")} 
+      />;
+    }
   }
 
   return (

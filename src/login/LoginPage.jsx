@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import "./Login.css";
 
-export const LoginPage = ({ onLogin, onSwitchToRegister }) => {
+export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -117,7 +117,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister }) => {
           <div className="mb-3">
             <div className="d-flex justify-content-between align-items-center">
               <label className="form-label" htmlFor="password">Mật khẩu</label>
-              <a href="#" className="forgot-password">Quên mật khẩu?</a>
+              <a href="#" className="forgot-password" onClick={(e) => { e.preventDefault(); onSwitchToForgot(); }}>Quên mật khẩu?</a>
             </div>
             <div className="password-wrapper">
               <input
@@ -130,7 +130,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister }) => {
               />
               <button
                 type="button"
-                className="toggle-password"
+                className="hto-password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >

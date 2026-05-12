@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import "./Login.css";
 
-export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
+export const NewPasswordPage = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -15,113 +15,69 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
     formState: { errors },
   } = useForm({
     mode: "onTouched",
-    reValidateMode: "onChange",
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      agreed: false,
-    },
   });
 
   const password = watch("password");
 
   const onSubmit = async (data) => {
-    setApiError("");
     setLoading(true);
-
     try {
-      /* --- LOGIC API THẬT (Đã ẩn) ---
-      const res = await fetch("http://localhost:3001/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
-      });
-      const responseData = await res.json();
-
-      if (!res.ok) {
-        throw new Error(responseData.message || "Đăng ký thất bại");
-      }
-
-      alert("Đăng ký thành công! Vui lòng đăng nhập.");
-      onSwitchToLogin();
-      ------------------------------ */
-
-      // --- LOGIC GIẢ LẬP (MOCK API) ---
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Giả lập độ trễ mạng
-      
-      alert("Đăng ký thành công! Bạn có thể dùng tài khoản này để đăng nhập (giả lập).");
-      onSwitchToLogin();
-      // -------------------------------
-      
+      // Giả lập xử lý đổi mật khẩu 
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      console.log("Cập nhật mật khẩu thành công");
+      setIsSuccess(true);
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Đăng ký thất bại");
+      console.error("Lỗi cập nhật:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="login-container">
+        <div className="login-card text-center">
+          <div className="mb-4">
+            <div className="success-icon-wrapper">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h1 className="login-title">Thành công!</h1>
+          <p className="login-subtitle">
+            Mật khẩu của bạn đã được cập nhật. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.
+          </p>
+          <button
+            className="btn-login"
+            onClick={() => onSwitchToLogin()}
+          >
+            Đăng nhập ngay
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="login-container">
       <div className="login-card">
+        <button className="back-button" onClick={onSwitchToLogin} aria-label="Quay lại">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
         <div className="text-center">
           <img src="/assets/images/logo-HTO.png" alt="HTO Logo" className="login-logo visible-light" />
         </div>
 
-        <h1 className="login-title">Tạo tài khoản mới</h1>
-        <p className="login-subtitle">Tham gia HTO để bắt đầu hành trình của bạn.</p>
-
-        {apiError && (
-          <div className="error-message">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            {apiError}
-          </div>
-        )}
+        <h1 className="login-title">Mật khẩu mới</h1>
+        <p className="login-subtitle">Thiết lập mật khẩu mạnh để bảo vệ tài khoản của bạn.</p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-3">
-            <label className="form-label" htmlFor="name">Họ và tên</label>
-            <input
-              type="text"
-              id="name"
-              className={`form-control ${errors.name ? "is-invalid" : ""}`}
-              placeholder="Nguyễn Văn A"
-              disabled={loading}
-              {...register("name", { required: "Vui lòng nhập họ và tên." })}
-            />
-            {errors.name && <div className="field-error">{errors.name.message}</div>}
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label" htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              className={`form-control ${errors.email ? "is-invalid" : ""}`}
-              placeholder="name@example.com"
-              disabled={loading}
-              {...register("email", { 
-                required: "Vui lòng nhập email.",
-                pattern: {
-                  value: /\S+@\S+\.\S+/,
-                  message: "Định dạng email không hợp lệ."
-                }
-              })}
-            />
-            {errors.email && <div className="field-error">{errors.email.message}</div>}
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label" htmlFor="password">Mật khẩu</label>
+            <label className="form-label" htmlFor="password">Mật khẩu mới</label>
             <div className="password-wrapper">
               <input
                 type={showPassword ? "text" : "password"}
@@ -129,11 +85,13 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
                 className={`form-control ${errors.password ? "is-invalid" : ""}`}
                 placeholder="********"
                 disabled={loading}
-                {...register("password", { 
-                  required: "Vui lòng nhập mật khẩu.",
-                  pattern: {
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/,
-                    message: "Mật khẩu tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và ký tự đặc biệt."
+                {...register("password", {
+                  required: "Vui lòng nhập mật khẩu mới.",
+                  minLength: { value: 8, message: "Mật khẩu phải có ít nhất 8 ký tự." },
+                  validate: {
+                    hasUpper: v => /[A-Z]/.test(v) || "Phải có ít nhất 1 chữ hoa.",
+                    hasLower: v => /[a-z]/.test(v) || "Phải có ít nhất 1 chữ thường.",
+                    hasSpecial: v => /[!@#$%^&*(),.?":{}|<>]/.test(v) || "Phải có ít nhất 1 ký tự đặc biệt."
                   }
                 })}
               />
@@ -169,8 +127,8 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
                 placeholder="********"
                 disabled={loading}
                 {...register("confirmPassword", { 
-                  required: "Vui lòng xác nhận mật khẩu.",
-                  validate: (value) => value === password || "Mật khẩu xác nhận không khớp."
+                  required: "Vui lòng xác nhận lại mật khẩu.",
+                  validate: value => value === password || "Mật khẩu xác nhận không khớp."
                 })}
               />
               <button
@@ -197,34 +155,32 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
 
           <div className="mb-4">
             <div className="form-check">
-              <input 
-                type="checkbox" 
-                className="form-check-input" 
-                id="agreed" 
-                {...register("agreed", { required: "Bạn phải đồng ý với chính sách bảo mật." })}
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="terms"
+                {...register("terms", { required: "Bạn phải đồng ý với điều khoản." })}
               />
-              <label className="form-check-label" htmlFor="agreed" style={{ fontSize: '13px' }}>
-                Tôi đồng ý với <a href="#">chính sách bảo mật & điều khoản</a>
+              <label className="form-check-label" htmlFor="terms" style={{ fontSize: '13px' }}>
+                Tôi đồng ý với <a href="#" style={{ color: 'var(--hto-primary)', fontWeight: '600' }}>Điều khoản & Điều kiện</a>
               </label>
             </div>
-            {errors.agreed && <div className="field-error">{errors.agreed.message}</div>}
+            {errors.terms && <div className="field-error">{errors.terms.message}</div>}
           </div>
 
           <button type="submit" className="btn-login" disabled={loading}>
             {loading ? (
               <>
                 <div className="spinner"></div>
-                Đang đăng ký...
+                Đang cập nhật...
               </>
             ) : (
-              "Đăng ký"
+              "Cập nhật mật khẩu"
             )}
           </button>
         </form>
 
-        <div className="auth-links">
-          Đã có tài khoản? <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToLogin(); }}>Đăng nhập ngay</a>
-        </div>
+        <img src="/assets/images/logo-dolphin.png" alt="" className="login-mascot" />
       </div>
     </div>
   );
