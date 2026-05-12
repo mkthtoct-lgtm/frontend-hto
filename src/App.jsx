@@ -59,6 +59,14 @@ function App() {
     }
   };
 
+  const handleLogout = () => {
+    // Xóa thông tin đăng nhập
+    setUser(null);
+    localStorage.removeItem("token");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    setAuthMode("login");
+  };
+
   if (!user) {
     return authMode === "login" ? (
       <LoginPage onLogin={handleLogin} onSwitchToRegister={() => setAuthMode("register")} />
@@ -69,7 +77,11 @@ function App() {
 
   return (
     <div className="page-layout bg-body-tertiary">
-      <Header onToggleSidebar={handleToggleSidebar} onToggleTheme={handleToggleTheme} />
+      <Header 
+        onToggleSidebar={handleToggleSidebar} 
+        onToggleTheme={handleToggleTheme} 
+        onLogout={handleLogout}
+      />
       <Sidebar onNavigate={setCurrentPage} currentPage={currentPage} onToggleSidebar={handleToggleSidebar} />
 
       <main className="app-wrapper">

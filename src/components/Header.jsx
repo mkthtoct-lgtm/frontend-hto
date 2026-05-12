@@ -1,4 +1,4 @@
-export const Header = ({ onToggleSidebar, onToggleTheme }) => {
+export const Header = ({ onToggleSidebar, onToggleTheme, onLogout }) => {
   return (
     <header className="app-header">
       <div className="app-header-inner">
@@ -286,7 +286,11 @@ export const Header = ({ onToggleSidebar, onToggleTheme }) => {
                 <li>
                   <a
                     className="dropdown-item d-flex align-items-center gap-2 text-danger"
-                    href="authentication/login.html"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onLogout?.();
+                    }}
                   >
                     <i className="fi fi-sr-exit scale-1x"></i> Log Out
                   </a>
