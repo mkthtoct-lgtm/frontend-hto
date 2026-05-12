@@ -3,9 +3,13 @@ import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { Footer } from "./components/Footer";
 import { DocumentsPage } from "./components/DocumentsPage";
+import { LoginPage } from "./login/LoginPage";
+import { RegisterPage } from "./login/RegisterPage";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState("login"); // 'login' hoặc 'register'
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 
@@ -44,6 +48,24 @@ function App() {
     e?.preventDefault?.();
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   };
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    // Điều hướng dựa trên vai trò
+    if (userData.role === "admin") {
+      setCurrentPage("dashboard");
+    } else {
+      setCurrentPage("documents");
+    }
+  };
+
+  if (!user) {
+    return authMode === "login" ? (
+      <LoginPage onLogin={handleLogin} onSwitchToRegister={() => setAuthMode("register")} />
+    ) : (
+      <RegisterPage onRegister={handleLogin} onSwitchToLogin={() => setAuthMode("login")} />
+    );
+  }
 
   return (
     <div className="page-layout bg-body-tertiary">

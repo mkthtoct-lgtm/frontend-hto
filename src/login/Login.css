@@ -1,0 +1,226 @@
+:root {
+  --hto-primary: #0a3d62;
+  --hto-accent: #f5365c;
+  --hto-bg: #f0f2f5;
+  --hto-card-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --hto-radius: 16px;
+}
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--hto-bg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background decorative elements */
+.login-container::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(10, 61, 98, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 450px;
+  background: #ffffff;
+  border-radius: var(--hto-radius);
+  box-shadow: var(--hto-card-shadow);
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+[data-bs-theme="dark"] .login-card {
+  background: #1a1d21;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.login-logo {
+  display: block;
+  margin: 0 auto 30px;
+  height: 50px;
+  width: auto;
+}
+
+.login-title {
+  color: var(--hto-primary);
+  font-weight: 700;
+  font-size: 24px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.login-subtitle {
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--hto-primary);
+  margin-bottom: 8px;
+}
+
+.form-control {
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--hto-primary);
+  box-shadow: 0 0 0 3px rgba(10, 61, 98, 0.1);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #adb5bd;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.btn-login {
+  background-color: var(--hto-primary);
+  border: none;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-login:hover:not(:disabled) {
+  background-color: #082d49;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 61, 98, 0.2);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: var(--hto-accent);
+  background-color: rgba(245, 54, 92, 0.05);
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  border-left: 3px solid var(--hto-accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-error {
+  color: var(--hto-accent);
+  font-size: 12px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.form-control.is-invalid {
+  border-color: var(--hto-accent);
+}
+
+.password-wrapper .form-control.is-invalid {
+  background-image: none; /* Ẩn icon lỗi mặc định của Bootstrap để không đè lên nút hiện mật khẩu */
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(245, 54, 92, 0.1);
+}
+
+.auth-links {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.auth-links a {
+  color: var(--hto-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+.forgot-password {
+  display: block;
+  text-align: right;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6c757d;
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  color: var(--hto-primary);
+}
+
+/* Spinner for loading state */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mascot decoration */
+.login-mascot {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 80px;
+  opacity: 0.1;
+  pointer-events: none;
+}
