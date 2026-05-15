@@ -7,6 +7,7 @@ import { LoginPage } from "./login/LoginPage";
 import { RegisterPage } from "./login/RegisterPage";
 import { ForgotPasswordPage } from "./login/ForgotPasswordPage";
 import { NewPasswordPage } from "./login/NewPasswordPage";
+import { UserList } from "./UserList/UserList";
 
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -108,8 +109,11 @@ function App() {
       />
       <Sidebar onNavigate={setCurrentPage} currentPage={currentPage} onToggleSidebar={handleToggleSidebar} />
 
-      <main className="app-wrapper flex-grow-1">
-        {currentPage === "documents" ? (
+      <main className="app-wrapper">
+        {currentPage === "users" ? (
+        // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
+        <UserList currentUser={user} />
+        ) : currentPage === "documents" ? (
           <DocumentsPage />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
