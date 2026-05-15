@@ -285,6 +285,29 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
             </ul>
           </li>
 
+          {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
+          <li className="menu-item mb-2 border-top pt-3 mt-3">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "users" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("users");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Quản lý tài khoản</span>
+            </a>
+          </li>
+
           {/* ========================================================================= */}
           {/* TOÀN BỘ CÁC ĐOẠN COMMENT CŨ GIỮ NGUYÊN BÊN DƯỚI (ĐÃ FIX LỖI /) */}
           {/* ========================================================================= */}
