@@ -173,7 +173,6 @@ export const UserList = ({ currentUser }) => {
       // --- LOGIC GIẢ LẬP ---
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (modalMode === "create") {
-        // eslint-disable-next-line react-hooks/purity
         const newUser = { ...payload, id: Date.now(), status: "active" };
         setUsers(prev => [newUser, ...prev]);
       } else {
