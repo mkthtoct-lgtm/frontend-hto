@@ -4,7 +4,66 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Thẻ chứa bảng */
+/* ========================================================================= */
+/* --- 1. KHU VỰC CSS CHUNG, TAB NAVIGATION VÀ BANNER --- */
+/* ========================================================================= */
+
+/* Banner hiển thị Role hiện tại */
+.current-role-banner {
+  background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, rgba(13, 110, 253, 0.05) 100%);
+  border: 1px solid rgba(13, 110, 253, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+/* Giao diện chọn Tab tối giản (Minimalist Line) */
+.custom-tab-container {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.custom-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bs-secondary-color);
+  position: relative;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.custom-tab-btn:hover {
+  color: var(--bs-primary);
+}
+
+/* Hiệu ứng gạch chân chạy từ trái sang phải */
+.custom-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--bs-primary);
+  transition: width 0.3s ease;
+}
+
+.custom-tab-btn.active {
+  color: var(--bs-primary);
+}
+
+.custom-tab-btn.active::after {
+  width: 100%;
+}
+
+/* Thẻ chứa bảng dữ liệu chính */
 .table-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -17,7 +76,7 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Thanh filter */
+/* Thanh bộ lọc dữ liệu */
 .filter-bar {
   display: flex;
   gap: 15px;
@@ -61,7 +120,7 @@
   white-space: nowrap;
 }
 
-/* Tùy chỉnh Table */
+/* Tùy chỉnh cấu trúc Table */
 .custom-table {
   margin-bottom: 0;
   font-size: 14px;
@@ -86,7 +145,10 @@
   background-color: var(--bs-secondary-bg);
 }
 
-/* Trạng thái Account */
+/* ========================================================================= */
+/* --- 2. KHU VỰC CSS DÀNH CHO USER LIST --- */
+/* ========================================================================= */
+
 .status-badge {
   padding: 5px 10px;
   border-radius: 20px;
@@ -108,7 +170,6 @@
   color: #ef4444;
 }
 
-/* Nút Action */
 .action-btn {
   background: none;
   border: none;
@@ -129,12 +190,109 @@
 .btn-lock { color: #ef4444; }
 .btn-unlock { color: #10b981; }
 
-.action-btn:disabled {
-  opacity: 0.5;
+/* Trạng thái Disable (Khóa chức năng khi không đủ quyền) */
+.action-btn:disabled, .btn-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #6c757d !important;
+  background-color: transparent !important;
+}
+
+.wrapper-tooltip {
+  display: inline-block;
   cursor: not-allowed;
 }
 
-/* Modal Overlay & Content */
+/* ========================================================================= */
+/* --- 3. KHU VỰC CSS DÀNH CHO ROLE LIST & MA TRẬN QUYỀN --- */
+/* ========================================================================= */
+
+.permissions-container {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--bs-tertiary-bg);
+}
+
+.module-group {
+  background-color: var(--bs-body-bg);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border: 1px solid var(--bs-border-color-translucent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.module-group:last-child {
+  margin-bottom: 0;
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--bs-border-color-translucent);
+}
+
+.module-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bs-emphasis-color);
+  margin: 0;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bs-body-color);
+  cursor: pointer;
+  margin: 0;
+}
+
+.permission-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0d6efd;
+}
+
+/* Dictionary Modal (Bảng tra cứu phân quyền) */
+.dict-role-card {
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+.dict-role-header {
+  background-color: var(--bs-tertiary-bg);
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dict-role-body {
+  padding: 15px;
+  background-color: var(--bs-body-bg);
+}
+
+/* ========================================================================= */
+/* --- 4. CSS DÀNH CHO CÁC MODAL (POPUP FORM) --- */
+/* ========================================================================= */
+
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -161,6 +319,12 @@
   flex-direction: column;
   max-height: 90vh;
   animation: slideIn 0.3s ease-out;
+}
+
+/* Tùy chỉnh độ rộng cho modal phân quyền Role và Dictionary */
+.custom-modal-content.modal-role-wide,
+.custom-modal-content.modal-dict-wide {
+  max-width: 750px;
 }
 
 .custom-modal-header {
@@ -202,7 +366,10 @@
   gap: 10px;
 }
 
-/* RESPONSIVE MOBILE TỐI ƯU */
+/* ========================================================================= */
+/* --- 5. RESPONSIVE --- */
+/* ========================================================================= */
+
 @media (max-width: 768px) {
   .filter-bar {
     flex-direction: column;
@@ -225,6 +392,23 @@
   
   .custom-table td, .custom-table th {
     white-space: nowrap;
+  }
+
+  .permissions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .current-role-banner {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .permissions-grid {
+    grid-template-columns: 1fr;
   }
 }
 
