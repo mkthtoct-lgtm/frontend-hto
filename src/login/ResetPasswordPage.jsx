@@ -10,7 +10,7 @@ const getResetToken = () => {
   return searchParams.get("token") || searchParams.get("resetToken") || "";
 };
 
-export const NewPasswordPage = ({ onSwitchToLogin }) => {
+export const ResetPasswordPage = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -217,3 +217,5 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
     </>
   );
 };
+
+export const NewPasswordPage = ResetPasswordPage;
