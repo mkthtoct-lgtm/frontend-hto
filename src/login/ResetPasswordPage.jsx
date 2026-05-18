@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
 const getResetToken = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -10,7 +11,7 @@ const getResetToken = () => {
   return searchParams.get("token") || searchParams.get("resetToken") || "";
 };
 
-export const NewPasswordPage = ({ onSwitchToLogin }) => {
+export const ResetPasswordPage = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,7 +48,6 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
         body: JSON.stringify({
           token: resetToken,
           password: data.password,
-          confirmPassword: data.confirmPassword,
         }),
       });
 
@@ -60,7 +60,7 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
         );
       }
 
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState({}, "", "/");
       setIsSuccess(true);
     } catch (err) {
       setApiError(
@@ -218,3 +218,5 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
     </>
   );
 };
+
+export const NewPasswordPage = ResetPasswordPage;

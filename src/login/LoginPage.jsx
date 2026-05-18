@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
 const ROLE_ID_MAP = {
   "69fc5af582ef85451120772a": "admin",
@@ -16,6 +17,30 @@ const ROLE_ID_MAP = {
 
 function normalizeRole(roleId) {
   return ROLE_ID_MAP[roleId] || "user";
+}
+
+function getLoginErrorMessage(response, status) {
+  const detailMessages = response?.error?.details;
+
+  if (Array.isArray(detailMessages) && detailMessages.length > 0) {
+    return detailMessages[0];
+  }
+
+  const message = response?.message;
+
+  if (typeof message === "string" && message.trim() && message !== "Bad Request") {
+    return message;
+  }
+
+  if (status === 400) {
+    return "Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại email và mật khẩu.";
+  }
+
+  if (status === 401) {
+    return "Email hoặc mật khẩu không chính xác.";
+  }
+
+  return "Đăng nhập thất bại";
 }
 
 export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => {
@@ -54,11 +79,11 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         }),
       });
 
-      const response = await res.json();
+      const response = await res.json().catch(() => null);
       const responseData = response?.data;
 
       if (!res.ok) {
-        throw new Error(response?.message || "Đăng nhập thất bại");
+        throw new Error(getLoginErrorMessage(response, res.status));
       }
 
       if (!responseData?.access_token || !responseData?.user) {
@@ -163,8 +188,6 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
           {loading ? <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[rgba(255,255,255,0.3)] border-t-white"></div> : "Đăng nhập"}
         </button>
       </form>
-
-      <div className="my-4 flex items-center text-center text-[11px] text-[#9ca3af] before:mr-2 before:flex-1 before:border-b before:border-[#e5e7eb] after:ml-2 after:flex-1 after:border-b after:border-[#e5e7eb] app-dark:before:border-[#374151] app-dark:after:border-[#374151]">Hoặc</div>
 
       <div className="text-center text-[13px] text-[#6b7280]">
         Chưa có tài khoản? <a href="#" className="ml-1 font-semibold text-[#4f46e5] no-underline hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Đăng ký ngay</a>

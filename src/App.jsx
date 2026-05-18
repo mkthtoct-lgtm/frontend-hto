@@ -6,7 +6,7 @@ import { DocumentsPage } from "./components/DocumentsPage";
 import { LoginPage } from "./login/LoginPage";
 import { RegisterPage } from "./login/RegisterPage";
 import { ForgotPasswordPage } from "./login/ForgotPasswordPage";
-import { NewPasswordPage } from "./login/NewPasswordPage";
+import { ResetPasswordPage } from "./login/ResetPasswordPage";
 import { AuthLayout } from "./login/AuthLayout";
 import { UserList } from "./UserList/UserList";
 
@@ -27,16 +27,24 @@ const clearStoredSession = () => {
   document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
 };
 
+const getAuthModeFromLocation = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hasResetToken =
+    searchParams.has("token") || searchParams.has("resetToken");
+  const isResetPasswordPath =
+    window.location.pathname.replace(/\/+$/, "") === "/reset-password";
+
+  return hasResetToken && isResetPasswordPath ? "reset-password" : "login";
+};
+
+const resetAuthUrl = () => {
+  window.history.replaceState({}, "", "/");
+};
+
 function App() {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const hasResetToken =
-      searchParams.has("token") || searchParams.has("resetToken");
-
-    return hasResetToken ? "new-password" : "login";
-  }); // 'login', 'register', 'forgot', 'new-password'
+  const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 
@@ -60,15 +68,11 @@ function App() {
     }
 
     const syncAuthModeFromUrl = () => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const hasResetToken =
-        searchParams.has("token") || searchParams.has("resetToken");
-
-      if (hasResetToken) {
-        setAuthMode("new-password");
-      } else if (window.location.search === "") {
+      if (getAuthModeFromLocation() === "reset-password") {
+        setAuthMode("reset-password");
+      } else if (window.location.search === "" || window.location.pathname !== "/reset-password") {
         setAuthMode((currentMode) =>
-          currentMode === "new-password" ? "login" : currentMode,
+          currentMode === "reset-password" ? "login" : currentMode,
         );
       }
     };
@@ -151,6 +155,7 @@ function App() {
     // Xóa thông tin đăng nhập
     setUser(null);
     clearStoredSession();
+    resetAuthUrl();
     setCurrentPage("dashboard");
     setAuthMode("login");
   };
@@ -163,27 +168,38 @@ function App() {
         <LoginPage 
           onLogin={handleLogin} 
           onSwitchToRegister={() => setAuthMode("register")} 
-          onSwitchToForgot={() => setAuthMode("forgot")}
+          onSwitchToForgot={() => {
+            resetAuthUrl();
+            setAuthMode("forgot");
+          }}
         />
       );
     } else if (authMode === "register") {
       authContent = (
         <RegisterPage 
           onRegister={handleLogin} 
-          onSwitchToLogin={() => setAuthMode("login")} 
+          onSwitchToLogin={() => {
+            resetAuthUrl();
+            setAuthMode("login");
+          }} 
         />
       );
     } else if (authMode === "forgot") {
       authContent = (
         <ForgotPasswordPage 
-          onSwitchToLogin={() => setAuthMode("login")} 
-          onSwitchToNewPassword={() => setAuthMode("new-password")}
+          onSwitchToLogin={() => {
+            resetAuthUrl();
+            setAuthMode("login");
+          }} 
         />
       );
-    } else if (authMode === "new-password") {
+    } else if (authMode === "reset-password") {
       authContent = (
-        <NewPasswordPage 
-          onSwitchToLogin={() => setAuthMode("login")} 
+        <ResetPasswordPage 
+          onSwitchToLogin={() => {
+            resetAuthUrl();
+            setAuthMode("login");
+          }} 
         />
       );
     }
