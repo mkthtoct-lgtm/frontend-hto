@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import "./Login.css";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+
+const getResetToken = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+
+  return searchParams.get("token") || searchParams.get("resetToken") || "";
+};
 
 export const NewPasswordPage = ({ onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [resetToken] = useState(() => getResetToken());
+  const inputClass =
+    "w-full rounded-[8px] border border-[#d1d5db] bg-[#f9fafb] px-3.5 py-2.5 text-sm text-[#111827] transition focus:border-[#4f46e5] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[rgba(79,70,229,0.1)] app-dark:border-[#4b5563] app-dark:bg-[#374151] app-dark:text-white app-dark:focus:bg-[#1f2937]";
 
   const {
     register,
@@ -20,14 +32,42 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
   const password = watch("password");
 
   const onSubmit = async (data) => {
+    setApiError("");
+
+    if (!resetToken) {
+      setApiError("Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Giả lập xử lý đổi mật khẩu 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Cập nhật mật khẩu thành công");
+      const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: resetToken,
+          password: data.password,
+          confirmPassword: data.confirmPassword,
+        }),
+      });
+
+      const response = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(
+          response?.message ||
+            "Không thể cập nhật mật khẩu. Vui lòng thử lại.",
+        );
+      }
+
+      window.history.replaceState({}, "", window.location.pathname);
       setIsSuccess(true);
     } catch (err) {
-      console.error("Lỗi cập nhật:", err);
+      setApiError(
+        err instanceof Error
+          ? err.message
+          : "Không thể cập nhật mật khẩu. Vui lòng thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -35,20 +75,20 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
 
   if (isSuccess) {
     return (
-      <div className="text-center">
-        <div className="mb-4 d-flex justify-content-center">
-          <div className="success-icon-wrapper">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="text-left">
+        <div className="mb-4 flex justify-start">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ecfdf5] app-dark:bg-[#163328]">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
         </div>
-        <h1 className="login-title">Thành công!</h1>
-        <p className="login-subtitle">
-          Mật khẩu của bạn đã được cập nhật. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.
+        <h2 className="mb-1.5 justify-center text-[22px] font-bold text-[#111827] app-dark:text-white">Thành công!</h2>
+        <p className="mb-5 justify-center text-[13px] leading-[1.45] text-[#6b7280]">
+          Mật khẩu của bạn đã được cập nhật. Bạn có thể đăng nhập bằng mật khẩu mới.
         </p>
         <button
-          className="btn-login"
+          className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] border-0 bg-[#111827] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f2937] app-dark:bg-[#4f46e5] app-dark:hover:bg-[#4338ca]"
           onClick={() => onSwitchToLogin()}
         >
           Đăng nhập ngay
@@ -59,22 +99,43 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
 
   return (
     <>
-      <div className="text-center">
-        <img src="/assets/images/logo-HTO.png" alt="HTO Logo" className="login-logo visible-light" />
+      <div className="mb-4 flex justify-center">
+        <img src="/assets/images/logo-HTO.png" alt="HTO Logo" className="h-[60px] w-auto" />
       </div>
+      <h1 className="mb-1.5  text-center text-[22px] font-bold text-[#111827] app-dark:text-white">Mật khẩu mới</h1>
+      <p className="mb-5 text-center text-[13px] leading-[1.45] text-[#6b7280]">Thiết lập mật khẩu mạnh để bảo vệ tài khoản của bạn.</p>
 
-      <h1 className="login-title">Mật khẩu mới</h1>
-      <p className="login-subtitle">Thiết lập mật khẩu mạnh để bảo vệ tài khoản của bạn.</p>
+      {!resetToken && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-[13px] text-[#be123c] app-dark:border-[#7f1d1d] app-dark:bg-[#2a1215] app-dark:text-[#fecdd3]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
+        </div>
+      )}
+
+      {apiError && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-[13px] text-[#be123c] app-dark:border-[#7f1d1d] app-dark:bg-[#2a1215] app-dark:text-[#fecdd3]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          {apiError}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mb-2">
-          <label className="form-label" htmlFor="password">Mật khẩu mới</label>
-          <div className="password-wrapper">
+        <div className="mb-3">
+          <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="password">Mật khẩu mới</label>
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               id="password"
-              className={`form-control ${errors.password ? "is-invalid" : ""}`}
-              placeholder="********"
+              className={`${inputClass} ${errors.password ? "border-[#f5365c]" : ""}`}
+              placeholder="Ít nhất 8 ký tự"
               disabled={loading}
               {...register("password", {
                 required: "Vui lòng nhập mật khẩu mới.",
@@ -88,7 +149,7 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
             />
             <button
               type="button"
-              className="hto-password-toggle"
+              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
@@ -105,17 +166,17 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
               )}
             </button>
           </div>
-          {errors.password && <div className="field-error">{errors.password.message}</div>}
+          {errors.password && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.password.message}</div>}
         </div>
 
-        <div className="mb-2">
-          <label className="form-label" htmlFor="confirmPassword">Xác nhận mật khẩu</label>
-          <div className="password-wrapper">
+        <div className="mb-3">
+          <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="confirmPassword">Xác nhận mật khẩu</label>
+          <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
-              className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
-              placeholder="********"
+              className={`${inputClass} ${errors.confirmPassword ? "border-[#f5365c]" : ""}`}
+              placeholder="Ít nhất 8 ký tự"
               disabled={loading}
               {...register("confirmPassword", { 
                 required: "Vui lòng xác nhận lại mật khẩu.",
@@ -124,7 +185,7 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
             />
             <button
               type="button"
-              className="hto-password-toggle"
+              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
@@ -141,36 +202,19 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
               )}
             </button>
           </div>
-          {errors.confirmPassword && <div className="field-error">{errors.confirmPassword.message}</div>}
-        </div>
-
-        <div className="mb-3">
-          <div className="form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id="terms"
-              {...register("terms", { required: "Bạn phải đồng ý với điều khoản." })}
-            />
-            <label className="form-check-label" htmlFor="terms" style={{ fontSize: '12px' }}>
-              Tôi đồng ý với <a href="#" style={{ color: 'var(--hto-primary)', fontWeight: '600' }}>Điều khoản & Điều kiện</a>
-            </label>
-          </div>
-          {errors.terms && <div className="field-error">{errors.terms.message}</div>}
+          {errors.confirmPassword && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.confirmPassword.message}</div>}
         </div>
 
 
-        <button type="submit" className="btn-login" disabled={loading}>
-          {loading ? (
-            <>
-              <div className="spinner"></div>
-              Đang cập nhật...
-            </>
-          ) : (
-            "Cập nhật mật khẩu"
-          )}
+
+        <button type="submit" className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] border-0 bg-[#111827] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-70 app-dark:bg-[#4f46e5] app-dark:hover:bg-[#4338ca]" disabled={loading || !resetToken}>
+          {loading ? <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[rgba(255,255,255,0.3)] border-t-white"></div> : "Cập nhật mật khẩu"}
         </button>
       </form>
+      
+      <div className="mt-4 text-left text-[13px] text-[#6b7280]">
+        <a href="#" className="font-semibold text-[#4f46e5] no-underline hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToLogin(); }}>Quay lại Đăng nhập</a>
+      </div>
     </>
   );
 };
