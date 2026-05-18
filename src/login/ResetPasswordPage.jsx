@@ -47,7 +47,6 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
         body: JSON.stringify({
           token: resetToken,
           password: data.password,
-          confirmPassword: data.confirmPassword,
         }),
       });
 
@@ -60,7 +59,7 @@ export const NewPasswordPage = ({ onSwitchToLogin }) => {
         );
       }
 
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState({}, "", "/");
       setIsSuccess(true);
     } catch (err) {
       setApiError(

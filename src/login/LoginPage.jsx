@@ -164,8 +164,6 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         </button>
       </form>
 
-      <div className="my-4 flex items-center text-center text-[11px] text-[#9ca3af] before:mr-2 before:flex-1 before:border-b before:border-[#e5e7eb] after:ml-2 after:flex-1 after:border-b after:border-[#e5e7eb] app-dark:before:border-[#374151] app-dark:after:border-[#374151]">Hoặc</div>
-
       <div className="text-center text-[13px] text-[#6b7280]">
         Chưa có tài khoản? <a href="#" className="ml-1 font-semibold text-[#4f46e5] no-underline hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Đăng ký ngay</a>
       </div>

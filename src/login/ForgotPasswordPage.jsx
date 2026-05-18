@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
-export const ForgotPasswordPage = ({ onSwitchToLogin, onSwitchToNewPassword }) => {
+export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -69,7 +69,7 @@ export const ForgotPasswordPage = ({ onSwitchToLogin, onSwitchToNewPassword }) =
         </div>
         <h1 className="mb-1.5 justify-center text-[22px] font-bold text-[#111827] app-dark:text-white">Kiểm tra email!</h1>
         <p className="mb-5 justify-center text-[13px] leading-[1.45] text-[#6b7280]">
-          Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn.
+          Kiểm tra hộp thư của bạn để mở liên kết đặt lại mật khẩu và tạo mật khẩu mới.
         </p>
         <div className="mt-4 text-left text-[13px] text-[#6b7280]">
           <a href="#" className="font-semibold text-[#4f46e5] no-underline hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToLogin(); }}>Quay lại Đăng nhập</a>
