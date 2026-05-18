@@ -18,6 +18,30 @@ function normalizeRole(roleId) {
   return ROLE_ID_MAP[roleId] || "user";
 }
 
+function getLoginErrorMessage(response, status) {
+  const detailMessages = response?.error?.details;
+
+  if (Array.isArray(detailMessages) && detailMessages.length > 0) {
+    return detailMessages[0];
+  }
+
+  const message = response?.message;
+
+  if (typeof message === "string" && message.trim() && message !== "Bad Request") {
+    return message;
+  }
+
+  if (status === 400) {
+    return "Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra lại email và mật khẩu.";
+  }
+
+  if (status === 401) {
+    return "Email hoặc mật khẩu không chính xác.";
+  }
+
+  return "Đăng nhập thất bại";
+}
+
 export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,11 +78,11 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         }),
       });
 
-      const response = await res.json();
+      const response = await res.json().catch(() => null);
       const responseData = response?.data;
 
       if (!res.ok) {
-        throw new Error(response?.message || "Đăng nhập thất bại");
+        throw new Error(getLoginErrorMessage(response, res.status));
       }
 
       if (!responseData?.access_token || !responseData?.user) {
