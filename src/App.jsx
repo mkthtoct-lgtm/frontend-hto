@@ -31,8 +31,10 @@ const getAuthModeFromLocation = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const hasResetToken =
     searchParams.has("token") || searchParams.has("resetToken");
-  const isResetPasswordPath =
-    window.location.pathname.replace(/\/+$/, "") === "/reset-password";
+  const normalizedPathname = `/${window.location.pathname
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/\/{2,}/g, "/")}`;
+  const isResetPasswordPath = normalizedPathname === "/reset-password";
 
   return hasResetToken && isResetPasswordPath ? "reset-password" : "login";
 };

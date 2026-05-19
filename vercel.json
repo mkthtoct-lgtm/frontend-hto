@@ -1,13 +1,12 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/v1/(.*)",
-      "dest": "http://qlnb-api.hto.edu.vn/api/v1/$1"
+      "source": "/api/v1/:path*",
+      "destination": "http://qlnb-api.hto.edu.vn/api/v1/:path*"
     },
-    { "handle": "filesystem" },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
