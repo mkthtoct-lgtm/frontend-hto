@@ -215,6 +215,7 @@ function App() {
   return (
     <div className="page-layout bg-body-tertiary d-flex flex-column min-vh-100">
       <Header 
+        user={user}
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 
         onLogout={handleLogout}

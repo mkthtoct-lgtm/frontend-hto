@@ -5,6 +5,9 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
+const PASSWORD_PATTERN =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
 export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -119,7 +122,18 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               className={inputClass}
               placeholder="Ít nhất 8 ký tự"
               disabled={loading}
-              {...register("password", { required: "Nhập mật khẩu." })}
+              {...register("password", {
+                required: "Vui lòng nhập mật khẩu.",
+                minLength: {
+                  value: 8,
+                  message: "Mật khẩu phải có ít nhất 8 ký tự.",
+                },
+                pattern: {
+                  value: PASSWORD_PATTERN,
+                  message:
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
+                },
+              })}
             />
             <button
               type="button"
@@ -146,8 +160,8 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               placeholder="Ít nhất 8 ký tự"
               disabled={loading}
               {...register("confirmPassword", {
-                required: "Xác nhận mật khẩu.",
-                validate: v => v === password || "Không khớp."
+                required: "Vui lòng nhập lại mật khẩu.",
+                validate: (v) => v === password || "Mật khẩu xác nhận không khớp.",
               })}
             />
             <button

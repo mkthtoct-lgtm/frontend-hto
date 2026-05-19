@@ -5,6 +5,9 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
+const PASSWORD_PATTERN =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
 const getResetToken = () => {
   const searchParams = new URLSearchParams(window.location.search);
 
@@ -139,12 +142,15 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
               disabled={loading}
               {...register("password", {
                 required: "Vui lòng nhập mật khẩu mới.",
-                minLength: { value: 8, message: "Mật khẩu phải có ít nhất 8 ký tự." },
-                validate: {
-                  hasUpper: v => /[A-Z]/.test(v) || "Phải có ít nhất 1 chữ hoa.",
-                  hasLower: v => /[a-z]/.test(v) || "Phải có ít nhất 1 chữ thường.",
-                  hasSpecial: v => /[!@#$%^&*(),.?":{}|<>]/.test(v) || "Phải có ít nhất 1 ký tự đặc biệt."
-                }
+                minLength: {
+                  value: 8,
+                  message: "Mật khẩu phải có ít nhất 8 ký tự.",
+                },
+                pattern: {
+                  value: PASSWORD_PATTERN,
+                  message:
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
+                },
               })}
             />
             <button

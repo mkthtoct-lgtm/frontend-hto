@@ -1,4 +1,18 @@
-export const Header = ({ onToggleSidebar, onToggleTheme, onLogout }) => {
+const ROLE_LABELS = {
+  admin: "Admin",
+  bangiamdoc: "Ban giam doc",
+  truongbophan: "Truong bo phan",
+  nhansu: "Nhan su",
+  daily: "Dai ly",
+  congtacvien: "Cong tac vien",
+  user: "Nguoi dung",
+};
+
+export const Header = ({ user, onToggleSidebar, onToggleTheme, onLogout }) => {
+  const displayName = user?.fullName || user?.name || "Nguoi dung";
+  const displayEmail = user?.email || "";
+  const displayRole = ROLE_LABELS[user?.role] || "Tai khoan";
+
   return (
     <header className="app-header">
       <div className="app-header-inner">
@@ -220,10 +234,10 @@ export const Header = ({ onToggleSidebar, onToggleTheme, onLogout }) => {
                 aria-expanded="true"
               >
                 <div className="text-end me-2 d-none d-lg-inline-block">
-                  <div className="fw-bold text-dark">Robert Brown</div>
+                  <div className="fw-bold text-dark">{displayName}</div>
                   <small className="text-body d-block lh-sm">
                     <i className="fi fi-rr-angle-down text-3xs me-1"></i>{" "}
-                    Manager
+                    {displayRole}
                   </small>
                 </div>
                 <div className="avatar avatar-sm rounded-circle avatar-status-success">
@@ -236,10 +250,8 @@ export const Header = ({ onToggleSidebar, onToggleTheme, onLogout }) => {
                     <img src="/assets/images/avatar/avatar1.webp" alt="" />
                   </div>
                   <div className="ms-2">
-                    <div className="fw-bold text-dark">John Carter </div>
-                    <small className="text-body d-block lh-sm">
-                      john@gamil.com
-                    </small>
+                    <div className="fw-bold text-dark">{displayName}</div>
+                    <small className="text-body d-block lh-sm">{displayEmail}</small>
                   </div>
                 </li>
                 <li>

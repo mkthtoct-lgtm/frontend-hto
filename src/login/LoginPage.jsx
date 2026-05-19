@@ -15,6 +15,9 @@ const ROLE_ID_MAP = {
   "69fc5af782ef854511207730": "user",
 };
 
+const PASSWORD_PATTERN =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
 function normalizeRole(roleId) {
   return ROLE_ID_MAP[roleId] || "user";
 }
@@ -156,7 +159,18 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
               className={`${inputClass} ${errors.password || apiError ? invalidInputClass : ""}`}
               placeholder="Ít nhất 8 ký tự"
               disabled={loading}
-              {...register("password", { required: "Vui lòng nhập mật khẩu." })}
+              {...register("password", {
+                required: "Vui lòng nhập mật khẩu.",
+                minLength: {
+                  value: 8,
+                  message: "Mật khẩu phải có ít nhất 8 ký tự.",
+                },
+                pattern: {
+                  value: PASSWORD_PATTERN,
+                  message:
+                    "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
+                },
+              })}
             />
             <button
               type="button"
