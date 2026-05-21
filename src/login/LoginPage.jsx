@@ -5,6 +5,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const ROLE_ID_MAP = {
   "69fc5af582ef85451120772a": "admin",
   "69fc5af582ef85451120772b": "bangiamdoc",
@@ -59,7 +61,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
     handleSubmit,
     formState: { errors },
   } = useForm({
-    mode: "onTouched",
+    mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       email: "",
@@ -128,19 +130,19 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
       <h2 className="mb-1.5 text-center text-[15px] font-bold text-[#111827] app-dark:text-white">Đăng nhập</h2>
       <p className="mb-3 text-center text-[13px] leading-[1.45] text-[#6b7280]">Hôm nay là một ngày mới. Hãy đăng nhập để bắt đầu.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
           <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="email">Email</label>
           <input
             type="email"
             id="email"
             className={`${inputClass} ${errors.email || apiError ? invalidInputClass : ""}`}
-            placeholder="Example@email.com"
+            placeholder="Example@gmail.com"
             disabled={loading}
             {...register("email", {
               required: "Vui lòng nhập email.",
               pattern: {
-                value: /\S+@\S+\.\S+/,
+                value: EMAIL_PATTERN,
                 message: "Định dạng email không hợp lệ.",
               },
             })}

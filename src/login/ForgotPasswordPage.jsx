@@ -5,6 +5,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -17,7 +19,8 @@ export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    mode: "onTouched",
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       email: "",
     },
@@ -87,7 +90,7 @@ export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
       <h1 className="mb-1.5 text-center text-[22px] font-bold text-[#111827] app-dark:text-white">Quên mật khẩu?</h1>
       <p className="mb-5 text-center text-[13px] leading-[1.45] text-[#6b7280]">Nhập email của bạn để nhận liên kết đặt lại mật khẩu.</p>
 
-      {apiError && (
+      {apiError && !errors.email && (
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-[13px] text-[#be123c] app-dark:border-[#7f1d1d] app-dark:bg-[#2a1215] app-dark:text-[#fecdd3]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -98,7 +101,7 @@ export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
           <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="email">Email</label>
           <input
@@ -110,7 +113,7 @@ export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
             {...register("email", {
               required: "Vui lòng nhập email.",
               pattern: {
-                value: /\S+@\S+\.\S+/,
+                value: EMAIL_PATTERN,
                 message: "Định dạng email không hợp lệ."
               }
             })}
