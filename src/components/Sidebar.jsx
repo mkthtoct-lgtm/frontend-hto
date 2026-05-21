@@ -313,26 +313,52 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           </li>
 
           {isAdmin(currentUser) && (
-            <li className="menu-item mb-2">
-              <a
-                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "departments" ? "text-primary fw-bold" : "text-body-secondary"}`}
-                href="#"
-                style={{ textDecoration: "none" }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate?.("departments");
-                }}
-              >
-                <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <path d="M8 13h8"></path>
-                    <path d="M8 16h5"></path>
-                  </svg>
-                </div>
-                <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Phòng ban</span>
-              </a>
-            </li>
+            <>
+              <li className="menu-item mb-2">
+                <a
+                  className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "departments" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                  href="#"
+                  style={{ textDecoration: "none" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("departments");
+                  }}
+                >
+                  <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <path d="M8 13h8"></path>
+                      <path d="M8 16h5"></path>
+                    </svg>
+                  </div>
+                  <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Phòng ban</span>
+                </a>
+              </li>
+
+              <li className="menu-item mb-2">
+                <a
+                  className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "auditLogs" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                  href="#"
+                  style={{ textDecoration: "none" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("auditLogs");
+                  }}
+                >
+                  <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 6h13"></path>
+                      <path d="M8 12h13"></path>
+                      <path d="M8 18h13"></path>
+                      <path d="M3 6h.01"></path>
+                      <path d="M3 12h.01"></path>
+                      <path d="M3 18h.01"></path>
+                    </svg>
+                  </div>
+                  <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Lịch sử thao tác</span>
+                </a>
+              </li>
+            </>
           )}
 
           {/* ========================================================================= */}

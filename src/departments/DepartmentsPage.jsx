@@ -10,7 +10,6 @@ import {
   removeUserFromDepartment,
   updateDepartment,
 } from "./departmentMockData.jsx";
-import "./DepartmentsPage.css";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 
@@ -252,7 +251,7 @@ export const DepartmentsPage = ({ currentUser }) => {
   }
 
   return (
-    <div className="departments-page container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
+    <div className="mx-auto w-full max-w-[1600px] px-3 pb-4 pt-3">
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý phòng ban</h4>
@@ -266,12 +265,12 @@ export const DepartmentsPage = ({ currentUser }) => {
         </button>
       </div>
 
-      <div className="departments-toolbar">
-        <div className="departments-search">
+      <div className="mb-4 grid grid-cols-1 items-center gap-3 md:grid-cols-[minmax(220px,1fr)_auto]">
+        <div className="relative">
           <SearchIcon />
           <input
             type="text"
-            className="form-control bg-body"
+            className="form-control bg-body pl-9"
             placeholder="Tìm theo tên hoặc mô tả phòng ban..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -289,8 +288,8 @@ export const DepartmentsPage = ({ currentUser }) => {
         </div>
       )}
 
-      <div className="departments-grid">
-        <section className="card department-list-card">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách phòng ban</span>
             <span className="badge text-bg-light">{filteredDepartments.length} phòng ban</span>
@@ -302,7 +301,7 @@ export const DepartmentsPage = ({ currentUser }) => {
             <EmptyState label="Chưa có phòng ban phù hợp." />
           ) : (
             <>
-              <div className="table-responsive department-table-wrap">
+              <div className="table-responsive hidden md:block">
                 <table className="table custom-table mb-0">
                   <thead>
                     <tr>
@@ -316,18 +315,18 @@ export const DepartmentsPage = ({ currentUser }) => {
                     {filteredDepartments.map((department) => (
                       <tr
                         key={department.id}
-                        className={`department-row ${selectedDepartmentId === department.id ? "active" : ""}`}
+                        className={`cursor-pointer ${selectedDepartmentId === department.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
                         onClick={() => setSelectedDepartmentId(department.id)}
                       >
-                        <td className="department-name-cell">
+                        <td className="min-w-[220px]">
                           <span className="fw-bold text-body-emphasis">{department.name}</span>
                         </td>
                         <td className="text-body-secondary">{department.description || "—"}</td>
                         <td className="text-center">{department.memberCount || 0}</td>
                         <td onClick={(event) => event.stopPropagation()}>
-                          <div className="department-actions">
+                          <div className="flex min-w-[76px] items-center justify-center gap-2 whitespace-nowrap">
                             <button
-                              className="action-btn btn-edit"
+                              className="action-btn btn-edit h-8 w-8 flex-none"
                               title="Chỉnh sửa phòng ban"
                               onClick={() => openEditModal(department)}
                               disabled={actionLoading}
@@ -335,7 +334,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                               <EditIcon />
                             </button>
                             <button
-                              className="action-btn btn-lock"
+                              className="action-btn btn-lock h-8 w-8 flex-none"
                               title="Xóa phòng ban"
                               onClick={() => handleDeleteDepartment(department)}
                               disabled={actionLoading}
@@ -350,12 +349,12 @@ export const DepartmentsPage = ({ currentUser }) => {
                 </table>
               </div>
 
-              <div className="department-mobile-list">
+              <div className="block md:hidden">
                 {filteredDepartments.map((department) => (
                   <button
                     type="button"
                     key={department.id}
-                    className={`department-mobile-item w-100 text-start bg-transparent border-0 ${selectedDepartmentId === department.id ? "active" : ""}`}
+                    className={`w-100 border-0 border-b border-[var(--bs-border-color-translucent)] bg-transparent p-3 text-start ${selectedDepartmentId === department.id ? "bg-[var(--bs-primary-bg-subtle)]" : ""}`}
                     onClick={() => setSelectedDepartmentId(department.id)}
                   >
                     <div className="d-flex justify-content-between gap-2">
@@ -380,7 +379,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           )}
         </section>
 
-        <section className="card department-members-card">
+        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom">
             <div className="d-flex justify-content-between align-items-start gap-2">
               <div>
@@ -432,11 +431,11 @@ export const DepartmentsPage = ({ currentUser }) => {
             ) : members.length === 0 ? (
               <EmptyState label="Phòng ban này chưa có nhân sự." />
             ) : (
-              <div className="member-list">
+              <div className="flex flex-col gap-2.5">
                 {members.map((member) => (
-                  <div className="member-item" key={member.id}>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--bs-border-color-translucent)] p-2.5 max-md:items-start" key={member.id}>
                     <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
-                      <span className="member-avatar">{getInitials(member.fullName)}</span>
+                      <span className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--bs-primary-bg-subtle)] font-bold text-[var(--bs-primary)]">{getInitials(member.fullName)}</span>
                       <div style={{ minWidth: 0 }}>
                         <div className="fw-bold text-body-emphasis text-truncate">{member.fullName}</div>
                         <div className="text-body-secondary text-truncate" style={{ fontSize: "12px" }}>
@@ -460,16 +459,16 @@ export const DepartmentsPage = ({ currentUser }) => {
       </div>
 
       {modalMode && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-content department-modal-content">
-            <div className="custom-modal-header">
-              <h5>{modalMode === "create" ? "Thêm phòng ban" : "Cập nhật phòng ban"}</h5>
-              <button className="btn-close-modal" onClick={closeModal} type="button">
+        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
+          <div className="flex max-h-[90vh] w-full max-w-[560px] flex-col rounded-xl bg-[var(--bs-body-bg)] shadow-xl">
+            <div className="flex items-center justify-between border-b border-[var(--bs-border-color-translucent)] p-5">
+              <h5 className="m-0 font-bold text-[var(--bs-emphasis-color)]">{modalMode === "create" ? "Thêm phòng ban" : "Cập nhật phòng ban"}</h5>
+              <button className="border-0 bg-transparent p-1 text-[var(--bs-secondary-color)] hover:text-[var(--bs-emphasis-color)]" onClick={closeModal} type="button">
                 <CloseIcon />
               </button>
             </div>
             <form noValidate onSubmit={handleSubmit(submitDepartment)}>
-              <div className="custom-modal-body">
+              <div className="overflow-y-auto p-5">
                 <div className="mb-3">
                   <label className="form-label fw-semibold">
                     Tên phòng ban <span className="text-danger">*</span>
@@ -518,7 +517,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                 </div>
               </div>
 
-              <div className="custom-modal-footer">
+              <div className="flex justify-end gap-2.5 border-t border-[var(--bs-border-color-translucent)] px-5 py-4">
                 <button type="button" className="btn btn-light border" onClick={closeModal} disabled={actionLoading}>
                   Hủy
                 </button>
@@ -537,7 +536,7 @@ export const DepartmentsPage = ({ currentUser }) => {
 
 function LoadingState({ label }) {
   return (
-    <div className="department-empty">
+    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
       <div className="spinner-border text-primary mb-2" role="status">
         <span className="visually-hidden">Loading...</span>
       </div>
@@ -548,7 +547,7 @@ function LoadingState({ label }) {
 
 function EmptyState({ label }) {
   return (
-    <div className="department-empty">
+    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
       <FolderIcon />
       <div className="mt-2">{label}</div>
     </div>
@@ -576,7 +575,7 @@ function PlusIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--bs-secondary-color)]" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="11" cy="11" r="8"></circle>
       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
     </svg>
