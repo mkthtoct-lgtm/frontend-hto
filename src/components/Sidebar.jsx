@@ -1,6 +1,10 @@
 import { useState } from "react";
 
-export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
+const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
+
+const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
+
+export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar }) => {
   // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
   const [openMenu, setOpenMenu] = useState("sanpham");
 
@@ -307,6 +311,29 @@ export const Sidebar = ({ onNavigate, currentPage, onToggleSidebar }) => {
               <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Quản lý tài khoản</span>
             </a>
           </li>
+
+          {isAdmin(currentUser) && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "departments" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                href="#"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("departments");
+                }}
+              >
+                <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <path d="M8 13h8"></path>
+                    <path d="M8 16h5"></path>
+                  </svg>
+                </div>
+                <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Phòng ban</span>
+              </a>
+            </li>
+          )}
 
           {/* ========================================================================= */}
           {/* TOÀN BỘ CÁC ĐOẠN COMMENT CŨ GIỮ NGUYÊN BÊN DƯỚI (ĐÃ FIX LỖI /) */}

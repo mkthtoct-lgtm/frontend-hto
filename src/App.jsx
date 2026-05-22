@@ -9,6 +9,7 @@ import { ForgotPasswordPage } from "./login/ForgotPasswordPage";
 import { ResetPasswordPage } from "./login/ResetPasswordPage";
 import { AuthLayout } from "./login/AuthLayout";
 import { UserList } from "./UserList/UserList";
+import { DepartmentsPage } from "./departments/DepartmentsPage";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -222,12 +223,19 @@ function App() {
         onToggleTheme={handleToggleTheme} 
         onLogout={handleLogout}
       />
-      <Sidebar onNavigate={setCurrentPage} currentPage={currentPage} onToggleSidebar={handleToggleSidebar} />
+      <Sidebar
+        currentUser={user}
+        onNavigate={setCurrentPage}
+        currentPage={currentPage}
+        onToggleSidebar={handleToggleSidebar}
+      />
 
       <main className="app-wrapper">
         {currentPage === "users" ? (
         // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
         <UserList currentUser={user} />
+        ) : currentPage === "departments" ? (
+          <DepartmentsPage currentUser={user} />
         ) : currentPage === "documents" ? (
           <DocumentsPage />
         ) : (
