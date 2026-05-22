@@ -4,8 +4,11 @@ import { useForm } from "react-hook-form";
 import "./UserList.css";
 
 // =========================================================================
-// --- KHU VỰC CẤU HÌNH DATA TĨNH VÀ MOCK DATA CHUNG ---
+// --- KHU VỰC 1: CẤU HÌNH ĐƯỜNG DẪN API VÀ KHỞI TẠO ĐỐI TƯỢNG MẪU ---
 // =========================================================================
+
+// CHÚ Ý: Thay đổi cổng 3000 thành cổng Backend của bạn đang chạy
+const API_BASE_URL = "http://localhost:3000/api/v1";
 
 const ROLE_MAP = {
   admin: { label: "Admin", color: "bg-danger", link: "/role-links/admin" },
@@ -58,41 +61,12 @@ const PERMISSION_MODULES = [
   }
 ];
 
-const INITIAL_MOCK_USERS = [
-  { id: 1, name: "Nguyễn Văn Admin", email: "admin@hto.vn", role: "admin", department: "Ban Giám Đốc", status: "active" },
-  { id: 2, name: "Trần Thị B", email: "tranb@hto.vn", role: "nhansu", department: "Tuyển Sinh", status: "active" },
-  { id: 3, name: "Lê Văn C", email: "lec@hto.vn", role: "daily", department: "Hồ Sơ", status: "locked" },
-  { id: 4, name: "Phạm D", email: "phamd@hto.vn", role: "congtacvien", department: "Kế Toán", status: "active" },
-  { id: 5, name: "Hoàng Thị E", email: "hoange@hto.vn", role: "truongbophan", department: "Marketing", status: "active" },
-];
-
-const INITIAL_MOCK_ROLES = [
-  { 
-    id: 1, key: "admin", name: "Admin", description: "Quản trị viên cấp cao nhất hệ thống, kiểm soát toàn quyền thao tác.", 
-    permissions: ["view_dashboard", "export_report", "view_users", "create_users", "edit_users", "lock_users", "view_roles", "create_roles", "edit_roles", "delete_roles", "view_products", "create_products", "edit_products", "delete_products"],
-    userCount: 1 
-  },
-  { 
-    id: 2, key: "bangiamdoc", name: "Ban giám đốc", description: "Theo dõi dữ liệu báo cáo tổng hợp và xét duyệt hồ sơ.", 
-    permissions: ["view_dashboard", "export_report", "view_users", "view_products"],
-    userCount: 1 
-  },
-  { 
-    id: 3, key: "nhansu", name: "Nhân sự", description: "Quản lý nhân viên, phòng ban và tài khoản nội bộ.", 
-    permissions: ["view_dashboard", "view_users", "create_users", "edit_users", "lock_users"],
-    userCount: 1 
-  },
-];
-
-
 // =========================================================================
-// --- START: COMPONENT NỘI BỘ (DICTIONARY MODAL) ---
-// Chức năng: Modal hiển thị tra cứu Ma trận phân quyền của tất cả Role
+// --- KHU VỰC 2: TỪ ĐIỂN TRA CỨU MA TRẬN PHÂN QUYỀN (DICTIONARY MODAL) ---
 // =========================================================================
 const PermissionDictionaryModal = ({ isOpen, onClose, roles }) => {
   if (!isOpen) return null;
 
-  // Hàm hỗ trợ tìm tên Quyền từ ID
   const getActionName = (actionId) => {
     for (const mod of PERMISSION_MODULES) {
       const found = mod.actions.find(a => a.id === actionId);
@@ -106,17 +80,23 @@ const PermissionDictionaryModal = ({ isOpen, onClose, roles }) => {
       <div className="custom-modal-content modal-dict-wide">
         <div className="custom-modal-header bg-primary-subtle text-primary-emphasis">
           <h5 className="d-flex align-items-center gap-2">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
             Từ điển Ma Trận Phân Quyền
           </h5>
           <button className="btn-close-modal text-primary-emphasis" onClick={onClose}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
         
         <div className="custom-modal-body" style={{ maxHeight: "70vh" }}>
           <p className="text-body-secondary mb-4" style={{ fontSize: "14px" }}>
-            Bảng dưới đây liệt kê chi tiết các chức năng mà từng Nhóm vai trò được phép thao tác trong hệ thống. Nếu chức năng không có tên trong danh sách, người dùng thuộc vai trò đó sẽ bị vô hiệu hóa quyền thao tác.
+            Bảng dưới đây liệt kê chi tiết các chức năng mà từng Nhóm vai trò được phép thao tác trong hệ thống.
           </p>
 
           {roles.map((role) => {
@@ -124,17 +104,25 @@ const PermissionDictionaryModal = ({ isOpen, onClose, roles }) => {
             return (
               <div className="dict-role-card" key={role.id}>
                 <div className="dict-role-header">
-                  <span className={`badge ${roleUI.color} px-2 py-1`} style={{ fontSize: "13px" }}>{role.name}</span>
-                  <span className="text-body-secondary fw-normal" style={{ fontSize: "12px" }}>({role.permissions?.length || 0} quyền hạn)</span>
+                  <span className={`badge ${roleUI.color} px-2 py-1`} style={{ fontSize: "13px" }}>
+                    {role.name}
+                  </span>
+                  <span className="text-body-secondary fw-normal" style={{ fontSize: "12px" }}>
+                    ({role.permissions?.length || 0} quyền hạn)
+                  </span>
                 </div>
                 <div className="dict-role-body">
                   {(!role.permissions || role.permissions.length === 0) ? (
-                    <span className="text-muted fst-italic" style={{ fontSize: "13px" }}>Vai trò này chưa được gán bất kỳ quyền nào.</span>
+                    <span className="text-muted fst-italic" style={{ fontSize: "13px" }}>
+                      Vai trò này chưa được gán bất kỳ quyền nào.
+                    </span>
                   ) : (
                     <div className="d-flex flex-wrap gap-2">
                       {role.permissions.map(permId => (
                         <span key={permId} className="badge bg-body-secondary text-body-emphasis border fw-medium" style={{ fontSize: "12px" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" className="me-1"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" className="me-1">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
                           {getActionName(permId)}
                         </span>
                       ))}
@@ -149,12 +137,9 @@ const PermissionDictionaryModal = ({ isOpen, onClose, roles }) => {
     </div>
   );
 };
-// === END: DICTIONARY MODAL ===
-
 
 // =========================================================================
-// --- START: COMPONENT NỘI BỘ (ROLE LIST) ---
-// Chức năng: Hiển thị danh sách vai trò, tạo mới và cấp quyền (Permissions)
+// --- KHU VỰC 3: LOGIC & GIAO DIỆN QUẢN LÝ VAI TRÒ (ROLE LIST COMPONENT) ---
 // =========================================================================
 const RoleManagementSection = ({ roles, setRoles }) => {
   const [loading, setLoading] = useState(false);
@@ -164,12 +149,33 @@ const RoleManagementSection = ({ roles, setRoles }) => {
   const [modalMode, setModalMode] = useState("create");
   const [selectedRole, setSelectedRole] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-
   const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     mode: "onTouched"
   });
+
+  // Gọi API lấy danh sách Role khi component mount
+  useEffect(() => {
+    const fetchRoles = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/roles`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Lỗi tải dữ liệu vai trò");
+        
+        // Update dữ liệu Roles
+        setRoles(data.data ? data.data : data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRoles();
+  }, [setRoles]);
 
   const openCreateModal = () => {
     setModalMode("create");
@@ -187,9 +193,7 @@ const RoleManagementSection = ({ roles, setRoles }) => {
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  const closeModal = () => setIsModalOpen(false);
 
   const togglePermission = (permissionId) => {
     setSelectedPermissions(prev => 
@@ -216,9 +220,9 @@ const RoleManagementSection = ({ roles, setRoles }) => {
         permissions: selectedPermissions
       };
 
-      /* --- LOGIC KẾT NỐI API THẬT CHO ROLE ---
-      const url = modalMode === "create" ? "https://api.domaincuaban.com/api/roles" : `https://api.domaincuaban.com/api/roles/${selectedRole.id}`;
-      const method = modalMode === "create" ? "POST" : "PUT";
+      const url = modalMode === "create" ? `${API_BASE_URL}/roles` : `${API_BASE_URL}/roles/${selectedRole.id}`;
+      const method = modalMode === "create" ? "POST" : "PATCH";
+
       const res = await fetch(url, {
         method: method,
         headers: { 
@@ -227,19 +231,17 @@ const RoleManagementSection = ({ roles, setRoles }) => {
         },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error("Cập nhật vai trò thất bại từ API");
-      ---------------------------------------- */
+      const responseData = await res.json();
 
-      await new Promise(resolve => setTimeout(resolve, 800)); 
+      if (!res.ok) throw new Error(responseData.message || "Cập nhật vai trò thất bại");
       
-      if (modalMode === "create") {
-        // eslint-disable-next-line react-hooks/purity
-        const newRole = { ...payload, id: Date.now(), userCount: 0 };
-        setRoles(prev => [...prev, newRole]);
-      } else {
-        setRoles(prev => prev.map(item => item.id === selectedRole.id ? { ...item, ...payload } : item));
-      }
+      const updatedRecord = responseData.data ? responseData.data : responseData;
 
+      if (modalMode === "create") {
+        setRoles(prev => [...prev, updatedRecord]);
+      } else {
+        setRoles(prev => prev.map(item => item.id === selectedRole.id ? updatedRecord : item));
+      }
       closeModal();
     } catch (err) {
       alert("Lỗi hệ thống: " + err.message);
@@ -249,8 +251,7 @@ const RoleManagementSection = ({ roles, setRoles }) => {
   };
 
   const handleDeleteRole = async (role) => {
-    if (role.key === "admin") return; // Nút xóa đã bị ẩn, check thêm logic an toàn
-    
+    if (role.key === "admin") return; 
     if (role.userCount > 0) {
       alert(`Từ chối lệnh xóa: Đang có ${role.userCount} tài khoản nhân sự đang áp dụng vai trò này.`);
       return;
@@ -259,15 +260,13 @@ const RoleManagementSection = ({ roles, setRoles }) => {
 
     setActionLoading(true);
     try {
-      /* --- LOGIC KẾT NỐI API THẬT CHO ROLE ---
-      const res = await fetch(`https://api.domaincuaban.com/api/roles/${role.id}`, {
+      const res = await fetch(`${API_BASE_URL}/roles/${role.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      if (!res.ok) throw new Error("Yêu cầu xóa từ API thất bại");
-      ---------------------------------------- */
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || "Yêu cầu xóa từ API thất bại");
 
-      await new Promise(resolve => setTimeout(resolve, 600)); 
       setRoles(prev => prev.filter(item => item.id !== role.id));
     } catch (err) {
       alert("Lỗi hệ thống: " + err.message);
@@ -317,7 +316,6 @@ const RoleManagementSection = ({ roles, setRoles }) => {
               ) : (
                 roles.map((role) => {
                   const isAdmin = role.key === "admin";
-                  
                   return (
                     <tr key={role.id}>
                       <td>
@@ -327,11 +325,10 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                       <td><span className="text-body-secondary text-wrap" style={{ fontSize: "13px" }}>{role.description || "Chưa thiết lập mô tả cụ thể cho nhóm này."}</span></td>
                       <td>
                         <span className="badge bg-secondary-subtle text-body-emphasis border">
-                          {role.userCount} nhân sự
+                          {role.userCount || 0} nhân sự
                         </span>
                       </td>
                       <td className="text-center">
-                        {/* Nút sửa */}
                         {isAdmin ? (
                           <span className="wrapper-tooltip" title="Tài khoản Admin hệ thống đã bị khóa bảo vệ, không thể sửa">
                             <button className="action-btn btn-disabled me-2" disabled>
@@ -341,15 +338,14 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                         ) : (
                           <button 
                             className="action-btn btn-edit me-2" 
-                            title="Chỉnh sửa cấu hình phân quyền"
-                            onClick={() => openEditModal(role)}
+                            title="Chỉnh sửa cấu hình phân quyền" 
+                            onClick={() => openEditModal(role)} 
                             disabled={actionLoading}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                           </button>
                         )}
                         
-                        {/* Nút xóa */}
                         {isAdmin ? (
                           <span className="wrapper-tooltip" title="Tài khoản Admin hệ thống đã bị khóa bảo vệ, không thể xóa">
                             <button className="action-btn btn-disabled" disabled>
@@ -358,9 +354,9 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                           </span>
                         ) : (
                           <button 
-                            className="action-btn btn-lock"
-                            title={role.userCount > 0 ? "Không thể xóa Role đang có nhân sự sử dụng" : "Xóa nhóm vai trò khỏi hệ thống"}
-                            onClick={() => handleDeleteRole(role)}
+                            className="action-btn btn-lock" 
+                            title={role.userCount > 0 ? "Không thể xóa Role đang có nhân sự sử dụng" : "Xóa nhóm vai trò khỏi hệ thống"} 
+                            onClick={() => handleDeleteRole(role)} 
                             disabled={actionLoading || role.userCount > 0}
                           >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -392,29 +388,36 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                   <div className="col-md-6 mb-3 mb-md-0">
                     <label className="form-label" style={{ fontWeight: "600" }}>Tên nhóm hiển thị <span className="text-danger">*</span></label>
                     <input 
-                      type="text" className={`form-control ${errors.name ? 'is-invalid' : ''}`} 
-                      placeholder="Ví dụ: Trưởng phòng nghiệp vụ" disabled={actionLoading}
-                      {...register("name", { required: "Yêu cầu bắt buộc điền tên hiển thị vai trò" })}
+                      type="text" 
+                      className={`form-control ${errors.name ? 'is-invalid' : ''}`} 
+                      placeholder="Ví dụ: Trưởng phòng nghiệp vụ" 
+                      disabled={actionLoading || (modalMode === "edit" && selectedRole?.key === "admin")} 
+                      {...register("name", { required: "Yêu cầu bắt buộc điền tên hiển thị vai trò" })} 
                     />
                     {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
                   </div>
                   <div className="col-md-6">
                     <label className="form-label" style={{ fontWeight: "600" }}>Mã hệ thống định danh (Key) <span className="text-danger">*</span></label>
                     <input 
-                      type="text" className={`form-control ${errors.key ? 'is-invalid' : ''}`} 
-                      placeholder="Ví dụ: truong_phong_nghiep_vu" disabled={actionLoading || modalMode === "edit"}
+                      type="text" 
+                      className={`form-control ${errors.key ? 'is-invalid' : ''}`} 
+                      placeholder="Ví dụ: truong_phong_nghiep_vu" 
+                      disabled={actionLoading || modalMode === "edit"} 
                       {...register("key", { 
-                        required: "Mã định danh hệ thống không được để trống",
-                        pattern: { value: /^[a-z0-9_]+$/, message: "Quy ước mã viết thường liền nhau, số hoặc dấu gạch dưới" }
-                      })}
+                        required: "Mã định danh hệ thống không được để trống", 
+                        pattern: { value: /^[a-z0-9_]+$/, message: "Quy ước mã viết thường liền nhau, số hoặc dấu gạch dưới" } 
+                      })} 
                     />
                     {errors.key && <div className="invalid-feedback">{errors.key.message}</div>}
                   </div>
                   <div className="col-12 mt-3">
                     <label className="form-label" style={{ fontWeight: "600" }}>Mô tả diễn giải chi tiết</label>
                     <input 
-                      type="text" className="form-control" placeholder="Mô tả phân cấp trách nhiệm của vai trò..." disabled={actionLoading}
-                      {...register("description")}
+                      type="text" 
+                      className="form-control" 
+                      placeholder="Mô tả phân cấp trách nhiệm của vai trò..." 
+                      disabled={actionLoading} 
+                      {...register("description")} 
                     />
                   </div>
                 </div>
@@ -437,10 +440,10 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                           <label className="permission-checkbox fw-bold text-primary">
                             <input 
                               type="checkbox" 
-                              checked={isAllChecked}
-                              ref={input => { if (input) input.indeterminate = isSomeChecked; }}
-                              onChange={(e) => toggleModuleAll(module, e.target.checked)}
-                              disabled={actionLoading}
+                              checked={isAllChecked} 
+                              ref={input => { if (input) input.indeterminate = isSomeChecked; }} 
+                              onChange={(e) => toggleModuleAll(module, e.target.checked)} 
+                              disabled={actionLoading || (modalMode === "edit" && selectedRole?.key === "admin")} 
                             />
                             Bật tất cả
                           </label>
@@ -449,10 +452,10 @@ const RoleManagementSection = ({ roles, setRoles }) => {
                           {module.actions.map(action => (
                             <label key={action.id} className="permission-checkbox">
                               <input 
-                                type="checkbox"
-                                checked={selectedPermissions.includes(action.id)}
-                                onChange={() => togglePermission(action.id)}
-                                disabled={actionLoading}
+                                type="checkbox" 
+                                checked={selectedPermissions.includes(action.id)} 
+                                onChange={() => togglePermission(action.id)} 
+                                disabled={actionLoading || (modalMode === "edit" && selectedRole?.key === "admin")} 
                               />
                               {action.name}
                             </label>
@@ -466,7 +469,7 @@ const RoleManagementSection = ({ roles, setRoles }) => {
 
               <div className="custom-modal-footer mt-auto">
                 <button type="button" className="btn btn-light border" onClick={closeModal} disabled={actionLoading}>Đóng lại</button>
-                <button type="submit" className="btn btn-primary d-flex align-items-center gap-2" disabled={actionLoading}>
+                <button type="submit" className="btn btn-primary d-flex align-items-center gap-2" disabled={actionLoading || (modalMode === "edit" && selectedRole?.key === "admin")}>
                   {actionLoading && <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>}
                   {modalMode === "create" ? "Khởi tạo ngay" : "Cập nhật phân quyền"}
                 </button>
@@ -478,19 +481,16 @@ const RoleManagementSection = ({ roles, setRoles }) => {
     </div>
   );
 };
-// === END: COMPONENT NỘI BỘ (ROLE LIST) ===
-
 
 // =========================================================================
-// --- START: MAIN COMPONENT (USER LIST & TAB CONTROLLER) ---
-// Chức năng: Component xuất khẩu chính, quản lý Tabs và danh sách Người dùng
+// --- KHU VỰC 4: LOGIC & GIAO DIỆN QUẢN LÝ TÀI KHOẢN (USER LIST COMPONENT) ---
 // =========================================================================
 export const UserList = ({ currentUser }) => {
   const [activeTab, setActiveTab] = useState("users");
-  const [isDictOpen, setIsDictOpen] = useState(false); // State bật tắt từ điển phân quyền
+  const [isDictOpen, setIsDictOpen] = useState(false);
 
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState(INITIAL_MOCK_ROLES);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -515,44 +515,49 @@ export const UserList = ({ currentUser }) => {
   const currentUserRoleData = roles.find(r => r.key === currentUser?.role);
   const userPermissions = currentUserRoleData?.permissions || [];
   
-  // Xác định quyền Thêm/Sửa/Khóa (Admin luôn được phép hoặc check trong mảng permissions)
   const isAdmin = currentUser?.role === "admin";
   const canCreateUser = isAdmin || userPermissions.includes("create_users");
   const canEditUser = isAdmin || userPermissions.includes("edit_users");
   const canLockUser = isAdmin || userPermissions.includes("lock_users");
 
-  // Kiểm soát quyền truy cập trang tổng thể
-  if (!["admin", "bangiamdoc", "nhansu"].includes(currentUser?.role)) {
-    return (
-      <div className="container-fluid pt-5 text-center">
-        <h2 className="text-danger">Từ chối quyền truy cập</h2>
-        <p className="text-body-secondary">Tài khoản hiện tại của bạn không nằm trong phân cấp quản lý nhân sự.</p>
-      </div>
-    );
-  }
-
-  // Fetch danh sách Users
+  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM GET DANH SÁCH USER THẬT CỦA BE
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      /* --- LOGIC KẾT NỐI API THẬT CHO USER ---
-      const res = await fetch("https://api.domaincuaban.com/api/users", {
+      const res = await fetch(`${API_BASE_URL}/users`, {
+        method: "GET",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Không thể đồng bộ dữ liệu tài khoản");
-      setUsers(data);
-      ----------------------------------------- */
-
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setUsers(INITIAL_MOCK_USERS);
+      const responseData = await res.json();
+      
+      if (!res.ok) throw new Error(responseData.message || "Không thể đồng bộ dữ liệu tài khoản");
+      setUsers(responseData.data ? responseData.data : responseData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Xảy ra lỗi đồng bộ hệ thống");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM GET ROLE CỦA BE ĐỂ RENDER TOOLTIP
+  const fetchRolesData = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/roles`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRoles(data.data ? data.data : data);
+      }
+    } catch (err) {
+      console.log("Không thể fetch roles để render quyền");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRolesData();
+  }, [fetchRolesData]);
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -596,6 +601,7 @@ export const UserList = ({ currentUser }) => {
     reset(); 
   };
 
+  // ĐẤU NỐI HOÀN TOÀN VÀO LUỒNG TẠO MỚI (POST) VÀ CẬP NHẬT THÔNG TIN (PATCH) CỦA BE
   const onSubmitUser = async (data) => {
     setActionLoading(true);
     try {
@@ -607,9 +613,9 @@ export const UserList = ({ currentUser }) => {
         department: finalDepartment
       };
 
-      /* --- LOGIC KẾT NỐI API THẬT CHO USER ---
-      const url = modalMode === "create" ? "https://api.domaincuaban.com/api/users" : `https://api.domaincuaban.com/api/users/${selectedUser.id}`;
-      const method = modalMode === "create" ? "POST" : "PUT";
+      const url = modalMode === "create" ? `${API_BASE_URL}/users` : `${API_BASE_URL}/users/${selectedUser.id}`;
+      const method = modalMode === "create" ? "POST" : "PATCH"; 
+
       const res = await fetch(url, {
         method: method,
         headers: { 
@@ -618,29 +624,26 @@ export const UserList = ({ currentUser }) => {
         },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error("Thao tác cập nhật tài khoản trên API thất bại");
-      ----------------------------------------- */
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || "Thao tác cập nhật tài khoản trên API thất bại");
+      const savedUserRecord = responseData.data ? responseData.data : responseData;
       
       if (modalMode === "create") {
-        // eslint-disable-next-line react-hooks/purity
-        const newUser = { ...payload, id: Date.now(), status: "active" };
-        setUsers(prev => [newUser, ...prev]);
-        setRoles(prev => prev.map(r => r.key === payload.role ? { ...r, userCount: r.userCount + 1 } : r));
+        setUsers(prev => [savedUserRecord, ...prev]);
+        setRoles(prev => prev.map(r => r.key === payload.role ? { ...r, userCount: (r.userCount || 0) + 1 } : r));
       } else {
         const oldRole = selectedUser.role;
         const newRole = payload.role;
         if (oldRole !== newRole) {
           setRoles(prev => prev.map(r => {
-            if (r.key === oldRole) return { ...r, userCount: Math.max(0, r.userCount - 1) };
-            if (r.key === newRole) return { ...r, userCount: r.userCount + 1 };
+            if (r.key === oldRole) return { ...r, userCount: Math.max(0, (r.userCount || 0) - 1) };
+            if (r.key === newRole) return { ...r, userCount: (r.userCount || 0) + 1 };
             return r;
           }));
         }
-        setUsers(prev => prev.map(item => item.id === selectedUser.id ? { ...item, ...payload } : item));
+        setUsers(prev => prev.map(item => item.id === selectedUser.id ? savedUserRecord : item));
       }
-
       closeModal();
     } catch (err) {
       alert("Lỗi: " + err.message);
@@ -649,6 +652,7 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
+  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM CẬP NHẬT TRẠNG THÁI (PATCH :ID/STATUS) CỦA BE
   const toggleUserStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === "active" ? "locked" : "active";
     const confirmMessage = currentStatus === "active" ? "Xác nhận KHÓA tài khoản này ngừng truy cập hệ thống?" : "Xác nhận MỞ KHÓA khôi phục quyền truy cập?";
@@ -657,8 +661,7 @@ export const UserList = ({ currentUser }) => {
 
     setActionLoading(true);
     try {
-      /* --- LOGIC KẾT NỐI API THẬT ---
-      const res = await fetch(`https://api.domaincuaban.com/api/users/${userId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/users/${userId}/status`, {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",
@@ -666,11 +669,31 @@ export const UserList = ({ currentUser }) => {
         },
         body: JSON.stringify({ status: newStatus })
       });
-      if (!res.ok) throw new Error("Lệnh PATCH cập nhật trạng thái thất bại");
-      ------------------------------- */
+      const responseData = await res.json();
 
-      await new Promise(resolve => setTimeout(resolve, 600));
+      if (!res.ok) throw new Error(responseData.message || "Lệnh PATCH cập nhật trạng thái thất bại");
       setUsers(prev => prev.map(item => item.id === userId ? { ...item, status: newStatus } : item));
+    } catch (err) {
+      alert("Lỗi hệ thống: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ĐẤU NỐI HOÀN TOÀN VÀO CHỨC NĂNG XÓA MỀM (DELETE) CỦA BE
+  const deleteUser = async (userId, userName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa mềm tài khoản của nhân viên "${userName}" không?`)) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const responseData = await res.json();
+
+      if (!res.ok) throw new Error(responseData.message || "Lệnh xóa mềm trên API thất bại");
+      setUsers(prev => prev.filter(item => item.id !== userId));
     } catch (err) {
       alert("Lỗi hệ thống: " + err.message);
     } finally {
@@ -689,49 +712,17 @@ export const UserList = ({ currentUser }) => {
   return (
     <div className="user-list-wrapper container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
       
-      {/* ========================================================================= */}
-      {/* BANNER THÔNG TIN ROLE CỦA NGƯỜI DÙNG HIỆN TẠI VÀ NÚT XEM TỪ ĐIỂN */}
-      {/* ========================================================================= */}
-      <div className="current-role-banner mb-4 p-3 rounded-3 d-flex justify-content-between align-items-center">
-        <div>
-          <span className="text-body-secondary me-2">Đang đăng nhập:</span> 
-          <span className="fw-bold text-body-emphasis">{currentUser?.name}</span> 
-          <span className="mx-2 text-body-secondary">|</span>
-          <span className="text-body-secondary me-2">Vai trò hiện tại:</span>
-          <span className={`badge ${ROLE_MAP[currentUser?.role]?.color || 'bg-secondary'} px-2 py-1`} style={{ fontSize: '13px' }}>
-            {ROLE_MAP[currentUser?.role]?.label || currentUser?.role}
-          </span>
-        </div>
-        <button 
-          className="btn btn-sm btn-outline-primary fw-medium d-flex align-items-center gap-2"
-          onClick={() => setIsDictOpen(true)}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          <span className="d-none d-sm-inline">Xem ma trận phân quyền</span>
-        </button>
-      </div>
-
-      {/* Tích hợp Modal Từ Điển Phân Quyền */}
-      <PermissionDictionaryModal 
-        isOpen={isDictOpen} 
-        onClose={() => setIsDictOpen(false)} 
-        roles={roles} 
-      />
-
-      {/* ========================================================================= */}
-      {/* UI GIAO DIỆN CHỌN TAB THEO PHONG CÁCH TỐI GIẢN (MINIMALIST) */}
-      {/* ========================================================================= */}
+      {/* THANH ĐIỀU HƯỚNG TAB THEO PHONG CÁCH TỐI GIẢN (LINE UNDERLINE ANIMATION) */}
       <div className="custom-tab-container">
         <button 
-          className={`custom-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+          className={`custom-tab-btn ${activeTab === 'users' ? 'active' : ''}`} 
           onClick={() => setActiveTab('users')}
         >
           Danh sách tài khoản nhân sự
         </button>
-        
         {isAdmin && (
           <button 
-            className={`custom-tab-btn ${activeTab === 'roles' ? 'active' : ''}`}
+            className={`custom-tab-btn ${activeTab === 'roles' ? 'active' : ''}`} 
             onClick={() => setActiveTab('roles')}
           >
             Cấu hình & Phân quyền vai trò
@@ -739,10 +730,27 @@ export const UserList = ({ currentUser }) => {
         )}
       </div>
 
-      {/* ========================================================================= */}
-      {/* RENDER MÀN HÌNH TƯƠNG ỨNG VỚI TAB */}
-      {/* ========================================================================= */}
-      
+      <div className="current-role-banner mb-4 p-3 rounded-3 d-flex justify-content-between align-items-center">
+        <div>
+          <span className="text-body-secondary me-2">Đang đăng nhập:</span> 
+          <span className="fw-bold text-body-emphasis">{currentUser?.name}</span> 
+          <span className="mx-2 text-body-secondary">|</span>
+          <span className="text-body-secondary me-2">Vai trò:</span>
+          <span className={`badge ${ROLE_MAP[currentUser?.role]?.color || 'bg-secondary'} px-2 py-1`} style={{ fontSize: '13px' }}>
+            {ROLE_MAP[currentUser?.role]?.label || currentUser?.role}
+          </span>
+        </div>
+        <button 
+          className="btn btn-sm btn-outline-primary fw-medium d-flex align-items-center gap-2" 
+          onClick={() => setIsDictOpen(true)}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          Ma trận phân quyền
+        </button>
+      </div>
+
+      <PermissionDictionaryModal isOpen={isDictOpen} onClose={() => setIsDictOpen(false)} roles={roles} />
+
       {activeTab === 'roles' && isAdmin ? (
         <RoleManagementSection roles={roles} setRoles={setRoles} />
       ) : (
@@ -753,9 +761,11 @@ export const UserList = ({ currentUser }) => {
               <span className="text-body-secondary" style={{ fontSize: "14px" }}>Kiểm soát trạng thái hoạt động, cấp quyền và tổ chức phòng ban nhân viên.</span>
             </div>
             
-            {/* KIỂM TRA QUYỀN THÊM TÀI KHOẢN (Hiển thị ổ khóa nếu không có quyền) */}
             {canCreateUser ? (
-              <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
+              <button 
+                className="btn btn-primary d-flex align-items-center gap-2" 
+                onClick={openCreateModal}
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -763,7 +773,7 @@ export const UserList = ({ currentUser }) => {
                 <span className="d-none d-sm-inline">Tạo tài khoản mới</span>
               </button>
             ) : (
-              <span className="wrapper-tooltip" title="Tài khoản của bạn không được cấp quyền Thêm tài khoản hệ thống">
+              <span className="wrapper-tooltip" title="Tài khoản của bạn không được cấp quyền Thêm tài khoản">
                 <button className="btn btn-secondary d-flex align-items-center gap-2 btn-disabled" disabled>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                   <span className="d-none d-sm-inline">Tạo tài khoản mới</span>
@@ -774,22 +784,19 @@ export const UserList = ({ currentUser }) => {
 
           <div className="filter-bar">
             <div className="search-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input 
                 type="text" 
                 className="form-control form-control-sm bg-body border-1" 
                 placeholder="Tìm kiếm theo họ tên hoặc hòm thư..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
               />
             </div>
             
             <select 
-              className="form-select form-select-sm bg-body filter-select"
-              value={filterRole}
+              className="form-select form-select-sm bg-body filter-select" 
+              value={filterRole} 
               onChange={(e) => setFilterRole(e.target.value)}
             >
               <option value="">Lọc theo vai trò</option>
@@ -799,8 +806,8 @@ export const UserList = ({ currentUser }) => {
             </select>
 
             <select 
-              className="form-select form-select-sm bg-body filter-select"
-              value={filterDepartment}
+              className="form-select form-select-sm bg-body filter-select" 
+              value={filterDepartment} 
               onChange={(e) => setFilterDepartment(e.target.value)}
             >
               <option value="">Lọc theo phòng ban</option>
@@ -810,11 +817,12 @@ export const UserList = ({ currentUser }) => {
             </select>
 
             {hasActiveFilters && (
-              <button className="btn btn-outline-secondary btn-sm btn-reset-filter" onClick={resetFilters} title="Khôi phục trạng thái danh sách ban đầu">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                  <polyline points="3 3 3 8 8 8"></polyline>
-                </svg>
+              <button 
+                className="btn btn-outline-secondary btn-sm btn-reset-filter" 
+                onClick={resetFilters} 
+                title="Khôi phục danh sách ban đầu"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
                 Hoàn tác bộ lọc
               </button>
             )}
@@ -843,7 +851,7 @@ export const UserList = ({ currentUser }) => {
                   ) : error ? (
                     <tr><td colSpan="6" className="text-center py-4 text-danger">{error}</td></tr>
                   ) : filteredUsers.length === 0 ? (
-                    <tr><td colSpan="6" className="text-center py-5 text-body-secondary">Hệ thống dữ liệu trống hoặc không tìm thấy kết quả phù hợp.</td></tr>
+                    <tr><td colSpan="6" className="text-center py-5 text-body-secondary">Hệ thống dữ liệu trống hoặc không tìm thấy kết quả.</td></tr>
                   ) : (
                     filteredUsers.map((user, index) => {
                       const roleData = ROLE_MAP[user.role] || { label: user.role, color: "bg-secondary", link: "#" };
@@ -860,11 +868,7 @@ export const UserList = ({ currentUser }) => {
                             <div className="d-flex align-items-center gap-2">
                               <span className={`badge ${roleData.color}`}>{roleData.label}</span>
                               <a href={roleData.link} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none" style={{ fontSize: "12px" }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
-                                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                  <polyline points="15 3 21 3 21 9"></polyline>
-                                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                                </svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                                 Xem chức năng
                               </a>
                             </div>
@@ -875,29 +879,36 @@ export const UserList = ({ currentUser }) => {
                               {user.status === 'active' ? (
                                 <><span className="spinner-grow spinner-grow-sm bg-success" style={{width: '6px', height: '6px'}}></span> Đang hoạt động</>
                               ) : (
-                                <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Đang khóa</>
+                                <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Đã khóa</>
                               )}
                             </span>
                           </td>
                           <td className="text-center">
-                            
-                            {/* KIỂM TRA QUYỀN SỬA USER TẠI MỖI DÒNG */}
                             {canEditUser ? (
-                              <button className="action-btn btn-edit me-2" title="Chỉnh sửa tài khoản" onClick={() => openEditModal(user)} disabled={actionLoading}>
+                              <button 
+                                className="action-btn btn-edit me-1" 
+                                title="Chỉnh sửa tài khoản" 
+                                onClick={() => openEditModal(user)} 
+                                disabled={actionLoading}
+                              >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                               </button>
                             ) : (
-                              <span className="wrapper-tooltip me-2" title="Tài khoản của bạn không được cấp quyền Sửa thông tin nhân sự">
+                              <span className="wrapper-tooltip me-1" title="Bạn không có quyền Sửa nhân sự">
                                 <button className="action-btn btn-disabled" disabled>
                                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                 </button>
                               </span>
                             )}
 
-                            {/* KIỂM TRA QUYỀN KHÓA/MỞ KHÓA TẠI MỖI DÒNG */}
                             {currentUser?.email !== user.email && (
                               canLockUser ? (
-                                <button className={`action-btn ${user.status === 'active' ? 'btn-lock' : 'btn-unlock'}`} title={user.status === 'active' ? 'Khóa tài khoản' : 'Kích hoạt mở khóa'} onClick={() => toggleUserStatus(user.id, user.status)} disabled={actionLoading}>
+                                <button 
+                                  className={`action-btn ${user.status === 'active' ? 'btn-lock' : 'btn-unlock'} me-1`} 
+                                  title={user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'} 
+                                  onClick={() => toggleUserStatus(user.id, user.status)} 
+                                  disabled={actionLoading}
+                                >
                                   {user.status === 'active' ? (
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                   ) : (
@@ -905,12 +916,23 @@ export const UserList = ({ currentUser }) => {
                                   )}
                                 </button>
                               ) : (
-                                <span className="wrapper-tooltip" title="Tài khoản của bạn không có quyền Khóa/Mở khóa nhân sự">
+                                <span className="wrapper-tooltip me-1" title="Bạn không có quyền Khóa nhân sự">
                                   <button className="action-btn btn-disabled" disabled>
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                   </button>
                                 </span>
                               )
+                            )}
+
+                            {currentUser?.email !== user.email && isAdmin && (
+                              <button 
+                                className="action-btn btn-delete" 
+                                title="Xóa mềm người dùng" 
+                                onClick={() => deleteUser(user.id, user.name)} 
+                                disabled={actionLoading}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -921,10 +943,11 @@ export const UserList = ({ currentUser }) => {
               </table>
             </div>
             <div className="card-footer bg-transparent border-top py-3">
-              <span className="text-body-secondary" style={{ fontSize: "13px" }}>Tổng số ghi nhận hệ thống: {filteredUsers.length} tài khoản</span>
+              <span className="text-body-secondary" style={{ fontSize: "13px" }}>Tổng số ghi nhận: {filteredUsers.length} tài khoản</span>
             </div>
           </div>
 
+          {/* Modal Tạo/Sửa User */}
           {isModalOpen && (
             <div className="custom-modal-overlay">
               <div className="custom-modal-content">
@@ -940,9 +963,11 @@ export const UserList = ({ currentUser }) => {
                     <div className="mb-3">
                       <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Họ và tên nhân sự <span className="text-danger">*</span></label>
                       <input 
-                        type="text" className={`form-control ${errors.name ? 'is-invalid' : ''}`} 
-                        placeholder="Nhập họ và tên..." disabled={actionLoading}
-                        {...register("name", { required: "Trường họ và tên bắt buộc nhập" })}
+                        type="text" 
+                        className={`form-control ${errors.name ? 'is-invalid' : ''}`} 
+                        placeholder="Nhập họ và tên..." 
+                        disabled={actionLoading} 
+                        {...register("name", { required: "Trường họ và tên bắt buộc nhập" })} 
                       />
                       {errors.name && <div className="invalid-feedback">{errors.name.message}</div>}
                     </div>
@@ -950,25 +975,24 @@ export const UserList = ({ currentUser }) => {
                     <div className="mb-3">
                       <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Hòm thư Email hệ thống <span className="text-danger">*</span></label>
                       <input 
-                        type="email" className={`form-control ${errors.email ? 'is-invalid' : ''}`} 
-                        placeholder="username@hto.vn" disabled={actionLoading || modalMode === "edit"} 
-                        {...register("email", { 
-                          required: "Hòm thư đăng nhập bắt buộc nhập",
-                          pattern: { value: /\S+@\S+\.\S+/, message: "Định dạng hòm thư không đúng quy chuẩn mã định danh" }
-                        })}
+                        type="email" 
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`} 
+                        placeholder="username@hto.vn" 
+                        disabled={actionLoading || modalMode === "edit"} 
+                        {...register("email", { required: "Hòm thư bắt buộc nhập", pattern: { value: /\S+@\S+\.\S+/, message: "Định dạng hòm thư hông đúng" } })} 
                       />
                       {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
-                      {modalMode === "edit" && <small className="text-body-secondary mt-1 d-block">Khóa nghiệp vụ: Định danh email dùng làm tài khoản gốc không được sửa.</small>}
                     </div>
 
                     <div className="row">
                       <div className="col-md-6 mb-3">
                         <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Phân cấp vai trò <span className="text-danger">*</span></label>
                         <select 
-                          className={`form-select ${errors.role ? 'is-invalid' : ''}`} disabled={actionLoading}
+                          className={`form-select ${errors.role ? 'is-invalid' : ''}`} 
+                          disabled={actionLoading} 
                           {...register("role", { required: "Bắt buộc chỉ định vai trò quyền" })}
                         >
-                          <option value="">-- Chọn vai trò hệ thống --</option>
+                          <option value="">-- Chọn vai trò --</option>
                           {Object.entries(ROLE_MAP).map(([key, data]) => (
                             <option key={key} value={key}>{data.label}</option>
                           ))}
@@ -978,7 +1002,11 @@ export const UserList = ({ currentUser }) => {
 
                       <div className="col-md-6 mb-3">
                         <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Sơ đồ tổ chức phòng ban</label>
-                        <select className="form-select mb-2" disabled={actionLoading} {...register("departmentSelect")}>
+                        <select 
+                          className="form-select mb-2" 
+                          disabled={actionLoading} 
+                          {...register("departmentSelect")}
+                        >
                           <option value="">-- Bỏ trống --</option>
                           {departments.map(dept => (
                             <option key={dept} value={dept}>{dept}</option>
@@ -988,9 +1016,12 @@ export const UserList = ({ currentUser }) => {
                         
                         {watchDepartmentSelect === "other" && (
                           <input 
-                            type="text" className={`form-control ${errors.departmentInput ? 'is-invalid' : ''}`} 
-                            placeholder="Nhập tên phòng ban mới..." autoFocus disabled={actionLoading}
-                            {...register("departmentInput", { required: watchDepartmentSelect === "other" ? "Yêu cầu gõ tên phòng ban tùy biến" : false })}
+                            type="text" 
+                            className={`form-control ${errors.departmentInput ? 'is-invalid' : ''}`} 
+                            placeholder="Nhập tên phòng ban mới..." 
+                            autoFocus 
+                            disabled={actionLoading} 
+                            {...register("departmentInput", { required: watchDepartmentSelect === "other" ? "Yêu cầu gõ tên phòng ban tùy biến" : false })} 
                           />
                         )}
                         {errors.departmentInput && <div className="invalid-feedback">{errors.departmentInput.message}</div>}
@@ -1011,9 +1042,6 @@ export const UserList = ({ currentUser }) => {
           )}
         </>
       )}
-      {/* ========================================================================= */}
-      {/* --- END: MAIN COMPONENT (USER LIST & TAB CONTROLLER) --- */}
-      {/* ========================================================================= */}
     </div>
   );
 };

@@ -5,10 +5,9 @@
 }
 
 /* ========================================================================= */
-/* --- 1. KHU VỰC CSS CHUNG, TAB NAVIGATION VÀ BANNER --- */
+/* --- CHUNG: BANNER TRẠNG THÁI VÀ ĐIỀU HƯỚNG TAB TỐI GIẢN (MINIMALIST) --- */
 /* ========================================================================= */
 
-/* Banner hiển thị Role hiện tại */
 .current-role-banner {
   background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, rgba(13, 110, 253, 0.05) 100%);
   border: 1px solid rgba(13, 110, 253, 0.15);
@@ -16,7 +15,6 @@
   transition: all 0.3s ease;
 }
 
-/* Giao diện chọn Tab tối giản (Minimalist Line) */
 .custom-tab-container {
   display: flex;
   gap: 32px;
@@ -43,7 +41,7 @@
   color: var(--bs-primary);
 }
 
-/* Hiệu ứng gạch chân chạy từ trái sang phải */
+/* Hiệu ứng gạch chân tối giản chạy động khi chuyển Tab */
 .custom-tab-btn::after {
   content: '';
   position: absolute;
@@ -63,7 +61,6 @@
   width: 100%;
 }
 
-/* Thẻ chứa bảng dữ liệu chính */
 .table-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -76,7 +73,6 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Thanh bộ lọc dữ liệu */
 .filter-bar {
   display: flex;
   gap: 15px;
@@ -120,7 +116,6 @@
   white-space: nowrap;
 }
 
-/* Tùy chỉnh cấu trúc Table */
 .custom-table {
   margin-bottom: 0;
   font-size: 14px;
@@ -146,7 +141,7 @@
 }
 
 /* ========================================================================= */
-/* --- 2. KHU VỰC CSS DÀNH CHO USER LIST --- */
+/* --- THÀNH PHẦN 1: ĐẶC TẢ GIAO DIỆN DANH SÁCH NGƯỜI DÙNG (USER LIST) --- */
 /* ========================================================================= */
 
 .status-badge {
@@ -189,10 +184,11 @@
 .btn-edit { color: #3b82f6; }
 .btn-lock { color: #ef4444; }
 .btn-unlock { color: #10b981; }
+.btn-delete { color: #dc3545; }
 
-/* Trạng thái Disable (Khóa chức năng khi không đủ quyền) */
+/* Trạng thái mờ và chặn tương tác khi tài khoản thiếu quyền hạn truy cập */
 .action-btn:disabled, .btn-disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
   color: #6c757d !important;
   background-color: transparent !important;
@@ -204,7 +200,7 @@
 }
 
 /* ========================================================================= */
-/* --- 3. KHU VỰC CSS DÀNH CHO ROLE LIST & MA TRẬN QUYỀN --- */
+/* --- THÀNH PHẦN 2: ĐẶC TẢ GIAO DIỆN DANH SÁCH VAI TRÒ (ROLE LIST) --- */
 /* ========================================================================= */
 
 .permissions-container {
@@ -268,13 +264,13 @@
   accent-color: #0d6efd;
 }
 
-/* Dictionary Modal (Bảng tra cứu phân quyền) */
 .dict-role-card {
   border: 1px solid var(--bs-border-color-translucent);
   border-radius: 8px;
   margin-bottom: 15px;
   overflow: hidden;
 }
+
 .dict-role-header {
   background-color: var(--bs-tertiary-bg);
   padding: 12px 15px;
@@ -284,13 +280,14 @@
   align-items: center;
   gap: 10px;
 }
+
 .dict-role-body {
   padding: 15px;
   background-color: var(--bs-body-bg);
 }
 
 /* ========================================================================= */
-/* --- 4. CSS DÀNH CHO CÁC MODAL (POPUP FORM) --- */
+/* --- THÀNH PHẦN 3: ĐẶC TẢ GIAO DIỆN CÁC Ô MODAL CỦA HỆ THỐNG --- */
 /* ========================================================================= */
 
 .custom-modal-overlay {
@@ -321,7 +318,6 @@
   animation: slideIn 0.3s ease-out;
 }
 
-/* Tùy chỉnh độ rộng cho modal phân quyền Role và Dictionary */
 .custom-modal-content.modal-role-wide,
 .custom-modal-content.modal-dict-wide {
   max-width: 750px;
@@ -366,10 +362,7 @@
   gap: 10px;
 }
 
-/* ========================================================================= */
-/* --- 5. RESPONSIVE --- */
-/* ========================================================================= */
-
+/* TỐI ƯU HÓA RESPONSIVE CHO IPAD VÀ THIẾT BỊ DI ĐỘNG MÀN HÌNH NHỎ */
 @media (max-width: 768px) {
   .filter-bar {
     flex-direction: column;
