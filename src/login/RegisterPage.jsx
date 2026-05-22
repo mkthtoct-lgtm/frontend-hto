@@ -5,6 +5,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
 
+const GMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
 const PASSWORD_PATTERN =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
@@ -22,7 +24,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
     watch,
     formState: { errors },
   } = useForm({
-    mode: "onTouched",
+    mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       name: "",
@@ -49,7 +51,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
           password: data.password,
         }),
       });
-      const response = await res.json();
+      const response = await res.json().catch(() => null);
 
       if (!res.ok) {
         throw new Error(response?.message || "Đăng ký thất bại");
@@ -72,7 +74,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
       <h2 className="mb-1.5 text-center text-[22px] font-bold text-[#111827] app-dark:text-white">Tạo tài khoản</h2>
       <p className="mb-3 text-center text-[13px] leading-[1.45] text-[#6b7280]">Tham gia cùng chúng tôi và bắt đầu hành trình của bạn.</p>
 
-      {apiError && (
+      {apiError && !errors.email && (
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-[13px] text-[#be123c] app-dark:border-[#7f1d1d] app-dark:bg-[#2a1215] app-dark:text-[#fecdd3]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -83,7 +85,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-3">
           <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="name">Họ và tên</label>
           <input
@@ -102,12 +104,15 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
           <input
             type="email"
             id="email"
-            className={inputClass}
-            placeholder="Ví dụ: name@example.com"
+            className={`${inputClass} ${errors.email ? "border-[#f5365c]" : ""}`}
+            placeholder="Ví dụ: name@gmail.com"
             disabled={loading}
             {...register("email", {
               required: "Vui lòng nhập email.",
-              pattern: { value: /\S+@\S+\.\S+/, message: "Sai định dạng." }
+              pattern: {
+                value: GMAIL_PATTERN,
+                message: "Email phải là địa chỉ Gmail hợp lệ (ví dụ: example@gmail.com).",
+              }
             })}
           />
           {errors.email && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.email.message}</div>}
