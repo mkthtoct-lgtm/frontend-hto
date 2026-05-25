@@ -168,7 +168,9 @@
 .action-btn {
   background: none;
   border: none;
-  padding: 6px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
@@ -368,7 +370,7 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box, .filter-select {
     width: 100%;
   }
@@ -382,7 +384,7 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .custom-table td, .custom-table th {
     white-space: nowrap;
   }
@@ -390,7 +392,7 @@
   .permissions-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .current-role-banner {
     flex-direction: column;
     align-items: stretch !important;
