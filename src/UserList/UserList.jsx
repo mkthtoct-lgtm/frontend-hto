@@ -8,6 +8,7 @@ import "./UserList.css";
 // =========================================================================
 
 // CHÚ Ý: Thay đổi cổng 3000 thành cổng Backend của bạn đang chạy
+// Dòng này phải chính xác như thế này
 const API_BASE_URL = "http://localhost:3000/api/v1";
 
 const ROLE_MAP = {
@@ -701,11 +702,20 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
+  // 7. Lọc dữ liệu hiển thị (Đã thêm kiểm tra an toàn dữ liệu)
   const filteredUsers = users.filter(user => {
-    const matchSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Nếu đối tượng user bị null/undefined thì bỏ qua
+    if (!user) return false;
+
+    // Sử dụng optional chaining (?.) và giá trị mặc định ("") để tránh lỗi toLowerCase()
+    const name = user.name?.toLowerCase() || "";
+    const email = user.email?.toLowerCase() || "";
+    const term = searchTerm.toLowerCase();
+
+    const matchSearch = name.includes(term) || email.includes(term);
     const matchRole = filterRole ? user.role === filterRole : true;
     const matchDept = filterDepartment ? user.department === filterDepartment : true;
+    
     return matchSearch && matchRole && matchDept;
   });
 
