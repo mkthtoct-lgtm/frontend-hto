@@ -4,12 +4,12 @@ import { useForm } from "react-hook-form";
 import "./UserList.css";
 
 // =========================================================================
-// --- KHU VỰC 1: CẤU HÌNH API ---
+// --- KHU VỰC 1: CẤU HÌNH API VÀ GIAO DIỆN BADGE ---
 // =========================================================================
 
 const API_BASE_URL = "http://localhost:3000/api/v1";
 
-// Cấu hình giao diện màu sắc Badge theo tên Role (name)
+// Cấu hình giao diện màu sắc Badge theo tên Role (name) thực tế từ Database
 const ROLE_UI_MAP = {
   "admin": { color: "bg-danger" },
   "ban giám đốc": { color: "bg-primary" },
@@ -21,13 +21,53 @@ const ROLE_UI_MAP = {
   "hệ thống": { color: "bg-dark" }
 };
 
+const PERMISSION_MODULES = [
+  {
+    id: "dashboard",
+    name: "Dashboard & Báo cáo tổng hợp",
+    actions: [
+      { id: "view_dashboard", name: "Xem Dashboard" },
+      { id: "export_report", name: "Xuất báo cáo doanh nghiệp" }
+    ]
+  },
+  {
+    id: "users",
+    name: "Hệ thống quản lý tài khoản nhân viên",
+    actions: [
+      { id: "view_users", name: "Xem danh sách tài khoản" },
+      { id: "create_users", name: "Tạo mới tài khoản" },
+      { id: "edit_users", name: "Chỉnh sửa thông tin" },
+      { id: "lock_users", name: "Khóa / Mở khóa tài khoản" }
+    ]
+  },
+  {
+    id: "roles",
+    name: "Phân quyền và Quản lý vai trò",
+    actions: [
+      { id: "view_roles", name: "Xem danh sách vai trò" },
+      { id: "create_roles", name: "Thêm vai trò hệ thống" },
+      { id: "edit_roles", name: "Sửa cấu hình quyền" },
+      { id: "delete_roles", name: "Xóa cấu hình vai trò" }
+    ]
+  },
+  {
+    id: "products",
+    name: "Quản lý danh mục Sản phẩm & Nghiệp vụ",
+    actions: [
+      { id: "view_products", name: "Xem danh mục sản phẩm" },
+      { id: "create_products", name: "Thêm mới sản phẩm" },
+      { id: "edit_products", name: "Cập nhật sản phẩm" },
+      { id: "delete_products", name: "Xóa bỏ sản phẩm" }
+    ]
+  }
+];
+
 // =========================================================================
 // --- KHU VỰC 2: TỪ ĐIỂN TRA CỨU MA TRẬN PHÂN QUYỀN (DICTIONARY MODAL) ---
 // =========================================================================
 const PermissionDictionaryModal = ({ isOpen, onClose, roles, permissions }) => {
   if (!isOpen) return null;
 
-  // Lấy tên/mô tả quyền dựa trên ID
   const getPermissionDesc = (permId) => {
     const perm = permissions.find(p => p._id === permId);
     return perm ? (perm.description || perm.name) : permId;
@@ -57,12 +97,13 @@ const PermissionDictionaryModal = ({ isOpen, onClose, roles, permissions }) => {
             Bảng dưới đây liệt kê chi tiết các chức năng mà từng Nhóm vai trò được phép thao tác trong hệ thống dựa trên dữ liệu thực tế.
           </p>
 
-          {roles.map((role) => {
+          {roles.map((role, idx) => {
             const roleUI = ROLE_UI_MAP[role.name?.toLowerCase()] || { color: "bg-secondary" };
             const permsArray = role.permissionIds || [];
+            const roleId = role._id || role.id || idx;
             
             return (
-              <div className="dict-role-card" key={role._id}>
+              <div className="dict-role-card" key={roleId}>
                 <div className="dict-role-header">
                   <span className={`badge ${roleUI.color} px-2 py-1`} style={{ fontSize: "13px" }}>
                     {role.name}
@@ -107,8 +148,6 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
   const [modalMode, setModalMode] = useState("create");
   const [selectedRole, setSelectedRole] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  
-  // Lưu trữ danh sách ObjectIds của Permission
   const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -151,7 +190,6 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
   const onSubmitRole = async (data) => {
     setActionLoading(true);
     try {
-      // Khớp cấu trúc Bảng Roles của MongoDB
       const payload = {
         name: data.name,
         description: data.description,
@@ -173,10 +211,8 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
       const responseData = await res.json();
 
       if (!res.ok) throw new Error(responseData.message || "Thao tác vai trò thất bại");
-      
       let updatedRecord = responseData.data || responseData;
 
-      // Cập nhật ma trận phân quyền (Nếu API tách rời)
       if (modalMode === "edit") {
         try {
           const permRes = await fetch(`${API_BASE_URL}/roles/${rId}/permissions`, {
@@ -185,14 +221,14 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token")}`
             },
-            body: JSON.stringify({ permissionIds: selectedPermissions }) // Gửi theo format mảng ID
+            body: JSON.stringify({ permissionIds: selectedPermissions })
           });
           const permData = await permRes.json();
           if (permRes.ok) {
              updatedRecord = permData.data || permData;
           }
         } catch (e) {
-          console.log("Cập nhật quyền bị lỗi, hoặc API đã gom chung vào PATCH /roles/:id");
+          console.log("Cập nhật quyền tích hợp cùng PATCH /roles/:id");
         }
       }
 
@@ -212,8 +248,8 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
   const handleDeleteRole = async (role) => {
     if (role.name?.toLowerCase() === "admin") return; 
     
-    // Đếm chính xác nhân sự dựa trên _id reference của MongoDB
-    const currentUserCount = users.filter(u => u.role_id === role._id).length;
+    // Sửa logic đếm: Khớp Object_id dạng chuỗi từ MongoDB toàn diện
+    const currentUserCount = users.filter(u => String(u.role_id) === String(role._id)).length;
 
     if (currentUserCount > 0) {
       alert(`Từ chối lệnh xóa: Đang có ${currentUserCount} tài khoản nhân sự đang áp dụng vai trò này.`);
@@ -275,15 +311,18 @@ const RoleManagementSection = ({ roles, setRoles, users, permissions, permission
               ) : roles.length === 0 ? (
                 <tr><td colSpan="4" className="text-center py-5 text-body-secondary">Hệ thống chưa ghi nhận cấu hình vai trò nào.</td></tr>
               ) : (
-                roles.map((role) => {
+                roles.map((role, idx) => {
                   const isAdmin = role.name?.toLowerCase() === "admin";
-                  const userCount = users.filter(u => u.role_id === role._id).length;
+                  const roleId = role._id || role.id || idx;
+                  
+                  // FIX LỖI 0 LIÊN KẾT: So sánh string của ObjectId chính xác tuyệt đối
+                  const userCount = users.filter(u => String(u.role_id) === String(roleId)).length;
 
                   return (
-                    <tr key={role._id}>
+                    <tr key={roleId}>
                       <td>
                         <span className="fw-bold text-body-emphasis">{role.name}</span>
-                        <div className="text-body-secondary" style={{ fontSize: "11px", marginTop: "2px" }}>ID: {role._id}</div>
+                        <div className="text-body-secondary" style={{ fontSize: "11px", marginTop: "2px" }}>ID: {roleId}</div>
                       </td>
                       <td><span className="text-body-secondary text-wrap" style={{ fontSize: "13px" }}>{role.description || "Chưa thiết lập mô tả cụ thể cho nhóm này."}</span></td>
                       <td>
@@ -443,11 +482,10 @@ export const UserList = ({ currentUser }) => {
   const [activeTab, setActiveTab] = useState("users");
   const [isDictOpen, setIsDictOpen] = useState(false);
 
-  // States danh sách dùng chung cho nghiệp vụ
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [permissions, setPermissions] = useState([]); // Chứa mảng object quyền chuẩn từ Database
+  const [permissions, setPermissions] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -468,7 +506,7 @@ export const UserList = ({ currentUser }) => {
   const watchDepartmentSelect = watch("departmentSelect");
   const hasActiveFilters = searchTerm !== "" || filterRole !== "" || filterDepartment !== "";
 
-  // Helper: Chuyển mảng Permissions phẳng thành nhóm theo Module cho UI
+  // Helper chuyển mảng Permissions phẳng thành nhóm theo Module
   const permissionModules = useMemo(() => {
     const groups = {};
     permissions.forEach(p => {
@@ -482,13 +520,12 @@ export const UserList = ({ currentUser }) => {
     }));
   }, [permissions]);
 
-  // LOGIC TRÍCH XUẤT QUYỀN HIỆN TẠI (Theo chuẩn mới _id)
-  const currentUserRoleData = roles.find(r => r._id === currentUser?.role_id || r.name === currentUser?.role);
+  // LOGIC TRÍCH XUẤT QUYỀN TRUY CẬP HIỆN TẠI
+  const currentUserRoleData = roles.find(r => String(r._id) === String(currentUser?.role_id) || r.name === currentUser?.role);
   const userPermissionIds = currentUserRoleData?.permissionIds || [];
   
   const isAdmin = currentUserRoleData?.name?.toLowerCase() === "admin" || currentUser?.role === "admin";
   
-  // Hàm check quyền thông minh, dựa theo tên permission (vd: users:create:all)
   const hasPermissionStr = (searchStr) => {
       if (isAdmin) return true;
       const permObj = permissions.find(p => p.name && p.name.includes(searchStr));
@@ -499,7 +536,7 @@ export const UserList = ({ currentUser }) => {
   const canEditUser = hasPermissionStr("users:update");
   const canLockUser = hasPermissionStr("users:status") || hasPermissionStr("users:update");
 
-  // Fetch API Đồng Bộ
+  // Multi-Fetch API Đồng Bộ Toàn Hệ Thống
   const fetchAllData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -507,12 +544,11 @@ export const UserList = ({ currentUser }) => {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Chạy đa luồng lấy toàn bộ hệ sinh thái dữ liệu
       const [usersRes, rolesRes, deptsRes, permsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/users`, { headers }),
         fetch(`${API_BASE_URL}/roles`, { headers }),
         fetch(`${API_BASE_URL}/departments`, { headers }),
-        fetch(`${API_BASE_URL}/permissions`, { headers }).catch(() => null) // Dự phòng nếu chưa code controller
+        fetch(`${API_BASE_URL}/permissions`, { headers }).catch(() => null)
       ]);
 
       const [usersData, rolesData, deptsData, permsData] = await Promise.all([
@@ -555,8 +591,7 @@ export const UserList = ({ currentUser }) => {
     setModalMode("edit");
     setSelectedUser(user);
     
-    // Tìm ID phòng ban khớp với MongoDB reference
-    const isKnownDept = departments.some(d => d._id === user.department_id);
+    const isKnownDept = departments.some(d => String(d._id) === String(user.department_id));
     const initialDeptSelect = isKnownDept ? user.department_id : (user.department_id ? "other" : "");
     const initialDeptInput = isKnownDept ? "" : "Phòng ban mới";
 
@@ -575,13 +610,12 @@ export const UserList = ({ currentUser }) => {
     reset(); 
   };
 
-  // Nén dữ liệu và gửi lên API User (POST/PATCH) chuẩn Database
   const onSubmitUser = async (data) => {
     setActionLoading(true);
     try {
       let finalDepartmentId = data.departmentSelect;
       
-      // XỬ LÝ TẠO PHÒNG BAN: Nếu người dùng nhập tên mới (other)
+      // Khởi tạo phòng ban tự động nếu chọn 'other'
       if (data.departmentSelect === "other" && data.departmentInput) {
         try {
           const deptRes = await fetch(`${API_BASE_URL}/departments`, {
@@ -596,14 +630,14 @@ export const UserList = ({ currentUser }) => {
           if (deptRes.ok) {
             const createdDept = newDeptData.data || newDeptData;
             setDepartments(prev => [...prev, createdDept]);
-            finalDepartmentId = createdDept._id; // Trích Object ID mới tạo
+            finalDepartmentId = createdDept._id;
           }
         } catch (e) {
           console.log("Lỗi tạo phòng ban mới.");
         }
       }
 
-      // Payload Khớp Bảng Users (full_name, role_id, department_id)
+      // Khớp dữ liệu Payload thực tế Database (full_name, role_id, department_id)
       const payload = {
         full_name: data.full_name,
         email: data.email,
@@ -612,7 +646,7 @@ export const UserList = ({ currentUser }) => {
       };
 
       if (modalMode === "create") {
-        payload.password = "Hito@123456"; // Tránh lỗi Class Validator
+        payload.password = "Hito@123456"; // Tránh lỗi 400 Bad Request từ BE validation
       }
 
       const uId = selectedUser?._id;
@@ -693,7 +727,7 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
-  // Lọc an toàn bằng Optional Chaining
+  // Filter an toàn tránh crash giao diện
   const filteredUsers = users.filter(user => {
     if (!user) return false;
 
@@ -702,8 +736,8 @@ export const UserList = ({ currentUser }) => {
     const term = searchTerm.toLowerCase();
 
     const matchSearch = name.includes(term) || email.includes(term);
-    const matchRole = filterRole ? user.role_id === filterRole : true;
-    const matchDept = filterDepartment ? user.department_id === filterDepartment : true;
+    const matchRole = filterRole ? String(user.role_id) === String(filterRole) : true;
+    const matchDept = filterDepartment ? String(user.department_id) === String(filterDepartment) : true;
     
     return matchSearch && matchRole && matchDept;
   });
@@ -784,31 +818,17 @@ export const UserList = ({ currentUser }) => {
           <div className="filter-bar">
             <div className="search-box">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input 
-                type="text" 
-                className="form-control form-control-sm bg-body border-1" 
-                placeholder="Tìm kiếm theo họ tên hoặc hòm thư..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-              />
+              <input type="text" className="form-control form-control-sm bg-body border-1" placeholder="Tìm kiếm theo họ tên hoặc hòm thư..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             
-            <select 
-              className="form-select form-select-sm bg-body filter-select" 
-              value={filterRole} 
-              onChange={(e) => setFilterRole(e.target.value)}
-            >
+            <select className="form-select form-select-sm bg-body filter-select" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
               <option value="">Lọc theo vai trò</option>
               {roles.map(role => (
                 <option key={role._id} value={role._id}>{role.name}</option>
               ))}
             </select>
 
-            <select 
-              className="form-select form-select-sm bg-body filter-select" 
-              value={filterDepartment} 
-              onChange={(e) => setFilterDepartment(e.target.value)}
-            >
+            <select className="form-select form-select-sm bg-body filter-select" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)}>
               <option value="">Lọc theo phòng ban</option>
               {departments.map(dept => (
                 <option key={dept._id} value={dept._id}>{dept.name}</option>
@@ -853,12 +873,11 @@ export const UserList = ({ currentUser }) => {
                     <tr><td colSpan="6" className="text-center py-5 text-body-secondary">Hệ thống dữ liệu trống hoặc không tìm thấy kết quả.</td></tr>
                   ) : (
                     filteredUsers.map((user, index) => {
-                      // Lookup Role & Department by ObjectId
-                      const uRole = roles.find(r => r._id === user.role_id) || {};
+                      const uRole = roles.find(r => String(r._id) === String(user.role_id)) || {};
                       const roleName = uRole.name || "Chưa gán quyền";
                       const roleUI = ROLE_UI_MAP[roleName.toLowerCase()] || { color: "bg-secondary" };
                       
-                      const uDept = departments.find(d => d._id === user.department_id);
+                      const uDept = departments.find(d => String(d._id) === String(user.department_id));
                       const deptName = uDept?.name || "—";
 
                       return (
@@ -985,7 +1004,7 @@ export const UserList = ({ currentUser }) => {
                         className={`form-control ${errors.email ? 'is-invalid' : ''}`} 
                         placeholder="username@hto.vn" 
                         disabled={actionLoading || modalMode === "edit"} 
-                        {...register("email", { required: "Hòm thư bắt buộc nhập", pattern: { value: /\S+@\S+\.\S+/, message: "Định dạng hòm thư hông đúng" } })} 
+                        {...register("email", { required: "Hòm thư bắt buộc nhập", pattern: { value: /\S+@\S+\.\S+/, message: "Định dạng hòm thư không đúng" } })} 
                       />
                       {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
                     </div>
