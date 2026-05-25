@@ -7,8 +7,7 @@ import "./UserList.css";
 // --- KHU VỰC 1: CẤU HÌNH ĐƯỜNG DẪN API VÀ KHỞI TẠO ĐỐI TƯỢNG MẪU ---
 // =========================================================================
 
-// CHÚ Ý: Thay đổi cổng 3000 thành cổng Backend của bạn đang chạy
-// Dòng này phải chính xác như thế này
+// CHÚ Ý: Cổng 3000 khớp với Backend NestJS của bạn
 const API_BASE_URL = "http://localhost:3000/api/v1";
 
 const ROLE_MAP = {
@@ -156,7 +155,6 @@ const RoleManagementSection = ({ roles, setRoles }) => {
     mode: "onTouched"
   });
 
-  // Gọi API lấy danh sách Role khi component mount
   useEffect(() => {
     const fetchRoles = async () => {
       setLoading(true);
@@ -166,8 +164,6 @@ const RoleManagementSection = ({ roles, setRoles }) => {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Lỗi tải dữ liệu vai trò");
-        
-        // Update dữ liệu Roles
         setRoles(data.data ? data.data : data);
       } catch (err) {
         setError(err.message);
@@ -224,6 +220,7 @@ const RoleManagementSection = ({ roles, setRoles }) => {
       const url = modalMode === "create" ? `${API_BASE_URL}/roles` : `${API_BASE_URL}/roles/${selectedRole.id}`;
       const method = modalMode === "create" ? "POST" : "PATCH";
 
+      // 1. Gọi API cập nhật thông tin chung của Role
       const res = await fetch(url, {
         method: method,
         headers: { 
@@ -233,11 +230,26 @@ const RoleManagementSection = ({ roles, setRoles }) => {
         body: JSON.stringify(payload)
       });
       const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || "Cập nhật thông tin vai trò thất bại");
 
-      if (!res.ok) throw new Error(responseData.message || "Cập nhật vai trò thất bại");
-      
-      const updatedRecord = responseData.data ? responseData.data : responseData;
+      let updatedRecord = responseData.data ? responseData.data : responseData;
 
+      // 2. Nếu là Edit (PATCH), gọi thêm API /permissions để cập nhật ma trận phân quyền theo thiết kế của BE
+      if (modalMode === "edit") {
+        const permRes = await fetch(`${API_BASE_URL}/roles/${selectedRole.id}/permissions`, {
+          method: "PATCH",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({ permissions: selectedPermissions })
+        });
+        const permData = await permRes.json();
+        if (!permRes.ok) throw new Error(permData.message || "Cập nhật quyền thất bại");
+        updatedRecord = permData.data ? permData.data : permData;
+      }
+
+      // Cập nhật lại UI
       if (modalMode === "create") {
         setRoles(prev => [...prev, updatedRecord]);
       } else {
@@ -492,6 +504,8 @@ export const UserList = ({ currentUser }) => {
 
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+  const [departments, setDepartments] = useState([]); // Tích hợp API Departments
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -510,9 +524,8 @@ export const UserList = ({ currentUser }) => {
 
   const watchDepartmentSelect = watch("departmentSelect");
   const hasActiveFilters = searchTerm !== "" || filterRole !== "" || filterDepartment !== "";
-  const departments = [...new Set(users.map(user => user.department).filter(Boolean))];
 
-  // LOGIC TRÍCH XUẤT QUYỀN HIỆN TẠI (Dùng để khóa UI thông minh)
+  // TRÍCH XUẤT QUYỀN ĐỂ KHÓA UI
   const currentUserRoleData = roles.find(r => r.key === currentUser?.role);
   const userPermissions = currentUserRoleData?.permissions || [];
   
@@ -521,7 +534,25 @@ export const UserList = ({ currentUser }) => {
   const canEditUser = isAdmin || userPermissions.includes("edit_users");
   const canLockUser = isAdmin || userPermissions.includes("lock_users");
 
-  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM GET DANH SÁCH USER THẬT CỦA BE
+  // Fetch Danh sách Phòng ban (Tích hợp API thực tế GET /departments)
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/departments`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const deptList = data.data || data;
+        // Trích xuất tên phòng ban (Cho phép API trả về array string hoặc array object)
+        const formattedList = deptList.map(item => typeof item === 'object' ? (item.name || item.id) : item).filter(Boolean);
+        setDepartments(formattedList);
+      }
+    } catch (err) {
+      console.log("Lỗi fetch danh sách phòng ban");
+    }
+  }, []);
+
+  // Fetch Danh sách Người dùng
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -541,7 +572,7 @@ export const UserList = ({ currentUser }) => {
     }
   }, []);
 
-  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM GET ROLE CỦA BE ĐỂ RENDER TOOLTIP
+  // Fetch Danh sách Role cho UserList UI (Lấy Tooltip/Badge)
   const fetchRolesData = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/roles`, {
@@ -552,13 +583,15 @@ export const UserList = ({ currentUser }) => {
         setRoles(data.data ? data.data : data);
       }
     } catch (err) {
-      console.log("Không thể fetch roles để render quyền");
+      console.log("Lỗi fetch roles");
     }
   }, []);
 
+  // Gọi APIs khi mount
   useEffect(() => {
     fetchRolesData();
-  }, [fetchRolesData]);
+    fetchDepartments();
+  }, [fetchRolesData, fetchDepartments]);
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -602,11 +635,30 @@ export const UserList = ({ currentUser }) => {
     reset(); 
   };
 
-  // ĐẤU NỐI HOÀN TOÀN VÀO LUỒNG TẠO MỚI (POST) VÀ CẬP NHẬT THÔNG TIN (PATCH) CỦA BE
+  // Submit User (Tích hợp tạo Phòng ban mới nếu user gõ tay)
   const onSubmitUser = async (data) => {
     setActionLoading(true);
     try {
-      const finalDepartment = data.departmentSelect === "other" ? data.departmentInput : data.departmentSelect;
+      let finalDepartment = data.departmentSelect === "other" ? data.departmentInput : data.departmentSelect;
+      
+      // XỬ LÝ API POST PHÒNG BAN: Nếu người dùng nhập tên mới chưa có trong hệ thống
+      if (data.departmentSelect === "other" && finalDepartment) {
+        try {
+          await fetch(`${API_BASE_URL}/departments`, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json", 
+              Authorization: `Bearer ${localStorage.getItem("token")}` 
+            },
+            body: JSON.stringify({ name: finalDepartment })
+          });
+          // Kích hoạt lấy lại list phòng ban thả vào state
+          fetchDepartments();
+        } catch (e) {
+          console.log("Bỏ qua lỗi tạo department (Có thể do đã tồn tại)");
+        }
+      }
+
       const payload = {
         name: data.name,
         email: data.email,
@@ -628,6 +680,7 @@ export const UserList = ({ currentUser }) => {
       
       const responseData = await res.json();
       if (!res.ok) throw new Error(responseData.message || "Thao tác cập nhật tài khoản trên API thất bại");
+      
       const savedUserRecord = responseData.data ? responseData.data : responseData;
       
       if (modalMode === "create") {
@@ -653,7 +706,6 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
-  // ĐẤU NỐI HOÀN TOÀN VÀO HÀM CẬP NHẬT TRẠNG THÁI (PATCH :ID/STATUS) CỦA BE
   const toggleUserStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === "active" ? "locked" : "active";
     const confirmMessage = currentStatus === "active" ? "Xác nhận KHÓA tài khoản này ngừng truy cập hệ thống?" : "Xác nhận MỞ KHÓA khôi phục quyền truy cập?";
@@ -681,7 +733,6 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
-  // ĐẤU NỐI HOÀN TOÀN VÀO CHỨC NĂNG XÓA MỀM (DELETE) CỦA BE
   const deleteUser = async (userId, userName) => {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa mềm tài khoản của nhân viên "${userName}" không?`)) return;
 
@@ -702,12 +753,10 @@ export const UserList = ({ currentUser }) => {
     }
   };
 
-  // 7. Lọc dữ liệu hiển thị (Đã thêm kiểm tra an toàn dữ liệu)
+  // Filter an toàn với Optional Chaining chặn lỗi null/undefined
   const filteredUsers = users.filter(user => {
-    // Nếu đối tượng user bị null/undefined thì bỏ qua
     if (!user) return false;
 
-    // Sử dụng optional chaining (?.) và giá trị mặc định ("") để tránh lỗi toLowerCase()
     const name = user.name?.toLowerCase() || "";
     const email = user.email?.toLowerCase() || "";
     const term = searchTerm.toLowerCase();
@@ -719,10 +768,18 @@ export const UserList = ({ currentUser }) => {
     return matchSearch && matchRole && matchDept;
   });
 
+  if (!["admin", "bangiamdoc", "nhansu"].includes(currentUser?.role)) {
+    return (
+      <div className="container-fluid pt-5 text-center">
+        <h2 className="text-danger">Từ chối quyền truy cập</h2>
+        <p className="text-body-secondary">Tài khoản hiện tại của bạn không nằm trong phân cấp quản lý nhân sự.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="user-list-wrapper container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
       
-      {/* THANH ĐIỀU HƯỚNG TAB THEO PHONG CÁCH TỐI GIẢN (LINE UNDERLINE ANIMATION) */}
       <div className="custom-tab-container">
         <button 
           className={`custom-tab-btn ${activeTab === 'users' ? 'active' : ''}`} 
@@ -755,7 +812,7 @@ export const UserList = ({ currentUser }) => {
           onClick={() => setIsDictOpen(true)}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          Ma trận phân quyền
+          <span className="d-none d-sm-inline">Ma trận phân quyền</span>
         </button>
       </div>
 
