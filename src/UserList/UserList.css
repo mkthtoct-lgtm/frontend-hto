@@ -4,7 +4,63 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Thẻ chứa bảng */
+/* ========================================================================= */
+/* --- CHUNG: BANNER TRẠNG THÁI VÀ ĐIỀU HƯỚNG TAB TỐI GIẢN (MINIMALIST) --- */
+/* ========================================================================= */
+
+.current-role-banner {
+  background: linear-gradient(135deg, var(--bs-primary-bg-subtle) 0%, rgba(13, 110, 253, 0.05) 100%);
+  border: 1px solid rgba(13, 110, 253, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.custom-tab-container {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.custom-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bs-secondary-color);
+  position: relative;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.custom-tab-btn:hover {
+  color: var(--bs-primary);
+}
+
+/* Hiệu ứng gạch chân tối giản chạy động khi chuyển Tab */
+.custom-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--bs-primary);
+  transition: width 0.3s ease;
+}
+
+.custom-tab-btn.active {
+  color: var(--bs-primary);
+}
+
+.custom-tab-btn.active::after {
+  width: 100%;
+}
+
 .table-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -17,12 +73,12 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-/* Thanh filter */
 .filter-bar {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
   margin-bottom: 20px;
+  align-items: center;
 }
 
 .search-box {
@@ -47,9 +103,19 @@
 .filter-select {
   border-radius: 8px;
   min-width: 150px;
+  width: auto;
 }
 
-/* Tùy chỉnh Table */
+.btn-reset-filter {
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
 .custom-table {
   margin-bottom: 0;
   font-size: 14px;
@@ -74,7 +140,10 @@
   background-color: var(--bs-secondary-bg);
 }
 
-/* Trạng thái Account */
+/* ========================================================================= */
+/* --- THÀNH PHẦN 1: ĐẶC TẢ GIAO DIỆN DANH SÁCH NGƯỜI DÙNG (USER LIST) --- */
+/* ========================================================================= */
+
 .status-badge {
   padding: 5px 10px;
   border-radius: 20px;
@@ -83,6 +152,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap;
 }
 
 .status-active {
@@ -95,7 +165,6 @@
   color: #ef4444;
 }
 
-/* Nút Action */
 .action-btn {
   background: none;
   border: none;
@@ -117,13 +186,112 @@
 .btn-edit { color: #3b82f6; }
 .btn-lock { color: #ef4444; }
 .btn-unlock { color: #10b981; }
+.btn-delete { color: #dc3545; }
 
-.action-btn:disabled {
-  opacity: 0.5;
+/* Trạng thái mờ và chặn tương tác khi tài khoản thiếu quyền hạn truy cập */
+.action-btn:disabled, .btn-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: #6c757d !important;
+  background-color: transparent !important;
+}
+
+.wrapper-tooltip {
+  display: inline-block;
   cursor: not-allowed;
 }
 
-/* Modal Overlay & Content */
+/* ========================================================================= */
+/* --- THÀNH PHẦN 2: ĐẶC TẢ GIAO DIỆN DANH SÁCH VAI TRÒ (ROLE LIST) --- */
+/* ========================================================================= */
+
+.permissions-container {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--bs-tertiary-bg);
+}
+
+.module-group {
+  background-color: var(--bs-body-bg);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border: 1px solid var(--bs-border-color-translucent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.module-group:last-child {
+  margin-bottom: 0;
+}
+
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--bs-border-color-translucent);
+}
+
+.module-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bs-emphasis-color);
+  margin: 0;
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bs-body-color);
+  cursor: pointer;
+  margin: 0;
+}
+
+.permission-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0d6efd;
+}
+
+.dict-role-card {
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.dict-role-header {
+  background-color: var(--bs-tertiary-bg);
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dict-role-body {
+  padding: 15px;
+  background-color: var(--bs-body-bg);
+}
+
+/* ========================================================================= */
+/* --- THÀNH PHẦN 3: ĐẶC TẢ GIAO DIỆN CÁC Ô MODAL CỦA HỆ THỐNG --- */
+/* ========================================================================= */
+
 .custom-modal-overlay {
   position: fixed;
   top: 0;
@@ -144,12 +312,17 @@
   background-color: var(--bs-body-bg);
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 550px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
   max-height: 90vh;
   animation: slideIn 0.3s ease-out;
+}
+
+.custom-modal-content.modal-role-wide,
+.custom-modal-content.modal-dict-wide {
+  max-width: 750px;
 }
 
 .custom-modal-header {
@@ -191,13 +364,46 @@
   gap: 10px;
 }
 
-/* Responsive */
+/* TỐI ƯU HÓA RESPONSIVE CHO IPAD VÀ THIẾT BỊ DI ĐỘNG MÀN HÌNH NHỎ */
 @media (max-width: 768px) {
   .filter-bar {
     flex-direction: column;
+    align-items: stretch;
   }
+
   .search-box, .filter-select {
     width: 100%;
+  }
+
+  .btn-reset-filter {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .custom-table td, .custom-table th {
+    white-space: nowrap;
+  }
+
+  .permissions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .current-role-banner {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .permissions-grid {
+    grid-template-columns: 1fr;
   }
 }
 

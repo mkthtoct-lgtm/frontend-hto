@@ -23,6 +23,7 @@ export default defineConfig([
       // ... các rule khác
       'react-hooks/exhaustive-deps': 'warn', // Chuyển từ 'error' sang 'warn' (chỉ cảnh báo vàng, không gạch đỏ)
       'react-hooks/purity': 'off', // Tắt luôn kiểm tra purity
+      'eslint-comments/no-unused-disable': 'off',
     }
   }
 ])
