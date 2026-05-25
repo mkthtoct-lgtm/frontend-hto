@@ -240,7 +240,7 @@ function App() {
         ) : currentPage === "auditLogs" ? (
           <AuditLogPage currentUser={user} />
         ) : currentPage === "documents" ? (
-          <DocumentsPage />
+          <DocumentsPage currentUser={user} />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
             
