@@ -16,6 +16,21 @@ const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
 };
 
+const ROLE_ID_MAP = {
+  "69fc5af582ef85451120772a": "admin",
+  "69fc5af582ef85451120772b": "bangiamdoc",
+  "69fc5af582ef85451120772c": "truongbophan",
+  "69fc5af582ef85451120772d": "nhansu",
+  "69fc5af582ef85451120772e": "daily",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
+};
+
+const AUTH_USER_STORAGE_KEY = "auth_user";
+const CURRENT_PAGE_STORAGE_KEY = "current_page";
+
+const normalizeRole = (roleId) => ROLE_ID_MAP[roleId] || "user";
+
 const hasStoredSession = () => {
   const token = window.localStorage.getItem("token");
   const refreshToken = window.localStorage.getItem("refresh_token");
@@ -26,7 +41,95 @@ const hasStoredSession = () => {
 const clearStoredSession = () => {
   window.localStorage.removeItem("token");
   window.localStorage.removeItem("refresh_token");
+  window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  window.localStorage.removeItem(CURRENT_PAGE_STORAGE_KEY);
   document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+};
+
+const normalizeUser = (userData) => {
+  if (!userData?.id || !userData?.email || !userData?.roleId) {
+    return null;
+  }
+
+  return {
+    id: userData.id,
+    name: userData.name || userData.fullName || "",
+    fullName: userData.fullName || userData.name || "",
+    email: userData.email,
+    avatarUrl: userData.avatarUrl || "",
+    roleId: userData.roleId,
+    departmentId: userData.departmentId || null,
+    role: userData.role || normalizeRole(userData.roleId),
+  };
+};
+
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token.split(".")[1];
+
+    if (!payload) {
+      return null;
+    }
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedBase64 = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
+    const json = window.atob(paddedBase64);
+
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+};
+
+const getStoredUser = () => {
+  if (!hasStoredSession()) {
+    clearStoredSession();
+    return null;
+  }
+
+  try {
+    const storedUser = JSON.parse(
+      window.localStorage.getItem(AUTH_USER_STORAGE_KEY) || "null",
+    );
+    const normalizedUser = normalizeUser(storedUser);
+
+    if (normalizedUser) {
+      return normalizedUser;
+    }
+  } catch {
+    window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  }
+
+  const tokenPayload = decodeJwtPayload(window.localStorage.getItem("token"));
+
+  return normalizeUser({
+    id: tokenPayload?.sub,
+    email: tokenPayload?.email,
+    roleId: tokenPayload?.roleId,
+    departmentId: tokenPayload?.departmentId,
+  });
+};
+
+const storeAuthUser = (userData) => {
+  const normalizedUser = normalizeUser(userData);
+
+  if (!normalizedUser) {
+    return null;
+  }
+
+  window.localStorage.setItem(
+    AUTH_USER_STORAGE_KEY,
+    JSON.stringify(normalizedUser),
+  );
+
+  return normalizedUser;
+};
+
+const getStoredPage = () => {
+  return window.localStorage.getItem(CURRENT_PAGE_STORAGE_KEY) || "dashboard";
 };
 
 const getAuthModeFromLocation = () => {
@@ -46,8 +149,8 @@ const resetAuthUrl = () => {
 };
 
 function App() {
-  const [currentPage, setCurrentPage] = useState("dashboard");
-  const [user, setUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(() => getStoredPage());
+  const [user, setUser] = useState(() => getStoredUser());
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
@@ -65,6 +168,14 @@ function App() {
     document.documentElement.setAttribute("data-bs-theme", theme);
     window.localStorage.setItem("app-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    window.localStorage.setItem(CURRENT_PAGE_STORAGE_KEY, currentPage);
+  }, [currentPage, user]);
 
   useEffect(() => {
     if (user) {
@@ -146,9 +257,18 @@ function App() {
       return;
     }
 
-    setUser(userData);
+    const nextUser = storeAuthUser(userData);
+
+    if (!nextUser) {
+      clearStoredSession();
+      setUser(null);
+      setAuthMode("login");
+      return;
+    }
+
+    setUser(nextUser);
     // Điều hướng dựa trên vai trò
-    if (userData.roleId === ROLE_IDS.ADMIN) {
+    if (nextUser.roleId === ROLE_IDS.ADMIN) {
       setCurrentPage("dashboard");
     } else {
       setCurrentPage("documents");
