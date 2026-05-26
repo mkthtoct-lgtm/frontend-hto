@@ -7,6 +7,7 @@ const API_BASE_URL =
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
 const DOCUMENT_PERMISSIONS_STORAGE_KEY = "hto_document_permissions";
+const DOCUMENT_STATUS_STORAGE_KEY = "hto_document_statuses";
 
 const ROLE_OPTIONS = [
   { id: "admin", roleId: ADMIN_ROLE_ID, label: "Admin" },
@@ -31,15 +32,19 @@ const PERMISSION_ACTIONS = [
   { id: "edit", label: "Sửa" },
 ];
 
+const DOCUMENT_STATUS_OPTIONS = [
+  "Nháp",
+  "Chờ duyệt",
+  "Đang dùng",
+  "Cần cập nhật",
+  "Ngừng dùng",
+];
+
+const DOCUMENT_DOWNLOAD_BLOCKED_STATUSES = new Set(["Nháp", "Ngừng dùng"]);
+
 const canUploadDocument = (user) =>
   ["admin", "truongbophan"].includes(user?.role) ||
   [ADMIN_ROLE_ID, DEPARTMENT_HEAD_ROLE_ID].includes(user?.roleId);
-
-const initialCategories = [
-  { id: 1, name: "Hành chính", description: "Biểu mẫu nội bộ", isHidden: false },
-  { id: 2, name: "Nhân sự", description: "Hợp đồng, nghỉ phép", isHidden: false },
-  { id: 3, name: "Kế toán", description: "Phiếu thu/chi", isHidden: false },
-];
 
 const initialDepartments = [
   { id: "dept-hanh-chinh", name: "Hành chính" },
@@ -177,6 +182,18 @@ const canUseDocumentAction = (user, document, action) => {
   );
 };
 
+const getDownloadDisabledReason = (user, document) => {
+  if (DOCUMENT_DOWNLOAD_BLOCKED_STATUSES.has(document.status)) {
+    return `Tài liệu đang ở trạng thái "${document.status}" nên chưa thể tải xuống`;
+  }
+
+  if (!canUseDocumentAction(user, document, "download")) {
+    return "Bạn chưa có quyền tải";
+  }
+
+  return "";
+};
+
 const readStoredPermissions = () => {
   try {
     return JSON.parse(window.localStorage.getItem(DOCUMENT_PERMISSIONS_STORAGE_KEY) || "{}");
@@ -193,11 +210,44 @@ const writeStoredPermissions = (permissionsByDocumentId) => {
   );
 };
 
+const readStoredStatuses = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(DOCUMENT_STATUS_STORAGE_KEY) || "{}");
+  } catch {
+    window.localStorage.removeItem(DOCUMENT_STATUS_STORAGE_KEY);
+    return {};
+  }
+};
+
+const writeStoredStatuses = (statusesByDocumentId) => {
+  window.localStorage.setItem(
+    DOCUMENT_STATUS_STORAGE_KEY,
+    JSON.stringify(statusesByDocumentId),
+  );
+};
+
+const getStatusBadgeClass = (status) => {
+  switch (status) {
+    case "Đang dùng":
+      return "bg-success-subtle text-success";
+    case "Chờ duyệt":
+      return "bg-warning-subtle text-warning";
+    case "Cần cập nhật":
+      return "bg-info-subtle text-info";
+    case "Ngừng dùng":
+      return "bg-danger-subtle text-danger";
+    default:
+      return "bg-body-secondary text-body";
+  }
+};
+
 const applyStoredPermissions = (documents) => {
   const storedPermissions = readStoredPermissions();
+  const storedStatuses = readStoredStatuses();
 
   return documents.map((document) => ({
     ...document,
+    status: storedStatuses[document.id] || document.status,
     permissions: normalizePermissions(
       storedPermissions[document.id] || document.permissions,
       document.departmentId,
@@ -211,6 +261,22 @@ const normalizeCategory = (category) => ({
   description: category.description || "",
   isHidden: Boolean(category.isHidden ?? category.hidden),
 });
+
+const normalizeDocumentCategory = (document) => {
+  const category = document.category || document.documentCategory || null;
+  const id = category?.id || category?._id || document.categoryId;
+
+  if (!id) {
+    return null;
+  }
+
+  return normalizeCategory({
+    id,
+    name: category?.name || document.categoryName || "Danh mục chưa đặt tên",
+    description: category?.description || "",
+    isHidden: category?.isHidden ?? category?.hidden ?? false,
+  });
+};
 
 async function requestDocumentCategories(path = "", options = {}) {
   const response = await fetch(`${API_BASE_URL}/document-categories${path}`, {
@@ -236,6 +302,41 @@ const getDocumentCategories = async () => {
   const categories = Array.isArray(payload) ? payload : payload?.items || [];
 
   return categories.map(normalizeCategory).filter((category) => category.id);
+};
+
+async function requestReadableDocuments(path = "", options = {}) {
+  const response = await fetch(`${API_BASE_URL}/documents${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Không thể tải danh mục tài liệu.");
+  }
+
+  return payload?.data ?? payload;
+}
+
+const getReadableDocumentCategories = async () => {
+  const payload = await requestReadableDocuments("?page=1&limit=100");
+  const documents = Array.isArray(payload) ? payload : payload?.items || [];
+  const categoriesById = new Map();
+
+  documents.forEach((document) => {
+    const category = normalizeDocumentCategory(document);
+
+    if (category) {
+      categoriesById.set(String(category.id), category);
+    }
+  });
+
+  return Array.from(categoriesById.values());
 };
 
 const createDocumentCategory = async (input) => {
@@ -265,7 +366,7 @@ const toggleDocumentCategoryVisibility = async (categoryId) => {
 };
 
 export const DocumentsPage = ({ currentUser }) => {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
   const [documents, setDocuments] = useState(() => applyStoredPermissions(initialDocuments));
   const [activeCategory, setActiveCategory] = useState("all");
   const [categoryPage, setCategoryPage] = useState(1);
@@ -282,6 +383,8 @@ export const DocumentsPage = ({ currentUser }) => {
   const [uploadSuccess, setUploadSuccess] = useState("");
 
   const canUpload = canUploadDocument(currentUser);
+  const canManageCategories = isAdminUser(currentUser);
+  const canLoadCategories = Boolean(currentUser);
   const canConfigurePermissions = isAdminUser(currentUser);
 
   const categoryMap = useMemo(
@@ -294,13 +397,21 @@ export const DocumentsPage = ({ currentUser }) => {
   );
 
   const visibleCategories = categories.filter((c) => !c.isHidden);
-  const categoryPageCount = Math.max(1, Math.ceil(categories.length / CATEGORY_PAGE_SIZE));
+  const displayedCategories = canManageCategories ? categories : visibleCategories;
+  const categoryPageCount = Math.max(
+    1,
+    Math.ceil(displayedCategories.length / CATEGORY_PAGE_SIZE),
+  );
   const safeCategoryPage = Math.min(categoryPage, categoryPageCount);
-  const paginatedCategories = categories.slice(
+  const paginatedCategories = displayedCategories.slice(
     (safeCategoryPage - 1) * CATEGORY_PAGE_SIZE,
     safeCategoryPage * CATEGORY_PAGE_SIZE,
   );
   const filteredDocuments = documents.filter((doc) => {
+    if (doc.status === "Nháp" && !isAdminUser(currentUser)) {
+      return false;
+    }
+
     if (!canUseDocumentAction(currentUser, doc, "view")) {
       return false;
     }
@@ -323,16 +434,33 @@ export const DocumentsPage = ({ currentUser }) => {
   }, [documents]);
 
   useEffect(() => {
+    const statusesByDocumentId = documents.reduce((acc, document) => {
+      acc[document.id] = document.status;
+      return acc;
+    }, {});
+
+    writeStoredStatuses(statusesByDocumentId);
+  }, [documents]);
+
+  useEffect(() => {
     let isMounted = true;
+
+    if (!canLoadCategories) {
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const loadCategories = async () => {
       setCategoryLoading(true);
       setCategoryError("");
 
       try {
-        const categoryData = await getDocumentCategories();
+        const categoryData = canManageCategories
+          ? await getDocumentCategories()
+          : await getReadableDocumentCategories();
 
-        if (isMounted && categoryData.length > 0) {
+        if (isMounted) {
           setCategories(categoryData);
         }
       } catch (error) {
@@ -355,7 +483,7 @@ export const DocumentsPage = ({ currentUser }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [canLoadCategories, canManageCategories]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -364,7 +492,7 @@ export const DocumentsPage = ({ currentUser }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!canManageCategories || !form.name.trim()) return;
 
     setCategoryActionLoading(true);
     setCategoryError("");
@@ -406,11 +534,15 @@ export const DocumentsPage = ({ currentUser }) => {
   };
 
   const startEdit = (category) => {
+    if (!canManageCategories) return;
+
     setEditingId(category.id);
     setForm({ name: category.name, description: category.description });
   };
 
   const toggleHidden = async (categoryId) => {
+    if (!canManageCategories) return;
+
     setCategoryActionLoading(true);
     setCategoryError("");
 
@@ -540,6 +672,21 @@ export const DocumentsPage = ({ currentUser }) => {
     );
   };
 
+  const updateDocumentStatus = (documentId, status) => {
+    setDocuments((prev) =>
+      prev.map((document) =>
+        String(document.id) === String(documentId)
+          ? {
+              ...document,
+              status,
+              updatedAt: new Date().toISOString().slice(0, 10),
+            }
+          : document,
+      ),
+    );
+    setUploadSuccess("Đã cập nhật trạng thái tài liệu.");
+  };
+
   return (
     <div className="container-fluid">
       <div className="app-page-head d-flex flex-wrap gap-3 align-items-center justify-content-between">
@@ -549,75 +696,77 @@ export const DocumentsPage = ({ currentUser }) => {
       </div>
 
       <div className="row g-3">
-        <div className="col-xxl-4">
-          <div className="card">
-            <div className="card-header border-0 pb-0">
-              <h6 className="card-title mb-0">
-                {editingId ? "Sửa danh mục" : "Tạo danh mục mới"}
-              </h6>
-            </div>
-            <div className="card-body">
-              {categoryError && (
-                <div className="alert alert-warning py-2" role="alert">
-                  {categoryError}
-                </div>
-              )}
-              <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
-                <div>
-                  <label className="form-label">Tên danh mục</label>
-                  <input
-                    className="form-control"
-                    value={form.name}
-                    disabled={categoryActionLoading}
-                    onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ví dụ: Pháp lý"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Mô tả</label>
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    value={form.description}
-                    disabled={categoryActionLoading}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, description: e.target.value }))
-                    }
-                    placeholder="Mô tả ngắn cho danh mục"
-                  />
-                </div>
-                <div className="d-flex gap-2">
-                  <button type="submit" className="btn btn-primary">
-                    {categoryActionLoading
-                      ? "Đang lưu..."
-                      : editingId
-                        ? "Lưu thay đổi"
-                        : "Tạo danh mục"}
-                  </button>
-                  {editingId && (
-                    <button
-                      type="button"
-                      className="btn btn-light"
-                      onClick={resetForm}
+        {canManageCategories && (
+          <div className="col-xxl-4">
+            <div className="card">
+              <div className="card-header border-0 pb-0">
+                <h6 className="card-title mb-0">
+                  {editingId ? "Sửa danh mục" : "Tạo danh mục mới"}
+                </h6>
+              </div>
+              <div className="card-body">
+                {categoryError && (
+                  <div className="alert alert-warning py-2" role="alert">
+                    {categoryError}
+                  </div>
+                )}
+                <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+                  <div>
+                    <label className="form-label">Tên danh mục</label>
+                    <input
+                      className="form-control"
+                      value={form.name}
                       disabled={categoryActionLoading}
-                    >
-                      Hủy
+                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ví dụ: Pháp lý"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label">Mô tả</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={form.description}
+                      disabled={categoryActionLoading}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      placeholder="Mô tả ngắn cho danh mục"
+                    />
+                  </div>
+                  <div className="d-flex gap-2">
+                    <button type="submit" className="btn btn-primary">
+                      {categoryActionLoading
+                        ? "Đang lưu..."
+                        : editingId
+                          ? "Lưu thay đổi"
+                          : "Tạo danh mục"}
                     </button>
-                  )}
-                </div>
-              </form>
+                    {editingId && (
+                      <button
+                        type="button"
+                        className="btn btn-light"
+                        onClick={resetForm}
+                        disabled={categoryActionLoading}
+                      >
+                        Hủy
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="col-xxl-8">
+        <div className={canManageCategories ? "col-xxl-8" : "col-12"}>
           <div className="card">
             <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
               <h6 className="card-title mb-0">Danh mục tài liệu</h6>
               <span className="badge bg-primary-subtle text-primary">
                 {categoryLoading
                   ? "Đang tải..."
-                  : `${visibleCategories.length} danh mục đang dùng`}
+                  : `${displayedCategories.length} danh mục`}
               </span>
             </div>
             <div className="card-body">
@@ -627,12 +776,16 @@ export const DocumentsPage = ({ currentUser }) => {
                     <tr>
                       <th>Tên danh mục</th>
                       <th>Mô tả</th>
-                      <th className="text-nowrap" style={{ width: "120px" }}>
-                        Trạng thái
-                      </th>
-                      <th className="text-center text-nowrap" style={{ width: "96px" }}>
-                        Thao tác
-                      </th>
+                      {canManageCategories && (
+                        <>
+                          <th className="text-nowrap" style={{ width: "120px" }}>
+                            Trạng thái
+                          </th>
+                          <th className="text-center text-nowrap" style={{ width: "96px" }}>
+                            Thao tác
+                          </th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -640,48 +793,55 @@ export const DocumentsPage = ({ currentUser }) => {
                       <tr key={category.id}>
                         <td>{category.name}</td>
                         <td>{category.description || "-"}</td>
-                        <td className="text-nowrap">
-                          <span
-                            className={`badge ${
-                              category.isHidden
-                                ? "bg-danger-subtle text-danger"
-                                : "bg-success-subtle text-success"
-                            }`}
-                          >
-                            {category.isHidden ? "Đang ẩn" : "Hiển thị"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            onClick={() => startEdit(category)}
-                            disabled={categoryActionLoading}
-                            title="Sửa danh mục"
-                            aria-label="Sửa danh mục"
-                          >
-                            <EditIcon />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            onClick={() => toggleHidden(category.id)}
-                            disabled={categoryActionLoading}
-                            title={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
-                            aria-label={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
-                          >
-                            {category.isHidden ? <EyeIcon /> : <EyeOffIcon />}
-                          </button>
-                          </div>
-                        </td>
+                        {canManageCategories && (
+                          <>
+                            <td className="text-nowrap">
+                              <span
+                                className={`badge ${
+                                  category.isHidden
+                                    ? "bg-danger-subtle text-danger"
+                                    : "bg-success-subtle text-success"
+                                }`}
+                              >
+                                {category.isHidden ? "Đang ẩn" : "Hiển thị"}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                                style={{ width: "32px", height: "32px", padding: 0 }}
+                                onClick={() => startEdit(category)}
+                                disabled={categoryActionLoading}
+                                title="Sửa danh mục"
+                                aria-label="Sửa danh mục"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                                style={{ width: "32px", height: "32px", padding: 0 }}
+                                onClick={() => toggleHidden(category.id)}
+                                disabled={categoryActionLoading}
+                                title={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
+                                aria-label={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
+                              >
+                                {category.isHidden ? <EyeIcon /> : <EyeOffIcon />}
+                              </button>
+                              </div>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                     {paginatedCategories.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="text-center text-body-secondary py-4">
+                        <td
+                          colSpan={canManageCategories ? 4 : 2}
+                          className="text-center text-body-secondary py-4"
+                        >
                           Chưa có danh mục tài liệu.
                         </td>
                       </tr>
@@ -689,12 +849,12 @@ export const DocumentsPage = ({ currentUser }) => {
                   </tbody>
                 </table>
               </div>
-              {categories.length > CATEGORY_PAGE_SIZE && (
+              {displayedCategories.length > CATEGORY_PAGE_SIZE && (
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
                   <span className="text-body-secondary" style={{ fontSize: "13px" }}>
                     Hiển thị {(safeCategoryPage - 1) * CATEGORY_PAGE_SIZE + 1}-
-                    {Math.min(safeCategoryPage * CATEGORY_PAGE_SIZE, categories.length)} trong{" "}
-                    {categories.length} danh mục
+                    {Math.min(safeCategoryPage * CATEGORY_PAGE_SIZE, displayedCategories.length)} trong{" "}
+                    {displayedCategories.length} danh mục
                   </span>
                   <div className="btn-group" role="group" aria-label="Phân trang danh mục">
                     <button
@@ -737,22 +897,15 @@ export const DocumentsPage = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="card mt-3">
-        <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div>
-            <h6 className="card-title mb-1">Upload tài liệu</h6>
-          </div>
-          <span className={`badge ${canUpload ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}>
-            {canUpload ? "Có quyền upload" : "Chỉ xem"}
-          </span>
-        </div>
-        <div className="card-body">
-          {!canUpload && (
-            <div className="alert alert-warning py-2" role="alert">
-              Tài khoản hiện tại không có quyền upload tài liệu.
+      {canUpload && (
+        <div className="card mt-3">
+          <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <h6 className="card-title mb-1">Upload tài liệu</h6>
             </div>
-          )}
-
+            <span className="badge bg-success-subtle text-success">Có quyền upload</span>
+          </div>
+          <div className="card-body">
           {uploadSuccess && (
             <div className="alert alert-success py-2" role="alert">
               {uploadSuccess}
@@ -760,7 +913,7 @@ export const DocumentsPage = ({ currentUser }) => {
           )}
 
           <form noValidate onSubmit={handleUploadSubmit}>
-            <fieldset disabled={!canUpload} className="border-0 p-0 m-0">
+            <fieldset className="border-0 p-0 m-0">
               <div className="row g-3">
                 <div className="col-lg-4">
                   <label className="form-label">
@@ -930,8 +1083,9 @@ export const DocumentsPage = ({ currentUser }) => {
               </div>
             </fieldset>
           </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {canConfigurePermissions && (
         <div className="card mt-3">
@@ -1083,7 +1237,8 @@ export const DocumentsPage = ({ currentUser }) => {
               </thead>
               <tbody>
                 {filteredDocuments.map((doc) => {
-                  const canDownload = canUseDocumentAction(currentUser, doc, "download");
+                  const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
+                  const canDownload = !downloadDisabledReason;
                   const canEdit = canUseDocumentAction(currentUser, doc, "edit");
 
                   return (
@@ -1107,7 +1262,26 @@ export const DocumentsPage = ({ currentUser }) => {
                         </span>
                       </td>
                       <td>{doc.updatedAt}</td>
-                      <td>{doc.status}</td>
+                      <td>
+                        {canEdit ? (
+                          <select
+                            className="form-select form-select-sm"
+                            value={doc.status}
+                            onChange={(e) => updateDocumentStatus(doc.id, e.target.value)}
+                            aria-label={`Cập nhật trạng thái ${doc.title}`}
+                          >
+                            {DOCUMENT_STATUS_OPTIONS.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={`badge ${getStatusBadgeClass(doc.status)}`}>
+                            {doc.status}
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <div className="d-flex justify-content-center gap-2">
                           <button
@@ -1125,7 +1299,7 @@ export const DocumentsPage = ({ currentUser }) => {
                             className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
                             style={{ width: "32px", height: "32px", padding: 0 }}
                             disabled={!canDownload}
-                            title={canDownload ? "Tải tài liệu" : "Bạn chưa có quyền tải"}
+                            title={canDownload ? "Tải tài liệu" : downloadDisabledReason}
                             aria-label="Tải tài liệu"
                             onClick={() => setUploadSuccess(`Đã ghi nhận tải: ${doc.title}`)}
                           >
