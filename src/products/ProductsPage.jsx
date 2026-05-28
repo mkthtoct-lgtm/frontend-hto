@@ -297,6 +297,33 @@ const productFromForm = (form, id) =>
     updatedAt: new Date().toISOString().slice(0, 10),
   });
 
+const readImageFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+const getDroppedBannerValue = (dataTransfer) => {
+  const uriList = dataTransfer.getData("text/uri-list");
+  const plainText = dataTransfer.getData("text/plain");
+  const html = dataTransfer.getData("text/html");
+  const droppedText = (uriList || plainText || "").trim();
+
+  if (droppedText) {
+    return droppedText.split("\n").find((line) => line.trim() && !line.startsWith("#"))?.trim() || droppedText;
+  }
+
+  if (html) {
+    const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return match?.[1] || "";
+  }
+
+  return "";
+};
+
 export const ProductsPage = ({ currentUser }) => {
   const [dashboardData, setDashboardData] = useState(() => readDashboardData());
   const [editingDashboardSection, setEditingDashboardSection] = useState(null);
@@ -695,14 +722,18 @@ function DashboardEditModal({ dashboardForm, editingDashboardSection, onCancel, 
           <div className="p-4" style={{ minHeight: 0, flex: 1, overflowY: "auto" }}>
             {editingDashboardSection === "banners" && (
               <div className="row g-3">
-                <div className="col-12">
-                  <label className="form-label fw-semibold">Đường dẫn Banner 1</label>
-                  <input className="form-control" value={dashboardForm.banner1 || ""} onChange={(event) => onChange({ ...dashboardForm, banner1: event.target.value })} required />
-                </div>
-                <div className="col-12">
-                  <label className="form-label fw-semibold">Đường dẫn Banner 2</label>
-                  <input className="form-control" value={dashboardForm.banner2 || ""} onChange={(event) => onChange({ ...dashboardForm, banner2: event.target.value })} required />
-                </div>
+                <BannerInput
+                  label="Banner 1"
+                  name="banner1"
+                  onChange={(value) => onChange({ ...dashboardForm, banner1: value })}
+                  value={dashboardForm.banner1 || ""}
+                />
+                <BannerInput
+                  label="Banner 2"
+                  name="banner2"
+                  onChange={(value) => onChange({ ...dashboardForm, banner2: value })}
+                  value={dashboardForm.banner2 || ""}
+                />
               </div>
             )}
 
@@ -787,6 +818,86 @@ function DashboardEditModal({ dashboardForm, editingDashboardSection, onCancel, 
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function BannerInput({ label, name, onChange, value }) {
+  const inputId = `${name}-file-input`;
+
+  const setFileValue = async (file) => {
+    if (!file || !file.type.startsWith("image/")) {
+      return;
+    }
+
+    const dataUrl = await readImageFileAsDataUrl(file);
+    onChange(dataUrl);
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+
+    const imageFile = Array.from(event.dataTransfer.files || []).find((file) => file.type.startsWith("image/"));
+
+    if (imageFile) {
+      await setFileValue(imageFile);
+      return;
+    }
+
+    const droppedValue = getDroppedBannerValue(event.dataTransfer);
+
+    if (droppedValue) {
+      onChange(droppedValue);
+    }
+  };
+
+  return (
+    <div className="col-12">
+      <label className="form-label fw-semibold">{label}</label>
+      <div
+        className="rounded border bg-body-tertiary p-3"
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={handleDrop}
+      >
+        <div className="row g-3 align-items-stretch">
+          <div className="col-12 col-md-5">
+            <div className="bg-body border rounded overflow-hidden h-100 d-flex align-items-center justify-content-center" style={{ minHeight: "120px" }}>
+              {value ? (
+                <img src={value} alt={label} className="img-fluid w-100 h-100" style={{ objectFit: "cover", minHeight: "120px" }} />
+              ) : (
+                <span className="text-body-secondary" style={{ fontSize: "13px" }}>Chưa có ảnh</span>
+              )}
+            </div>
+          </div>
+          <div className="col-12 col-md-7 d-flex flex-column gap-2">
+            <input
+              className="form-control"
+              placeholder="Dán link ảnh hoặc kéo thả ảnh/link vào đây"
+              required
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+            />
+            <div className="d-flex flex-wrap gap-2">
+              <input
+                accept="image/*"
+                className="d-none"
+                id={inputId}
+                type="file"
+                onChange={(event) => setFileValue(event.target.files?.[0])}
+              />
+              <label className="btn btn-sm btn-outline-primary mb-0" htmlFor={inputId}>
+                Chọn ảnh từ máy
+              </label>
+              <button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => onChange("")}>
+                Xóa ảnh
+              </button>
+            </div>
+            <div className="text-body-secondary" style={{ fontSize: "12px", lineHeight: 1.4 }}>
+              Có thể chọn file ảnh, kéo thả ảnh/link từ nơi khác, hoặc nhập đường link ảnh trực tiếp.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
