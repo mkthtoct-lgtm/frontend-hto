@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 // const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
 //   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
-const API_BASE_URL = "http://localhost:8080/api/v1";
+const API_BASE_URL = "http://localhost:3000/api/v1";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
@@ -581,6 +581,7 @@ export const DocumentsPage = ({ currentUser }) => {
   const [documentDetailLoading, setDocumentDetailLoading] = useState(false);
   const [documentError, setDocumentError] = useState("");
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [categoryPage, setCategoryPage] = useState(1);
   const [editingId, setEditingId] = useState(null);
@@ -971,6 +972,7 @@ export const DocumentsPage = ({ currentUser }) => {
 
   const handlePreviewDocument = async (document) => {
     setSelectedDocument(document);
+    setIsDetailPanelOpen(true);
     setUploadSuccess("");
     setDocumentError("");
 
@@ -1000,6 +1002,8 @@ export const DocumentsPage = ({ currentUser }) => {
     const downloadDisabledReason = getDownloadDisabledReason(currentUser, document);
 
     if (downloadDisabledReason) {
+      setSelectedDocument(document);
+      setIsDetailPanelOpen(true);
       setUploadSuccess("");
       setDocumentError(downloadDisabledReason);
       return;
@@ -1008,6 +1012,8 @@ export const DocumentsPage = ({ currentUser }) => {
     const documentUrl = getDocumentActionUrl(document);
 
     if (!documentUrl) {
+      setSelectedDocument(document);
+      setIsDetailPanelOpen(true);
       setUploadSuccess("");
       setDocumentError("Tài liệu chưa có link tải.");
       return;
@@ -1104,84 +1110,92 @@ export const DocumentsPage = ({ currentUser }) => {
               </span>
             </div>
             <div className="card-body">
-              <div className="table-responsive">
-                <table className="table align-middle">
-                  <thead>
-                    <tr>
-                      <th>Tên danh mục</th>
-                      <th>Mô tả</th>
-                      {canManageCategories && (
-                        <>
-                          <th className="text-nowrap" style={{ width: "120px" }}>
-                            Trạng thái
-                          </th>
-                          <th className="text-center text-nowrap" style={{ width: "96px" }}>
-                            Thao tác
-                          </th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedCategories.map((category) => (
-                      <tr key={category.id}>
-                        <td>{category.name}</td>
-                        <td>{category.description || "-"}</td>
+              <div>
+                <div className="d-none d-md-block table-responsive">
+                  <table className="table align-middle">
+                    <thead>
+                      <tr>
+                        <th>Tên danh mục</th>
+                        <th>Mô tả</th>
                         {canManageCategories && (
                           <>
-                            <td className="text-nowrap">
-                              <span
-                                className={`badge ${
-                                  category.isHidden
-                                    ? "bg-danger-subtle text-danger"
-                                    : "bg-success-subtle text-success"
-                                }`}
-                              >
-                                {category.isHidden ? "Đang ẩn" : "Hiển thị"}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                                style={{ width: "32px", height: "32px", padding: 0 }}
-                                onClick={() => startEdit(category)}
-                                disabled={categoryActionLoading}
-                                title="Sửa danh mục"
-                                aria-label="Sửa danh mục"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                                style={{ width: "32px", height: "32px", padding: 0 }}
-                                onClick={() => toggleHidden(category.id)}
-                                disabled={categoryActionLoading}
-                                title={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
-                                aria-label={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
-                              >
-                                {category.isHidden ? <EyeIcon /> : <EyeOffIcon />}
-                              </button>
-                              </div>
-                            </td>
+                            <th className="text-nowrap" style={{ width: "120px" }}>
+                              Trạng thái
+                            </th>
+                            <th className="text-center text-nowrap" style={{ width: "96px" }}>
+                              Thao tác
+                            </th>
                           </>
                         )}
                       </tr>
-                    ))}
-                    {paginatedCategories.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={canManageCategories ? 4 : 2}
-                          className="text-center text-body-secondary py-4"
-                        >
-                          Chưa có danh mục tài liệu.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {paginatedCategories.map((category) => (
+                        <tr key={category.id}>
+                          <td className="fw-semibold text-body-emphasis">{category.name}</td>
+                          <td className="text-break">{category.description || "-"}</td>
+                          {canManageCategories && (
+                            <>
+                              <td className="text-nowrap">
+                                <CategoryStatusBadge isHidden={category.isHidden} />
+                              </td>
+                              <td>
+                                <CategoryActionButtons
+                                  category={category}
+                                  disabled={categoryActionLoading}
+                                  onEdit={startEdit}
+                                  onToggleHidden={toggleHidden}
+                                />
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                      {paginatedCategories.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={canManageCategories ? 4 : 2}
+                            className="text-center text-body-secondary py-4"
+                          >
+                            Chưa có danh mục tài liệu.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="d-md-none d-flex flex-column gap-2">
+                  {paginatedCategories.map((category) => (
+                    <div key={category.id} className="rounded border bg-body p-2">
+                      <div className="d-flex align-items-start justify-content-between gap-2">
+                        <div className="min-w-0">
+                          <div className="fw-semibold text-body-emphasis text-break">
+                            {category.name}
+                          </div>
+                          <div className="text-body-secondary text-break" style={{ fontSize: "13px" }}>
+                            {category.description || "-"}
+                          </div>
+                        </div>
+                        {canManageCategories && <CategoryStatusBadge isHidden={category.isHidden} />}
+                      </div>
+                      {canManageCategories && (
+                        <div className="d-flex justify-content-end mt-2">
+                          <CategoryActionButtons
+                            category={category}
+                            disabled={categoryActionLoading}
+                            onEdit={startEdit}
+                            onToggleHidden={toggleHidden}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {paginatedCategories.length === 0 && (
+                    <div className="rounded border bg-body-tertiary p-3 text-center text-body-secondary">
+                      Chưa có danh mục tài liệu.
+                    </div>
+                  )}
+                </div>
               </div>
               {displayedCategories.length > CATEGORY_PAGE_SIZE && (
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
@@ -1429,13 +1443,23 @@ export const DocumentsPage = ({ currentUser }) => {
               
             </div>
             {selectedPermissionDocument && (
-              <button
-                type="button"
-                className="btn btn-sm btn-outline-secondary"
-                onClick={() => resetDocumentPermissions(selectedPermissionDocument.id)}
-              >
-                Đặt quyền mặc định
-              </button>
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                  disabled={documentDetailLoading}
+                  onClick={() => handlePreviewDocument(selectedPermissionDocument)}
+                >
+                  Chi tiết & preview tài liệu
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => resetDocumentPermissions(selectedPermissionDocument.id)}
+                >
+                  Đặt quyền mặc định
+                </button>
+              </div>
             )}
           </div>
           <div className="card-body">
@@ -1469,66 +1493,122 @@ export const DocumentsPage = ({ currentUser }) => {
 
               <div className="col-lg-8">
                 {selectedPermissionDocument ? (
-                  <div className="table-responsive">
-                    <table className="table table-sm table-borderless align-middle mb-0">
-                      <thead>
-                        <tr>
-                          <th style={{ width: "96px" }}>Quyền</th>
-                          <th>Nhóm người dùng</th>
-                          <th>Role</th>
-                          <th>Phòng ban</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {PERMISSION_ACTIONS.map((action) => {
-                          const permissions = normalizePermissions(
-                            selectedPermissionDocument.permissions,
-                            selectedPermissionDocument.departmentId,
-                          );
-                          const rule = permissions[action.id];
+                  <div>
+                    <div className="d-none d-xl-block table-responsive">
+                      <table className="table table-sm table-borderless align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th style={{ width: "96px" }}>Quyền</th>
+                            <th>Nhóm người dùng</th>
+                            <th>Role</th>
+                            <th>Phòng ban</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {PERMISSION_ACTIONS.map((action) => {
+                            const permissions = normalizePermissions(
+                              selectedPermissionDocument.permissions,
+                              selectedPermissionDocument.departmentId,
+                            );
+                            const rule = permissions[action.id];
 
-                          return (
-                            <tr key={action.id} className="border-0">
-                              <td>
-                                <span className="badge bg-primary-subtle text-primary">
-                                  {action.label}
-                                </span>
-                              </td>
-                              <td>
-                                <CheckboxGroup
-                                  action={action.id}
-                                  documentId={selectedPermissionDocument.id}
-                                  options={USER_GROUP_OPTIONS}
-                                  scope="groups"
-                                  values={rule.groups}
-                                  onToggle={updateDocumentPermission}
-                                />
-                              </td>
-                              <td>
-                                <CheckboxGroup
-                                  action={action.id}
-                                  documentId={selectedPermissionDocument.id}
-                                  options={ROLE_OPTIONS}
-                                  scope="roles"
-                                  values={rule.roles}
-                                  onToggle={updateDocumentPermission}
-                                />
-                              </td>
-                              <td>
-                                <CheckboxGroup
-                                  action={action.id}
-                                  documentId={selectedPermissionDocument.id}
-                                  options={initialDepartments}
-                                  scope="departments"
-                                  values={rule.departments}
-                                  onToggle={updateDocumentPermission}
-                                />
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            return (
+                              <tr key={action.id} className="border-0">
+                                <td>
+                                  <span className="badge bg-primary-subtle text-primary">
+                                    {action.label}
+                                  </span>
+                                </td>
+                                <td>
+                                  <CheckboxGroup
+                                    action={action.id}
+                                    documentId={selectedPermissionDocument.id}
+                                    layout="wrap"
+                                    options={USER_GROUP_OPTIONS}
+                                    scope="groups"
+                                    values={rule.groups}
+                                    onToggle={updateDocumentPermission}
+                                  />
+                                </td>
+                                <td>
+                                  <CheckboxGroup
+                                    action={action.id}
+                                    documentId={selectedPermissionDocument.id}
+                                    layout="wrap"
+                                    options={ROLE_OPTIONS}
+                                    scope="roles"
+                                    values={rule.roles}
+                                    onToggle={updateDocumentPermission}
+                                  />
+                                </td>
+                                <td>
+                                  <CheckboxGroup
+                                    action={action.id}
+                                    documentId={selectedPermissionDocument.id}
+                                    layout="wrap"
+                                    options={initialDepartments}
+                                    scope="departments"
+                                    values={rule.departments}
+                                    onToggle={updateDocumentPermission}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="d-xl-none d-flex flex-column gap-2">
+                      {PERMISSION_ACTIONS.map((action) => {
+                        const permissions = normalizePermissions(
+                          selectedPermissionDocument.permissions,
+                          selectedPermissionDocument.departmentId,
+                        );
+                        const rule = permissions[action.id];
+
+                        return (
+                          <PermissionActionDropdown
+                            key={action.id}
+                            actionLabel={action.label}
+                            rule={rule}
+                          >
+                            <PermissionMobileGroup label="Nhóm người dùng">
+                              <CheckboxGroup
+                                action={action.id}
+                                documentId={selectedPermissionDocument.id}
+                                layout="stack"
+                                options={USER_GROUP_OPTIONS}
+                                scope="groups"
+                                values={rule.groups}
+                                onToggle={updateDocumentPermission}
+                              />
+                            </PermissionMobileGroup>
+                            <PermissionMobileGroup label="Role">
+                              <CheckboxGroup
+                                action={action.id}
+                                documentId={selectedPermissionDocument.id}
+                                layout="stack"
+                                options={ROLE_OPTIONS}
+                                scope="roles"
+                                values={rule.roles}
+                                onToggle={updateDocumentPermission}
+                              />
+                            </PermissionMobileGroup>
+                            <PermissionMobileGroup label="Phòng ban">
+                              <CheckboxGroup
+                                action={action.id}
+                                documentId={selectedPermissionDocument.id}
+                                layout="stack"
+                                options={initialDepartments}
+                                scope="departments"
+                                values={rule.departments}
+                                onToggle={updateDocumentPermission}
+                              />
+                            </PermissionMobileGroup>
+                          </PermissionActionDropdown>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-body-secondary">Chưa có tài liệu để cấu hình.</div>
@@ -1539,17 +1619,40 @@ export const DocumentsPage = ({ currentUser }) => {
         </div>
       )}
 
-      {(documentError || selectedDocument) && (
-        <div className="card mt-3">
-          <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <h6 className="card-title mb-1">Chi tiết & preview tài liệu</h6>
-            </div>
-            {documentDetailLoading && (
-              <span className="badge bg-info-subtle text-info">Đang tải metadata...</span>
-            )}
-          </div>
-          <div className="card-body">
+      {isDetailPanelOpen && (documentError || selectedDocument) && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100"
+          style={{
+            backgroundColor: "rgba(15, 23, 42, 0.45)",
+            zIndex: 1080,
+          }}
+        >
+          <div className="container-fluid h-100 py-4">
+            <div
+              className="card shadow-lg border-0 mx-auto h-100"
+              style={{
+                maxWidth: "1120px",
+                maxHeight: "calc(100vh - 48px)",
+              }}
+            >
+              <div className="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                  <h6 className="card-title mb-1">Chi tiết & preview tài liệu</h6>
+                </div>
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  {documentDetailLoading && (
+                    <span className="badge bg-info-subtle text-info">Đang tải metadata...</span>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-light border"
+                    onClick={() => setIsDetailPanelOpen(false)}
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+              <div className="card-body overflow-auto">
             {documentError && (
               <div className="alert alert-warning py-2" role="alert">
                 {documentError}
@@ -1675,6 +1778,8 @@ export const DocumentsPage = ({ currentUser }) => {
                 </div>
               </div>
             )}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1703,7 +1808,7 @@ export const DocumentsPage = ({ currentUser }) => {
           </select>
         </div>
         <div className="card-body">
-          <div className="table-responsive">
+          <div className="d-none d-lg-block table-responsive">
             <table className="table align-middle mb-0">
               <thead>
                 <tr>
@@ -1722,6 +1827,8 @@ export const DocumentsPage = ({ currentUser }) => {
                   const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
                   const canDownload = hasDownloadAccess && !downloadDisabledReason;
                   const canEdit = canUseDocumentAction(currentUser, doc, "edit");
+                  const categoryName =
+                    doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
 
                   return (
                     <tr
@@ -1740,94 +1847,35 @@ export const DocumentsPage = ({ currentUser }) => {
                           </div>
                         )}
                       </td>
-                      <td>{doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn"}</td>
+                      <td>{categoryName}</td>
                       <td>
-                        <span
-                          className={`badge ${
-                            hasDownloadAccess
-                              ? "bg-success-subtle text-success"
-                              : "bg-danger-subtle text-danger"
-                          }`}
-                          title={
-                            hasDownloadAccess
-                              ? getDocumentActionUrl(doc)
-                                ? "Được tải"
-                                : "Được cấp quyền tải, nhưng chưa có link tải"
-                              : getDownloadPermissionReason(currentUser, doc)
-                          }
-                        >
-                          {hasDownloadAccess ? "Được tải" : "Không tải"}
-                        </span>
+                        <DocumentDownloadBadge
+                          document={doc}
+                          hasDownloadAccess={hasDownloadAccess}
+                          currentUser={currentUser}
+                        />
                       </td>
                       <td>
-                        <span className="badge bg-body-secondary text-body">
-                          {doc.sourceType === "link" ? "Link" : "File"}
-                        </span>
-                        <span className="ms-2 text-body-secondary" style={{ fontSize: "12px" }}>
-                          {doc.sourceName || "-"}
-                        </span>
+                        <DocumentSource document={doc} />
                       </td>
                       <td>{doc.updatedAt}</td>
                       <td>
-                        {canEdit ? (
-                          <select
-                            className="form-select form-select-sm"
-                            value={doc.status}
-                            onChange={(e) => updateDocumentStatus(doc.id, e.target.value)}
-                            aria-label={`Cập nhật trạng thái ${doc.title}`}
-                          >
-                            {DOCUMENT_STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {status}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className={`badge ${getStatusBadgeClass(doc.status)}`}>
-                            {doc.status}
-                          </span>
-                        )}
+                        <DocumentStatusControl
+                          canEdit={canEdit}
+                          document={doc}
+                          onUpdateStatus={updateDocumentStatus}
+                        />
                       </td>
                       <td>
-                        <div className="d-flex justify-content-center gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            title="Xem tài liệu"
-                            aria-label="Xem tài liệu"
-                            onClick={() => handlePreviewDocument(doc)}
-                          >
-                            <EyeIcon />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            disabled={!canDownload}
-                            title={
-                              canDownload
-                                ? "Tải tài liệu"
-                                : downloadDisabledReason ||
-                                  "Bạn chưa có quyền tải"
-                            }
-                            aria-label="Tải tài liệu"
-                            onClick={() => handleDownloadDocument(doc)}
-                          >
-                            <DownloadIcon />
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            disabled={!canEdit}
-                            title={canEdit ? "Sửa tài liệu" : "Bạn chưa có quyền sửa"}
-                            aria-label="Sửa tài liệu"
-                            onClick={() => setSelectedPermissionDocId(String(doc.id))}
-                          >
-                            <EditIcon />
-                          </button>
-                        </div>
+                        <DocumentActionButtons
+                          canDownload={canDownload}
+                          canEdit={canEdit}
+                          document={doc}
+                          downloadDisabledReason={downloadDisabledReason}
+                          onDownload={handleDownloadDocument}
+                          onEdit={(document) => setSelectedPermissionDocId(String(document.id))}
+                          onPreview={handlePreviewDocument}
+                        />
                       </td>
                     </tr>
                   );
@@ -1842,23 +1890,298 @@ export const DocumentsPage = ({ currentUser }) => {
               </tbody>
             </table>
           </div>
+          <div className="d-lg-none d-flex flex-column gap-2">
+            {filteredDocuments.map((doc) => {
+              const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
+              const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
+              const canDownload = hasDownloadAccess && !downloadDisabledReason;
+              const canEdit = canUseDocumentAction(currentUser, doc, "edit");
+              const categoryName =
+                doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
+
+              return (
+                <details
+                  key={doc.id}
+                  className={`rounded border bg-body p-2 ${
+                    selectedDocument && String(selectedDocument.id) === String(doc.id)
+                      ? "border-primary"
+                      : ""
+                  }`}
+                >
+                  <summary
+                    className="d-flex align-items-start justify-content-between gap-2"
+                    style={{ cursor: "pointer", listStyle: "none" }}
+                  >
+                    <div className="min-w-0">
+                      <div className="fw-semibold text-body-emphasis text-break">{doc.title}</div>
+                      <div className="text-body-secondary text-break" style={{ fontSize: "12px" }}>
+                        {categoryName} · {doc.updatedAt}
+                      </div>
+                    </div>
+                    <DocumentDownloadBadge
+                      document={doc}
+                      hasDownloadAccess={hasDownloadAccess}
+                      currentUser={currentUser}
+                    />
+                  </summary>
+
+                  <div className="mt-2 border-top pt-2 d-flex flex-column gap-2">
+                    {doc.description && (
+                      <DocumentMobileMeta label="Mô tả" value={doc.description} />
+                    )}
+                    <DocumentMobileMeta label="Danh mục" value={categoryName} />
+                    <DocumentMobileMeta label="Nguồn">
+                      <DocumentSource document={doc} compact />
+                    </DocumentMobileMeta>
+                    <DocumentMobileMeta label="Cập nhật" value={doc.updatedAt} />
+                    <div>
+                      <div
+                        className="mb-1 fw-semibold text-body-secondary text-uppercase"
+                        style={{ fontSize: "10px" }}
+                      >
+                        Trạng thái
+                      </div>
+                      <DocumentStatusControl
+                        canEdit={canEdit}
+                        document={doc}
+                        onUpdateStatus={updateDocumentStatus}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-end mt-2">
+                    <DocumentActionButtons
+                      canDownload={canDownload}
+                      canEdit={canEdit}
+                      document={doc}
+                      downloadDisabledReason={downloadDisabledReason}
+                      onDownload={handleDownloadDocument}
+                      onEdit={(document) => setSelectedPermissionDocId(String(document.id))}
+                      onPreview={handlePreviewDocument}
+                    />
+                  </div>
+                </details>
+              );
+            })}
+            {filteredDocuments.length === 0 && (
+              <div className="rounded border bg-body-tertiary p-3 text-center text-body-secondary">
+                Không có tài liệu trong bộ lọc này.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-function CheckboxGroup({ action, documentId, onToggle, options, scope, values }) {
+function DocumentActionButtons({
+  canDownload,
+  canEdit,
+  document,
+  downloadDisabledReason,
+  onDownload,
+  onEdit,
+  onPreview,
+}) {
+  return (
+    <div className="d-flex justify-content-center gap-2">
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        title="Xem tài liệu"
+        aria-label="Xem tài liệu"
+        onClick={() => onPreview(document)}
+      >
+        <EyeIcon />
+      </button>
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        disabled={!canDownload}
+        title={canDownload ? "Tải tài liệu" : downloadDisabledReason || "Bạn chưa có quyền tải"}
+        aria-label="Tải tài liệu"
+        onClick={() => onDownload(document)}
+      >
+        <DownloadIcon />
+      </button>
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        disabled={!canEdit}
+        title={canEdit ? "Sửa tài liệu" : "Bạn chưa có quyền sửa"}
+        aria-label="Sửa tài liệu"
+        onClick={() => onEdit(document)}
+      >
+        <EditIcon />
+      </button>
+    </div>
+  );
+}
+
+function DocumentDownloadBadge({ currentUser, document, hasDownloadAccess }) {
+  return (
+    <span
+      className={`badge flex-shrink-0 ${
+        hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+      }`}
+      title={
+        hasDownloadAccess
+          ? getDocumentActionUrl(document)
+            ? "Được tải"
+            : "Được cấp quyền tải, nhưng chưa có link tải"
+          : getDownloadPermissionReason(currentUser, document)
+      }
+    >
+      {hasDownloadAccess ? "Được tải" : "Không tải"}
+    </span>
+  );
+}
+
+function DocumentMobileMeta({ children, label, value }) {
+  return (
+    <div className="rounded border bg-body-tertiary p-2">
+      <div
+        className="mb-1 fw-semibold text-body-secondary text-uppercase"
+        style={{ fontSize: "10px" }}
+      >
+        {label}
+      </div>
+      {children || (
+        <div className="fw-medium text-body-emphasis text-break" style={{ fontSize: "13px" }}>
+          {value || "-"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DocumentSource({ compact = false, document }) {
+  return (
+    <div className={compact ? "d-flex flex-wrap align-items-center gap-2" : ""}>
+      <span className="badge bg-body-secondary text-body">
+        {document.sourceType === "link" ? "Link" : "File"}
+      </span>
+      <span
+        className={`${compact ? "" : "ms-2"} text-body-secondary text-break`}
+        style={{ fontSize: "12px" }}
+      >
+        {document.sourceName || "-"}
+      </span>
+    </div>
+  );
+}
+
+function DocumentStatusControl({ canEdit, document, onUpdateStatus }) {
+  if (!canEdit) {
+    return <span className={`badge ${getStatusBadgeClass(document.status)}`}>{document.status}</span>;
+  }
+
+  return (
+    <select
+      className="form-select form-select-sm"
+      value={document.status}
+      onChange={(e) => onUpdateStatus(document.id, e.target.value)}
+      aria-label={`Cập nhật trạng thái ${document.title}`}
+    >
+      {DOCUMENT_STATUS_OPTIONS.map((status) => (
+        <option key={status} value={status}>
+          {status}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function PermissionActionDropdown({ actionLabel, children, rule }) {
+  const selectedCount =
+    (rule?.groups?.length || 0) + (rule?.roles?.length || 0) + (rule?.departments?.length || 0);
+
+  return (
+    <details className="rounded border bg-body">
+      <summary
+        className="d-flex align-items-center justify-content-between gap-2 p-2"
+        style={{ cursor: "pointer", listStyle: "none" }}
+      >
+        <span className="badge bg-primary-subtle text-primary">{actionLabel}</span>
+        <span className="text-body-secondary" style={{ fontSize: "12px" }}>
+          {selectedCount} quyền đã chọn
+        </span>
+      </summary>
+      <div className="border-top p-2">{children}</div>
+    </details>
+  );
+}
+
+function CategoryStatusBadge({ isHidden }) {
+  return (
+    <span
+      className={`badge flex-shrink-0 ${
+        isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
+      }`}
+    >
+      {isHidden ? "Đang ẩn" : "Hiển thị"}
+    </span>
+  );
+}
+
+function CategoryActionButtons({ category, disabled, onEdit, onToggleHidden }) {
+  return (
+    <div className="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        onClick={() => onEdit(category)}
+        disabled={disabled}
+        title="Sửa danh mục"
+        aria-label="Sửa danh mục"
+      >
+        <EditIcon />
+      </button>
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        onClick={() => onToggleHidden(category.id)}
+        disabled={disabled}
+        title={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
+        aria-label={category.isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
+      >
+        {category.isHidden ? <EyeIcon /> : <EyeOffIcon />}
+      </button>
+    </div>
+  );
+}
+
+function CheckboxGroup({
+  action,
+  documentId,
+  layout = "wrap",
+  onToggle,
+  options,
+  scope,
+  values,
+}) {
+  const isStacked = layout === "stack";
+
   return (
     <div
-      className="d-flex flex-wrap gap-2 rounded border bg-body-tertiary p-2"
-      style={{ minHeight: "46px" }}
+      className={`d-flex gap-2 rounded border bg-body-tertiary p-2 ${
+        isStacked ? "flex-column" : "flex-wrap"
+      }`}
+      style={{ minHeight: "46px", maxWidth: "100%" }}
     >
       {options.map((option) => (
         <label
           key={option.id}
-          className="d-inline-flex align-items-center gap-1 rounded border bg-body px-2 py-1"
-          style={{ fontSize: "12px" }}
+          className={`d-inline-flex align-items-center gap-2 rounded border bg-body px-2 py-1 ${
+            isStacked ? "w-100" : ""
+          }`}
+          style={{ fontSize: "12px", whiteSpace: "nowrap" }}
         >
           <input
             type="checkbox"
@@ -1869,6 +2192,20 @@ function CheckboxGroup({ action, documentId, onToggle, options, scope, values })
           <span>{option.label || option.name}</span>
         </label>
       ))}
+    </div>
+  );
+}
+
+function PermissionMobileGroup({ children, label }) {
+  return (
+    <div className="mb-2">
+      <div
+        className="mb-1 fw-semibold text-body-secondary text-uppercase"
+        style={{ fontSize: "10px" }}
+      >
+        {label}
+      </div>
+      {children}
     </div>
   );
 }
