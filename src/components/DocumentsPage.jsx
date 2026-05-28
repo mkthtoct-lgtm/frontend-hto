@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
@@ -41,6 +42,7 @@ const DOCUMENT_STATUS_OPTIONS = [
 ];
 
 const DOCUMENT_DOWNLOAD_BLOCKED_STATUSES = new Set(["Nháp", "Ngừng dùng"]);
+const REMOTE_DOCUMENT_PAGE_SIZE = 100;
 
 const canUploadDocument = (user) =>
   ["admin", "truongbophan"].includes(user?.role) ||
@@ -182,13 +184,39 @@ const canUseDocumentAction = (user, document, action) => {
   );
 };
 
-const getDownloadDisabledReason = (user, document) => {
+const getDocumentActionUrl = (document) =>
+  document.fileUrl ||
+  (document.sourceType === "link" ? getAbsoluteDocumentUrl(document.sourceName) : "");
+
+const hasDownloadPermission = (user, document) => {
+  if (DOCUMENT_DOWNLOAD_BLOCKED_STATUSES.has(document.status)) {
+    return false;
+  }
+
+  return canUseDocumentAction(user, document, "download");
+};
+
+const getDownloadPermissionReason = (user, document) => {
+  if (!canUseDocumentAction(user, document, "download")) {
+    return "Bạn chưa có quyền tải";
+  }
+
   if (DOCUMENT_DOWNLOAD_BLOCKED_STATUSES.has(document.status)) {
     return `Tài liệu đang ở trạng thái "${document.status}" nên chưa thể tải xuống`;
   }
 
-  if (!canUseDocumentAction(user, document, "download")) {
-    return "Bạn chưa có quyền tải";
+  return "";
+};
+
+const getDownloadDisabledReason = (user, document) => {
+  const permissionReason = getDownloadPermissionReason(user, document);
+
+  if (permissionReason) {
+    return permissionReason;
+  }
+
+  if (!getDocumentActionUrl(document)) {
+    return "Tài liệu đã được cấp quyền tải nhưng chưa có link tải.";
   }
 
   return "";
@@ -239,6 +267,161 @@ const getStatusBadgeClass = (status) => {
     default:
       return "bg-body-secondary text-body";
   }
+};
+
+const formatDate = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString("vi-VN");
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const normalizeDocumentStatus = (status) => {
+  switch (status) {
+    case "draft":
+      return "Nháp";
+    case "pending":
+      return "Chờ duyệt";
+    case "inactive":
+    case "archived":
+      return "Ngừng dùng";
+    case "active":
+      return "Đang dùng";
+    default:
+      return status || "Đang dùng";
+  }
+};
+
+const getFileNameFromUrl = (url) => {
+  if (!url) return "";
+
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    const pathnameParts = parsedUrl.pathname.split("/").filter(Boolean);
+
+    return decodeURIComponent(pathnameParts[pathnameParts.length - 1] || "");
+  } catch {
+    const pathnameParts = String(url).split("?")[0].split("/").filter(Boolean);
+
+    return decodeURIComponent(pathnameParts[pathnameParts.length - 1] || "");
+  }
+};
+
+const getAbsoluteDocumentUrl = (url) => {
+  if (!url) return "";
+
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  const apiOrigin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
+
+  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
+const normalizeDocumentsPayload = (payload) => {
+  if (Array.isArray(payload)) return { items: payload, total: payload.length };
+  if (Array.isArray(payload?.items)) return { items: payload.items, total: payload.total };
+  if (Array.isArray(payload?.data)) return { items: payload.data, total: payload.total };
+
+  return { items: [], total: 0 };
+};
+
+const normalizeDocument = (document) => {
+  const id = document.id || document._id;
+  const storedPermissions = readStoredPermissions();
+  const storedStatuses = readStoredStatuses();
+  const category = normalizeDocumentCategory(document);
+  const fileUrl = document.fileUrl || document.url || document.link || "";
+  const absoluteFileUrl = getAbsoluteDocumentUrl(fileUrl);
+  const fileName =
+    document.fileName ||
+    document.sourceName ||
+    getFileNameFromUrl(fileUrl) ||
+    document.title ||
+    "Tài liệu";
+  const fileType =
+    document.fileType ||
+    document.mimeType ||
+    fileName.split(".").pop()?.toLowerCase() ||
+    "";
+  const status = normalizeDocumentStatus(document.status);
+  const departmentId =
+    document.departmentId ||
+    document.allowedDepartmentId ||
+    document.category?.departmentId ||
+    "";
+  const metadata = {
+    fileType: fileType || "-",
+    productId: document.productId || "-",
+    schoolId: document.schoolId || "-",
+    uploadedById: document.uploadedById || "-",
+    isAiTrainingSource: Boolean(document.isAiTrainingSource),
+    createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
+    rawStatus: document.status || "-",
+  };
+  const canDownload =
+    typeof document.canDownload === "boolean"
+      ? document.canDownload
+      : true;
+  const permissions = normalizePermissions(
+    storedPermissions[id] ||
+      document.permissions || {
+        view: { groups: ["all"], roles: [], departments: [] },
+        download: {
+          groups: canDownload ? ["all"] : [],
+          roles: [],
+          departments: [],
+        },
+        edit: { groups: ["manager"], roles: ["admin", "truongbophan"], departments: [] },
+      },
+    departmentId,
+  );
+
+  return {
+    ...document,
+    id,
+    categoryId: category?.id || document.categoryId || "",
+    categoryName: category?.name || document.categoryName || "Danh mục chưa đặt tên",
+    departmentId,
+    updatedAt: formatDate(document.updatedAt),
+    createdAt: formatDate(document.createdAt),
+    status: storedStatuses[id] || status,
+    sourceType: document.sourceType || (absoluteFileUrl ? "file" : "link"),
+    sourceName: fileName,
+    fileType,
+    fileUrl: absoluteFileUrl,
+    previewImage: document.previewImage || document.thumbnailUrl || "",
+    metadata,
+    canDownload,
+    canView: document.canView ?? true,
+    isRemote: true,
+    permissions,
+  };
 };
 
 const applyStoredPermissions = (documents) => {
@@ -325,7 +508,7 @@ async function requestReadableDocuments(path = "", options = {}) {
 
 const getReadableDocumentCategories = async () => {
   const payload = await requestReadableDocuments("?page=1&limit=100");
-  const documents = Array.isArray(payload) ? payload : payload?.items || [];
+  const { items: documents } = normalizeDocumentsPayload(payload);
   const categoriesById = new Map();
 
   documents.forEach((document) => {
@@ -337,6 +520,31 @@ const getReadableDocumentCategories = async () => {
   });
 
   return Array.from(categoriesById.values());
+};
+
+const getReadableDocuments = async (params = {}) => {
+  const searchParams = new URLSearchParams({
+    page: String(params.page || 1),
+    limit: String(params.limit || REMOTE_DOCUMENT_PAGE_SIZE),
+  });
+
+  if (params.categoryId && params.categoryId !== "all") {
+    searchParams.set("categoryId", params.categoryId);
+  }
+
+  const payload = await requestReadableDocuments(`?${searchParams.toString()}`);
+  const { items, total } = normalizeDocumentsPayload(payload);
+
+  return {
+    items: items.map(normalizeDocument).filter((document) => document.id),
+    total: total ?? items.length,
+  };
+};
+
+const getReadableDocumentDetail = async (documentId) => {
+  const payload = await requestReadableDocuments(`/${documentId}`);
+
+  return normalizeDocument(payload);
 };
 
 const createDocumentCategory = async (input) => {
@@ -368,6 +576,11 @@ const toggleDocumentCategoryVisibility = async (categoryId) => {
 export const DocumentsPage = ({ currentUser }) => {
   const [categories, setCategories] = useState([]);
   const [documents, setDocuments] = useState(() => applyStoredPermissions(initialDocuments));
+  const [documentTotal, setDocumentTotal] = useState(initialDocuments.length);
+  const [documentLoading, setDocumentLoading] = useState(false);
+  const [documentDetailLoading, setDocumentDetailLoading] = useState(false);
+  const [documentError, setDocumentError] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const [activeCategory, setActiveCategory] = useState("all");
   const [categoryPage, setCategoryPage] = useState(1);
   const [editingId, setEditingId] = useState(null);
@@ -484,6 +697,74 @@ export const DocumentsPage = ({ currentUser }) => {
       isMounted = false;
     };
   }, [canLoadCategories, canManageCategories]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!currentUser) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadDocuments = async () => {
+      setDocumentLoading(true);
+      setDocumentError("");
+
+      try {
+        const documentData = await getReadableDocuments({
+          categoryId: activeCategory,
+          limit: REMOTE_DOCUMENT_PAGE_SIZE,
+        });
+        const nextDocuments =
+          documentData.items.length > 0
+            ? documentData.items
+            : applyStoredPermissions(initialDocuments);
+
+        if (isMounted) {
+          setDocuments(nextDocuments);
+          setDocumentTotal(documentData.items.length > 0 ? documentData.total : nextDocuments.length);
+          setSelectedPermissionDocId((currentId) => {
+            if (nextDocuments.some((document) => String(document.id) === currentId)) {
+              return currentId;
+            }
+
+            return String(nextDocuments[0]?.id || "");
+          });
+          setSelectedDocument((currentDocument) => {
+            if (
+              currentDocument &&
+              nextDocuments.some(
+                (document) => String(document.id) === String(currentDocument.id),
+              )
+            ) {
+              return currentDocument;
+            }
+
+            return nextDocuments[0] || null;
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setDocumentError(
+            error instanceof Error
+              ? error.message
+              : "Không thể tải danh sách tài liệu từ API.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setDocumentLoading(false);
+        }
+      }
+    };
+
+    void loadDocuments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCategory, currentUser]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -621,6 +902,7 @@ export const DocumentsPage = ({ currentUser }) => {
         uploadForm.sourceType === "file"
           ? uploadForm.file.name
           : uploadForm.link.trim(),
+      fileUrl: uploadForm.sourceType === "link" ? uploadForm.link.trim() : "",
       description: uploadForm.description.trim(),
       permissions: createDefaultPermissions(uploadForm.departmentId),
     };
@@ -687,12 +969,64 @@ export const DocumentsPage = ({ currentUser }) => {
     setUploadSuccess("Đã cập nhật trạng thái tài liệu.");
   };
 
+  const handlePreviewDocument = async (document) => {
+    setSelectedDocument(document);
+    setUploadSuccess("");
+    setDocumentError("");
+
+    if (!document.isRemote) {
+      return;
+    }
+
+    setDocumentDetailLoading(true);
+
+    try {
+      const detail = await getReadableDocumentDetail(document.id);
+
+      setSelectedDocument(detail);
+      setDocuments((prev) =>
+        prev.map((item) => (String(item.id) === String(detail.id) ? detail : item)),
+      );
+    } catch (error) {
+      setDocumentError(
+        error instanceof Error ? error.message : "Không thể tải chi tiết tài liệu.",
+      );
+    } finally {
+      setDocumentDetailLoading(false);
+    }
+  };
+
+  const handleDownloadDocument = (document) => {
+    const downloadDisabledReason = getDownloadDisabledReason(currentUser, document);
+
+    if (downloadDisabledReason) {
+      setUploadSuccess("");
+      setDocumentError(downloadDisabledReason);
+      return;
+    }
+
+    const documentUrl = getDocumentActionUrl(document);
+
+    if (!documentUrl) {
+      setUploadSuccess("");
+      setDocumentError("Tài liệu chưa có link tải.");
+      return;
+    }
+
+    window.open(documentUrl, "_blank", "noopener,noreferrer");
+    setDocumentError("");
+    setUploadSuccess(`Đã mở link tải: ${document.title}`);
+  };
+
   return (
     <div className="container-fluid">
       <div className="app-page-head d-flex flex-wrap gap-3 align-items-center justify-content-between">
         <div className="clearfix">
           <h1 className="app-page-title mb-0">Tài Liệu & Biểu Mẫu</h1>
         </div>
+        <span className="badge bg-primary-subtle text-primary">
+          {documentLoading ? "Đang tải tài liệu..." : `${documentTotal} tài liệu được phân quyền`}
+        </span>
       </div>
 
       <div className="row g-3">
@@ -1205,9 +1539,156 @@ export const DocumentsPage = ({ currentUser }) => {
         </div>
       )}
 
+      {(documentError || selectedDocument) && (
+        <div className="card mt-3">
+          <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <h6 className="card-title mb-1">Chi tiết & preview tài liệu</h6>
+            </div>
+            {documentDetailLoading && (
+              <span className="badge bg-info-subtle text-info">Đang tải metadata...</span>
+            )}
+          </div>
+          <div className="card-body">
+            {documentError && (
+              <div className="alert alert-warning py-2" role="alert">
+                {documentError}
+              </div>
+            )}
+            {selectedDocument && (
+              <div className="row g-3">
+                <div className="col-lg-4">
+                  <DocumentPreview
+                    categoryName={
+                      selectedDocument.categoryName ||
+                      categoryMap.get(String(selectedDocument.categoryId))?.name ||
+                      "Danh mục ẩn"
+                    }
+                    departmentName={
+                      departmentMap.get(selectedDocument.departmentId)?.name || "Theo danh mục"
+                    }
+                    document={selectedDocument}
+                  />
+                </div>
+                <div className="col-lg-8">
+                  <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
+                    <div>
+                      <h5 className="mb-1 text-body-emphasis">{selectedDocument.title}</h5>
+                      <div className="text-body-secondary" style={{ fontSize: "13px" }}>
+                        {selectedDocument.sourceName || "-"}
+                      </div>
+                    </div>
+                    <div className="d-flex gap-2 align-items-start">
+                      {getDocumentActionUrl(selectedDocument) ? (
+                        <a
+                          className="btn btn-sm btn-outline-primary"
+                          href={getDocumentActionUrl(selectedDocument)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Mở preview/link
+                        </a>
+                      ) : (
+                        <button type="button" className="btn btn-sm btn-outline-secondary" disabled>
+                          Chưa có link
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-success"
+                        disabled={Boolean(getDownloadDisabledReason(currentUser, selectedDocument))}
+                        title={
+                          getDownloadDisabledReason(currentUser, selectedDocument) ||
+                          "Tải tài liệu"
+                        }
+                        onClick={() => handleDownloadDocument(selectedDocument)}
+                      >
+                        Tải xuống
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="row g-2">
+                    <MetadataItem label="ID" value={selectedDocument.id} />
+                    <MetadataItem
+                      label="Danh mục"
+                      value={
+                        selectedDocument.categoryName ||
+                        categoryMap.get(String(selectedDocument.categoryId))?.name ||
+                        "-"
+                      }
+                    />
+                    <MetadataItem label="Loại file" value={selectedDocument.fileType || "-"} />
+                    <MetadataItem label="Trạng thái" value={selectedDocument.status} />
+                    <MetadataItem
+                      label="Quyền download"
+                      value={
+                        hasDownloadPermission(currentUser, selectedDocument)
+                          ? "Được tải"
+                          : "Không được tải"
+                      }
+                    />
+                    <MetadataItem
+                      label="Trạng thái link tải"
+                      value={
+                        getDocumentActionUrl(selectedDocument)
+                          ? "Có link tải"
+                          : hasDownloadPermission(currentUser, selectedDocument)
+                            ? "Được cấp quyền, chưa có link tải"
+                            : "Không có link tải"
+                      }
+                    />
+                    <MetadataItem
+                      label="Lý do chặn tải"
+                      value={getDownloadDisabledReason(currentUser, selectedDocument) || "Không bị chặn"}
+                    />
+                    <MetadataItem
+                      label="Nguồn AI"
+                      value={selectedDocument.metadata?.isAiTrainingSource ? "Có" : "Không"}
+                    />
+                    <MetadataItem
+                      label="Product ID"
+                      value={selectedDocument.metadata?.productId || "-"}
+                    />
+                    <MetadataItem
+                      label="School ID"
+                      value={selectedDocument.metadata?.schoolId || "-"}
+                    />
+                    <MetadataItem
+                      label="Người upload"
+                      value={selectedDocument.metadata?.uploadedById || "-"}
+                    />
+                    <MetadataItem
+                      label="Ngày tạo"
+                      value={formatDateTime(selectedDocument.metadata?.createdAt)}
+                    />
+                    <MetadataItem
+                      label="Cập nhật"
+                      value={formatDateTime(selectedDocument.metadata?.updatedAt)}
+                    />
+                    <MetadataItem
+                      label="File URL"
+                      value={getDocumentActionUrl(selectedDocument) || "-"}
+                      wide
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="card mt-3">
         <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
-          <h6 className="card-title mb-0">Danh sách tài liệu</h6>
+          <div>
+            <h6 className="card-title mb-0">Danh sách tài liệu</h6>
+            {documentLoading && (
+              <div className="text-body-secondary mt-1" style={{ fontSize: "12px" }}>
+                Đang tải danh sách từ API...
+              </div>
+            )}
+          </div>
           <select
             className="form-select w-auto"
             value={activeCategory}
@@ -1228,7 +1709,7 @@ export const DocumentsPage = ({ currentUser }) => {
                 <tr>
                   <th>Tài liệu</th>
                   <th>Danh mục</th>
-                  <th>Phòng ban nhận</th>
+                  <th>Quyền download</th>
                   <th>Nguồn</th>
                   <th>Cập nhật</th>
                   <th>Trạng thái</th>
@@ -1238,11 +1719,19 @@ export const DocumentsPage = ({ currentUser }) => {
               <tbody>
                 {filteredDocuments.map((doc) => {
                   const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
-                  const canDownload = !downloadDisabledReason;
+                  const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
+                  const canDownload = hasDownloadAccess && !downloadDisabledReason;
                   const canEdit = canUseDocumentAction(currentUser, doc, "edit");
 
                   return (
-                    <tr key={doc.id}>
+                    <tr
+                      key={doc.id}
+                      className={
+                        selectedDocument && String(selectedDocument.id) === String(doc.id)
+                          ? "table-active"
+                          : ""
+                      }
+                    >
                       <td>
                         <div className="fw-semibold text-body-emphasis">{doc.title}</div>
                         {doc.description && (
@@ -1251,8 +1740,25 @@ export const DocumentsPage = ({ currentUser }) => {
                           </div>
                         )}
                       </td>
-                      <td>{categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn"}</td>
-                      <td>{departmentMap.get(doc.departmentId)?.name || "-"}</td>
+                      <td>{doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn"}</td>
+                      <td>
+                        <span
+                          className={`badge ${
+                            hasDownloadAccess
+                              ? "bg-success-subtle text-success"
+                              : "bg-danger-subtle text-danger"
+                          }`}
+                          title={
+                            hasDownloadAccess
+                              ? getDocumentActionUrl(doc)
+                                ? "Được tải"
+                                : "Được cấp quyền tải, nhưng chưa có link tải"
+                              : getDownloadPermissionReason(currentUser, doc)
+                          }
+                        >
+                          {hasDownloadAccess ? "Được tải" : "Không tải"}
+                        </span>
+                      </td>
                       <td>
                         <span className="badge bg-body-secondary text-body">
                           {doc.sourceType === "link" ? "Link" : "File"}
@@ -1290,7 +1796,7 @@ export const DocumentsPage = ({ currentUser }) => {
                             style={{ width: "32px", height: "32px", padding: 0 }}
                             title="Xem tài liệu"
                             aria-label="Xem tài liệu"
-                            onClick={() => setUploadSuccess(`Đang xem: ${doc.title}`)}
+                            onClick={() => handlePreviewDocument(doc)}
                           >
                             <EyeIcon />
                           </button>
@@ -1299,9 +1805,14 @@ export const DocumentsPage = ({ currentUser }) => {
                             className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
                             style={{ width: "32px", height: "32px", padding: 0 }}
                             disabled={!canDownload}
-                            title={canDownload ? "Tải tài liệu" : downloadDisabledReason}
+                            title={
+                              canDownload
+                                ? "Tải tài liệu"
+                                : downloadDisabledReason ||
+                                  "Bạn chưa có quyền tải"
+                            }
                             aria-label="Tải tài liệu"
-                            onClick={() => setUploadSuccess(`Đã ghi nhận tải: ${doc.title}`)}
+                            onClick={() => handleDownloadDocument(doc)}
                           >
                             <DownloadIcon />
                           </button>
@@ -1362,12 +1873,30 @@ function CheckboxGroup({ action, documentId, onToggle, options, scope, values })
   );
 }
 
+function MetadataItem({ label, value, wide = false }) {
+  return (
+    <div className={wide ? "col-12" : "col-md-6 col-xl-4"}>
+      <div className="rounded border bg-body-tertiary p-2 h-100">
+        <div className="text-body-secondary text-uppercase" style={{ fontSize: "10px" }}>
+          {label}
+        </div>
+        <div
+          className="fw-medium text-body-emphasis text-break"
+          style={{ fontSize: "13px", lineHeight: 1.35 }}
+        >
+          {value || "-"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DocumentPreview({ categoryName, departmentName, document }) {
   const extension = document.sourceName?.split(".").pop()?.toUpperCase() || "DOC";
   const isLink = document.sourceType === "link";
 
   return (
-    <div className="mt-7 rounded border bg-body-tertiary p-2">
+    <div className="rounded border bg-body-tertiary p-2">
       <div className="rounded border bg-body overflow-hidden">
         <div
           className="d-flex align-items-center justify-content-center bg-primary-subtle text-primary"

@@ -1,6 +1,7 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 const LOCAL_AUDIT_LOGS_KEY = "hto_audit_logs_mock";
 

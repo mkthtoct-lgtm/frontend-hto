@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import "./UserList.css";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+// const API_BASE_URL =
+//   import.meta.env.VITE_API_BASE_URL ||
+//   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
+const API_BASE_URL = "http://localhost:8080/api/v1";
 
 // --- CẤU HÌNH DANH SÁCH ROLE VÀ LINK CHỨC NĂNG TƯƠNG ỨNG ---
 // BẠN HÃY THAY THẾ CÁC LINK TRONG BIẾN NÀY BẰNG LINK TỪ FILE EXCEL CỦA BẠN
@@ -17,6 +18,22 @@ const ROLE_MAP = {
   daily: { label: "Đại lý", color: "bg-success", link: "/role-links/dai-ly", roleId: "69fc5af582ef85451120772e" },
   congtacvien: { label: "Cộng tác viên", color: "bg-secondary", link: "/role-links/cong-tac-vien", roleId: "69fc5af682ef85451120772f" },
   hethong: { label: "Hệ thống", color: "bg-dark", link: "/role-links/he-thong", roleId: "69fc5af782ef854511207730" }
+};
+
+const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
+const DASHBOARD_EDITORS_KEY = "hto_dashboard_editors";
+
+const readDashboardEditors = () => {
+  try {
+    const value = localStorage.getItem(DASHBOARD_EDITORS_KEY);
+    return value ? JSON.parse(value) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeDashboardEditors = (editors) => {
+  localStorage.setItem(DASHBOARD_EDITORS_KEY, JSON.stringify(editors));
 };
 
 const ROLE_ID_TO_KEY = Object.fromEntries(
@@ -97,6 +114,10 @@ export const UserList = ({ currentUser }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
+
+  // Dashboard editor permissions (admin-only feature)
+  const [dashboardEditors, setDashboardEditors] = useState(() => readDashboardEditors());
+  const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.roleId === ADMIN_ROLE_ID;
 
   // States quản lý Modal (Create/Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -230,6 +251,16 @@ export const UserList = ({ currentUser }) => {
     ),
   );
 
+  const toggleDashboardEditor = (userId) => {
+    setDashboardEditors((prev) => {
+      const next = prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId];
+      writeDashboardEditors(next);
+      return next;
+    });
+  };
+
   if (!["admin", "bangiamdoc"].includes(currentUser?.role)) {
     return (
       <div className="container-fluid pt-5 text-center">
@@ -302,17 +333,18 @@ export const UserList = ({ currentUser }) => {
             <thead>
               <tr>
                 <th style={{ width: "5%" }}>#</th>
-                <th style={{ width: "25%" }}>Thông tin nhân viên</th>
-                <th style={{ width: "25%" }}>Vai trò & Quyền</th>
-                <th style={{ width: "15%" }}>Phòng ban</th>
-                <th style={{ width: "15%" }}>Trạng thái</th>
-                <th style={{ width: "15%", textAlign: "center" }}>Thao tác</th>
+                <th style={{ width: "24%" }}>Thông tin nhân viên</th>
+                <th style={{ width: "24%" }}>Vai trò & Quyền</th>
+                <th style={{ width: "14%" }}>Phòng ban</th>
+                <th style={{ width: "14%" }}>Trạng thái</th>
+                {isCurrentUserAdmin && <th style={{ width: "10%" }}>Quyền dashboard</th>}
+                <th style={{ width: "9%", textAlign: "center" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5">
+                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-5">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
@@ -320,17 +352,18 @@ export const UserList = ({ currentUser }) => {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-4 text-danger">{error}</td>
+                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-4 text-danger">{error}</td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-5 text-body-secondary">
+                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-5 text-body-secondary">
                     Không tìm thấy tài khoản nào phù hợp.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((user, index) => {
                   const roleData = ROLE_MAP[user.role] || { label: user.role, color: "bg-secondary", link: "#" };
+                  const isDashboardEditor = dashboardEditors.includes(user.id);
                   
                   return (
                     <tr key={user.id}>
@@ -373,6 +406,18 @@ export const UserList = ({ currentUser }) => {
                           )}
                         </span>
                       </td>
+                      {isCurrentUserAdmin && (
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${isDashboardEditor ? "btn-success" : "btn-light border"}`}
+                            onClick={() => toggleDashboardEditor(user.id)}
+                            disabled={actionLoading}
+                          >
+                            {isDashboardEditor ? "Được sửa" : "Chỉ xem"}
+                          </button>
+                        </td>
+                      )}
                       <td className="text-center">
                         <div className="d-inline-flex align-items-center justify-content-center gap-2" style={{ minWidth: "76px" }}>
                         <button 

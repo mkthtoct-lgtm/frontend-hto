@@ -11,6 +11,8 @@ import { AuthLayout } from "./login/AuthLayout";
 import { UserList } from "./UserList/UserList";
 import { DepartmentsPage } from "./departments/DepartmentsPage";
 import { AuditLogPage } from "./auditLogs/AuditLogPage";
+import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
+import { ProductsPage } from "./products/ProductsPage";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -359,8 +361,12 @@ function App() {
           <DepartmentsPage currentUser={user} />
         ) : currentPage === "auditLogs" ? (
           <AuditLogPage currentUser={user} />
+        ) : currentPage === "jobDescriptions" ? (
+          <JobDescriptionsPage currentUser={user} />
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
+        ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (
+          <ProductsPage currentUser={user} currentPage={currentPage} onNavigate={setCurrentPage} />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
             

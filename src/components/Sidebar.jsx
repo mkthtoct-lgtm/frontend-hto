@@ -1,12 +1,41 @@
 import { useState } from "react";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
+const PRODUCT_STORAGE_KEY = "hto_products";
+const PRODUCT_TYPES = [
+  { id: "duhocduc", label: "Du học - Đức" },
+  { id: "dinhcu", label: "Định cư" },
+  { id: "visa", label: "Visa" },
+  { id: "daotaongonngu", label: "Đào tạo ngôn ngữ" },
+  { id: "nophosoonline", label: "Nộp hồ sơ online" },
+];
+const DEFAULT_PRODUCT_LINKS = [
+  { id: "product-du-hoc-duc", name: "Du học nghề Đức", type: "duhocduc" },
+  { id: "product-visa", name: "Dịch vụ visa Đức", type: "visa" },
+  { id: "product-language", name: "Khóa tiếng Đức B1", type: "daotaongonngu" },
+];
 
 const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
+
+const getSidebarProducts = () => {
+  try {
+    const storedValue = window.localStorage.getItem(PRODUCT_STORAGE_KEY);
+    const products = storedValue ? JSON.parse(storedValue) : DEFAULT_PRODUCT_LINKS;
+
+    return Array.isArray(products) ? products : DEFAULT_PRODUCT_LINKS;
+  } catch {
+    return DEFAULT_PRODUCT_LINKS;
+  }
+};
 
 export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar }) => {
   // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
   const [openMenu, setOpenMenu] = useState("sanpham");
+  const [openProductCategory, setOpenProductCategory] = useState("duhocduc");
+  const sidebarProducts = getSidebarProducts();
+  const isProductPage =
+    ["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham"].includes(currentPage) ||
+    currentPage.startsWith("product:");
 
   return (
     <aside className="app-menubar" id="menubar">
@@ -70,7 +99,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 2. SẢN PHẨM --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isProductPage ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -103,30 +132,56 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "sanpham" ? "block" : "none", paddingLeft: "52px" }}>
               <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "duhocduc" || currentPage === "dashboard" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("duhocduc"); }}>
-                  Du học - Đức
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "sanpham" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("sanpham"); }}>
+                  Tổng quan sản phẩm
                 </a>
               </li>
-              <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "dinhcu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("dinhcu"); }}>
-                  Định cư
-                </a>
-              </li>
-              <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "visa" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("visa"); }}>
-                  Visa
-                </a>
-              </li>
-              <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "daotaongonngu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("daotaongonngu"); }}>
-                  Đào tạo ngôn ngữ
-                </a>
-              </li>
-              <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("nophosoonline"); }}>
-                  Nộp hồ sơ online
-                </a>
-              </li>
+              {PRODUCT_TYPES.map((type) => {
+                const products = sidebarProducts.filter((product) => product.type === type.id);
+                const isTypeActive =
+                  currentPage === type.id ||
+                  products.some((product) => currentPage === `product:${product.id}`);
+
+                return (
+                  <li className="menu-item mb-1" key={type.id}>
+                    <a className={`menu-link d-flex align-items-center px-3 py-2 rounded-2 ${isTypeActive ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.(type.id); }}>
+                      <span style={{ flex: 1 }}>{type.label}</span>
+                      <span
+                        className="d-inline-flex"
+                        style={{ cursor: "pointer", padding: "2px" }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenProductCategory(openProductCategory === type.id ? "" : type.id);
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openProductCategory === type.id || isTypeActive ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </span>
+                    </a>
+                    {products.length > 0 && (openProductCategory === type.id || isTypeActive) && (
+                      <ul className="list-unstyled mb-1" style={{ paddingLeft: "14px" }}>
+                        {products.map((product) => (
+                          <li className="menu-item" key={product.id}>
+                            <a
+                              className={`menu-link d-block px-3 py-1 rounded-2 ${currentPage === `product:${product.id}` ? "text-primary fw-semibold" : "text-body-secondary"}`}
+                              style={{ textDecoration: "none", fontSize: "12px" }}
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                onNavigate?.(`product:${product.id}`);
+                              }}
+                            >
+                              {product.name}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </li>
 
@@ -290,6 +345,28 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           </li>
 
           {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
+          <li className="menu-item mb-2 border-top pt-3 mt-3">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "jobDescriptions" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("jobDescriptions");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                  <polyline points="14 2 14 7 19 7"></polyline>
+                  <line x1="9" y1="13" x2="15" y2="13"></line>
+                  <line x1="9" y1="17" x2="13" y2="17"></line>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>JD công việc</span>
+            </a>
+          </li>
+
           <li className="menu-item mb-2 border-top pt-3 mt-3">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "users" ? "text-primary fw-bold" : "text-body-secondary"}`}
