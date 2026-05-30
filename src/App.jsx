@@ -14,6 +14,7 @@ import { UserList } from "./UserList/UserList";
 import { DepartmentsPage } from "./departments/DepartmentsPage";
 import { AuditLogPage } from "./auditLogs/AuditLogPage";
 import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
+import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
 
 const ROLE_IDS = {
@@ -154,6 +155,7 @@ const resetAuthUrl = () => {
 
 function App() {
   const [currentPage, setCurrentPage] = useState(() => getStoredPage());
+  const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [user, setUser] = useState(() => getStoredUser());
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
   const [theme, setTheme] = useState(() => {
@@ -254,6 +256,13 @@ function App() {
     setTheme((currentTheme) => (currentTheme === "light" ? "light" : "dark"));
   };
 
+  const handleNavigate = (page, options = {}) => {
+    setCurrentPage(page);
+    setSelectedNotificationId(
+      page === "notifications" ? options.notificationId || null : null,
+    );
+  };
+
   const handleLogin = (userData) => {
     if (!hasStoredSession()) {
       setUser(null);
@@ -344,13 +353,14 @@ function App() {
     <div className="page-layout bg-body-tertiary d-flex flex-column min-vh-100">
       <Header 
         user={user}
+        onNavigate={handleNavigate}
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 
         onLogout={handleLogout}
       />
       <Sidebar
         currentUser={user}
-        onNavigate={setCurrentPage}
+        onNavigate={handleNavigate}
         currentPage={currentPage}
         onToggleSidebar={handleToggleSidebar}
       />
@@ -365,6 +375,11 @@ function App() {
           <AuditLogPage currentUser={user} />
         ) : currentPage === "jobDescriptions" ? (
           <JobDescriptionsPage currentUser={user} />
+        ) : currentPage === "notifications" ? (
+          <NotificationsPage
+            currentUser={user}
+            selectedNotificationId={selectedNotificationId}
+          />
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
         ) : currentPage === "nghiepvu" ? (
