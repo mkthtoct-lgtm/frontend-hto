@@ -311,6 +311,26 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 7. TÀI LIỆU & BIỂU MẪU --- */}
           <li className="menu-item mb-2">
             <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "notifications" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("notifications");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Thông báo nội bộ</span>
+            </a>
+          </li>
+
+          <li className="menu-item mb-2">
+            <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "documents" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"

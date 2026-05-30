@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 // const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
@@ -9,6 +9,7 @@ const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
 const DOCUMENT_PERMISSIONS_STORAGE_KEY = "hto_document_permissions";
 const DOCUMENT_STATUS_STORAGE_KEY = "hto_document_statuses";
+const DOCUMENT_PREVIEWS_STORAGE_KEY = "hto_document_previews";
 
 const ROLE_OPTIONS = [
   { id: "admin", roleId: ADMIN_ROLE_ID, label: "Admin" },
@@ -116,6 +117,90 @@ const emptyUploadForm = {
   description: "",
 };
 
+const emptyDocumentEditForm = {
+  title: "",
+  categoryId: "",
+  departmentId: "",
+  fileUrl: "",
+  fileType: "",
+  status: "Đang dùng",
+  description: "",
+};
+
+const createDocumentEditForm = (document = {}) => ({
+  title: document.title || "",
+  categoryId: document.categoryId || "",
+  departmentId: document.departmentId || "",
+  fileUrl: getDocumentActionUrl(document),
+  fileType: document.fileType || document.metadata?.fileType || "",
+  status: document.status || "Đang dùng",
+  description: document.description || "",
+});
+
+const buildUploadPreviewDocument = async (uploadForm, categories = []) => {
+  const now = new Date();
+  const sourceName =
+    uploadForm.sourceType === "file" ? uploadForm.file?.name || "" : uploadForm.link.trim();
+  const previewUrl =
+    uploadForm.sourceType === "file" && uploadForm.file
+      ? URL.createObjectURL(uploadForm.file)
+      : uploadForm.link.trim();
+  const fileType =
+    uploadForm.sourceType === "file"
+      ? uploadForm.file?.name.split(".").pop()?.toLowerCase() || ""
+      : getFileNameFromUrl(uploadForm.link).split(".").pop()?.toLowerCase() || "link";
+  const category = categories.find(
+    (item) => String(item.id) === String(uploadForm.categoryId),
+  );
+  const mimeType = uploadForm.file?.type || "";
+  const canCacheImage =
+    uploadForm.sourceType === "file" &&
+    uploadForm.file &&
+    isImagePreview({ fileType, mimeType, sourceName });
+  const previewDataUrl = canCacheImage ? await readFileAsDataUrl(uploadForm.file) : "";
+  const previewText =
+    uploadForm.sourceType === "file" &&
+    uploadForm.file &&
+    isTextPreview({ fileType, mimeType, sourceName })
+      ? await uploadForm.file.text()
+      : "";
+
+  return {
+    id: `preview-${Date.now()}`,
+    title: uploadForm.title.trim(),
+    categoryId: uploadForm.categoryId,
+    categoryName: category?.name || "Danh mục chưa đặt tên",
+    departmentId: uploadForm.departmentId,
+    updatedAt: formatDate(now.toISOString()),
+    createdAt: formatDate(now.toISOString()),
+    status: "Nháp",
+    sourceType: uploadForm.sourceType,
+    sourceName,
+    fileType,
+    fileUrl: uploadForm.sourceType === "link" ? uploadForm.link.trim() : "",
+    previewUrl: previewDataUrl || previewUrl,
+    previewDataUrl,
+    previewText,
+    mimeType,
+    description: uploadForm.description.trim(),
+    permissions: createDefaultPermissions(uploadForm.departmentId),
+    metadata: {
+      fileType: fileType || "-",
+      productId: "-",
+      schoolId: "-",
+      uploadedById: "-",
+      isAiTrainingSource: false,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      rawStatus: "draft",
+    },
+    canDownload: uploadForm.sourceType === "link",
+    canView: true,
+    isRemote: false,
+    isUploadPreview: true,
+  };
+};
+
 const getAuthHeaders = () => {
   const token = window.localStorage.getItem("token");
 
@@ -144,6 +229,25 @@ const normalizePermissions = (permissions, departmentId) => {
 
     return acc;
   }, {});
+};
+
+const getDepartmentIdFromPermissions = (permissions) =>
+  permissions?.view?.departments?.[0] || permissions?.download?.departments?.[0] || "";
+
+const setPermissionsDepartment = (permissions, departmentId) => {
+  const normalizedPermissions = normalizePermissions(permissions, departmentId);
+
+  return {
+    ...normalizedPermissions,
+    view: {
+      ...normalizedPermissions.view,
+      departments: departmentId ? [departmentId] : [],
+    },
+    download: {
+      ...normalizedPermissions.download,
+      departments: departmentId ? [departmentId] : [],
+    },
+  };
 };
 
 const getUserGroupIds = (user) => {
@@ -254,6 +358,87 @@ const writeStoredStatuses = (statusesByDocumentId) => {
   );
 };
 
+const readStoredPreviews = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(DOCUMENT_PREVIEWS_STORAGE_KEY) || "{}");
+  } catch {
+    window.localStorage.removeItem(DOCUMENT_PREVIEWS_STORAGE_KEY);
+    return {};
+  }
+};
+
+const writeStoredPreviews = (previewsByDocumentId) => {
+  try {
+    window.localStorage.setItem(
+      DOCUMENT_PREVIEWS_STORAGE_KEY,
+      JSON.stringify(previewsByDocumentId),
+    );
+  } catch {
+    // Preview cache is best-effort because browser storage can be small.
+  }
+};
+
+const cacheDocumentPreview = (documentId, previewDocument) => {
+  if (!documentId || (!previewDocument.previewDataUrl && !previewDocument.previewText)) {
+    return;
+  }
+
+  const previewsByDocumentId = readStoredPreviews();
+
+  previewsByDocumentId[documentId] = {
+    previewDataUrl: previewDocument.previewDataUrl || "",
+    previewText: previewDocument.previewText || "",
+    mimeType: previewDocument.mimeType || "",
+    fileType: previewDocument.fileType || "",
+    sourceName: previewDocument.sourceName || "",
+  };
+
+  writeStoredPreviews(previewsByDocumentId);
+};
+
+const removeStoredDocumentData = (documentId) => {
+  const removeKeyFromStorageObject = (storageKey) => {
+    try {
+      const values = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+      delete values[documentId];
+      window.localStorage.setItem(storageKey, JSON.stringify(values));
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+  };
+
+  removeKeyFromStorageObject(DOCUMENT_PERMISSIONS_STORAGE_KEY);
+  removeKeyFromStorageObject(DOCUMENT_STATUS_STORAGE_KEY);
+  removeKeyFromStorageObject(DOCUMENT_PREVIEWS_STORAGE_KEY);
+};
+
+const applyStoredPreview = (document) => {
+  const preview = readStoredPreviews()[document.id];
+
+  if (!preview) {
+    return document;
+  }
+
+  return {
+    ...document,
+    previewUrl: preview.previewDataUrl || document.previewUrl,
+    previewDataUrl: preview.previewDataUrl || document.previewDataUrl,
+    previewText: preview.previewText || document.previewText,
+    mimeType: preview.mimeType || document.mimeType,
+    fileType: document.fileType || preview.fileType,
+    sourceName: document.sourceName || preview.sourceName,
+  };
+};
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case "Đang dùng":
@@ -331,15 +516,39 @@ const getFileNameFromUrl = (url) => {
 };
 
 const getAbsoluteDocumentUrl = (url) => {
-  if (!url) return "";
+  const cleanUrl = String(url || "").trim();
 
-  if (/^https?:\/\//i.test(url)) {
-    return url;
+  if (!cleanUrl) return "";
+
+  if (/^(https?:|blob:)/i.test(cleanUrl)) {
+    return cleanUrl;
+  }
+
+  if (!cleanUrl.startsWith("/") && !cleanUrl.includes("/")) {
+    return "";
   }
 
   const apiOrigin = API_BASE_URL.replace(/\/api\/v\d+\/?$/, "");
 
-  return `${apiOrigin}${url.startsWith("/") ? "" : "/"}${url}`;
+  return `${apiOrigin}${cleanUrl.startsWith("/") ? "" : "/"}${cleanUrl}`;
+};
+
+const isImagePreview = (document) => {
+  const value = `${document.mimeType || ""} ${document.fileType || ""} ${document.sourceName || ""}`;
+
+  return /image\/|\.?(png|jpe?g|gif|webp|bmp|svg)$/i.test(value);
+};
+
+const isPdfPreview = (document) => {
+  const value = `${document.mimeType || ""} ${document.fileType || ""} ${document.sourceName || ""}`;
+
+  return /application\/pdf|\.?pdf$/i.test(value);
+};
+
+const isTextPreview = (document) => {
+  const value = `${document.mimeType || ""} ${document.fileType || ""} ${document.sourceName || ""}`;
+
+  return /text\/|\.?(txt|csv|json|md|log)$/i.test(value);
 };
 
 const normalizeDocumentsPayload = (payload) => {
@@ -372,6 +581,7 @@ const normalizeDocument = (document) => {
   const departmentId =
     document.departmentId ||
     document.allowedDepartmentId ||
+    getDepartmentIdFromPermissions(storedPermissions[id] || document.permissions) ||
     document.category?.departmentId ||
     "";
   const metadata = {
@@ -402,7 +612,7 @@ const normalizeDocument = (document) => {
     departmentId,
   );
 
-  return {
+  return applyStoredPreview({
     ...document,
     id,
     categoryId: category?.id || document.categoryId || "",
@@ -421,21 +631,23 @@ const normalizeDocument = (document) => {
     canView: document.canView ?? true,
     isRemote: true,
     permissions,
-  };
+  });
 };
 
 const applyStoredPermissions = (documents) => {
   const storedPermissions = readStoredPermissions();
   const storedStatuses = readStoredStatuses();
 
-  return documents.map((document) => ({
-    ...document,
-    status: storedStatuses[document.id] || document.status,
-    permissions: normalizePermissions(
-      storedPermissions[document.id] || document.permissions,
-      document.departmentId,
-    ),
-  }));
+  return documents.map((document) =>
+    applyStoredPreview({
+      ...document,
+      status: storedStatuses[document.id] || document.status,
+      permissions: normalizePermissions(
+        storedPermissions[document.id] || document.permissions,
+        document.departmentId,
+      ),
+    }),
+  );
 };
 
 const normalizeCategory = (category) => ({
@@ -547,6 +759,30 @@ const getReadableDocumentDetail = async (documentId) => {
   return normalizeDocument(payload);
 };
 
+const createReadableDocument = async (input) => {
+  const payload = await requestReadableDocuments("", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return normalizeDocument(payload);
+};
+
+const updateReadableDocument = async (documentId, input) => {
+  const payload = await requestReadableDocuments(`/${documentId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+  return normalizeDocument(payload);
+};
+
+const deleteReadableDocument = async (documentId) => {
+  await requestReadableDocuments(`/${documentId}`, {
+    method: "DELETE",
+  });
+};
+
 const createDocumentCategory = async (input) => {
   const payload = await requestDocumentCategories("", {
     method: "POST",
@@ -595,6 +831,16 @@ export const DocumentsPage = ({ currentUser }) => {
   const [uploadForm, setUploadForm] = useState(emptyUploadForm);
   const [uploadErrors, setUploadErrors] = useState({});
   const [uploadSuccess, setUploadSuccess] = useState("");
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadSubmitting, setUploadSubmitting] = useState(false);
+  const [editingDocumentId, setEditingDocumentId] = useState("");
+  const [documentEditForm, setDocumentEditForm] = useState(emptyDocumentEditForm);
+  const [documentEditErrors, setDocumentEditErrors] = useState({});
+  const [documentEditSubmitting, setDocumentEditSubmitting] = useState(false);
+  const [deleteTargetDocument, setDeleteTargetDocument] = useState(null);
+  const [deleteConfirmValue, setDeleteConfirmValue] = useState("");
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const permissionConfigRef = useRef(null);
 
   const canUpload = canUploadDocument(currentUser);
   const canManageCategories = isAdminUser(currentUser);
@@ -882,92 +1128,259 @@ export const DocumentsPage = ({ currentUser }) => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleUploadSubmit = (e) => {
-    e.preventDefault();
-    setUploadSuccess("");
-
-    if (!canUpload || !validateUploadForm()) {
+  const importUploadDocument = async (previewDocument) => {
+    if (!canUpload || !previewDocument || uploadSubmitting) {
       return;
     }
 
-    const now = new Date();
-    const uploadedDocument = {
-      id: Date.now(),
-      title: uploadForm.title.trim(),
-      categoryId: uploadForm.categoryId,
-      departmentId: uploadForm.departmentId,
-      updatedAt: now.toISOString().slice(0, 10),
-      status: "Nháp",
-      sourceType: uploadForm.sourceType,
-      sourceName:
-        uploadForm.sourceType === "file"
-          ? uploadForm.file.name
-          : uploadForm.link.trim(),
-      fileUrl: uploadForm.sourceType === "link" ? uploadForm.link.trim() : "",
-      description: uploadForm.description.trim(),
-      permissions: createDefaultPermissions(uploadForm.departmentId),
+    setUploadSubmitting(true);
+    setDocumentError("");
+    setUploadSuccess("");
+
+    try {
+      const createdDocument = await createReadableDocument({
+        title: previewDocument.title,
+        categoryId: previewDocument.categoryId,
+        departmentId: previewDocument.departmentId,
+        fileUrl: previewDocument.fileUrl,
+        fileType: previewDocument.fileType,
+        status: "draft",
+        permissions: previewDocument.permissions,
+      });
+      const importedDocument = {
+        ...createdDocument,
+        departmentId: previewDocument.departmentId,
+        permissions: previewDocument.permissions,
+        sourceType: previewDocument.sourceType,
+        sourceName: previewDocument.sourceName,
+        description: previewDocument.description,
+        previewText: previewDocument.previewText,
+        previewUrl: previewDocument.previewUrl,
+        previewDataUrl: previewDocument.previewDataUrl,
+        mimeType: previewDocument.mimeType,
+        canDownload: previewDocument.sourceType === "link",
+      };
+
+      cacheDocumentPreview(importedDocument.id, previewDocument);
+      setDocuments((prev) => [importedDocument, ...prev]);
+      setSelectedPermissionDocId(String(importedDocument.id));
+      setSelectedDocument(importedDocument);
+      setUploadPreview(null);
+      setUploadForm(emptyUploadForm);
+      setUploadErrors({});
+      setDocumentTotal((total) => total + 1);
+      setUploadSuccess("Đã import tài liệu vào hệ thống.");
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "Không thể import tài liệu.");
+    } finally {
+      setUploadSubmitting(false);
+    }
+  };
+
+  const prepareUploadPreview = async () => {
+    setUploadSuccess("");
+
+    if (!canUpload || !validateUploadForm()) {
+      return null;
+    }
+
+    const previewDocument = await buildUploadPreviewDocument(uploadForm, categories);
+
+    setUploadPreview(previewDocument);
+    setSelectedDocument(previewDocument);
+    setUploadErrors({});
+    setDocumentError("");
+
+    return previewDocument;
+  };
+
+  const handleUploadPreview = (e) => {
+    e.preventDefault();
+
+    void (async () => {
+      if (await prepareUploadPreview()) {
+        setIsDetailPanelOpen(true);
+      }
+    })();
+  };
+
+  const handleDirectUploadImport = async () => {
+    const previewDocument = await prepareUploadPreview();
+
+    if (previewDocument) {
+      await importUploadDocument(previewDocument);
+    }
+  };
+
+  const confirmUploadImport = async () => {
+    await importUploadDocument(uploadPreview);
+  };
+
+  const applyDocumentUpdate = (updatedDocument) => {
+    setDocuments((prev) =>
+      prev.map((document) =>
+        String(document.id) === String(updatedDocument.id) ? updatedDocument : document,
+      ),
+    );
+    setSelectedDocument((currentDocument) =>
+      currentDocument && String(currentDocument.id) === String(updatedDocument.id)
+        ? updatedDocument
+        : currentDocument,
+    );
+    setSelectedPermissionDocId(String(updatedDocument.id));
+  };
+
+  const persistDocumentUpdate = async (document, updateData, successMessage) => {
+    const optimisticDocument = {
+      ...document,
+      ...updateData,
+      updatedAt: formatDate(new Date().toISOString()),
+      permissions: updateData.permissions || document.permissions,
     };
 
-    setDocuments((prev) => [uploadedDocument, ...prev]);
-    setSelectedPermissionDocId(String(uploadedDocument.id));
-    setUploadForm(emptyUploadForm);
-    setUploadErrors({});
-    setUploadSuccess("Đã thêm tài liệu vào danh sách tạm thời.");
+    applyDocumentUpdate(optimisticDocument);
+    setDocumentError("");
+    setUploadSuccess("");
+
+    if (!document.isRemote) {
+      setUploadSuccess(successMessage);
+      return optimisticDocument;
+    }
+
+    try {
+      const updatedDocument = await updateReadableDocument(document.id, updateData);
+      const mergedDocument = {
+        ...updatedDocument,
+        departmentId:
+          updateData.departmentId ??
+          document.departmentId ??
+          getDepartmentIdFromPermissions(updateData.permissions || document.permissions),
+        permissions: updateData.permissions || updatedDocument.permissions || document.permissions,
+        sourceType: updateData.fileUrl ? "link" : document.sourceType,
+        sourceName:
+          updateData.fileUrl !== undefined
+            ? getFileNameFromUrl(updateData.fileUrl) || updateData.title || document.title
+            : document.sourceName,
+        description: updateData.description ?? document.description,
+        previewUrl: document.previewUrl,
+        previewDataUrl: document.previewDataUrl,
+        previewText: document.previewText,
+        mimeType: document.mimeType,
+      };
+
+      applyDocumentUpdate(mergedDocument);
+      setUploadSuccess(successMessage);
+      return mergedDocument;
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "Không thể cập nhật tài liệu.");
+      return optimisticDocument;
+    }
   };
 
-  const updateDocumentPermission = (documentId, action, scope, optionId) => {
-    setDocuments((prev) =>
-      prev.map((document) => {
-        if (String(document.id) !== String(documentId)) {
-          return document;
+  const updateDocumentPermission = async (documentId, action, scope, optionId) => {
+    const document = documents.find((item) => String(item.id) === String(documentId));
+
+    if (!document) return;
+
+    const permissions = normalizePermissions(document.permissions, document.departmentId);
+    const currentValues = permissions[action][scope];
+    const nextValues = currentValues.includes(optionId)
+      ? currentValues.filter((value) => value !== optionId)
+      : [...currentValues, optionId];
+    const nextPermissions = {
+      ...permissions,
+      [action]: {
+        ...permissions[action],
+        [scope]: nextValues,
+      },
+    };
+
+    await persistDocumentUpdate(
+      document,
+      { permissions: nextPermissions },
+      "Đã cập nhật quyền tài liệu.",
+    );
+  };
+
+  const resetDocumentPermissions = async (documentId) => {
+    const document = documents.find((item) => String(item.id) === String(documentId));
+
+    if (!document) return;
+
+    await persistDocumentUpdate(
+      document,
+      { permissions: createDefaultPermissions(document.departmentId) },
+      "Đã đặt lại quyền mặc định.",
+    );
+  };
+
+  const updateDocumentStatus = async (documentId, status) => {
+    const document = documents.find((item) => String(item.id) === String(documentId));
+
+    if (!document) return;
+
+    await persistDocumentUpdate(document, { status }, "Đã cập nhật trạng thái tài liệu.");
+  };
+
+  const validateDocumentEditForm = () => {
+    const nextErrors = {};
+
+    if (!documentEditForm.title.trim()) {
+      nextErrors.title = "Vui lòng nhập tên tài liệu.";
+    }
+
+    if (!documentEditForm.categoryId) {
+      nextErrors.categoryId = "Vui lòng chọn danh mục.";
+    }
+
+    if (documentEditForm.fileUrl.trim()) {
+      try {
+        const parsedUrl = new URL(documentEditForm.fileUrl.trim());
+
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+          nextErrors.fileUrl = "Link file phải bắt đầu bằng http hoặc https.";
         }
+      } catch {
+        nextErrors.fileUrl = "Link file không hợp lệ.";
+      }
+    }
 
-        const permissions = normalizePermissions(document.permissions, document.departmentId);
-        const currentValues = permissions[action][scope];
-        const nextValues = currentValues.includes(optionId)
-          ? currentValues.filter((value) => value !== optionId)
-          : [...currentValues, optionId];
-
-        return {
-          ...document,
-          permissions: {
-            ...permissions,
-            [action]: {
-              ...permissions[action],
-              [scope]: nextValues,
-            },
-          },
-        };
-      }),
-    );
+    setDocumentEditErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
-  const resetDocumentPermissions = (documentId) => {
-    setDocuments((prev) =>
-      prev.map((document) =>
-        String(document.id) === String(documentId)
-          ? {
-              ...document,
-              permissions: createDefaultPermissions(document.departmentId),
-            }
-          : document,
-      ),
-    );
-  };
+  const saveDocumentDetail = async () => {
+    if (!selectedDocument || documentEditSubmitting || !validateDocumentEditForm()) {
+      return;
+    }
 
-  const updateDocumentStatus = (documentId, status) => {
-    setDocuments((prev) =>
-      prev.map((document) =>
-        String(document.id) === String(documentId)
-          ? {
-              ...document,
-              status,
-              updatedAt: new Date().toISOString().slice(0, 10),
-            }
-          : document,
-      ),
-    );
-    setUploadSuccess("Đã cập nhật trạng thái tài liệu.");
+    setDocumentEditSubmitting(true);
+
+    try {
+      const updatedDocument = await persistDocumentUpdate(
+        selectedDocument,
+        {
+          title: documentEditForm.title.trim(),
+          categoryId: documentEditForm.categoryId,
+          departmentId: documentEditForm.departmentId,
+          fileUrl: documentEditForm.fileUrl.trim(),
+          fileType: documentEditForm.fileType.trim(),
+          status: documentEditForm.status,
+          description: documentEditForm.description.trim(),
+          permissions: setPermissionsDepartment(
+            selectedDocument.permissions,
+            documentEditForm.departmentId,
+          ),
+        },
+        "Đã cập nhật chi tiết tài liệu.",
+      );
+
+      setDocumentEditForm(createDocumentEditForm(updatedDocument));
+      setEditingDocumentId("");
+      setDocumentEditErrors({});
+    } finally {
+      setDocumentEditSubmitting(false);
+    }
   };
 
   const handlePreviewDocument = async (document) => {
@@ -975,6 +1388,7 @@ export const DocumentsPage = ({ currentUser }) => {
     setIsDetailPanelOpen(true);
     setUploadSuccess("");
     setDocumentError("");
+    setEditingDocumentId("");
 
     if (!document.isRemote) {
       return;
@@ -984,10 +1398,22 @@ export const DocumentsPage = ({ currentUser }) => {
 
     try {
       const detail = await getReadableDocumentDetail(document.id);
+      const existingDocument =
+        documents.find((item) => String(item.id) === String(document.id)) || document;
+      const mergedDetail = {
+        ...detail,
+        sourceType: existingDocument.sourceType || detail.sourceType,
+        sourceName: existingDocument.sourceName || detail.sourceName,
+        description: existingDocument.description ?? detail.description,
+        previewUrl: existingDocument.previewUrl || detail.previewUrl,
+        previewDataUrl: existingDocument.previewDataUrl || detail.previewDataUrl,
+        previewText: existingDocument.previewText || detail.previewText,
+        mimeType: existingDocument.mimeType || detail.mimeType,
+      };
 
-      setSelectedDocument(detail);
+      setSelectedDocument(mergedDetail);
       setDocuments((prev) =>
-        prev.map((item) => (String(item.id) === String(detail.id) ? detail : item)),
+        prev.map((item) => (String(item.id) === String(mergedDetail.id) ? mergedDetail : item)),
       );
     } catch (error) {
       setDocumentError(
@@ -1022,6 +1448,78 @@ export const DocumentsPage = ({ currentUser }) => {
     window.open(documentUrl, "_blank", "noopener,noreferrer");
     setDocumentError("");
     setUploadSuccess(`Đã mở link tải: ${document.title}`);
+  };
+
+  const handleEditDocument = (document) => {
+    setSelectedPermissionDocId(String(document.id));
+    setSelectedDocument(document);
+    setDocumentEditForm(createDocumentEditForm(document));
+    setDocumentEditErrors({});
+    setEditingDocumentId(String(document.id));
+    setIsDetailPanelOpen(true);
+    setDocumentError("");
+    setUploadSuccess(`Đang sửa chi tiết tài liệu: ${document.title}`);
+  };
+
+  const openDeleteDocumentDialog = (document) => {
+    setDeleteTargetDocument(document);
+    setDeleteConfirmValue("");
+    setDocumentError("");
+  };
+
+  const closeDeleteDocumentDialog = () => {
+    if (deleteSubmitting) return;
+
+    setDeleteTargetDocument(null);
+    setDeleteConfirmValue("");
+  };
+
+  const getDeleteConfirmName = (document) => document?.title || "";
+
+  const confirmDeleteDocument = async () => {
+    if (!deleteTargetDocument || deleteSubmitting) return;
+
+    const expectedName = getDeleteConfirmName(deleteTargetDocument);
+
+    if (deleteConfirmValue.trim() !== expectedName) {
+      setDocumentError(`Vui lòng nhập đúng tên file: ${expectedName}`);
+      return;
+    }
+
+    setDeleteSubmitting(true);
+    setDocumentError("");
+    setUploadSuccess("");
+
+    try {
+      if (deleteTargetDocument.isRemote) {
+        await deleteReadableDocument(deleteTargetDocument.id);
+      }
+
+      setDocuments((prev) =>
+        prev.filter((document) => String(document.id) !== String(deleteTargetDocument.id)),
+      );
+      setDocumentTotal((total) => Math.max(0, total - 1));
+      setSelectedPermissionDocId((currentId) =>
+        String(currentId) === String(deleteTargetDocument.id) ? "" : currentId,
+      );
+      setSelectedDocument((currentDocument) =>
+        currentDocument && String(currentDocument.id) === String(deleteTargetDocument.id)
+          ? null
+          : currentDocument,
+      );
+      if (selectedDocument && String(selectedDocument.id) === String(deleteTargetDocument.id)) {
+        setIsDetailPanelOpen(false);
+        setEditingDocumentId("");
+      }
+      removeStoredDocumentData(deleteTargetDocument.id);
+      setUploadSuccess(`Đã xóa tài liệu: ${deleteTargetDocument.title}`);
+      setDeleteTargetDocument(null);
+      setDeleteConfirmValue("");
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "Không thể xóa tài liệu.");
+    } finally {
+      setDeleteSubmitting(false);
+    }
   };
 
   return (
@@ -1259,8 +1757,41 @@ export const DocumentsPage = ({ currentUser }) => {
               {uploadSuccess}
             </div>
           )}
+          {uploadPreview && (
+            <div className="alert alert-info py-2 d-flex flex-wrap justify-content-between align-items-center gap-2" role="alert">
+              <span>
+                Đã tạo preview cho "{uploadPreview.title}". Kiểm tra nội dung rồi xác nhận import.
+              </span>
+              <div className="d-flex gap-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "32px", height: "32px", padding: 0 }}
+                  title="Xem preview"
+                  aria-label="Xem preview"
+                  onClick={() => {
+                    setSelectedDocument(uploadPreview);
+                    setIsDetailPanelOpen(true);
+                  }}
+                >
+                  <EyeIcon />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "32px", height: "32px", padding: 0 }}
+                  disabled={uploadSubmitting}
+                  title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                  aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                  onClick={confirmUploadImport}
+                >
+                  <ImportIcon />
+                </button>
+              </div>
+            </div>
+          )}
 
-          <form noValidate onSubmit={handleUploadSubmit}>
+          <form noValidate onSubmit={handleUploadPreview}>
             <fieldset className="border-0 p-0 m-0">
               <div className="row g-3">
                 <div className="col-lg-4">
@@ -1416,17 +1947,39 @@ export const DocumentsPage = ({ currentUser }) => {
               <div className="d-flex justify-content-end gap-2 mt-3">
                 <button
                   type="button"
-                  className="btn btn-light border"
+                  className="btn btn-light border d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "38px", height: "38px", padding: 0 }}
+                  title="Làm mới"
+                  aria-label="Làm mới"
                   onClick={() => {
                     setUploadForm(emptyUploadForm);
                     setUploadErrors({});
                     setUploadSuccess("");
+                    setUploadPreview(null);
                   }}
                 >
-                  Làm mới
+                  <RefreshIcon />
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Thêm tài liệu
+                <button
+                  type="submit"
+                  className="btn btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "38px", height: "38px", padding: 0 }}
+                  disabled={uploadSubmitting}
+                  title="Xem preview"
+                  aria-label="Xem preview"
+                >
+                  <EyeIcon />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "38px", height: "38px", padding: 0 }}
+                  disabled={uploadSubmitting}
+                  title={uploadSubmitting ? "Đang import" : "Import tài liệu"}
+                  aria-label={uploadSubmitting ? "Đang import" : "Import tài liệu"}
+                  onClick={handleDirectUploadImport}
+                >
+                  <ImportIcon />
                 </button>
               </div>
             </fieldset>
@@ -1436,7 +1989,7 @@ export const DocumentsPage = ({ currentUser }) => {
       )}
 
       {canConfigurePermissions && (
-        <div className="card mt-3">
+        <div className="card mt-3" ref={permissionConfigRef}>
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Cấu hình quyền tài liệu</h6>
@@ -1646,7 +2199,11 @@ export const DocumentsPage = ({ currentUser }) => {
                   <button
                     type="button"
                     className="btn btn-sm btn-light border"
-                    onClick={() => setIsDetailPanelOpen(false)}
+                    onClick={() => {
+                      setIsDetailPanelOpen(false);
+                      setEditingDocumentId("");
+                      setDocumentEditErrors({});
+                    }}
                   >
                     Đóng
                   </button>
@@ -1682,34 +2239,221 @@ export const DocumentsPage = ({ currentUser }) => {
                       </div>
                     </div>
                     <div className="d-flex gap-2 align-items-start">
+                      {!selectedDocument.isUploadPreview &&
+                        canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                            style={{ width: "32px", height: "32px", padding: 0 }}
+                            title="Sửa chi tiết tài liệu"
+                            aria-label="Sửa chi tiết tài liệu"
+                            onClick={() => handleEditDocument(selectedDocument)}
+                          >
+                            <EditIcon />
+                          </button>
+                        )}
+                      {!selectedDocument.isUploadPreview &&
+                        canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                            style={{ width: "32px", height: "32px", padding: 0 }}
+                            title="Xóa tài liệu"
+                            aria-label="Xóa tài liệu"
+                            onClick={() => openDeleteDocumentDialog(selectedDocument)}
+                          >
+                            <TrashIcon />
+                          </button>
+                        )}
+                      {selectedDocument.isUploadPreview && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
+                          style={{ width: "32px", height: "32px", padding: 0 }}
+                          disabled={uploadSubmitting}
+                          title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                          aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                          onClick={confirmUploadImport}
+                        >
+                          <ImportIcon />
+                        </button>
+                      )}
                       {getDocumentActionUrl(selectedDocument) ? (
                         <a
-                          className="btn btn-sm btn-outline-primary"
+                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                          style={{ width: "32px", height: "32px", padding: 0 }}
                           href={getDocumentActionUrl(selectedDocument)}
                           target="_blank"
                           rel="noreferrer"
+                          title="Mở preview/link"
+                          aria-label="Mở preview/link"
                         >
-                          Mở preview/link
+                          <ExternalLinkIcon />
                         </a>
                       ) : (
-                        <button type="button" className="btn btn-sm btn-outline-secondary" disabled>
-                          Chưa có link
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                          style={{ width: "32px", height: "32px", padding: 0 }}
+                          disabled
+                          title="Chưa có link"
+                          aria-label="Chưa có link"
+                        >
+                          <ExternalLinkIcon />
                         </button>
                       )}
                       <button
                         type="button"
-                        className="btn btn-sm btn-success"
+                        className="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center"
+                        style={{ width: "32px", height: "32px", padding: 0 }}
                         disabled={Boolean(getDownloadDisabledReason(currentUser, selectedDocument))}
                         title={
                           getDownloadDisabledReason(currentUser, selectedDocument) ||
                           "Tải tài liệu"
                         }
+                        aria-label="Tải tài liệu"
                         onClick={() => handleDownloadDocument(selectedDocument)}
                       >
-                        Tải xuống
+                        <DownloadIcon />
                       </button>
                     </div>
                   </div>
+
+                  {editingDocumentId === String(selectedDocument.id) && (
+                    <div className="rounded border bg-body-tertiary p-3 mb-3">
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <label className="form-label">Tên tài liệu</label>
+                          <input
+                            className={`form-control ${documentEditErrors.title ? "is-invalid" : ""}`}
+                            value={documentEditForm.title}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({ ...prev, title: e.target.value }))
+                            }
+                          />
+                          {documentEditErrors.title && (
+                            <div className="invalid-feedback">{documentEditErrors.title}</div>
+                          )}
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label">Danh mục</label>
+                          <select
+                            className={`form-select ${documentEditErrors.categoryId ? "is-invalid" : ""}`}
+                            value={documentEditForm.categoryId}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({ ...prev, categoryId: e.target.value }))
+                            }
+                          >
+                            <option value="">Chọn danh mục</option>
+                            {visibleCategories.map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                          {documentEditErrors.categoryId && (
+                            <div className="invalid-feedback">{documentEditErrors.categoryId}</div>
+                          )}
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label">Phòng ban nhận</label>
+                          <select
+                            className="form-select"
+                            value={documentEditForm.departmentId}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({
+                                ...prev,
+                                departmentId: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="">Không chọn</option>
+                            {initialDepartments.map((department) => (
+                              <option key={department.id} value={department.id}>
+                                {department.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Loại file</label>
+                          <input
+                            className="form-control"
+                            value={documentEditForm.fileType}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({ ...prev, fileType: e.target.value }))
+                            }
+                            placeholder="pdf, docx, png..."
+                          />
+                        </div>
+                        <div className="col-md-3">
+                          <label className="form-label">Trạng thái</label>
+                          <select
+                            className="form-select"
+                            value={documentEditForm.status}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({ ...prev, status: e.target.value }))
+                            }
+                          >
+                            {DOCUMENT_STATUS_OPTIONS.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label">Link file</label>
+                          <input
+                            className={`form-control ${documentEditErrors.fileUrl ? "is-invalid" : ""}`}
+                            value={documentEditForm.fileUrl}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({ ...prev, fileUrl: e.target.value }))
+                            }
+                            placeholder="https://..."
+                          />
+                          {documentEditErrors.fileUrl && (
+                            <div className="invalid-feedback">{documentEditErrors.fileUrl}</div>
+                          )}
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label">Ghi chú</label>
+                          <textarea
+                            className="form-control"
+                            rows="2"
+                            value={documentEditForm.description}
+                            onChange={(e) =>
+                              setDocumentEditForm((prev) => ({
+                                ...prev,
+                                description: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="d-flex justify-content-end gap-2 mt-3">
+                        <button
+                          type="button"
+                          className="btn btn-light border"
+                          onClick={() => {
+                            setEditingDocumentId("");
+                            setDocumentEditErrors({});
+                            setDocumentEditForm(createDocumentEditForm(selectedDocument));
+                          }}
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          disabled={documentEditSubmitting}
+                          onClick={saveDocumentDetail}
+                        >
+                          {documentEditSubmitting ? "Đang lưu..." : "Lưu chi tiết"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="row g-2">
                     <MetadataItem label="ID" value={selectedDocument.id} />
@@ -1778,6 +2522,79 @@ export const DocumentsPage = ({ currentUser }) => {
                 </div>
               </div>
             )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTargetDocument && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100"
+          style={{
+            backgroundColor: "rgba(15, 23, 42, 0.45)",
+            zIndex: 1090,
+          }}
+        >
+          <div className="container-fluid h-100 d-flex align-items-center justify-content-center p-3">
+            <div className="card shadow-lg border-0" style={{ maxWidth: "520px", width: "100%" }}>
+              <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h6 className="card-title mb-0">Xác nhận xóa tài liệu</h6>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-light border d-inline-flex align-items-center justify-content-center"
+                  style={{ width: "32px", height: "32px", padding: 0 }}
+                  disabled={deleteSubmitting}
+                  title="Đóng"
+                  aria-label="Đóng"
+                  onClick={closeDeleteDocumentDialog}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              <div className="card-body">
+                <div className="alert alert-danger py-2" role="alert">
+                  Bạn có chắc chắn muốn xóa tài liệu này ra khỏi hệ thống? Thao tác này giúp tránh bấm nhầm nên cần nhập đúng tên tài liệu.
+                </div>
+                <div className="rounded border bg-body-tertiary p-2 mb-3">
+                  <div className="text-body-secondary text-uppercase" style={{ fontSize: "10px" }}>
+                    Tên tài liệu cần nhập
+                  </div>
+                  <div className="fw-semibold text-body-emphasis text-break">
+                    {getDeleteConfirmName(deleteTargetDocument)}
+                  </div>
+                </div>
+                <label className="form-label">
+                  Nhập đúng tên tài liệu để thực hiện xóa
+                </label>
+                <input
+                  className="form-control"
+                  value={deleteConfirmValue}
+                  onChange={(e) => setDeleteConfirmValue(e.target.value)}
+                  placeholder={`Nhập: ${getDeleteConfirmName(deleteTargetDocument)}`}
+                  disabled={deleteSubmitting}
+                />
+                <div className="d-flex justify-content-end gap-2 mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-light border"
+                    disabled={deleteSubmitting}
+                    onClick={closeDeleteDocumentDialog}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    disabled={
+                      deleteSubmitting ||
+                      deleteConfirmValue.trim() !== getDeleteConfirmName(deleteTargetDocument)
+                    }
+                    onClick={confirmDeleteDocument}
+                  >
+                    {deleteSubmitting ? "Đang xóa..." : "Xóa tài liệu"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1869,11 +2686,13 @@ export const DocumentsPage = ({ currentUser }) => {
                       <td>
                         <DocumentActionButtons
                           canDownload={canDownload}
+                          canDelete={canEdit}
                           canEdit={canEdit}
                           document={doc}
                           downloadDisabledReason={downloadDisabledReason}
+                          onDelete={openDeleteDocumentDialog}
                           onDownload={handleDownloadDocument}
-                          onEdit={(document) => setSelectedPermissionDocId(String(document.id))}
+                          onEdit={handleEditDocument}
                           onPreview={handlePreviewDocument}
                         />
                       </td>
@@ -1952,11 +2771,13 @@ export const DocumentsPage = ({ currentUser }) => {
                   <div className="d-flex justify-content-end mt-2">
                     <DocumentActionButtons
                       canDownload={canDownload}
+                      canDelete={canEdit}
                       canEdit={canEdit}
                       document={doc}
                       downloadDisabledReason={downloadDisabledReason}
+                      onDelete={openDeleteDocumentDialog}
                       onDownload={handleDownloadDocument}
-                      onEdit={(document) => setSelectedPermissionDocId(String(document.id))}
+                      onEdit={handleEditDocument}
                       onPreview={handlePreviewDocument}
                     />
                   </div>
@@ -1977,9 +2798,11 @@ export const DocumentsPage = ({ currentUser }) => {
 
 function DocumentActionButtons({
   canDownload,
+  canDelete,
   canEdit,
   document,
   downloadDisabledReason,
+  onDelete,
   onDownload,
   onEdit,
   onPreview,
@@ -2017,6 +2840,17 @@ function DocumentActionButtons({
         onClick={() => onEdit(document)}
       >
         <EditIcon />
+      </button>
+      <button
+        type="button"
+        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+        style={{ width: "32px", height: "32px", padding: 0 }}
+        disabled={!canDelete}
+        title={canDelete ? "Xóa tài liệu" : "Bạn chưa có quyền xóa"}
+        aria-label="Xóa tài liệu"
+        onClick={() => onDelete(document)}
+      >
+        <TrashIcon />
       </button>
     </div>
   );
@@ -2231,20 +3065,38 @@ function MetadataItem({ label, value, wide = false }) {
 function DocumentPreview({ categoryName, departmentName, document }) {
   const extension = document.sourceName?.split(".").pop()?.toUpperCase() || "DOC";
   const isLink = document.sourceType === "link";
+  const previewUrl = document.previewUrl || document.previewImage || getDocumentActionUrl(document);
+  const canRenderText = Boolean(document.previewText);
+  const canRenderImage = previewUrl && isImagePreview(document);
+  const canRenderFrame = previewUrl && (isPdfPreview(document) || isTextPreview(document) || isLink);
 
   return (
     <div className="rounded border bg-body-tertiary p-2">
       <div className="rounded border bg-body overflow-hidden">
         <div
-          className="d-flex align-items-center justify-content-center bg-primary-subtle text-primary"
+          className="d-flex align-items-center justify-content-center bg-primary-subtle text-primary overflow-hidden"
           style={{ aspectRatio: "4 / 3", minHeight: "260px" }}
         >
-          {document.previewImage ? (
+          {canRenderText ? (
+            <pre
+              className="h-100 w-100 m-0 bg-white text-body text-start overflow-auto p-3"
+              style={{ whiteSpace: "pre-wrap", fontSize: "13px", lineHeight: 1.5 }}
+            >
+              {document.previewText}
+            </pre>
+          ) : canRenderImage ? (
             <img
-              src={document.previewImage}
+              src={previewUrl}
               alt={document.title}
               className="h-100 w-100"
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: "contain", backgroundColor: "#fff" }}
+            />
+          ) : canRenderFrame ? (
+            <iframe
+              src={previewUrl}
+              title={`Preview ${document.title}`}
+              className="h-100 w-100 border-0 bg-white"
+              style={{ minHeight: "260px" }}
             />
           ) : (
             <div className="text-center px-3">
@@ -2311,6 +3163,58 @@ function DownloadIcon() {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
       <polyline points="7 10 12 15 17 10"></polyline>
       <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+  );
+}
+
+function ImportIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </svg>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <polyline points="1 20 1 14 7 14"></polyline>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+      <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <line x1="10" y1="14" x2="21" y2="3"></line>
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+      <path d="M10 11v6"></path>
+      <path d="M14 11v6"></path>
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
   );
 }
