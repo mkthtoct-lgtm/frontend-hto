@@ -2,6 +2,17 @@ import { useState } from "react";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const PRODUCT_STORAGE_KEY = "hto_products";
+
+const ROLE_ID_MAP = {
+  "69fc5af582ef85451120772a": "admin",
+  "69fc5af582ef85451120772b": "bangiamdoc",
+  "69fc5af582ef85451120772c": "truongbophan",
+  "69fc5af582ef85451120772d": "nhansu",
+  "69fc5af582ef85451120772e": "daily",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
+};
+
 const PRODUCT_TYPES = [
   { id: "duhocduc", label: "Du học - Đức" },
   { id: "dinhcu", label: "Định cư" },
@@ -9,25 +20,94 @@ const PRODUCT_TYPES = [
   { id: "daotaongonngu", label: "Đào tạo ngôn ngữ" },
   { id: "nophosoonline", label: "Nộp hồ sơ online" },
 ];
+
 const DEFAULT_PRODUCT_LINKS = [
   { id: "product-du-hoc-duc", name: "Du học nghề Đức", type: "duhocduc" },
   { id: "product-visa", name: "Dịch vụ visa Đức", type: "visa" },
   { id: "product-language", name: "Khóa tiếng Đức B1", type: "daotaongonngu" },
 ];
 
-const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
+const normalizeRoleKey = (roleValue) => {
+  return String(roleValue || "")
+    .trim()
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+};
+
+const getUserRoleKey = (user) => {
+  const roleFromObject = user?.role?.name || user?.roleName || user?.role;
+  const roleFromId = ROLE_ID_MAP[user?.roleId];
+
+  return normalizeRoleKey(roleFromObject || roleFromId || "user");
+};
+
+const isAdmin = (user) => {
+  return getUserRoleKey(user) === "admin" || user?.roleId === ADMIN_ROLE_ID;
+};
+
+const canViewAIManagement = (user) => {
+  const roleKey = getUserRoleKey(user);
+
+  return ["admin", "bangiamdoc", "truongbophan", "hethong"].includes(roleKey);
+};
+
+const normalizeProductType = (typeValue) => {
+  const typeKey = String(typeValue || "").trim();
+
+  if (PRODUCT_TYPES.some((type) => type.id === typeKey)) {
+    return typeKey;
+  }
+
+  return "duhocduc";
+};
+
+const normalizeProductItem = (product, index) => {
+  const id = String(
+    product?.id ||
+      product?._id ||
+      product?.slug ||
+      product?.code ||
+      `product-${index + 1}`,
+  );
+
+  return {
+    id,
+    name: product?.name || product?.title || product?.label || "Sản phẩm chưa đặt tên",
+    type: normalizeProductType(
+      product?.type ||
+        product?.productType ||
+        product?.category ||
+        product?.categoryId,
+    ),
+  };
+};
 
 const getSidebarProducts = () => {
-  try {
-    const storedValue = window.localStorage.getItem(PRODUCT_STORAGE_KEY);
-    const products = storedValue ? JSON.parse(storedValue) : DEFAULT_PRODUCT_LINKS;
+  if (typeof window === "undefined") {
+    return DEFAULT_PRODUCT_LINKS;
+  }
 
-    return Array.isArray(products) ? products : DEFAULT_PRODUCT_LINKS;
+  try {
+    const storedProducts = JSON.parse(
+      window.localStorage.getItem(PRODUCT_STORAGE_KEY) || "[]",
+    );
+
+    if (!Array.isArray(storedProducts) || storedProducts.length === 0) {
+      return DEFAULT_PRODUCT_LINKS;
+    }
+
+    const normalizedProducts = storedProducts
+      .map((product, index) => normalizeProductItem(product, index))
+      .filter((product) => product.id && product.name);
+
+    return normalizedProducts.length > 0 ? normalizedProducts : DEFAULT_PRODUCT_LINKS;
   } catch {
     return DEFAULT_PRODUCT_LINKS;
   }
 };
-
 export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar }) => {
   // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
   const [openMenu, setOpenMenu] = useState("sanpham");
@@ -188,7 +268,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "nghiepvu" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -217,26 +297,14 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </span>
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "nghiepvu" ? "block" : "none", paddingLeft: "52px" }}>
-              <li className="menu-item mb-1">
-                <a
-                  className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nghiepvu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
-                  style={{ textDecoration: "none", fontSize: "13px" }}
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.("nghiepvu");
-                  }}
-                >
-                  Kế toán & hoa hồng
-                </a>
-              </li>
+              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Quản lý chung</a></li>
             </ul>
           </li>
 
           {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "hotro" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -266,6 +334,19 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "hotro" ? "block" : "none", paddingLeft: "52px" }}>
               <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Tạo Ticket</a></li>
+              <li className="menu-item mb-1">
+                <a
+                  className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "leadForm" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("leadForm");
+                  }}
+                >
+                  Gửi lead khách hàng
+                </a>
+              </li>
             </ul>
           </li>
 
@@ -331,7 +412,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
 
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "documents" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["documents", "documentSearch"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -365,6 +446,19 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </span>
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "documents" ? "block" : "none", paddingLeft: "52px", marginTop: "4px" }}>
+              <li className="menu-item mb-1">
+                <a
+                  className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "documentSearch" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("documentSearch");
+                  }}
+                >
+                  Tìm kiếm tài liệu
+                </a>
+              </li>
               <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-elements.html">Form Elements</a></li>
               <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-floating.html">Form floating</a></li>
               <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-input-group.html">Form input group</a></li>
@@ -374,6 +468,91 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/tagify.html">Tagify</a></li>
             </ul>
           </li>
+
+          {/* --- 8A. AI NỘI BỘ --- */}
+          {canViewAIManagement(currentUser) && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["aiConfig", "aiPending", "aiHistory"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+                href="#"
+                role="button"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setOpenMenu(openMenu === "ai" ? "" : "ai");
+                }}
+              >
+                <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a4 4 0 0 0-4 4v2H6a4 4 0 0 0-4 4v2a4 4 0 0 0 4 4h2v2a4 4 0 0 0 8 0v-2h2a4 4 0 0 0 4-4v-2a4 4 0 0 0-4-4h-2V6a4 4 0 0 0-4-4z"></path>
+                    <path d="M9 12h6"></path>
+                    <path d="M12 9v6"></path>
+                  </svg>
+                </div>
+                <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>AI nội bộ</span>
+                <span
+                  style={{ cursor: "pointer", padding: "4px" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenMenu(openMenu === "ai" ? "" : "ai");
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "ai" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </a>
+
+              <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "ai" ? "block" : "none", paddingLeft: "52px", marginTop: "4px" }}>
+                {isAdmin(currentUser) && (
+                  <li className="menu-item mb-1">
+                    <a
+                      className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "aiConfig" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                      style={{ textDecoration: "none", fontSize: "13px" }}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.("aiConfig");
+                      }}
+                    >
+                      Cấu hình AI
+                    </a>
+                  </li>
+                )}
+
+                <li className="menu-item mb-1">
+                  <a
+                    className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "aiPending" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                    style={{ textDecoration: "none", fontSize: "13px" }}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate?.("aiPending");
+                    }}
+                  >
+                    Câu hỏi AI pending
+                  </a>
+                </li>
+
+                {["admin", "bangiamdoc", "hethong"].includes(currentUser?.role) && (
+                  <li className="menu-item mb-1">
+                    <a
+                      className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "aiHistory" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                      style={{ textDecoration: "none", fontSize: "13px" }}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.("aiHistory");
+                      }}
+                    >
+                      Thống kê lịch sử AI
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </li>
+          )}
 
           {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
           <li className="menu-item mb-2 border-top pt-3 mt-3">

@@ -13,6 +13,13 @@ import { AuthLayout } from "./login/AuthLayout";
 import { UserList } from "./UserList/UserList";
 import { DepartmentsPage } from "./departments/DepartmentsPage";
 import { AuditLogPage } from "./auditLogs/AuditLogPage";
+import { ChecklistPage } from "./Checklist/ChecklistPage";
+import { SOPPage } from "./SOP/SOPPage";
+import { DocumentSearchPage } from "./DocumentSearch/DocumentSearchPage";
+import { LeadFormPage } from "./LeadForm/LeadFormPage";
+import { AIConfigPage } from "./AIConfig/AIConfigPage";
+import { AIPendingQuestionsPage } from "./AIPendingQuestions/AIPendingQuestionsPage";
+import { AIHistoryPage } from "./AIHistory/AIHistoryPage";
 import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
@@ -272,7 +279,7 @@ function App() {
 
   const handleToggleTheme = (e) => {
     e?.preventDefault?.();
-    setTheme((currentTheme) => (currentTheme === "light" ? "light" : "dark"));
+    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
   };
 
   const handleNavigate = (page, options = {}) => {
@@ -317,13 +324,13 @@ function App() {
   };
 
   if (!user) {
-
     let authContent;
+
     if (authMode === "login") {
       authContent = (
-        <LoginPage 
-          onLogin={handleLogin} 
-          onSwitchToRegister={() => setAuthMode("register")} 
+        <LoginPage
+          onLogin={handleLogin}
+          onSwitchToRegister={() => setAuthMode("register")}
           onSwitchToForgot={() => {
             resetAuthUrl();
             setAuthMode("forgot");
@@ -332,30 +339,30 @@ function App() {
       );
     } else if (authMode === "register") {
       authContent = (
-        <RegisterPage 
-          onRegister={handleLogin} 
+        <RegisterPage
+          onRegister={handleLogin}
           onSwitchToLogin={() => {
             resetAuthUrl();
             setAuthMode("login");
-          }} 
+          }}
         />
       );
     } else if (authMode === "forgot") {
       authContent = (
-        <ForgotPasswordPage 
+        <ForgotPasswordPage
           onSwitchToLogin={() => {
             resetAuthUrl();
             setAuthMode("login");
-          }} 
+          }}
         />
       );
     } else if (authMode === "reset-password") {
       authContent = (
-        <ResetPasswordPage 
+        <ResetPasswordPage
           onSwitchToLogin={() => {
             resetAuthUrl();
             setAuthMode("login");
-          }} 
+          }}
         />
       );
     }
@@ -367,16 +374,15 @@ function App() {
     );
   }
 
-
   return (
     <div className="page-layout bg-body-tertiary d-flex flex-column min-vh-100">
-      <Header 
+      <Header
         user={user}
-        onNavigate={handleNavigate}
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 
         onLogout={handleLogout}
       />
+
       <Sidebar
         currentUser={user}
         onNavigate={handleNavigate}
@@ -390,12 +396,26 @@ function App() {
         }`}
       >
         {currentPage === "users" ? (
-        // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
-        <UserList currentUser={user} />
+          // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
+          <UserList currentUser={user} />
         ) : currentPage === "departments" ? (
           <DepartmentsPage currentUser={user} />
         ) : currentPage === "auditLogs" ? (
           <AuditLogPage currentUser={user} />
+        ) : currentPage === "checklist" ? (
+          <ChecklistPage currentUser={user} />
+        ) : currentPage === "sop" ? (
+          <SOPPage currentUser={user} />
+        ) : currentPage === "documentSearch" ? (
+          <DocumentSearchPage currentUser={user} />
+        ) : currentPage === "leadForm" ? (
+          <LeadFormPage currentUser={user} />
+        ) : currentPage === "aiConfig" ? (
+          <AIConfigPage currentUser={user} />
+        ) : currentPage === "aiPending" ? (
+          <AIPendingQuestionsPage currentUser={user} />
+        ) : currentPage === "aiHistory" ? (
+          <AIHistoryPage currentUser={user} />
         ) : currentPage === "jobDescriptions" ? (
           <JobDescriptionsPage currentUser={user} />
         ) : currentPage === "notifications" ? (
@@ -413,7 +433,6 @@ function App() {
           <ProductsPage currentUser={user} currentPage={currentPage} onNavigate={setCurrentPage} />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
-            
             {/* --- ROW 1: BANNER --- */}
             <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
               {/* Box 1 nằm dọc trên Mobile (mb-3), ngang trên Tablet/Desktop */}
@@ -433,7 +452,6 @@ function App() {
 
             {/* --- ROW 2: TỔNG QUAN, ĐIỀU KIỆN, THỦ TỤC --- */}
             <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
-              
               {/* TỔNG QUAN */}
               <div className="col-12 col-md-3 col-lg-3 col-xl-3 mb-3 mb-md-0">
                 <div className="card border-0 h-100" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", minHeight: "240px" }}>
@@ -478,48 +496,48 @@ function App() {
                   <div className="card-body p-2 p-xl-3 d-flex flex-column justify-content-between">
                     <h6 className="fw-bold d-flex align-items-center mb-2 text-body-emphasis" style={{ fontSize: "14px" }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="text-primary me-2">
-                        <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+                        <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
                       </svg>
                       ĐIỀU KIỆN
                     </h6>
-                    
+
                     {/* Bổ sung flex-wrap cho trường hợp màn iPad quá hẹp */}
                     <div className="d-flex flex-wrap justify-content-between mb-2 gap-1 gap-xl-2">
                       <div className="text-center rounded p-1 p-xl-2 flex-fill bg-primary-subtle text-primary overflow-hidden">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="mb-1">
-                          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                         </svg>
                         <span className="fw-bold text-body-emphasis d-block text-truncate" style={{ fontSize: "11.5px" }}>Tuổi</span>
                       </div>
                       <div className="text-center rounded p-1 p-xl-2 flex-fill bg-warning-subtle text-warning overflow-hidden">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="mb-1">
-                          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
                         </svg>
-                        <span className="fw-bold text-body-emphasis" style={{ fontSize: "11.5px", lineHeight: "1.2", display: "block" }}>B1/B2<br/>Tiếng Đức</span>
+                        <span className="fw-bold text-body-emphasis" style={{ fontSize: "11.5px", lineHeight: "1.2", display: "block" }}>B1/B2<br />Tiếng Đức</span>
                       </div>
                       <div className="text-center rounded p-1 p-xl-2 flex-fill bg-body-secondary text-primary overflow-hidden">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="mb-1">
-                          <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/>
+                          <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z" />
                         </svg>
-                        <span className="fw-bold text-body-emphasis" style={{ fontSize: "11.5px", lineHeight: "1.2", display: "block" }}>Tốt nghiệp<br/>THPT</span>
+                        <span className="fw-bold text-body-emphasis" style={{ fontSize: "11.5px", lineHeight: "1.2", display: "block" }}>Tốt nghiệp<br />THPT</span>
                       </div>
                     </div>
-                    
+
                     <div className="d-flex flex-wrap gap-1 gap-xl-2">
                       <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#5b6cf9", fontSize: "11.5px" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg> 
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
                         <span className="text-truncate">Tờ tiền CM</span>
                       </div>
                       <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#10b981", fontSize: "11.5px" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" /></svg>
                         <span className="text-truncate">Số tiền CM</span>
                       </div>
                       <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#5b6cf9", fontSize: "11.5px", opacity: 0.9 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M12 1L3 6v2h18V6l-9-5zm0 2.18l5.36 2.82H6.64L12 3.18zM5 10h2v7H5v-7zm6 0h2v7h-2v-7zm6 0h2v7h-2v-7zM3 19h18v2H3v-2z"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M12 1L3 6v2h18V6l-9-5zm0 2.18l5.36 2.82H6.64L12 3.18zM5 10h2v7H5v-7zm6 0h2v7h-2v-7zm6 0h2v7h-2v-7zM3 19h18v2H3v-2z" /></svg>
                         <span className="text-truncate">TK phong tỏa</span>
                       </div>
                       <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#10b981", fontSize: "11.5px", opacity: 0.9 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z"/><circle cx="16" cy="12" r="1.5"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z" /><circle cx="16" cy="12" r="1.5" /></svg>
                         <span className="text-truncate">Sổ tiết kiệm</span>
                       </div>
                     </div>
@@ -544,31 +562,30 @@ function App() {
                     <div className="d-flex justify-content-between align-items-start mt-auto mb-auto overflow-x-auto pb-2" style={{ minWidth: "100%" }}>
                       <div className="d-flex justify-content-between w-100" style={{ minWidth: "400px" }}>
                         {[
-                          { step: 1, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>, title: "Tư vấn\nban đầu", sub: "20 min." },
-                          { step: 2, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>, title: "Đào tạo\nngôn ngữ", sub: "25 min.\n(03 tuần)" },
-                          { step: 3, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z"/></svg>, title: "Nộp hồ sơ\ntrường", sub: "33 min.\n(3h nhận bot)" },
-                          { step: 4, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>, title: "Xin Visa", sub: "" },
-                          { step: 5, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 1.82 3.16.77 1.33 1.6-.43 5.31-1.42 4.35-1.16L21 11.49c.81-.23 1.28-1.05 1.07-1.85z"/></svg>, title: "Bay &\nNhập học", sub: "90 min.\n(3h nhận tỉnh)" },
-                          { step: 6, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>, title: "Đến nơi", sub: "" }
+                          { step: 1, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>, title: "Tư vấn\nban đầu", sub: "20 min." },
+                          { step: 2, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>, title: "Đào tạo\nngôn ngữ", sub: "25 min.\n(03 tuần)" },
+                          { step: 3, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z" /></svg>, title: "Nộp hồ sơ\ntrường", sub: "33 min.\n(3h nhận bot)" },
+                          { step: 4, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /></svg>, title: "Xin Visa", sub: "" },
+                          { step: 5, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 1.82 3.16.77 1.33 1.6-.43 5.31-1.42 4.35-1.16L21 11.49c.81-.23 1.28-1.05 1.07-1.85z" /></svg>, title: "Bay &\nNhập học", sub: "90 min.\n(3h nhận tỉnh)" },
+                          { step: 6, icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" /></svg>, title: "Đến nơi", sub: "" }
                         ].map((item, index) => (
                           <div key={index} className="d-flex flex-column align-items-center position-relative" style={{ flex: 1 }}>
-                            
                             {index < 5 && (
-                              <div className="position-absolute" style={{ top: "12px", left: "50%", width: "100%", height: "2px", backgroundColor: theme === 'dark' ? '#ffffff' : '#1e40af', zIndex: 0 }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="position-absolute top-50 start-50 translate-middle" style={{ color: theme === 'dark' ? '#ffffff' : '#1e40af', backgroundColor: "var(--bs-card-bg)", padding: "0 2px" }}>
-                                  <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                              <div className="position-absolute" style={{ top: "12px", left: "50%", width: "100%", height: "2px", backgroundColor: theme === "dark" ? "#ffffff" : "#1e40af", zIndex: 0 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="position-absolute top-50 start-50 translate-middle" style={{ color: theme === "dark" ? "#ffffff" : "#1e40af", backgroundColor: "var(--bs-card-bg)", padding: "0 2px" }}>
+                                  <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                                 </svg>
                               </div>
                             )}
 
-                            <div className="rounded-circle d-flex align-items-center justify-content-center mb-2 position-relative shadow-sm" style={{ backgroundColor: theme === 'dark' ? '#ffffff' : '#1e40af', color: theme === 'dark' ? '#1e40af' : '#ffffff', width: "24px", height: "24px", fontSize: "12px", fontWeight: "bold", zIndex: 1 }}>
+                            <div className="rounded-circle d-flex align-items-center justify-content-center mb-2 position-relative shadow-sm" style={{ backgroundColor: theme === "dark" ? "#ffffff" : "#1e40af", color: theme === "dark" ? "#1e40af" : "#ffffff", width: "24px", height: "24px", fontSize: "12px", fontWeight: "bold", zIndex: 1 }}>
                               {item.step}
                             </div>
 
                             <div className="d-flex align-items-center justify-content-center mb-1 text-primary" style={{ height: "30px" }}>
                               {item.icon}
                             </div>
-                            
+
                             <div className="fw-bold text-center text-body-emphasis mt-1 text-wrap" style={{ fontSize: "12.5px", lineHeight: "1.2", whiteSpace: "pre-line" }}>{item.title}</div>
                             <div className="text-body-secondary text-center mt-1 text-wrap" style={{ fontSize: "10.5px", lineHeight: "1.2", whiteSpace: "pre-line" }}>{item.sub}</div>
                           </div>
@@ -582,7 +599,6 @@ function App() {
 
             {/* --- ROW 3: CHI PHÍ, KHO TÀI LIỆU, Q&A --- */}
             <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
-              
               {/* CHI PHÍ DỰ KIẾN */}
               <div className="col-12 col-md-4 col-lg-4 col-xl-4 mb-3 mb-md-0">
                 <div className="card border-0 h-100" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", minHeight: "320px" }}>
@@ -653,7 +669,7 @@ function App() {
                           <span className="fw-medium text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Technical University of Munich</span>
                         </div>
                         <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Tải
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
@@ -662,10 +678,10 @@ function App() {
                           <span className="fw-medium text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Humboldt University Berlin</span>
                         </div>
                         <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Tải
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
-                      
+
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
                         <div className="d-flex align-items-center gap-3 pe-2 w-100" style={{ minWidth: 0 }}>
                           <div className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" style={{ width: "32px", height: "32px", backgroundColor: "#2563eb", fontSize: "10px", letterSpacing: "0.5px" }}>
@@ -677,7 +693,7 @@ function App() {
                           </div>
                         </div>
                         <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Tải
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
@@ -691,13 +707,13 @@ function App() {
                           </div>
                         </div>
                         <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Tải
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
                     </ul>
                     <div className="text-center pt-2 mt-1 border-top">
                       <a href="#" className="text-decoration-none fw-bold text-primary d-flex justify-content-center align-items-center" style={{ fontSize: "13px" }}>
-                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg>
                       </a>
                     </div>
                   </div>
@@ -717,7 +733,7 @@ function App() {
                     <div className="position-relative w-100 mt-1">
                       <input type="text" className="form-control form-control-sm border bg-body-tertiary text-body w-100" placeholder="Tìm câu hỏi..." style={{ fontSize: "12px", paddingRight: "30px", borderRadius: "6px", padding: "6px 10px" }} />
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="position-absolute text-body-secondary" style={{ top: "50%", transform: "translateY(-50%)", right: "10px" }}>
-                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                       </svg>
                     </div>
                   </div>
@@ -732,7 +748,7 @@ function App() {
                         </div>
                         <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle flex-shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
                       </div>
-                      
+
                       {/* Q2 */}
                       <div className="d-flex mb-3 pt-2 border-top align-items-start">
                         <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 flex-shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>2</div>
@@ -753,10 +769,10 @@ function App() {
                         <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle flex-shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
                       </div>
                     </div>
-                    
+
                     <div className="d-flex flex-row justify-content-between align-items-center pt-2 mt-2 border-top gap-2">
                       <a href="#" className="text-decoration-none fw-bold text-primary d-flex align-items-center text-truncate" style={{ fontSize: "13px" }}>
-                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1 flex-shrink-0"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1 flex-shrink-0"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg>
                       </a>
                       <button className="btn text-white py-1 px-3 d-flex align-items-center bg-primary flex-shrink-0 text-nowrap" style={{ borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
                         Hỏi mới
@@ -766,7 +782,6 @@ function App() {
                 </div>
               </div>
             </div>
-
           </div>
         )}
       </main>
