@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
 
 // const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
@@ -199,12 +200,6 @@ const buildUploadPreviewDocument = async (uploadForm, categories = []) => {
     isRemote: false,
     isUploadPreview: true,
   };
-};
-
-const getAuthHeaders = () => {
-  const token = window.localStorage.getItem("token");
-
-  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 const emptyPermissionRule = () => ({ groups: [], roles: [], departments: [] });
@@ -674,7 +669,7 @@ const normalizeDocumentCategory = (document) => {
 };
 
 async function requestDocumentCategories(path = "", options = {}) {
-  const response = await fetch(`${API_BASE_URL}/document-categories${path}`, {
+  const response = await authFetch(`${API_BASE_URL}/document-categories${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -700,7 +695,7 @@ const getDocumentCategories = async () => {
 };
 
 async function requestReadableDocuments(path = "", options = {}) {
-  const response = await fetch(`${API_BASE_URL}/documents${path}`, {
+  const response = await authFetch(`${API_BASE_URL}/documents${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",

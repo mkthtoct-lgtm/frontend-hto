@@ -1,6 +1,7 @@
 // src/UserList/UserList.jsx
 import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
+import { authFetch, getAuthHeaders } from "../auth/session";
 import "./UserList.css";
 
 // const API_BASE_URL =
@@ -39,12 +40,6 @@ const writeDashboardEditors = (editors) => {
 const ROLE_ID_TO_KEY = Object.fromEntries(
   Object.entries(ROLE_MAP).map(([key, value]) => [value.roleId, key]),
 );
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 const normalizeUser = (user) => {
   const role = user.role || ROLE_ID_TO_KEY[user.roleId] || "hethong";
@@ -87,7 +82,7 @@ const getApiErrorMessage = (payload, fallback) => {
 };
 
 async function usersRequest(path = "", options = {}) {
-  const response = await fetch(`${API_BASE_URL}/users${path}`, {
+  const response = await authFetch(`${API_BASE_URL}/users${path}`, {
     method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
