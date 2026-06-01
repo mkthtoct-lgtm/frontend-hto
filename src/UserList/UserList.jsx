@@ -23,7 +23,8 @@ const DASHBOARD_EDITORS_KEY = "hto_dashboard_editors";
 const readDashboardEditors = () => {
   try {
     const value = localStorage.getItem(DASHBOARD_EDITORS_KEY);
-    return value ? JSON.parse(value) : [];
+    return value ? JSON.parse(value) : []; // dữ lieeu mau 
+    
   } catch {
     return [];
   }
