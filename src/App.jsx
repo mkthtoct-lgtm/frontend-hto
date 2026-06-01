@@ -16,6 +16,7 @@ import { AuditLogPage } from "./auditLogs/AuditLogPage";
 import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
+import { AUTH_EVENTS } from "./auth/session";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -40,7 +41,17 @@ const hasStoredSession = () => {
   const token = window.localStorage.getItem("token");
   const refreshToken = window.localStorage.getItem("refresh_token");
 
-  return Boolean(token && refreshToken);
+  if (!token || !refreshToken) {
+    return false;
+  }
+
+  const tokenPayload = decodeJwtPayload(token);
+
+  if (tokenPayload?.exp && tokenPayload.exp * 1000 <= Date.now()) {
+    return false;
+  }
+
+  return true;
 };
 
 const clearStoredSession = () => {
@@ -211,6 +222,12 @@ function App() {
       return undefined;
     }
 
+    const handleExpiredSession = () => {
+      setUser(null);
+      setCurrentPage("dashboard");
+      setAuthMode("login");
+    };
+
     const enforceAuthSession = () => {
       if (!hasStoredSession()) {
         setUser(null);
@@ -223,12 +240,14 @@ function App() {
     enforceAuthSession();
 
     window.addEventListener("focus", enforceAuthSession);
+    window.addEventListener(AUTH_EVENTS.expired, handleExpiredSession);
     document.addEventListener("visibilitychange", enforceAuthSession);
 
     const sessionGuard = window.setInterval(enforceAuthSession, 1000);
 
     return () => {
       window.removeEventListener("focus", enforceAuthSession);
+      window.removeEventListener(AUTH_EVENTS.expired, handleExpiredSession);
       document.removeEventListener("visibilitychange", enforceAuthSession);
       window.clearInterval(sessionGuard);
     };
@@ -365,7 +384,11 @@ function App() {
         onToggleSidebar={handleToggleSidebar}
       />
 
-      <main className={`app-wrapper${currentPage === "qna" ? " ai-chat-wrapper" : ""}`}>
+      <main
+        className={`app-wrapper${currentPage === "qna" ? " ai-chat-wrapper" : ""}${
+          currentPage === "notifications" ? " notifications-wrapper" : ""
+        }`}
+      >
         {currentPage === "users" ? (
         // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
         <UserList currentUser={user} />

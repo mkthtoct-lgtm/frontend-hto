@@ -1,3 +1,5 @@
+import { authFetch, getAuthHeaders } from "../auth/session";
+
 // const API_BASE_URL =
 //   import.meta.env.VITE_API_BASE_URL ||
 //   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
@@ -90,11 +92,10 @@ export async function getAuditActors() {
 }
 
 async function apiRequest(path) {
-  const token = window.localStorage.getItem("token");
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await authFetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...getAuthHeaders(),
     },
   });
   const payload = await response.json().catch(() => null);
