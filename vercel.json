@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "http://qlnb-api.hto.edu.vn/api/v1/:path*"
+      "destination": "https://api.hto.edu.vn/api/v1/:path*"
     },
     {
       "source": "/(.*)",

@@ -6,6 +6,15 @@ import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      "/api/v1": {
+        target: "https://api.hto.edu.vn",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     react(),

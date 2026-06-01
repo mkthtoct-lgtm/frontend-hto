@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
-const API_BASE_URL = "http://localhost:3000/api/v1";
+import { API_BASE_URL } from "../config/api";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

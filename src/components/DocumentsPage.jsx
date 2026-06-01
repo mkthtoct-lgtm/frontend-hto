@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authFetch, getAuthHeaders } from "../auth/session";
-
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_BASE_URL ||
-//   (import.meta.env.PROD ? "/api/v1" : "http://qlnb-api.hto.edu.vn/api/v1");
-const API_BASE_URL = "http://localhost:3000/api/v1";
+import { API_BASE_URL } from "../config/api";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
