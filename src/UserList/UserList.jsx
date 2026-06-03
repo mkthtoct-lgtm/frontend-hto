@@ -18,21 +18,72 @@ const ROLE_MAP = {
 };
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const DASHBOARD_EDITORS_KEY = "hto_dashboard_editors";
+const USER_FEATURE_PERMISSIONS_KEY = "hto_user_feature_permissions";
+const USER_PAGE_SIZE = 12;
 
-const readDashboardEditors = () => {
+const FEATURE_PERMISSION_GROUPS = [
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    permissions: [
+      { id: "dashboard:view", label: "Xem dashboard" },
+      { id: "dashboard:edit", label: "Chỉnh sửa dashboard" },
+      { id: "dashboard:export", label: "Xuất báo cáo" },
+    ],
+  },
+  {
+    id: "documents",
+    title: "Tài liệu",
+    permissions: [
+      { id: "documents:view", label: "Xem tài liệu" },
+      { id: "documents:upload", label: "Upload tài liệu" },
+      { id: "documents:edit", label: "Sửa tài liệu" },
+      { id: "documents:delete", label: "Xóa tài liệu" },
+    ],
+  },
+  {
+    id: "notifications",
+    title: "Thông báo",
+    permissions: [
+      { id: "notifications:view", label: "Xem thông báo" },
+      { id: "notifications:create", label: "Tạo thông báo" },
+    ],
+  },
+  {
+    id: "users",
+    title: "Tài khoản",
+    permissions: [
+      { id: "users:view", label: "Xem tài khoản" },
+      { id: "users:edit", label: "Sửa tài khoản" },
+      { id: "users:lock", label: "Khóa/mở khóa" },
+    ],
+  },
+];
+
+const DEFAULT_FEATURE_PERMISSIONS_BY_ROLE = {
+  admin: FEATURE_PERMISSION_GROUPS.flatMap((group) => group.permissions.map((permission) => permission.id)),
+  bangiamdoc: ["dashboard:view", "dashboard:export", "documents:view", "notifications:view", "notifications:create", "users:view"],
+  truongbophan: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "notifications:create"],
+  nhansu: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "users:view"],
+  daily: ["dashboard:view", "documents:view", "notifications:view"],
+  congtacvien: ["documents:view", "notifications:view"],
+  hethong: ["dashboard:view", "documents:view", "notifications:view"],
+};
+
+const readUserFeaturePermissions = () => {
   try {
-    const value = localStorage.getItem(DASHBOARD_EDITORS_KEY);
-    return value ? JSON.parse(value) : []; // dữ lieeu mau 
-    
+    const value = localStorage.getItem(USER_FEATURE_PERMISSIONS_KEY);
+    return value ? JSON.parse(value) : {};
   } catch {
-    return [];
+    return {};
   }
 };
 
-const writeDashboardEditors = (editors) => {
-  localStorage.setItem(DASHBOARD_EDITORS_KEY, JSON.stringify(editors));
+const writeUserFeaturePermissions = (permissionsByUserId) => {
+  localStorage.setItem(USER_FEATURE_PERMISSIONS_KEY, JSON.stringify(permissionsByUserId));
 };
+
+const getDefaultFeaturePermissions = (role) => DEFAULT_FEATURE_PERMISSIONS_BY_ROLE[role] || [];
 
 const ROLE_ID_TO_KEY = Object.fromEntries(
   Object.entries(ROLE_MAP).map(([key, value]) => [value.roleId, key]),
@@ -51,6 +102,10 @@ const normalizeUser = (user) => {
     id: user.id || user._id,
     name: user.name || user.fullName || "",
     email: user.email || "",
+    phone: user.phone || "",
+    address: user.address || user.profile?.address || "",
+    socialLink: user.socialLink || user.socialUrl || user.profile?.socialLink || "",
+    referralCode: user.referralCode || user.referral_code || user.profile?.referralCode || "",
     role,
     roleId: user.roleId || ROLE_MAP[role]?.roleId || "",
     department,
@@ -67,6 +122,15 @@ const normalizeApiData = (payload) => {
   if (Array.isArray(data?.users)) return data.users;
 
   return [];
+};
+
+const normalizeUsersPayload = (payload) => {
+  const data = payload?.data ?? payload;
+  const users = normalizeApiData(payload);
+  const total = Number(data?.total ?? users.length) || users.length;
+  const pages = Number(data?.pages ?? data?.totalPages ?? 1) || 1;
+
+  return { users, total, pages };
 };
 
 const getApiErrorMessage = (payload, fallback) => {
@@ -106,15 +170,17 @@ export const UserList = ({ currentUser }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Dashboard editor permissions (admin-only feature)
-  const [dashboardEditors, setDashboardEditors] = useState(() => readDashboardEditors());
+  const [featurePermissionsByUserId, setFeaturePermissionsByUserId] = useState(() => readUserFeaturePermissions());
   const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.roleId === ADMIN_ROLE_ID;
 
   // States quản lý Modal (Create/Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // 'create' | 'edit'
   const [selectedUser, setSelectedUser] = useState(null);
+  const [detailUser, setDetailUser] = useState(null);
+  const [permissionUser, setPermissionUser] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -125,8 +191,24 @@ export const UserList = ({ currentUser }) => {
     setLoading(true);
     setError("");
     try {
-      const payload = await usersRequest();
-      setUsers(normalizeApiData(payload).map(normalizeUser));
+      const firstPayload = await usersRequest("?page=1");
+      const firstPage = normalizeUsersPayload(firstPayload);
+      let allUsers = firstPage.users;
+
+      if (firstPage.pages > 1 && firstPage.total > firstPage.users.length) {
+        const nextPages = await Promise.all(
+          Array.from({ length: firstPage.pages - 1 }, (_, index) =>
+            usersRequest(`?page=${index + 2}`),
+          ),
+        );
+
+        allUsers = [
+          ...allUsers,
+          ...nextPages.flatMap((payload) => normalizeUsersPayload(payload).users),
+        ];
+      }
+
+      setUsers(allUsers.map(normalizeUser));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
     } finally {
@@ -142,7 +224,7 @@ export const UserList = ({ currentUser }) => {
   const openCreateModal = () => {
     setModalMode("create");
     setSelectedUser(null);
-    reset({ name: "", email: "", password: "", role: "", departmentId: "" });
+    reset({ name: "", email: "", password: "", role: "", departmentId: "", phone: "" });
     setIsModalOpen(true);
   };
 
@@ -153,6 +235,7 @@ export const UserList = ({ currentUser }) => {
     reset({
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
       departmentId: user.departmentId,
     });
@@ -171,6 +254,7 @@ export const UserList = ({ currentUser }) => {
       const input = {
         fullName: data.name.trim(),
         email: data.email.trim(),
+        phone: data.phone?.trim() || undefined,
         roleId: ROLE_MAP[data.role]?.roleId,
         departmentId: data.departmentId?.trim() || undefined,
       };
@@ -193,6 +277,7 @@ export const UserList = ({ currentUser }) => {
         });
         const updatedUser = normalizeUser(payload?.data ?? payload);
         setUsers(prev => prev.map(u => u.id === selectedUser.id ? updatedUser : u));
+        setDetailUser((current) => current?.id === selectedUser.id ? updatedUser : current);
       }
 
       closeModal();
@@ -233,6 +318,19 @@ export const UserList = ({ currentUser }) => {
     const matchDept = filterDepartment ? user.departmentId === filterDepartment : true;
     return matchSearch && matchRole && matchDept;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USER_PAGE_SIZE));
+  const pageStartIndex = (currentPage - 1) * USER_PAGE_SIZE;
+  const paginatedUsers = filteredUsers.slice(pageStartIndex, pageStartIndex + USER_PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterRole, filterDepartment]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Lấy danh sách phòng ban unique (dùng cho bộ lọc)
   const departments = Array.from(
@@ -243,14 +341,53 @@ export const UserList = ({ currentUser }) => {
     ),
   );
 
-  const toggleDashboardEditor = (userId) => {
-    setDashboardEditors((prev) => {
-      const next = prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId];
-      writeDashboardEditors(next);
+  const getUserFeaturePermissions = (user) => {
+    const customPermissions = featurePermissionsByUserId[user.id];
+    return Array.isArray(customPermissions) ? customPermissions : getDefaultFeaturePermissions(user.role);
+  };
+
+  const getFeaturePermissionCount = (user) => getUserFeaturePermissions(user).length;
+
+  const openPermissionModal = (user) => {
+    setPermissionUser(user);
+  };
+
+  const closePermissionModal = () => {
+    setPermissionUser(null);
+  };
+
+  const toggleFeaturePermission = (userId, permissionId) => {
+    if (!isCurrentUserAdmin) return;
+
+    const user = users.find((item) => item.id === userId) || permissionUser;
+    const currentPermissions = getUserFeaturePermissions(user);
+    const nextPermissions = currentPermissions.includes(permissionId)
+      ? currentPermissions.filter((item) => item !== permissionId)
+      : [...currentPermissions, permissionId];
+
+    setFeaturePermissionsByUserId((current) => {
+      const next = {
+        ...current,
+        [userId]: nextPermissions,
+      };
+      writeUserFeaturePermissions(next);
       return next;
     });
+  };
+
+  const openUserDetail = async (user) => {
+    setDetailUser(user);
+
+    try {
+      const payload = await usersRequest(`/${user.id}`);
+      setDetailUser(normalizeUser(payload?.data ?? payload));
+    } catch {
+      setDetailUser(user);
+    }
+  };
+
+  const closeUserDetail = () => {
+    setDetailUser(null);
   };
 
   if (!["admin", "bangiamdoc"].includes(currentUser?.role)) {
@@ -326,17 +463,17 @@ export const UserList = ({ currentUser }) => {
               <tr>
                 <th style={{ width: "5%" }}>#</th>
                 <th style={{ width: "24%" }}>Thông tin nhân viên</th>
-                <th style={{ width: "24%" }}>Vai trò & Quyền</th>
+                <th style={{ width: "20%" }}>Vai trò</th>
                 <th style={{ width: "14%" }}>Phòng ban</th>
                 <th style={{ width: "14%" }}>Trạng thái</th>
-                {isCurrentUserAdmin && <th style={{ width: "10%" }}>Quyền dashboard</th>}
+                <th style={{ width: "14%" }}>Quyền chức năng</th>
                 <th style={{ width: "9%", textAlign: "center" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-5">
+                  <td colSpan="7" className="text-center py-5">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
@@ -344,22 +481,22 @@ export const UserList = ({ currentUser }) => {
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-4 text-danger">{error}</td>
+                  <td colSpan="7" className="text-center py-4 text-danger">{error}</td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={isCurrentUserAdmin ? 7 : 6} className="text-center py-5 text-body-secondary">
+                  <td colSpan="7" className="text-center py-5 text-body-secondary">
                     Không tìm thấy tài khoản nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user, index) => {
+                paginatedUsers.map((user, index) => {
                   const roleData = ROLE_MAP[user.role] || { label: user.role, color: "bg-secondary", link: "#" };
-                  const isDashboardEditor = dashboardEditors.includes(user.id);
+                  const featurePermissionCount = getFeaturePermissionCount(user);
                   
                   return (
-                    <tr key={user.id}>
-                      <td>{index + 1}</td>
+                    <tr key={user.id} className="cursor-pointer" onClick={() => openUserDetail(user)}>
+                      <td>{pageStartIndex + index + 1}</td>
                       <td>
                         <div className="d-flex flex-column">
                           <span className="fw-bold text-body-emphasis">{user.name}</span>
@@ -371,21 +508,6 @@ export const UserList = ({ currentUser }) => {
                           <span className={`badge ${roleData.color}`}>
                             {roleData.label}
                           </span>
-                          <a 
-                            href={roleData.link} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-primary text-decoration-none" 
-                            style={{ fontSize: "12px" }}
-                            title="Xem chi tiết chức năng của quyền này"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
-                              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                              <polyline points="15 3 21 3 21 9"></polyline>
-                              <line x1="10" y1="14" x2="21" y2="3"></line>
-                            </svg>
-                            Xem chức năng
-                          </a>
                         </div>
                       </td>
                       <td>{user.department || '—'}</td>
@@ -398,20 +520,27 @@ export const UserList = ({ currentUser }) => {
                           )}
                         </span>
                       </td>
-                      {isCurrentUserAdmin && (
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            className={`btn btn-sm ${isDashboardEditor ? "btn-success" : "btn-light border"}`}
-                            onClick={() => toggleDashboardEditor(user.id)}
-                            disabled={actionLoading}
-                          >
-                            {isDashboardEditor ? "Được sửa" : "Chỉ xem"}
-                          </button>
-                        </td>
-                      )}
+                      <td className="text-center" onClick={(event) => event.stopPropagation()}>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${featurePermissionCount > 0 ? "btn-outline-primary" : "btn-light border"}`}
+                          onClick={() => openPermissionModal(user)}
+                          disabled={actionLoading}
+                          title={isCurrentUserAdmin ? "Xem và phân quyền chức năng" : "Xem quyền chức năng"}
+                        >
+                          {featurePermissionCount} quyền
+                        </button>
+                      </td>
                       <td className="text-center">
-                        <div className="d-inline-flex align-items-center justify-content-center gap-2" style={{ minWidth: "76px" }}>
+                        <div className="d-inline-flex align-items-center justify-content-center gap-2" style={{ minWidth: "76px" }} onClick={(event) => event.stopPropagation()}>
+                        <button
+                          className="action-btn btn-view"
+                          title="Xem chi tiết"
+                          onClick={() => openUserDetail(user)}
+                          disabled={actionLoading}
+                        >
+                          <EyeIcon />
+                        </button>
                         <button 
                           className="action-btn btn-edit" 
                           title="Chỉnh sửa"
@@ -448,10 +577,147 @@ export const UserList = ({ currentUser }) => {
             </tbody>
           </table>
         </div>
-        <div className="card-footer bg-transparent border-top py-3">
-          <span className="text-body-secondary" style={{ fontSize: "13px" }}>Hiển thị {filteredUsers.length} tài khoản</span>
+        <div className="card-footer bg-transparent border-top py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+            {filteredUsers.length === 0
+              ? "Hiển thị 0 tài khoản"
+              : `Hiển thị ${pageStartIndex + 1}-${Math.min(pageStartIndex + paginatedUsers.length, filteredUsers.length)} / ${filteredUsers.length} tài khoản`}
+          </span>
+          {totalPages > 1 && (
+            <div className="d-flex align-items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                Trước
+              </button>
+              <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                Trang {currentPage}/{totalPages}
+              </span>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {detailUser && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal-content">
+            <div className="custom-modal-header">
+              <h5>Chi tiết tài khoản</h5>
+              <button className="btn-close-modal" onClick={closeUserDetail}>
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="custom-modal-body">
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <div className="user-detail-avatar">
+                  {detailUser.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(-2)
+                    .map((part) => part[0])
+                    .join("")
+                    .toUpperCase() || "U"}
+                </div>
+                <div className="min-w-0">
+                  <h5 className="mb-1 text-body-emphasis">{detailUser.name || "Chưa cập nhật tên"}</h5>
+                  <div className="text-body-secondary text-break">{detailUser.email || "Chưa cập nhật email"}</div>
+                </div>
+              </div>
+
+              <div className="user-detail-grid">
+                <DetailItem label="Tên" value={detailUser.name} />
+                <DetailItem label="Email" value={detailUser.email} />
+                <DetailItem label="Số điện thoại" value={detailUser.phone} />
+                <DetailItem label="Địa chỉ" value={detailUser.address} />
+                <DetailItem label="Link mạng xã hội" value={detailUser.socialLink} isLink />
+                <DetailItem label="Mã giới thiệu" value={detailUser.referralCode} />
+                <DetailItem label="Vai trò" value={ROLE_MAP[detailUser.role]?.label || detailUser.role} />
+                <DetailItem label="Phòng ban" value={detailUser.department} />
+                <DetailItem label="Trạng thái" value={detailUser.status === "active" ? "Hoạt động" : "Đã khóa/Ngừng hoạt động"} />
+              </div>
+            </div>
+            <div className="custom-modal-footer">
+              <button type="button" className="btn btn-light border" onClick={closeUserDetail}>Đóng</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  closeUserDetail();
+                  openEditModal(detailUser);
+                }}
+                disabled={!isCurrentUserAdmin}
+              >
+                Chỉnh sửa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {permissionUser && (
+        <div className="custom-modal-overlay">
+          <div className="custom-modal-content modal-role-wide">
+            <div className="custom-modal-header">
+              <div>
+                <h5>Quyền chức năng</h5>
+                <div className="text-body-secondary" style={{ fontSize: "13px" }}>
+                  {permissionUser.name} · {ROLE_MAP[permissionUser.role]?.label || permissionUser.role}
+                </div>
+              </div>
+              <button className="btn-close-modal" onClick={closePermissionModal}>
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="custom-modal-body">
+              {!isCurrentUserAdmin && (
+                <div className="alert alert-info py-2" style={{ fontSize: "13px" }}>
+                  Bạn chỉ có thể xem quyền chức năng. Chỉ Admin mới được phân thêm hoặc thu hồi quyền.
+                </div>
+              )}
+              <div className="permissions-container">
+                {FEATURE_PERMISSION_GROUPS.map((group) => (
+                  <div className="module-group" key={group.id}>
+                    <div className="module-header">
+                      <h6 className="module-title">{group.title}</h6>
+                    </div>
+                    <div className="permissions-grid">
+                      {group.permissions.map((permission) => {
+                        const checked = getUserFeaturePermissions(permissionUser).includes(permission.id);
+
+                        return (
+                          <label className="permission-checkbox" key={permission.id}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={!isCurrentUserAdmin}
+                              onChange={() => toggleFeaturePermission(permissionUser.id, permission.id)}
+                            />
+                            <span>{permission.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="custom-modal-footer">
+              <button type="button" className="btn btn-primary" onClick={closePermissionModal}>Xong</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- MODAL CREATE / EDIT --- */}
       {isModalOpen && (
@@ -511,6 +777,17 @@ export const UserList = ({ currentUser }) => {
                   </div>
                 )}
 
+                <div className="mb-3">
+                  <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Số điện thoại</label>
+                  <input
+                    type="tel"
+                    className="form-control"
+                    placeholder="Ví dụ: 0901234567"
+                    disabled={actionLoading}
+                    {...register("phone")}
+                  />
+                </div>
+
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Vai trò <span className="text-danger">*</span></label>
@@ -561,3 +838,38 @@ export const UserList = ({ currentUser }) => {
     </div>
   );
 };
+
+function DetailItem({ isLink = false, label, value }) {
+  const displayValue = value || "Chưa cập nhật";
+
+  return (
+    <div className="user-detail-item">
+      <div className="user-detail-label">{label}</div>
+      {isLink && value ? (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="user-detail-value text-primary">
+          {value}
+        </a>
+      ) : (
+        <div className="user-detail-value">{displayValue}</div>
+      )}
+    </div>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  );
+}

@@ -121,7 +121,13 @@ export async function deleteDepartment(departmentId) {
   return await withLocalFallback(
     () => apiRequest(`/departments/${departmentId}`, { method: "DELETE" }),
     () => {
-      writeDepartments(readDepartments().filter((department) => department.id !== departmentId));
+      writeDepartments(
+        readDepartments().map((department) =>
+          department.id === departmentId
+            ? { ...department, isHidden: true, updatedAt: new Date().toISOString() }
+            : department,
+        ),
+      );
       writeUsers(
         readUsers().map((user) =>
           user.departmentId === departmentId ? { ...user, departmentId: null } : user,
@@ -130,6 +136,30 @@ export async function deleteDepartment(departmentId) {
       return { id: departmentId };
     },
   );
+}
+
+export async function restoreDepartment(department) {
+  const departmentId = department?.id;
+
+  if (!departmentId) {
+    throw new Error("Không tìm thấy phòng ban cần hiện lại.");
+  }
+
+  const departments = readDepartments();
+  const existsLocally = departments.some((item) => item.id === departmentId);
+  const restoredDepartment = {
+    ...department,
+    isHidden: false,
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeDepartments(
+    existsLocally
+      ? departments.map((item) => (item.id === departmentId ? restoredDepartment : item))
+      : [restoredDepartment, ...departments],
+  );
+
+  return enrichDepartment(restoredDepartment, readUsers());
 }
 
 export async function getDepartmentMembers(departmentId) {

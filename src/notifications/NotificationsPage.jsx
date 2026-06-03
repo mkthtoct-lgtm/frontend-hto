@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
+import { API_BASE_URL } from "../config/api";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
-const NOTIFICATIONS_STORAGE_KEY = "hto_internal_notifications";
-const NOTIFICATION_READ_STORAGE_KEY = "hto_internal_notification_reads";
+const NOTIFICATIONS_CHANGED_EVENT = "notifications:changed";
 
 const ROLE_OPTIONS = [
   { id: "admin", roleId: ADMIN_ROLE_ID, label: "Admin" },
@@ -36,27 +37,6 @@ const PRIORITY_OPTIONS = [
   { id: "urgent", label: "Khẩn", className: "bg-danger-subtle text-danger" },
 ];
 
-const defaultNotifications = [
-  {
-    id: "notice-001",
-    title: "Cập nhật quy trình upload tài liệu",
-    content: "Từ hôm nay, tài liệu nội bộ cần được phân quyền trước khi chuyển trạng thái Đang dùng.",
-    priority: "important",
-    createdAt: "2026-05-30T08:00:00.000Z",
-    createdBy: "Admin",
-    target: { groups: ["internal"], roles: ["admin", "truongbophan", "nhansu"], departments: [] },
-  },
-  {
-    id: "notice-002",
-    title: "Lịch kiểm tra hồ sơ cuối tuần",
-    content: "Bộ phận Hồ sơ kiểm tra danh sách tài liệu pending trước 17:00 hôm nay.",
-    priority: "urgent",
-    createdAt: "2026-05-30T09:30:00.000Z",
-    createdBy: "Ban giám đốc",
-    target: { groups: [], roles: [], departments: ["dept-ho-so"] },
-  },
-];
-
 const emptyForm = {
   title: "",
   content: "",
@@ -70,52 +50,6 @@ const isAdminUser = (user) => user?.role === "admin" || user?.roleId === ADMIN_R
 
 const canCreateNotification = (user) =>
   isAdminUser(user) || user?.role === "truongbophan" || user?.roleId === DEPARTMENT_HEAD_ROLE_ID;
-
-const readNotifications = () => {
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY) || "null");
-    return Array.isArray(stored) ? stored : defaultNotifications;
-  } catch {
-    window.localStorage.removeItem(NOTIFICATIONS_STORAGE_KEY);
-    return defaultNotifications;
-  }
-};
-
-const writeNotifications = (notifications) => {
-  window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
-};
-
-const readState = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(NOTIFICATION_READ_STORAGE_KEY) || "{}");
-  } catch {
-    window.localStorage.removeItem(NOTIFICATION_READ_STORAGE_KEY);
-    return {};
-  }
-};
-
-const writeState = (state) => {
-  window.localStorage.setItem(NOTIFICATION_READ_STORAGE_KEY, JSON.stringify(state));
-};
-
-const getUserNotificationReadKey = (user) => user?.id || user?.email || user?.roleId || "guest";
-
-const readUserState = (user) => {
-  const state = readState();
-  const userKey = getUserNotificationReadKey(user);
-
-  return state[userKey] || {};
-};
-
-const writeUserState = (user, readByNotificationId) => {
-  const state = readState();
-  const userKey = getUserNotificationReadKey(user);
-
-  writeState({
-    ...state,
-    [userKey]: readByNotificationId,
-  });
-};
 
 const getUserGroupIds = (user) => {
   const role = user?.role || "";
@@ -167,18 +101,150 @@ const formatDateTime = (value) => {
 const getPriorityOption = (priority) =>
   PRIORITY_OPTIONS.find((option) => option.id === priority) || PRIORITY_OPTIONS[0];
 
+const normalizeNotificationsPayload = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.notifications)) return payload.notifications;
+  return [];
+};
+
+const normalizeNotification = (notification) => {
+  const data = notification?.data ?? notification ?? {};
+  const id = data.id || data._id;
+  const createdBy =
+    data.createdByName ||
+    data.createdBy?.fullName ||
+    data.createdBy?.name ||
+    data.createdBy?.email ||
+    data.createdBy ||
+    "Hệ thống";
+
+  return {
+    ...data,
+    id,
+    title: data.title || "Thông báo nội bộ",
+    content: data.content || "",
+    priority: data.priority || "normal",
+    createdAt: data.createdAt || new Date().toISOString(),
+    createdBy,
+    target: {
+      groups: Array.isArray(data.target?.groups) ? data.target.groups : ["all"],
+      roles: Array.isArray(data.target?.roles) ? data.target.roles : [],
+      departments: Array.isArray(data.target?.departments) ? data.target.departments : [],
+    },
+    isRead: Boolean(data.isRead),
+  };
+};
+
+const getReadStateFromNotifications = (notifications) =>
+  notifications.reduce((state, notification) => {
+    if (notification.isRead) {
+      state[notification.id] = notification.readAt || notification.updatedAt || new Date().toISOString();
+    }
+
+    return state;
+  }, {});
+
+async function requestNotifications(path = "", options = {}) {
+  const response = await authFetch(`${API_BASE_URL}/notifications${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Không thể xử lý thông báo nội bộ.");
+  }
+
+  return payload?.data ?? payload;
+}
+
+const getNotifications = async () =>
+  normalizeNotificationsPayload(await requestNotifications())
+    .map(normalizeNotification)
+    .filter((notification) => notification.id);
+
+const createNotificationRequest = async (input) =>
+  normalizeNotification(
+    await requestNotifications("", {
+      method: "POST",
+      body: input,
+    }),
+  );
+
+const markNotificationReadRequest = async (notificationId) =>
+  normalizeNotification(await requestNotifications(`/${notificationId}/read`, { method: "PATCH" }));
+
+const markNotificationUnreadRequest = async (notificationId) =>
+  normalizeNotification(await requestNotifications(`/${notificationId}/unread`, { method: "PATCH" }));
+
+const markAllNotificationsReadRequest = async () =>
+  await requestNotifications("/read-all", { method: "POST" });
+
+const notifyNotificationsChanged = (detail = {}) => {
+  window.dispatchEvent(
+    new CustomEvent(NOTIFICATIONS_CHANGED_EVENT, {
+      detail: { source: "page", ...detail },
+    }),
+  );
+};
+
 export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
-  const [notifications, setNotifications] = useState(() => readNotifications());
-  const [readByNotificationId, setReadByNotificationId] = useState(() => readUserState(currentUser));
+  const [notifications, setNotifications] = useState([]);
+  const [readByNotificationId, setReadByNotificationId] = useState({});
   const [manualActiveNotificationId, setManualActiveNotificationId] = useState(null);
   const [closedSelectedNotificationId, setClosedSelectedNotificationId] = useState(null);
   const [filter, setFilter] = useState("all");
   const [form, setForm] = useState(emptyForm);
   const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const canCreate = canCreateNotification(currentUser);
   const activeNotificationId =
     manualActiveNotificationId ||
     (selectedNotificationId !== closedSelectedNotificationId ? selectedNotificationId : null);
+
+  const loadNotifications = useCallback(async () => {
+    setLoading(true);
+    setApiError("");
+
+    try {
+      const notificationData = await getNotifications();
+      setNotifications(notificationData);
+      setReadByNotificationId(getReadStateFromNotifications(notificationData));
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể tải thông báo nội bộ.");
+      setNotifications([]);
+      setReadByNotificationId({});
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
+
+  useEffect(() => {
+    const refreshFromExternalChange = (event) => {
+      if (event.detail?.source !== "page") {
+        void loadNotifications();
+      }
+    };
+
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, refreshFromExternalChange);
+
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, refreshFromExternalChange);
+    };
+  }, [loadNotifications]);
 
   const visibleNotifications = useMemo(() => {
     return notifications
@@ -206,11 +272,24 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
   const updateReadState = (nextState) => {
     setReadByNotificationId(nextState);
-    writeUserState(currentUser, nextState);
   };
 
   const markAsRead = (notificationId) => {
     updateReadState({ ...readByNotificationId, [notificationId]: new Date().toISOString() });
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) =>
+        notification.id === notificationId ? { ...notification, isRead: true } : notification,
+      ),
+    );
+
+    notifyNotificationsChanged({ action: "read", notificationId });
+    void markNotificationReadRequest(notificationId)
+      .then(() => notifyNotificationsChanged({ action: "refresh" }))
+      .catch((error) => {
+        setApiError(error instanceof Error ? error.message : "Không thể đánh dấu đã đọc.");
+        void loadNotifications();
+        notifyNotificationsChanged({ action: "refresh" });
+      });
   };
 
   const openNotificationDetail = (notificationId) => {
@@ -230,6 +309,20 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
     const nextState = { ...readByNotificationId };
     delete nextState[notificationId];
     updateReadState(nextState);
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) =>
+        notification.id === notificationId ? { ...notification, isRead: false } : notification,
+      ),
+    );
+
+    notifyNotificationsChanged({ action: "unread", notificationId });
+    void markNotificationUnreadRequest(notificationId)
+      .then(() => notifyNotificationsChanged({ action: "refresh" }))
+      .catch((error) => {
+        setApiError(error instanceof Error ? error.message : "Không thể đánh dấu chưa đọc.");
+        void loadNotifications();
+        notifyNotificationsChanged({ action: "refresh" });
+      });
   };
 
   const markAllAsRead = () => {
@@ -238,6 +331,22 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
       nextState[notification.id] = nextState[notification.id] || new Date().toISOString();
     });
     updateReadState(nextState);
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) =>
+        visibleNotifications.some((visibleNotification) => visibleNotification.id === notification.id)
+          ? { ...notification, isRead: true }
+          : notification,
+      ),
+    );
+
+    notifyNotificationsChanged({ action: "read-all" });
+    void markAllNotificationsReadRequest()
+      .then(() => notifyNotificationsChanged({ action: "refresh" }))
+      .catch((error) => {
+        setApiError(error instanceof Error ? error.message : "Không thể đánh dấu tất cả đã đọc.");
+        void loadNotifications();
+        notifyNotificationsChanged({ action: "refresh" });
+      });
   };
 
   const toggleTarget = (scope, optionId) => {
@@ -251,7 +360,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
     });
   };
 
-  const createNotification = (e) => {
+  const createNotification = async (e) => {
     e.preventDefault();
     const nextErrors = {};
 
@@ -264,25 +373,30 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
     setFormErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const nextNotification = {
-      id: `notice-${Date.now()}`,
+    setActionLoading(true);
+    setApiError("");
+
+    try {
+      const nextNotification = await createNotificationRequest({
       title: form.title.trim(),
       content: form.content.trim(),
       priority: form.priority,
-      createdAt: new Date().toISOString(),
-      createdBy: currentUser?.fullName || currentUser?.name || currentUser?.email || "Người tạo",
       target: {
         groups: form.groups,
         roles: form.roles,
         departments: form.departments,
       },
-    };
-    const nextNotifications = [nextNotification, ...notifications];
+      });
 
-    setNotifications(nextNotifications);
-    writeNotifications(nextNotifications);
-    setForm(emptyForm);
-    setFormErrors({});
+      setNotifications((currentNotifications) => [nextNotification, ...currentNotifications]);
+      setForm(emptyForm);
+      setFormErrors({});
+      notifyNotificationsChanged({ action: "created", notificationId: nextNotification.id });
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể tạo thông báo.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -296,11 +410,20 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
-          <button type="button" className="btn btn-sm btn-outline-primary" onClick={markAllAsRead}>
+          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={loadNotifications} disabled={loading}>
+            Làm mới
+          </button>
+          <button type="button" className="btn btn-sm btn-outline-primary" onClick={markAllAsRead} disabled={loading || visibleNotifications.length === 0}>
             Đánh dấu tất cả đã đọc
           </button>
         </div>
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger py-2" role="alert">
+          {apiError}
+        </div>
+      )}
 
       <div className="notifications-page-workspace grid min-h-0 flex-1 grid-cols-1 items-start gap-4 xl:grid-cols-12 xl:overflow-hidden">
         {canCreate && (
@@ -316,6 +439,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                     <input
                       className={`form-control ${formErrors.title ? "is-invalid" : ""}`}
                       value={form.title}
+                      disabled={actionLoading}
                       onChange={(e) => setForm((currentForm) => ({ ...currentForm, title: e.target.value }))}
                     />
                     {formErrors.title && <div className="invalid-feedback">{formErrors.title}</div>}
@@ -326,6 +450,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                       className={`form-control ${formErrors.content ? "is-invalid" : ""}`}
                       rows="4"
                       value={form.content}
+                      disabled={actionLoading}
                       onChange={(e) => setForm((currentForm) => ({ ...currentForm, content: e.target.value }))}
                     />
                     {formErrors.content && <div className="invalid-feedback">{formErrors.content}</div>}
@@ -335,6 +460,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                     <select
                       className="form-select"
                       value={form.priority}
+                      disabled={actionLoading}
                       onChange={(e) => setForm((currentForm) => ({ ...currentForm, priority: e.target.value }))}
                     >
                       {PRIORITY_OPTIONS.map((option) => (
@@ -371,10 +497,11 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                   )}
 
                   <div className="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" className="btn btn-light border" onClick={() => setForm(emptyForm)}>
+                    <button type="button" className="btn btn-light border" onClick={() => setForm(emptyForm)} disabled={actionLoading}>
                       Làm mới
                     </button>
-                    <button type="submit" className="btn btn-primary">
+                    <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                      {actionLoading && <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>}
                       Tạo thông báo
                     </button>
                   </div>
@@ -407,7 +534,14 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
             </div>
             <div className="notifications-page-scroll card-body min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <div className="flex flex-col gap-2">
-                {visibleNotifications.map((notification) => {
+                {loading ? (
+                  <div className="rounded border bg-body-tertiary p-4 text-center text-body-secondary">
+                    <div className="spinner-border text-primary mb-2" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <div>Đang tải thông báo...</div>
+                  </div>
+                ) : visibleNotifications.map((notification) => {
                   const isRead = Boolean(readByNotificationId[notification.id]);
                   const priority = getPriorityOption(notification.priority);
 
@@ -470,7 +604,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                     </div>
                   );
                 })}
-                {visibleNotifications.length === 0 && (
+                {!loading && visibleNotifications.length === 0 && (
                   <div className="rounded border bg-body-tertiary p-4 text-center text-body-secondary">
                     Không có thông báo phù hợp.
                   </div>

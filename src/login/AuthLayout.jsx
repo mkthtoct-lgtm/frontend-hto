@@ -10,7 +10,7 @@ export const AuthLayout = ({ children, authMode, imageSrc }) => {
               isRegister ? 'translate-x-[122.22%]' : 'translate-x-0'
             }`}
           >
-            <div className="w-full max-w-[360px]">
+            <div className={`w-full ${isRegister ? 'max-w-[500px]' : 'max-w-[360px]'}`}>
               {children}
             </div>
           </div>

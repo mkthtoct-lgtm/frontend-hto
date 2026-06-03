@@ -3,17 +3,19 @@ import { useForm } from "react-hook-form";
 import {
   assignUserToDepartment,
   createDepartment,
-  deleteDepartment,
+  deleteDepartment as hideDepartment,
   getAssignableUsers,
   getDepartmentMembers,
   getDepartments,
   removeUserFromDepartment,
+  restoreDepartment,
   updateDepartment,
 } from "./departmentMockData.jsx";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 
 const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
+const isDepartmentHidden = (department) => Boolean(department?.isHidden || department?.hidden);
 
 export const DepartmentsPage = ({ currentUser }) => {
   const [departments, setDepartments] = useState([]);
@@ -46,6 +48,7 @@ export const DepartmentsPage = ({ currentUser }) => {
     () => departments.find((department) => department.id === selectedDepartmentId),
     [departments, selectedDepartmentId],
   );
+  const selectedDepartmentHidden = isDepartmentHidden(selectedDepartment);
 
   const filteredDepartments = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
@@ -184,8 +187,8 @@ export const DepartmentsPage = ({ currentUser }) => {
     }
   };
 
-  const handleDeleteDepartment = async (department) => {
-    if (!window.confirm(`Xóa phòng ban "${department.name}"? Nhân sự sẽ được gỡ khỏi phòng ban này.`)) {
+  const handleHideDepartment = async (department) => {
+    if (!window.confirm(`Ẩn phòng ban "${department.name}"? Nhân sự sẽ được gỡ khỏi phòng ban này.`)) {
       return;
     }
 
@@ -193,14 +196,39 @@ export const DepartmentsPage = ({ currentUser }) => {
     setApiError("");
 
     try {
-      await deleteDepartment(department.id);
-      const nextDepartments = departments.filter((item) => item.id !== department.id);
-      setDepartments(nextDepartments);
-      setSelectedDepartmentId(nextDepartments[0]?.id || "");
+      await hideDepartment(department.id);
+      setDepartments((currentDepartments) =>
+        currentDepartments.map((item) =>
+          item.id === department.id
+            ? { ...item, isHidden: true, hidden: true, memberCount: 0 }
+            : item,
+        ),
+      );
+      setSelectedDepartmentId(department.id);
       setMembers([]);
-      await loadDepartments();
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Không thể xóa phòng ban.");
+      setApiError(error instanceof Error ? error.message : "Không thể ẩn phòng ban.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestoreDepartment = async (department) => {
+    setActionLoading(true);
+    setApiError("");
+
+    try {
+      const restoredDepartment = await restoreDepartment(department);
+      setDepartments((currentDepartments) =>
+        currentDepartments.map((item) =>
+          item.id === department.id
+            ? { ...item, ...restoredDepartment, isHidden: false, hidden: false }
+            : item,
+        ),
+      );
+      setSelectedDepartmentId(department.id);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể hiện lại phòng ban.");
     } finally {
       setActionLoading(false);
     }
@@ -209,7 +237,7 @@ export const DepartmentsPage = ({ currentUser }) => {
   const handleAssignUser = async (event) => {
     const userId = event.target.value;
 
-    if (!selectedDepartmentId || !userId) {
+    if (!selectedDepartmentId || !userId || isDepartmentHidden(selectedDepartment)) {
       return;
     }
 
@@ -232,6 +260,10 @@ export const DepartmentsPage = ({ currentUser }) => {
     setMemberError("");
 
     try {
+      if (isDepartmentHidden(selectedDepartment)) {
+        throw new Error("Phòng ban đang ẩn nên không thể gỡ nhân sự.");
+      }
+
       await removeUserFromDepartment(selectedDepartmentId, userId);
       await Promise.all([loadMembers(selectedDepartmentId), loadDepartments()]);
     } catch (error) {
@@ -312,14 +344,22 @@ export const DepartmentsPage = ({ currentUser }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDepartments.map((department) => (
+                    {filteredDepartments.map((department) => {
+                      const departmentHidden = isDepartmentHidden(department);
+
+                      return (
                       <tr
                         key={department.id}
-                        className={`cursor-pointer ${selectedDepartmentId === department.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                        className={`cursor-pointer ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
                         onClick={() => setSelectedDepartmentId(department.id)}
                       >
                         <td className="min-w-[220px]">
-                          <span className="fw-bold text-body-emphasis">{department.name}</span>
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            <span className="fw-bold text-body-emphasis">{department.name}</span>
+                            {departmentHidden && (
+                              <span className="badge bg-warning-subtle text-warning">Đang ẩn</span>
+                            )}
+                          </div>
                         </td>
                         <td className="text-body-secondary">{department.description || "—"}</td>
                         <td className="text-center">{department.memberCount || 0}</td>
@@ -334,46 +374,70 @@ export const DepartmentsPage = ({ currentUser }) => {
                               <EditIcon />
                             </button>
                             <button
-                              className="action-btn btn-lock h-8 w-8 flex-none"
-                              title="Xóa phòng ban"
-                              onClick={() => handleDeleteDepartment(department)}
+                              className={`action-btn h-8 w-8 flex-none ${departmentHidden ? "btn-edit" : "btn-lock"}`}
+                              title={departmentHidden ? "Hiện lại phòng ban" : "Ẩn phòng ban"}
+                              onClick={() =>
+                                departmentHidden
+                                  ? handleRestoreDepartment(department)
+                                  : handleHideDepartment(department)
+                              }
                               disabled={actionLoading}
                             >
-                              <TrashIcon />
+                              {departmentHidden ? <EyeIcon /> : <EyeOffIcon />}
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
               <div className="block md:hidden">
-                {filteredDepartments.map((department) => (
+                {filteredDepartments.map((department) => {
+                  const departmentHidden = isDepartmentHidden(department);
+
+                  return (
                   <button
                     type="button"
                     key={department.id}
-                    className={`w-100 border-0 border-b border-[var(--bs-border-color-translucent)] bg-transparent p-3 text-start ${selectedDepartmentId === department.id ? "bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                    className={`w-100 border-0 border-b border-[var(--bs-border-color-translucent)] bg-transparent p-3 text-start ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "bg-[var(--bs-primary-bg-subtle)]" : ""}`}
                     onClick={() => setSelectedDepartmentId(department.id)}
                   >
                     <div className="d-flex justify-content-between gap-2">
-                      <strong>{department.name}</strong>
-                      <span className="badge text-bg-light">{department.memberCount || 0} người</span>
+                      <div className="d-flex flex-wrap align-items-center gap-2">
+                        <strong>{department.name}</strong>
+                        {departmentHidden && (
+                          <span className="badge bg-warning-subtle text-warning">Đang ẩn</span>
+                        )}
+                      </div>
+                      <span className="badge text-bg-light flex-shrink-0">{department.memberCount || 0} người</span>
                     </div>
                     <div className="text-body-secondary mt-1" style={{ fontSize: "13px" }}>
                       {department.description || "Chưa có mô tả"}
                     </div>
                     <div className="d-flex gap-2 mt-3">
-                      <span className="btn btn-sm btn-outline-primary" onClick={() => openEditModal(department)}>
+                      <span className="btn btn-sm btn-outline-primary" onClick={(event) => {
+                        event.stopPropagation();
+                        openEditModal(department);
+                      }}>
                         Sửa
                       </span>
-                      <span className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteDepartment(department)}>
-                        Xóa
+                      <span className={`btn btn-sm ${departmentHidden ? "btn-outline-success" : "btn-outline-danger"}`} onClick={(event) => {
+                        event.stopPropagation();
+                        if (departmentHidden) {
+                          handleRestoreDepartment(department);
+                        } else {
+                          handleHideDepartment(department);
+                        }
+                      }}>
+                        {departmentHidden ? "Hiện lại" : "Ẩn"}
                       </span>
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
@@ -385,9 +449,18 @@ export const DepartmentsPage = ({ currentUser }) => {
               <div>
                 <span className="fw-bold text-body-emphasis d-block">
                   {selectedDepartment?.name || "Thành viên phòng ban"}
+                  {selectedDepartmentHidden && (
+                    <span className="badge bg-warning-subtle text-warning ms-2 align-middle">
+                      Đang ẩn
+                    </span>
+                  )}
                 </span>
                 <span className="text-body-secondary" style={{ fontSize: "13px" }}>
-                  {selectedDepartment ? "Quản lý nhân sự đang thuộc phòng ban này" : "Chọn một phòng ban để xem thành viên"}
+                  {selectedDepartmentHidden
+                    ? "Phòng ban đang bị ẩn. Hãy hiện lại trước khi phân bổ nhân sự."
+                    : selectedDepartment
+                      ? "Quản lý nhân sự đang thuộc phòng ban này"
+                      : "Chọn một phòng ban để xem thành viên"}
                 </span>
               </div>
               <span className="badge text-bg-primary">{members.length}</span>
@@ -403,11 +476,15 @@ export const DepartmentsPage = ({ currentUser }) => {
                 <select
                   className="form-select"
                   onChange={handleAssignUser}
-                  disabled={actionLoading || assignableUsers.length === 0}
+                  disabled={actionLoading || selectedDepartmentHidden || assignableUsers.length === 0}
                   defaultValue=""
                 >
                   <option value="">
-                    {assignableUsers.length === 0 ? "Không còn nhân sự để thêm" : "-- Chọn nhân sự --"}
+                    {selectedDepartmentHidden
+                      ? "Phòng ban đang ẩn"
+                      : assignableUsers.length === 0
+                        ? "Không còn nhân sự để thêm"
+                        : "-- Chọn nhân sự --"}
                   </option>
                   {assignableUsers.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -446,7 +523,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                     <button
                       className="btn btn-sm btn-outline-danger flex-shrink-0"
                       onClick={() => handleRemoveUser(member.id)}
-                      disabled={actionLoading}
+                      disabled={actionLoading || selectedDepartmentHidden}
                     >
                       Gỡ
                     </button>
@@ -599,14 +676,22 @@ function EditIcon() {
   );
 }
 
-function TrashIcon() {
+function EyeOffIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="3 6 5 6 21 6"></polyline>
-      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-      <path d="M10 11v6"></path>
-      <path d="M14 11v6"></path>
-      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+      <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
     </svg>
   );
 }
