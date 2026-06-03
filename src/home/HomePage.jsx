@@ -49,18 +49,44 @@ const HOME_EVENTS = [
   },
 ];
 
+const HOME_GALLERY = [
+  {
+    title: "Du học Đức",
+    image: "/assets/images/banner-web-korean.jpg",
+  },
+  {
+    title: "Hỗ trợ hồ sơ",
+    image: "/assets/images/banner-second.jpg",
+  },
+  {
+    title: "Đào tạo ngôn ngữ",
+    image: "/assets/images/hito_3.png",
+  },
+  {
+    title: "Tư vấn lộ trình",
+    image: "/assets/images/hito_4.png",
+  },
+];
+
+const FALLBACK_HOME_IMAGE = "/assets/images/banner-second.jpg";
+
+const handleImageFallback = (event) => {
+  if (event.currentTarget.src.endsWith(FALLBACK_HOME_IMAGE)) return;
+  event.currentTarget.src = FALLBACK_HOME_IMAGE;
+};
+
 export const HomePage = ({ theme }) => {
   return (
     <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
       <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
         <div className="col-12 col-md-8 col-lg-8 col-xl-8 mb-3 mb-md-0">
           <div className="card border-0 bg-transparent h-100">
-            <img src="./assets/images/banner-web-korean.jpg" alt="Banner chương trình HTO" className="img-fluid w-100 h-100 bg-primary-subtle" style={{ borderRadius: "12px", objectFit: "cover", minHeight: "180px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} />
+            <img src="/assets/images/banner-web-korean.jpg" alt="Banner chương trình HTO" className="img-fluid w-100 h-100 bg-primary-subtle" style={{ borderRadius: "12px", objectFit: "cover", minHeight: "180px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} onError={handleImageFallback} />
           </div>
         </div>
         <div className="col-12 col-md-4 col-lg-4 col-xl-4">
           <div className="card border-0 bg-transparent h-100">
-            <img src="./assets/images/banner-second.jpg" alt="Banner hỗ trợ HTO" className="img-fluid w-100 h-100 bg-body" style={{ borderRadius: "12px", objectFit: "cover", minHeight: "180px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} />
+            <img src="/assets/images/banner-second.jpg" alt="Banner hỗ trợ HTO" className="img-fluid w-100 h-100 bg-body" style={{ borderRadius: "12px", objectFit: "cover", minHeight: "180px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} onError={handleImageFallback} />
           </div>
         </div>
       </div>
@@ -70,7 +96,7 @@ export const HomePage = ({ theme }) => {
           <div className="card border-0 h-100" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", minHeight: "260px" }}>
             <div className="card-body p-3 d-flex flex-column">
               <h6 className="fw-bold d-flex align-items-center mb-2 text-body-emphasis" style={{ fontSize: "14px" }}>
-                <img src="./assets/images/logo-HTO.png" alt="HTO" className="bg-body-secondary rounded me-2" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+                <img src="/assets/images/logo-HTO.png" alt="HTO" className="bg-body-secondary rounded me-2" style={{ width: "24px", height: "24px", objectFit: "contain" }} onError={handleImageFallback} />
                 GIỚI THIỆU CÔNG TY
               </h6>
               <p className="text-body-secondary mb-3" style={{ fontSize: "13px", lineHeight: 1.45 }}>
@@ -114,6 +140,21 @@ export const HomePage = ({ theme }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
+        {HOME_GALLERY.map((item) => (
+          <div className="col-12 col-sm-6 col-xl-3 mb-3 mb-xl-0" key={item.title}>
+            <div className="card border-0 h-100 overflow-hidden" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div className="position-relative">
+                <img src={item.image} alt={item.title} className="w-100 bg-body-tertiary" style={{ height: "150px", objectFit: "cover" }} onError={handleImageFallback} />
+                <div className="position-absolute bottom-0 start-0 w-100 p-2 text-white fw-bold" style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.68))", fontSize: "13px" }}>
+                  {item.title}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">

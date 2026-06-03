@@ -24,6 +24,8 @@ import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
 import { HomePage } from "./home/HomePage";
+import { DashboardPage } from "./dashboard/DashboardPage";
+import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
 import { AUTH_EVENTS } from "./auth/session";
 
 const ROLE_IDS = {
@@ -450,6 +452,10 @@ function App() {
           <AccountingPlaceholderPage />
         ) : currentPage === "qna" ? (
           <AiChatPage currentUser={user} />
+        ) : currentPage === "dashboardStats" ? (
+          <DashboardPage currentUser={user} />
+        ) : currentPage === "tintuc" ? (
+          <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (
           <HomePage theme={theme} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (

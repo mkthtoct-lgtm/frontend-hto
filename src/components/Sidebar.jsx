@@ -184,6 +184,26 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             </a>
           </li>
 
+          <li className="menu-item mb-2">
+            <a
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboardStats" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="#"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate?.("dashboardStats");
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3v18h18"></path>
+                  <path d="M7 15l4-4 3 3 5-7"></path>
+                </svg>
+              </div>
+              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Dashboard thống kê</span>
+            </a>
+          </li>
+
           {/* --- 2. SẢN PHẨM --- */}
           <li className="menu-item mb-2">
             <a
