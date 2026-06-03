@@ -2747,6 +2747,7 @@ export const DocumentsPage = ({ currentUser }) => {
                   const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
                   const canDownload = hasDownloadAccess && !downloadDisabledReason;
                   const canEdit = canUseDocumentAction(currentUser, doc, "edit");
+                  const canDelete = canEdit;
                   const categoryName =
                     doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
 
@@ -2789,7 +2790,7 @@ export const DocumentsPage = ({ currentUser }) => {
                       <td>
                         <DocumentActionButtons
                           canDownload={canDownload}
-                          canDelete={canEdit}
+                          canDelete={canDelete}
                           canEdit={canEdit}
                           document={doc}
                           downloadDisabledReason={downloadDisabledReason}
@@ -2818,6 +2819,7 @@ export const DocumentsPage = ({ currentUser }) => {
               const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
               const canDownload = hasDownloadAccess && !downloadDisabledReason;
               const canEdit = canUseDocumentAction(currentUser, doc, "edit");
+              const canDelete = canEdit;
               const categoryName =
                 doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
 
@@ -2874,7 +2876,7 @@ export const DocumentsPage = ({ currentUser }) => {
                   <div className="d-flex justify-content-end mt-2">
                     <DocumentActionButtons
                       canDownload={canDownload}
-                      canDelete={canEdit}
+                      canDelete={canDelete}
                       canEdit={canEdit}
                       document={doc}
                       downloadDisabledReason={downloadDisabledReason}
@@ -2933,28 +2935,30 @@ function DocumentActionButtons({
       >
         <DownloadIcon />
       </button>
-      <button
-        type="button"
-        className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-        style={{ width: "32px", height: "32px", padding: 0 }}
-        disabled={!canEdit}
-        title={canEdit ? "Sửa tài liệu" : "Bạn chưa có quyền sửa"}
-        aria-label="Sửa tài liệu"
-        onClick={() => onEdit(document)}
-      >
-        <EditIcon />
-      </button>
-      <button
-        type="button"
-        className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-        style={{ width: "32px", height: "32px", padding: 0 }}
-        disabled={!canDelete}
-        title={canDelete ? "Xóa tài liệu" : "Bạn chưa có quyền xóa"}
-        aria-label="Xóa tài liệu"
-        onClick={() => onDelete(document)}
-      >
-        <TrashIcon />
-      </button>
+      {canEdit && (
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+          style={{ width: "32px", height: "32px", padding: 0 }}
+          title="Sửa tài liệu"
+          aria-label="Sửa tài liệu"
+          onClick={() => onEdit(document)}
+        >
+          <EditIcon />
+        </button>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+          style={{ width: "32px", height: "32px", padding: 0 }}
+          title="Xóa tài liệu"
+          aria-label="Xóa tài liệu"
+          onClick={() => onDelete(document)}
+        >
+          <TrashIcon />
+        </button>
+      )}
     </div>
   );
 }

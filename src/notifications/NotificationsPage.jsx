@@ -404,9 +404,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
       <div className="app-page-head flex flex-shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="app-page-title mb-1">Thông báo nội bộ</h1>
-          <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-            Danh sách thông báo, trạng thái đã đọc/chưa đọc và phân quyền người nhận.
-          </div>
+          
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
