@@ -1,156 +1,102 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
+import { API_BASE_URL } from "../config/api";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const JD_STORAGE_KEY = "hto_job_descriptions";
+const DIRECTOR_ROLE_ID = "69fc5af582ef85451120772b";
+const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
+const HR_ROLE_ID = "69fc5af582ef85451120772d";
+const JD_FETCH_LIMIT = 1000;
 
-const ROLE_OPTIONS = [
-  { id: "admin", label: "Admin" },
-  { id: "bangiamdoc", label: "Ban giám đốc" },
-  { id: "truongbophan", label: "Trưởng bộ phận" },
-  { id: "nhansu", label: "Nhân sự" },
-  { id: "daily", label: "Đại lý" },
-  { id: "congtacvien", label: "Cộng tác viên" },
-  { id: "user", label: "Người dùng" },
+const ROLE_LABELS = {
+  admin: "Admin",
+  bangiamdoc: "Ban giám đốc",
+  truongbophan: "Trưởng bộ phận",
+  nhansu: "Nhân sự",
+  daily: "Đại lý",
+  congtacvien: "Cộng tác viên",
+  user: "Người dùng",
+  hethong: "Hệ thống",
+};
+
+const WORKING_TYPE_OPTIONS = [
+  { id: "full-time", label: "Toàn thời gian" },
+  { id: "part-time", label: "Bán thời gian" },
+  { id: "remote", label: "Từ xa" },
+  { id: "hybrid", label: "Hybrid" },
+  { id: "freelance", label: "Freelance" },
 ];
 
-const ROLE_LABELS = Object.fromEntries(ROLE_OPTIONS.map((role) => [role.id, role.label]));
-
-const DEPARTMENT_OPTIONS = [
-  { id: "dept-ban-giam-doc", name: "Ban Giám Đốc" },
-  { id: "dept-tuyen-sinh", name: "Tuyển Sinh" },
-  { id: "dept-ho-so", name: "Hồ Sơ" },
-  { id: "dept-hanh-chinh", name: "Hành Chính" },
-  { id: "dept-nhan-su", name: "Nhân Sự" },
-  { id: "dept-ke-toan", name: "Kế Toán" },
+const STATUS_OPTIONS = [
+  { id: "active", label: "Đang hiển thị", badge: "bg-success-subtle text-success" },
+  { id: "inactive", label: "Đang ẩn", badge: "bg-warning-subtle text-warning" },
+  { id: "draft", label: "Bản nháp", badge: "bg-body-secondary text-body" },
 ];
-
-const DEPARTMENT_LABELS = Object.fromEntries(
-  DEPARTMENT_OPTIONS.map((department) => [department.id, department.name]),
-);
 
 const emptyForm = {
   title: "",
-  departmentId: "dept-nhan-su",
-  role: "nhansu",
-  level: "Nhân viên",
-  reportsTo: "",
-  summary: "",
-  responsibilities: "",
+  departmentId: "",
+  description: "",
   requirements: "",
-  kpis: "",
-  hidden: false,
+  benefits: "",
+  salaryMin: "",
+  salaryMax: "",
+  currency: "VND",
+  workingType: "full-time",
+  location: "",
+  status: "active",
 };
 
-const DEFAULT_JOB_DESCRIPTIONS = [
-  {
-    id: "jd-ceo",
-    title: "Giám đốc điều hành",
-    departmentId: "dept-ban-giam-doc",
-    role: "bangiamdoc",
-    level: "Lãnh đạo",
-    reportsTo: "Hội đồng quản trị",
-    updatedAt: "2026-05-20",
-    hidden: false,
-    summary: "Điều hành tổng thể hoạt động kinh doanh, nhân sự, vận hành và chất lượng dịch vụ của HTO.",
-    responsibilities: [
-      "Xây dựng mục tiêu, kế hoạch vận hành và chỉ tiêu kinh doanh theo quý.",
-      "Phê duyệt chính sách, ngân sách và các quyết định nhân sự quan trọng.",
-      "Theo dõi hiệu quả các phòng ban và xử lý các vấn đề liên phòng ban.",
-      "Đại diện công ty trong các quan hệ đối tác chiến lược.",
-    ],
-    requirements: [
-      "Kinh nghiệm quản lý đội ngũ hoặc vận hành doanh nghiệp dịch vụ.",
-      "Năng lực hoạch định chiến lược, quản trị rủi ro và ra quyết định.",
-      "Giao tiếp tốt, chịu trách nhiệm với kết quả cuối cùng.",
-    ],
-    kpis: ["Doanh thu quý", "Tỷ lệ hoàn thành kế hoạch", "Hiệu suất phòng ban"],
-  },
-  {
-    id: "jd-hr-specialist",
-    title: "Chuyên viên nhân sự",
-    departmentId: "dept-nhan-su",
-    role: "nhansu",
-    level: "Nhân viên",
-    reportsTo: "Trưởng phòng Nhân Sự",
-    updatedAt: "2026-05-18",
-    hidden: false,
-    summary: "Quản lý hồ sơ nhân sự, tuyển dụng, chấm công và hỗ trợ các hoạt động nội bộ.",
-    responsibilities: [
-      "Cập nhật hồ sơ nhân sự, hợp đồng, quyết định và thông tin phòng ban.",
-      "Phối hợp tuyển dụng, đặt lịch phỏng vấn và theo dõi onboarding.",
-      "Tổng hợp chấm công, nghỉ phép và dữ liệu phục vụ tính lương.",
-      "Hỗ trợ truyền thông nội bộ và giải đáp chính sách nhân sự.",
-    ],
-    requirements: [
-      "Nắm nghiệp vụ nhân sự căn bản và bảo mật dữ liệu cá nhân.",
-      "Sử dụng tốt Excel/Google Sheets và các công cụ quản lý nội bộ.",
-      "Cẩn thận, giao tiếp rõ ràng, xử lý tình huống mềm mỏng.",
-    ],
-    kpis: ["Tỷ lệ cập nhật hồ sơ đúng hạn", "Thời gian tuyển dụng", "Mức độ hài lòng nội bộ"],
-  },
-  {
-    id: "jd-admission-consultant",
-    title: "Tư vấn tuyển sinh",
-    departmentId: "dept-tuyen-sinh",
-    role: "user",
-    level: "Nhân viên",
-    reportsTo: "Trưởng bộ phận Tuyển Sinh",
-    updatedAt: "2026-05-17",
-    hidden: false,
-    summary: "Tư vấn chương trình du học, chăm sóc học viên tiềm năng và chuyển đổi hồ sơ đầu vào.",
-    responsibilities: [
-      "Tiếp nhận lead, tư vấn lộ trình phù hợp và cập nhật trạng thái chăm sóc.",
-      "Chuẩn bị thông tin chương trình, học phí, điều kiện và timeline cho khách hàng.",
-      "Phối hợp bộ phận hồ sơ để bàn giao thông tin học viên sau khi ký hợp đồng.",
-      "Theo dõi phản hồi khách hàng và đề xuất cải thiện kịch bản tư vấn.",
-    ],
-    requirements: [
-      "Kỹ năng tư vấn, thuyết phục và chăm sóc khách hàng.",
-      "Hiểu quy trình du học hoặc có khả năng học nhanh sản phẩm giáo dục.",
-      "Chủ động theo đuổi mục tiêu, ghi nhận dữ liệu đầy đủ trên hệ thống.",
-    ],
-    kpis: ["Số lead được xử lý", "Tỷ lệ chuyển đổi", "Tỷ lệ phản hồi đúng SLA"],
-  },
-  {
-    id: "jd-document-specialist",
-    title: "Chuyên viên hồ sơ",
-    departmentId: "dept-ho-so",
-    role: "user",
-    level: "Nhân viên",
-    reportsTo: "Trưởng bộ phận Hồ Sơ",
-    updatedAt: "2026-05-16",
-    hidden: false,
-    summary: "Theo dõi, kiểm tra và hoàn thiện bộ hồ sơ du học theo yêu cầu từng chương trình.",
-    responsibilities: [
-      "Kiểm tra checklist hồ sơ, nhắc bổ sung giấy tờ và cập nhật tiến độ.",
-      "Soạn, rà soát biểu mẫu, bản dịch và tài liệu nộp trường/visa.",
-      "Phối hợp tư vấn viên và học viên để xử lý các điểm thiếu hoặc sai thông tin.",
-      "Lưu trữ hồ sơ theo đúng cấu trúc và quy định bảo mật.",
-    ],
-    requirements: [
-      "Cẩn thận, có khả năng đọc hiểu biểu mẫu và quy trình tài liệu.",
-      "Quản lý deadline tốt, ưu tiên công việc theo mức độ rủi ro.",
-      "Có kinh nghiệm hồ sơ du học/visa là lợi thế.",
-    ],
-    kpis: ["Tỷ lệ hồ sơ đúng hạn", "Số lỗi hồ sơ", "Thời gian xử lý checklist"],
-  },
-];
+const isManager = (user) =>
+  ["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(user?.role) ||
+  [ADMIN_ROLE_ID, DIRECTOR_ROLE_ID, DEPARTMENT_HEAD_ROLE_ID, HR_ROLE_ID].includes(user?.roleId);
 
 const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
 
-const getDepartmentName = (departmentId) => DEPARTMENT_LABELS[departmentId] || departmentId || "Chưa gán";
+const getRoleLabel = (role) => ROLE_LABELS[role] || role || "Người dùng";
 
-const getRoleLabel = (role) => ROLE_LABELS[role] || role || "Chưa gán";
+const getStatusOption = (status) =>
+  STATUS_OPTIONS.find((option) => option.id === status) || STATUS_OPTIONS[0];
 
-const formatDate = (value) => {
-  const date = new Date(value);
+const getWorkingTypeLabel = (workingType) =>
+  WORKING_TYPE_OPTIONS.find((option) => option.id === workingType)?.label || workingType || "-";
 
-  if (Number.isNaN(date.getTime())) {
-    return value || "-";
+const getApiErrorMessage = (payload, fallback) => {
+  const details = payload?.error?.details;
+
+  if (Array.isArray(details) && details.length > 0) return details[0];
+  if (payload?.message && payload.message !== "Bad Request") return payload.message;
+
+  return fallback;
+};
+
+const normalizeApiData = (payload) => payload?.data ?? payload ?? {};
+
+const normalizeApiList = (payload) => {
+  const data = normalizeApiData(payload);
+
+  if (Array.isArray(data)) return { items: data, total: data.length };
+  if (Array.isArray(data.items)) return { items: data.items, total: data.total ?? data.items.length };
+  if (Array.isArray(data.jobDescriptions)) {
+    return { items: data.jobDescriptions, total: data.total ?? data.jobDescriptions.length };
   }
 
-  return date.toLocaleDateString("vi-VN");
+  return { items: [], total: 0 };
 };
+
+const normalizeDepartment = (department) => {
+  const data = department?.data ?? department ?? {};
+
+  return {
+    id: String(data.id || data._id || ""),
+    name: data.name || data.title || "Phòng ban",
+  };
+};
+
+const normalizeDepartmentsPayload = (payload) =>
+  normalizeApiList(payload)
+    .items.map(normalizeDepartment)
+    .filter((department) => department.id);
 
 const splitListText = (value) =>
   Array.isArray(value)
@@ -162,47 +108,61 @@ const splitListText = (value) =>
 
 const listToFormText = (items) => (Array.isArray(items) ? items.join("\n") : String(items || ""));
 
+const formatDate = (value) => {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value || "-";
+  }
+
+  return date.toLocaleDateString("vi-VN");
+};
+
+const formatSalary = (salaryRange) => {
+  const min = Number(salaryRange?.min);
+  const max = Number(salaryRange?.max);
+  const currency = salaryRange?.currency || "VND";
+
+  if (!Number.isFinite(min) && !Number.isFinite(max)) return "Chưa khai báo";
+  if (Number.isFinite(min) && Number.isFinite(max)) return `${min.toLocaleString("vi-VN")} - ${max.toLocaleString("vi-VN")} ${currency}`;
+  if (Number.isFinite(min)) return `Từ ${min.toLocaleString("vi-VN")} ${currency}`;
+
+  return `Đến ${max.toLocaleString("vi-VN")} ${currency}`;
+};
+
 const normalizeJd = (input, index = 0) => {
-  const now = new Date().toISOString().slice(0, 10);
-  const title = String(input?.title || input?.["ten vi tri"] || input?.position || "").trim();
+  const data = input?.data ?? input ?? {};
+  const id = String(data.id || data._id || `jd-${index}`);
+  const departmentId = String(data.departmentId || data.department?._id || data.department?.id || "");
 
   return {
-    id: String(input?.id || `jd-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`),
-    title: title || `JD mới ${index + 1}`,
-    departmentId: String(input?.departmentId || input?.department || "dept-nhan-su").trim(),
-    role: String(input?.role || "nhansu").trim(),
-    level: String(input?.level || "Nhân viên").trim(),
-    reportsTo: String(input?.reportsTo || input?.manager || "").trim(),
-    updatedAt: String(input?.updatedAt || now).trim(),
-    hidden: Boolean(input?.hidden),
-    summary: String(input?.summary || input?.description || "").trim(),
-    responsibilities: splitListText(input?.responsibilities || input?.tasks),
-    requirements: splitListText(input?.requirements),
-    kpis: splitListText(input?.kpis || input?.kpi),
+    id,
+    title: data.title || `JD ${index + 1}`,
+    departmentId,
+    departmentName: data.department?.name || data.departmentName || "",
+    description: data.description || "",
+    requirements: splitListText(data.requirements),
+    benefits: splitListText(data.benefits),
+    salaryRange: {
+      min: data.salaryRange?.min ?? null,
+      max: data.salaryRange?.max ?? null,
+      currency: data.salaryRange?.currency || "VND",
+    },
+    workingType: data.workingType || "full-time",
+    location: data.location || "",
+    status: data.status || "active",
+    createdBy: data.creator?.fullName || data.creator?.email || data.createdByName || "",
+    updatedAt: data.updatedAt || data.createdAt || new Date().toISOString(),
   };
 };
 
-const readStoredJds = () => {
-  try {
-    const storedValue = window.localStorage.getItem(JD_STORAGE_KEY);
+const normalizeJdsPayload = (payload) => {
+  const { items, total } = normalizeApiList(payload);
 
-    if (!storedValue) {
-      window.localStorage.setItem(JD_STORAGE_KEY, JSON.stringify(DEFAULT_JOB_DESCRIPTIONS));
-      return DEFAULT_JOB_DESCRIPTIONS;
-    }
-
-    const parsedValue = JSON.parse(storedValue);
-    const rows = Array.isArray(parsedValue) ? parsedValue : parsedValue?.items || [];
-
-    return rows.map(normalizeJd);
-  } catch {
-    window.localStorage.setItem(JD_STORAGE_KEY, JSON.stringify(DEFAULT_JOB_DESCRIPTIONS));
-    return DEFAULT_JOB_DESCRIPTIONS;
-  }
-};
-
-const writeStoredJds = (items) => {
-  window.localStorage.setItem(JD_STORAGE_KEY, JSON.stringify(items));
+  return {
+    items: items.map(normalizeJd).filter((jd) => jd.id),
+    total,
+  };
 };
 
 const parseCsv = (text) => {
@@ -225,61 +185,117 @@ const parseCsv = (text) => {
   );
 };
 
-const parseImportedJds = (text, fileName) => {
+const parseImportedJds = (text, fileName, fallbackDepartmentId) => {
   const trimmedText = text.trim();
 
   if (!trimmedText) {
     return [];
   }
 
+  const normalizeImportItem = (item, index = 0) => ({
+    title: item.title || item.position || item["ten vi tri"] || fileName.replace(/\.[^.]+$/, "") || `JD import ${index + 1}`,
+    departmentId: item.departmentId || fallbackDepartmentId,
+    description: item.description || item.summary || trimmedText.slice(0, 500),
+    requirements: listToFormText(splitListText(item.requirements)),
+    benefits: listToFormText(splitListText(item.benefits || item.responsibilities || item.tasks)),
+    salaryRange: item.salaryRange || undefined,
+    workingType: item.workingType || "full-time",
+    location: item.location || "",
+    status: item.status || "active",
+  });
+
   if (fileName.toLowerCase().endsWith(".json") || trimmedText.startsWith("[") || trimmedText.startsWith("{")) {
     const parsedValue = JSON.parse(trimmedText);
     const rows = Array.isArray(parsedValue) ? parsedValue : parsedValue.items || [parsedValue];
 
-    return rows.map(normalizeJd);
+    return rows.map(normalizeImportItem);
   }
 
   if (fileName.toLowerCase().endsWith(".csv")) {
-    return parseCsv(trimmedText).map(normalizeJd);
+    return parseCsv(trimmedText).map(normalizeImportItem);
   }
 
-  return [
-    normalizeJd({
-      title: fileName.replace(/\.[^.]+$/, "") || "JD import",
-      summary: trimmedText.slice(0, 500),
-      responsibilities: trimmedText,
-    }),
-  ];
+  return [normalizeImportItem({ description: trimmedText })];
 };
 
 const formFromJd = (jd) => ({
   title: jd.title,
   departmentId: jd.departmentId,
-  role: jd.role,
-  level: jd.level,
-  reportsTo: jd.reportsTo,
-  summary: jd.summary,
-  responsibilities: listToFormText(jd.responsibilities),
+  description: jd.description,
   requirements: listToFormText(jd.requirements),
-  kpis: listToFormText(jd.kpis),
-  hidden: Boolean(jd.hidden),
+  benefits: listToFormText(jd.benefits),
+  salaryMin: jd.salaryRange?.min ?? "",
+  salaryMax: jd.salaryRange?.max ?? "",
+  currency: jd.salaryRange?.currency || "VND",
+  workingType: jd.workingType,
+  location: jd.location,
+  status: jd.status,
 });
 
-const jdFromForm = (form, id) =>
-  normalizeJd({
-    id,
-    ...form,
-    responsibilities: splitListText(form.responsibilities),
-    requirements: splitListText(form.requirements),
-    kpis: splitListText(form.kpis),
-    updatedAt: new Date().toISOString().slice(0, 10),
+const toNumberOrNull = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const jdPayloadFromForm = (form) => ({
+  title: form.title.trim(),
+  departmentId: form.departmentId,
+  description: form.description.trim(),
+  requirements: form.requirements.trim(),
+  benefits: form.benefits.trim(),
+  salaryRange: {
+    min: toNumberOrNull(form.salaryMin),
+    max: toNumberOrNull(form.salaryMax),
+    currency: form.currency || "VND",
+  },
+  workingType: form.workingType,
+  location: form.location.trim(),
+  status: form.status,
+});
+
+async function apiRequest(path, options = {}) {
+  const response = await authFetch(`${API_BASE_URL}${path}`, {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
   });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload, "Không thể xử lý dữ liệu mô tả công việc."));
+  }
+
+  return payload;
+}
+
+const fetchDepartments = async () =>
+  normalizeDepartmentsPayload(await apiRequest("/departments?page=1&limit=1000"));
+
+const fetchJobDescriptions = async () =>
+  normalizeJdsPayload(await apiRequest(`/job-descriptions?page=1&limit=${JD_FETCH_LIMIT}`));
+
+const createJobDescription = async (payload) =>
+  normalizeJd(normalizeApiData(await apiRequest("/job-descriptions", { method: "POST", body: payload })));
+
+const updateJobDescription = async (id, payload) =>
+  normalizeJd(normalizeApiData(await apiRequest(`/job-descriptions/${id}`, { method: "PATCH", body: payload })));
+
+const deleteJobDescription = async (id) =>
+  await apiRequest(`/job-descriptions/${id}`, { method: "DELETE" });
 
 export const JobDescriptionsPage = ({ currentUser }) => {
-  const [jds, setJds] = useState(() => readStoredJds());
+  const [jds, setJds] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [totalJds, setTotalJds] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedJdId, setSelectedJdId] = useState("");
   const [formMode, setFormMode] = useState(null);
   const [editingId, setEditingId] = useState("");
@@ -287,46 +303,72 @@ export const JobDescriptionsPage = ({ currentUser }) => {
   const [formError, setFormError] = useState("");
   const [importMessage, setImportMessage] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const fileInputRef = useRef(null);
 
-  const canManage = isAdmin(currentUser);
+  const canManage = isManager(currentUser);
+  const canDelete = isAdmin(currentUser);
 
-  const visibleJds = useMemo(() => {
-    if (canManage) {
-      return jds;
+  const departmentNameById = useMemo(
+    () => Object.fromEntries(departments.map((department) => [department.id, department.name])),
+    [departments],
+  );
+
+  const getDepartmentName = useCallback(
+    (jd) => jd.departmentName || departmentNameById[jd.departmentId] || "Chưa gán",
+    [departmentNameById],
+  );
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setApiError("");
+
+    try {
+      const [departmentData, jdData] = await Promise.all([fetchDepartments(), fetchJobDescriptions()]);
+      setDepartments(departmentData);
+      setJds(jdData.items);
+      setTotalJds(jdData.total);
+      setSelectedJdId((currentId) =>
+        jdData.items.some((jd) => jd.id === currentId) ? currentId : jdData.items[0]?.id || "",
+      );
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể tải danh sách JD.");
+      setDepartments([]);
+      setJds([]);
+      setTotalJds(0);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    return jds.filter((jd) => !jd.hidden && jd.role === currentUser?.role);
-  }, [canManage, currentUser?.role, jds]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const filteredJds = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
 
-    return visibleJds.filter((jd) => {
+    return jds.filter((jd) => {
       const matchesDepartment = departmentFilter === "all" || jd.departmentId === departmentFilter;
-      const matchesRole = roleFilter === "all" || jd.role === roleFilter;
+      const matchesStatus = statusFilter === "all" || jd.status === statusFilter;
       const matchesKeyword =
         !keyword ||
-        `${jd.title} ${jd.summary} ${getDepartmentName(jd.departmentId)} ${getRoleLabel(jd.role)}`
+        `${jd.title} ${jd.description} ${getDepartmentName(jd)} ${jd.location}`
           .toLowerCase()
           .includes(keyword);
 
-      return matchesDepartment && matchesRole && matchesKeyword;
+      return matchesDepartment && matchesStatus && matchesKeyword;
     });
-  }, [departmentFilter, roleFilter, searchTerm, visibleJds]);
+  }, [departmentFilter, getDepartmentName, jds, searchTerm, statusFilter]);
 
-  const selectedJd =
-    filteredJds.find((jd) => jd.id === selectedJdId) || filteredJds[0] || visibleJds[0] || null;
-
-  const saveJds = (nextJds) => {
-    setJds(nextJds);
-    writeStoredJds(nextJds);
-  };
+  const selectedJd = filteredJds.find((jd) => jd.id === selectedJdId) || filteredJds[0] || null;
 
   const openCreateForm = () => {
     setFormMode("create");
     setEditingId("");
-    setForm(emptyForm);
+    setForm({ ...emptyForm, departmentId: departments[0]?.id || "" });
     setFormError("");
   };
 
@@ -348,68 +390,111 @@ export const JobDescriptionsPage = ({ currentUser }) => {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   };
 
-  const submitForm = (event) => {
+  const submitForm = async (event) => {
     event.preventDefault();
 
-    if (!form.title.trim() || !form.summary.trim()) {
-      setFormError("Vui lòng nhập tên vị trí và tổng quan JD.");
+    if (!form.title.trim() || !form.departmentId || !form.description.trim()) {
+      setFormError("Vui lòng nhập tên vị trí, phòng ban và mô tả công việc.");
       return;
     }
 
-    const nextItem = jdFromForm(form, formMode === "edit" ? editingId : undefined);
-    const nextJds =
-      formMode === "edit"
-        ? jds.map((jd) => (jd.id === editingId ? nextItem : jd))
-        : [nextItem, ...jds];
+    setActionLoading(true);
+    setFormError("");
 
-    saveJds(nextJds);
-    setSelectedJdId(nextItem.id);
-    closeForm();
+    try {
+      const payload = jdPayloadFromForm(form);
+      const savedJd =
+        formMode === "edit"
+          ? await updateJobDescription(editingId, payload)
+          : await createJobDescription(payload);
+
+      setJds((currentJds) =>
+        formMode === "edit"
+          ? currentJds.map((jd) => (jd.id === editingId ? savedJd : jd))
+          : [savedJd, ...currentJds],
+      );
+      setSelectedJdId(savedJd.id);
+      setTotalJds((currentTotal) => (formMode === "edit" ? currentTotal : currentTotal + 1));
+      closeForm();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Không thể lưu JD.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const deleteJd = (jd) => {
+  const deleteJd = async (jd) => {
     if (!window.confirm(`Xóa JD "${jd.title}"?`)) {
       return;
     }
 
-    const nextJds = jds.filter((item) => item.id !== jd.id);
-    saveJds(nextJds);
-    setSelectedJdId(nextJds[0]?.id || "");
+    setActionLoading(true);
+    setApiError("");
+
+    try {
+      await deleteJobDescription(jd.id);
+      setJds((currentJds) => currentJds.filter((item) => item.id !== jd.id));
+      setTotalJds((currentTotal) => Math.max(0, currentTotal - 1));
+      setSelectedJdId((currentId) => (currentId === jd.id ? "" : currentId));
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể xóa JD.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const toggleHidden = (jd) => {
-    const nextJds = jds.map((item) =>
-      item.id === jd.id
-        ? { ...item, hidden: !item.hidden, updatedAt: new Date().toISOString().slice(0, 10) }
-        : item,
-    );
+  const toggleStatus = async (jd) => {
+    const nextStatus = jd.status === "active" ? "inactive" : "active";
+    setActionLoading(true);
+    setApiError("");
 
-    saveJds(nextJds);
+    try {
+      const updatedJd = await updateJobDescription(jd.id, { status: nextStatus });
+      setJds((currentJds) => currentJds.map((item) => (item.id === jd.id ? updatedJd : item)));
+      setSelectedJdId(updatedJd.id);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể cập nhật trạng thái JD.");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const importFiles = async (files) => {
     const fileList = Array.from(files || []);
+    const fallbackDepartmentId = departments[0]?.id || "";
 
     if (fileList.length === 0) {
       return;
     }
 
+    if (!fallbackDepartmentId) {
+      setImportMessage("Vui lòng tạo phòng ban trước khi import JD.");
+      return;
+    }
+
+    setActionLoading(true);
+    setImportMessage("");
+
     try {
       const importedGroups = await Promise.all(
-        fileList.map(async (file) => parseImportedJds(await file.text(), file.name)),
+        fileList.map(async (file) => parseImportedJds(await file.text(), file.name, fallbackDepartmentId)),
       );
-      const importedJds = importedGroups.flat();
+      const importedInputs = importedGroups.flat().filter((item) => item.title && item.description);
 
-      if (importedJds.length === 0) {
+      if (importedInputs.length === 0) {
         setImportMessage("File import không có JD hợp lệ.");
         return;
       }
 
-      saveJds([...importedJds, ...jds]);
-      setSelectedJdId(importedJds[0].id);
+      const importedJds = await Promise.all(importedInputs.map(createJobDescription));
+      setJds((currentJds) => [...importedJds, ...currentJds]);
+      setSelectedJdId(importedJds[0]?.id || "");
+      setTotalJds((currentTotal) => currentTotal + importedJds.length);
       setImportMessage(`Đã import ${importedJds.length} JD từ ${fileList.length} file.`);
     } catch (error) {
       setImportMessage(error instanceof Error ? error.message : "Không thể import file JD.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -429,11 +514,21 @@ export const JobDescriptionsPage = ({ currentUser }) => {
     const droppedText = event.dataTransfer.getData("text/plain");
 
     if (droppedText.trim()) {
-      const importedJds = parseImportedJds(droppedText, "noi-dung-keo-tha.txt");
+      const fallbackDepartmentId = departments[0]?.id || "";
+      const importedInputs = parseImportedJds(droppedText, "noi-dung-keo-tha.txt", fallbackDepartmentId);
 
-      saveJds([...importedJds, ...jds]);
-      setSelectedJdId(importedJds[0]?.id || "");
-      setImportMessage(`Đã tạo ${importedJds.length} JD từ nội dung kéo thả.`);
+      setActionLoading(true);
+      Promise.all(importedInputs.map(createJobDescription))
+        .then((importedJds) => {
+          setJds((currentJds) => [...importedJds, ...currentJds]);
+          setSelectedJdId(importedJds[0]?.id || "");
+          setTotalJds((currentTotal) => currentTotal + importedJds.length);
+          setImportMessage(`Đã tạo ${importedJds.length} JD từ nội dung kéo thả.`);
+        })
+        .catch((error) => {
+          setImportMessage(error instanceof Error ? error.message : "Không thể import nội dung JD.");
+        })
+        .finally(() => setActionLoading(false));
     }
   };
 
@@ -455,6 +550,9 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">JD vị trí / phòng ban</h4>
+          <div className="text-body-secondary" style={{ fontSize: "13px" }}>
+            Dữ liệu được đồng bộ từ API mô tả công việc.
+          </div>
         </div>
         {canManage ? (
           <div className="d-flex flex-wrap justify-content-end gap-2">
@@ -469,11 +567,19 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                 event.target.value = "";
               }}
             />
-            <button className="btn btn-outline-primary d-flex align-items-center gap-2" onClick={() => fileInputRef.current?.click()}>
+            <button
+              className="btn btn-outline-primary d-flex align-items-center gap-2"
+              disabled={actionLoading}
+              onClick={() => fileInputRef.current?.click()}
+            >
               <UploadIcon />
               Import JD
             </button>
-            <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateForm}>
+            <button
+              className="btn btn-primary d-flex align-items-center gap-2"
+              disabled={actionLoading || departments.length === 0}
+              onClick={openCreateForm}
+            >
               <PlusIcon />
               Tạo JD mới
             </button>
@@ -484,6 +590,12 @@ export const JobDescriptionsPage = ({ currentUser }) => {
           </span>
         )}
       </div>
+
+      {apiError && (
+        <div className="alert alert-danger py-2 mb-3" role="alert">
+          {apiError}
+        </div>
+      )}
 
       {canManage && (importMessage || isDragActive) && (
         <div className={`alert py-2 mb-3 ${isDragActive ? "alert-primary" : "alert-info"}`} role="alert">
@@ -498,7 +610,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
             <input
               type="text"
               className="form-control bg-body ps-5"
-              placeholder="Tìm theo vị trí, phòng ban hoặc nội dung JD..."
+              placeholder="Tìm theo vị trí, phòng ban, địa điểm hoặc nội dung JD..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
@@ -511,7 +623,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
             onChange={(event) => setDepartmentFilter(event.target.value)}
           >
             <option value="all">Tất cả phòng ban</option>
-            {DEPARTMENT_OPTIONS.map((department) => (
+            {departments.map((department) => (
               <option key={department.id} value={department.id}>
                 {department.name}
               </option>
@@ -521,14 +633,13 @@ export const JobDescriptionsPage = ({ currentUser }) => {
         <div className="col-12 col-md-6 col-lg-3">
           <select
             className="form-select bg-body"
-            value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value)}
-            disabled={!canManage}
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
           >
-            <option value="all">Tất cả role</option>
-            {ROLE_OPTIONS.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.label}
+            <option value="all">Tất cả trạng thái</option>
+            {STATUS_OPTIONS.map((status) => (
+              <option key={status.id} value={status.id}>
+                {status.label}
               </option>
             ))}
           </select>
@@ -540,39 +651,51 @@ export const JobDescriptionsPage = ({ currentUser }) => {
           <section className="card border-0 shadow-sm h-100">
             <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
               <span className="fw-bold text-body-emphasis">Danh sách JD</span>
-              <span className="badge bg-body-secondary text-body">{filteredJds.length}</span>
+              <span className="badge bg-body-secondary text-body">
+                {filteredJds.length}/{totalJds || filteredJds.length}
+              </span>
             </div>
             <div className="card-body p-0">
-              {filteredJds.length === 0 ? (
+              {loading ? (
+                <div className="text-center text-body-secondary py-5 px-3">
+                  Đang tải danh sách JD...
+                </div>
+              ) : filteredJds.length === 0 ? (
                 <div className="text-center text-body-secondary py-5 px-3">
                   Không tìm thấy JD phù hợp.
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
-                  {filteredJds.map((jd) => (
-                    <button
-                      key={jd.id}
-                      type="button"
-                      className={`list-group-item list-group-item-action border-0 border-bottom p-3 text-start ${
-                        selectedJd?.id === jd.id ? "bg-primary-subtle" : "bg-transparent"
-                      }`}
-                      onClick={() => setSelectedJdId(jd.id)}
-                    >
-                      <div className="d-flex justify-content-between align-items-start gap-2">
-                        <div style={{ minWidth: 0 }}>
-                          <div className="fw-bold text-body-emphasis text-truncate">{jd.title}</div>
-                         
+                  {filteredJds.map((jd) => {
+                    const status = getStatusOption(jd.status);
+
+                    return (
+                      <button
+                        key={jd.id}
+                        type="button"
+                        className={`list-group-item list-group-item-action border-0 border-bottom p-3 text-start ${
+                          selectedJd?.id === jd.id ? "bg-primary-subtle" : "bg-transparent"
+                        } ${jd.status === "inactive" ? "opacity-75" : ""}`}
+                        onClick={() => setSelectedJdId(jd.id)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start gap-2">
+                          <div style={{ minWidth: 0 }}>
+                            <div className="fw-bold text-body-emphasis text-truncate">{jd.title}</div>
+                            <div className="text-body-secondary mt-1" style={{ fontSize: "12px" }}>
+                              {getDepartmentName(jd)} {jd.location ? `- ${jd.location}` : ""}
+                            </div>
+                          </div>
+                          <div className="d-flex flex-column align-items-end gap-1 flex-shrink-0">
+                            <span className={`badge ${status.badge}`}>{status.label}</span>
+                            <span className="badge bg-body text-body border">{getWorkingTypeLabel(jd.workingType)}</span>
+                          </div>
                         </div>
-                        <div className="d-flex flex-column align-items-end gap-1 flex-shrink-0">
-                          <span className="badge bg-body text-body border">{jd.level}</span>
-                          {jd.hidden && <span className="badge bg-warning-subtle text-warning">Đang ẩn</span>}
-                        </div>
-                      </div>
-                      <p className="text-body-secondary mb-0 mt-2" style={{ fontSize: "13px", lineHeight: 1.45 }}>
-                        {jd.summary}
-                      </p>
-                    </button>
-                  ))}
+                        <p className="text-body-secondary mb-0 mt-2" style={{ fontSize: "13px", lineHeight: 1.45 }}>
+                          {jd.description}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -587,13 +710,17 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                   <div style={{ minWidth: 0 }}>
                     <h5 className="fw-bold text-body-emphasis mb-1">{selectedJd.title}</h5>
                     <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-                       Chức vụ được xem: {getRoleLabel(selectedJd.role)}
+                      {getDepartmentName(selectedJd)} {selectedJd.location ? `- ${selectedJd.location}` : ""}
                     </div>
                   </div>
                   <div className="d-flex flex-column align-items-end gap-2 flex-shrink-0">
                     <div className="d-flex flex-wrap gap-2 justify-content-end">
-                      {selectedJd.hidden && <span className="badge bg-warning-subtle text-warning">Ẩn</span>}
-                      <span className="badge bg-primary-subtle text-primary">{selectedJd.level}</span>
+                      <span className={`badge ${getStatusOption(selectedJd.status).badge}`}>
+                        {getStatusOption(selectedJd.status).label}
+                      </span>
+                      <span className="badge bg-primary-subtle text-primary">
+                        {getWorkingTypeLabel(selectedJd.workingType)}
+                      </span>
                       <span className="badge bg-body-secondary text-body">
                         Cập nhật {formatDate(selectedJd.updatedAt)}
                       </span>
@@ -605,6 +732,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                           style={{ width: "34px", height: "34px", padding: 0 }}
                           title="Sửa JD"
                           aria-label="Sửa JD"
+                          disabled={actionLoading}
                           onClick={() => openEditForm(selectedJd)}
                         >
                           <EditIcon />
@@ -612,44 +740,47 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                         <button
                           className="btn btn-sm btn-outline-warning d-inline-flex align-items-center justify-content-center"
                           style={{ width: "34px", height: "34px", padding: 0 }}
-                          title={selectedJd.hidden ? "Hiện JD" : "Ẩn JD"}
-                          aria-label={selectedJd.hidden ? "Hiện JD" : "Ẩn JD"}
-                          onClick={() => toggleHidden(selectedJd)}
+                          title={selectedJd.status === "active" ? "Ẩn JD" : "Hiện JD"}
+                          aria-label={selectedJd.status === "active" ? "Ẩn JD" : "Hiện JD"}
+                          disabled={actionLoading}
+                          onClick={() => toggleStatus(selectedJd)}
                         >
-                          {selectedJd.hidden ? <EyeIcon /> : <EyeOffIcon />}
+                          {selectedJd.status === "active" ? <EyeOffIcon /> : <EyeIcon />}
                         </button>
-                        <button
-                          className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-                          style={{ width: "34px", height: "34px", padding: 0 }}
-                          title="Xóa JD"
-                          aria-label="Xóa JD"
-                          onClick={() => deleteJd(selectedJd)}
-                        >
-                          <TrashIcon />
-                        </button>
+                        {canDelete && (
+                          <button
+                            className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                            style={{ width: "34px", height: "34px", padding: 0 }}
+                            title="Xóa JD"
+                            aria-label="Xóa JD"
+                            disabled={actionLoading}
+                            onClick={() => deleteJd(selectedJd)}
+                          >
+                            <TrashIcon />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
               </div>
               <div className="card-body">
-                <InfoBlock title="Tổng quan" items={[selectedJd.summary]} />
-                <InfoBlock title="Nhiệm vụ chính" items={selectedJd.responsibilities} ordered />
+                <InfoBlock title="Mô tả công việc" items={[selectedJd.description]} />
                 <InfoBlock title="Yêu cầu năng lực" items={selectedJd.requirements} />
+                <InfoBlock title="Quyền lợi" items={selectedJd.benefits} />
                 <div className="mt-4">
-                  <h6 className="fw-bold text-body-emphasis mb-2">KPI tham chiếu</h6>
+                  <h6 className="fw-bold text-body-emphasis mb-2">Thông tin thêm</h6>
                   <div className="d-flex flex-wrap gap-2">
-                    {selectedJd.kpis.length > 0 ? (
-                      selectedJd.kpis.map((kpi) => (
-                        <span
-                          key={kpi}
-                          className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2"
-                        >
-                          {kpi}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-body-secondary">Chưa khai báo KPI.</span>
+                    <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                      Lương: {formatSalary(selectedJd.salaryRange)}
+                    </span>
+                    <span className="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
+                      Hình thức: {getWorkingTypeLabel(selectedJd.workingType)}
+                    </span>
+                    {selectedJd.createdBy && (
+                      <span className="badge bg-body-secondary text-body px-3 py-2">
+                        Người tạo: {selectedJd.createdBy}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -658,7 +789,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
           ) : (
             <section className="card border-0 shadow-sm">
               <div className="card-body text-center text-body-secondary py-5">
-                Chưa có JD nào phù hợp với role của tài khoản này.
+                {loading ? "Đang tải JD..." : "Chưa có JD nào phù hợp."}
               </div>
             </section>
           )}
@@ -668,7 +799,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       {formMode && canManage && (
         <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
           <div
-            className="flex w-full max-w-[760px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl"
+            className="flex w-full max-w-[820px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl"
             style={{ maxHeight: "calc(100vh - 24px)" }}
           >
             <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
@@ -688,76 +819,98 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                     <input
                       className="form-control"
                       value={form.title}
+                      disabled={actionLoading}
                       onChange={(event) => updateForm("title", event.target.value)}
                       placeholder="Ví dụ: Chuyên viên nhân sự"
                     />
                   </Field>
-                  <Field label="Cấp bậc">
-                    <input
-                      className="form-control"
-                      value={form.level}
-                      onChange={(event) => updateForm("level", event.target.value)}
-                    />
-                  </Field>
-                  <Field label="Phòng ban">
+                  <Field label="Phòng ban" required>
                     <select
                       className="form-select"
                       value={form.departmentId}
+                      disabled={actionLoading}
                       onChange={(event) => updateForm("departmentId", event.target.value)}
                     >
-                      {DEPARTMENT_OPTIONS.map((department) => (
+                      <option value="">Chọn phòng ban</option>
+                      {departments.map((department) => (
                         <option key={department.id} value={department.id}>
                           {department.name}
                         </option>
                       ))}
                     </select>
                   </Field>
-                  <Field label="Role được xem">
+                  <Field label="Địa điểm">
+                    <input
+                      className="form-control"
+                      value={form.location}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("location", event.target.value)}
+                      placeholder="Ví dụ: TP. Hồ Chí Minh"
+                    />
+                  </Field>
+                  <Field label="Hình thức làm việc">
                     <select
                       className="form-select"
-                      value={form.role}
-                      onChange={(event) => updateForm("role", event.target.value)}
+                      value={form.workingType}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("workingType", event.target.value)}
                     >
-                      {ROLE_OPTIONS.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.label}
+                      {WORKING_TYPE_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
                         </option>
                       ))}
                     </select>
                   </Field>
-                  <Field label="Báo cáo cho">
+                  <Field label="Lương tối thiểu">
                     <input
                       className="form-control"
-                      value={form.reportsTo}
-                      onChange={(event) => updateForm("reportsTo", event.target.value)}
+                      type="number"
+                      min="0"
+                      value={form.salaryMin}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("salaryMin", event.target.value)}
                     />
                   </Field>
-                  <div className="col-md-6 d-flex align-items-end">
-                    <label className="form-check mb-2">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={form.hidden}
-                        onChange={(event) => updateForm("hidden", event.target.checked)}
-                      />
-                      <span className="form-check-label fw-semibold ms-1">Ẩn JD này</span>
-                    </label>
-                  </div>
-                  <Field label="Tổng quan" required wide>
-                    <textarea
+                  <Field label="Lương tối đa">
+                    <input
                       className="form-control"
-                      rows="3"
-                      value={form.summary}
-                      onChange={(event) => updateForm("summary", event.target.value)}
+                      type="number"
+                      min="0"
+                      value={form.salaryMax}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("salaryMax", event.target.value)}
                     />
                   </Field>
-                  <Field label="Nhiệm vụ chính" wide>
+                  <Field label="Tiền tệ">
+                    <input
+                      className="form-control"
+                      value={form.currency}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("currency", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Trạng thái">
+                    <select
+                      className="form-select"
+                      value={form.status}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("status", event.target.value)}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Mô tả công việc" required wide>
                     <textarea
                       className="form-control"
                       rows="4"
-                      value={form.responsibilities}
-                      onChange={(event) => updateForm("responsibilities", event.target.value)}
-                      placeholder="Mỗi dòng là một nhiệm vụ"
+                      value={form.description}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("description", event.target.value)}
                     />
                   </Field>
                   <Field label="Yêu cầu năng lực" wide>
@@ -765,27 +918,29 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                       className="form-control"
                       rows="4"
                       value={form.requirements}
+                      disabled={actionLoading}
                       onChange={(event) => updateForm("requirements", event.target.value)}
                       placeholder="Mỗi dòng là một yêu cầu"
                     />
                   </Field>
-                  <Field label="KPI tham chiếu" wide>
+                  <Field label="Quyền lợi" wide>
                     <textarea
                       className="form-control"
                       rows="3"
-                      value={form.kpis}
-                      onChange={(event) => updateForm("kpis", event.target.value)}
-                      placeholder="Mỗi dòng là một KPI"
+                      value={form.benefits}
+                      disabled={actionLoading}
+                      onChange={(event) => updateForm("benefits", event.target.value)}
+                      placeholder="Mỗi dòng là một quyền lợi"
                     />
                   </Field>
                 </div>
               </div>
               <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
-                <button type="button" className="btn btn-light border" onClick={closeForm}>
+                <button type="button" className="btn btn-light border" disabled={actionLoading} onClick={closeForm}>
                   Hủy
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {formMode === "create" ? "Tạo JD" : "Lưu thay đổi"}
+                <button type="submit" className="btn btn-primary" disabled={actionLoading}>
+                  {actionLoading ? "Đang lưu..." : formMode === "create" ? "Tạo JD" : "Lưu thay đổi"}
                 </button>
               </div>
             </form>
@@ -807,18 +962,17 @@ function Field({ children, label, required = false, wide = false }) {
   );
 }
 
-function InfoBlock({ items, ordered = false, title }) {
-  const ListTag = ordered ? "ol" : "ul";
+function InfoBlock({ items, title }) {
   const safeItems = items.length > 0 ? items : ["Chưa khai báo."];
 
   return (
     <div className="mt-4 first:mt-0">
       <h6 className="fw-bold text-body-emphasis mb-2">{title}</h6>
-      <ListTag className="mb-0 ps-3 text-body-secondary" style={{ lineHeight: 1.7 }}>
+      <ul className="mb-0 ps-3 text-body-secondary" style={{ lineHeight: 1.7 }}>
         {safeItems.map((item) => (
           <li key={item}>{item}</li>
         ))}
-      </ListTag>
+      </ul>
     </div>
   );
 }

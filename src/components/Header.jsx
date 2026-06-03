@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
+import { API_BASE_URL } from "../config/api";
 
-const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const NOTIFICATIONS_STORAGE_KEY = "hto_internal_notifications";
-const NOTIFICATION_READ_STORAGE_KEY = "hto_internal_notification_reads";
+const NOTIFICATIONS_CHANGED_EVENT = "notifications:changed";
 
 const ROLE_LABELS = {
   admin: "Admin",
@@ -12,131 +12,6 @@ const ROLE_LABELS = {
   daily: "Dai ly",
   congtacvien: "Cong tac vien",
   user: "Nguoi dung",
-};
-
-const defaultNotifications = [
-  {
-    id: "notice-001",
-    title: "Cập nhật quy trình upload tài liệu",
-    content: "Tài liệu nội bộ cần được phân quyền trước khi chuyển trạng thái Đang dùng.",
-    createdAt: "2026-05-30T08:00:00.000Z",
-    priority: "important",
-    target: { groups: ["internal"], roles: ["admin", "truongbophan", "nhansu"], departments: [] },
-  },
-  {
-    id: "notice-002",
-    title: "Lịch kiểm tra hồ sơ cuối tuần",
-    content: "Bộ phận Hồ sơ kiểm tra danh sách tài liệu pending trước 17:00 hôm nay.",
-    createdAt: "2026-05-30T09:30:00.000Z",
-    priority: "urgent",
-    target: { groups: [], roles: [], departments: ["dept-ho-so"] },
-  },
-];
-
-const isAdminUser = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
-
-const readNotifications = () => {
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY) || "null");
-    return Array.isArray(stored) ? stored : defaultNotifications;
-  } catch {
-    return defaultNotifications;
-  }
-};
-
-const readNotificationState = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(NOTIFICATION_READ_STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-};
-
-const writeNotificationState = (state) => {
-  window.localStorage.setItem(NOTIFICATION_READ_STORAGE_KEY, JSON.stringify(state));
-};
-
-const getUserNotificationReadKey = (user) => user?.id || user?.email || user?.roleId || "guest";
-
-const getUserReadNotifications = (user) => {
-  const state = readNotificationState();
-  const userKey = getUserNotificationReadKey(user);
-
-  return state[userKey] || {};
-};
-
-const writeUserReadNotifications = (user, readByNotificationId) => {
-  const state = readNotificationState();
-  const userKey = getUserNotificationReadKey(user);
-
-  writeNotificationState({
-    ...state,
-    [userKey]: readByNotificationId,
-  });
-};
-
-const getUserGroupIds = (user) => {
-  const role = user?.role || "";
-  const groups = ["all"];
-
-  if (["admin", "bangiamdoc", "truongbophan", "nhansu", "user"].includes(role)) {
-    groups.push("internal");
-  }
-
-  if (["daily", "congtacvien"].includes(role)) {
-    groups.push("partner");
-  }
-
-  if (["admin", "bangiamdoc", "truongbophan"].includes(role)) {
-    groups.push("manager");
-  }
-
-  return groups;
-};
-
-const canSeeNotification = (user, notification) => {
-  if (isAdminUser(user)) return true;
-
-  const target = notification.target || {};
-  const groups = Array.isArray(target.groups) ? target.groups : [];
-  const roles = Array.isArray(target.roles) ? target.roles : [];
-  const departments = Array.isArray(target.departments) ? target.departments : [];
-
-  if (groups.includes("all")) return true;
-  if (groups.some((groupId) => getUserGroupIds(user).includes(groupId))) return true;
-  if (roles.includes(user?.role) || roles.includes(user?.roleId)) return true;
-
-  return Boolean(user?.departmentId && departments.includes(user.departmentId));
-};
-
-const getUnreadNotificationCount = (user) => {
-  const readByNotificationId = getUserReadNotifications(user);
-
-  return readNotifications().filter(
-    (notification) => canSeeNotification(user, notification) && !readByNotificationId[notification.id],
-  ).length;
-};
-
-const getVisibleNotifications = (user) => {
-  const readByNotificationId = getUserReadNotifications(user);
-
-  return readNotifications()
-    .filter(
-      (notification) => canSeeNotification(user, notification) && !readByNotificationId[notification.id],
-    )
-    .map((notification) => ({
-      ...notification,
-      isRead: false,
-    }))
-    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-};
-
-const markNotificationAsRead = (user, notificationId) => {
-  const readByNotificationId = getUserReadNotifications(user);
-  writeUserReadNotifications(user, {
-    ...readByNotificationId,
-    [notificationId]: readByNotificationId[notificationId] || new Date().toISOString(),
-  });
 };
 
 const formatDateTime = (value) => {
@@ -151,41 +26,122 @@ const formatDateTime = (value) => {
   });
 };
 
+const normalizeNotificationsPayload = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.notifications)) return payload.notifications;
+  return [];
+};
+
+const normalizeNotification = (notification) => {
+  const data = notification?.data ?? notification ?? {};
+
+  return {
+    ...data,
+    id: data.id || data._id,
+    title: data.title || "Thông báo nội bộ",
+    content: data.content || "Bạn có thông báo mới.",
+    createdAt: data.createdAt || new Date().toISOString(),
+    isRead: Boolean(data.isRead),
+  };
+};
+
+async function requestNotifications(path = "", options = {}) {
+  const response = await authFetch(`${API_BASE_URL}/notifications${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Không thể tải thông báo nội bộ.");
+  }
+
+  return payload?.data ?? payload;
+}
+
+const getUnreadNotifications = async () =>
+  normalizeNotificationsPayload(await requestNotifications())
+    .map(normalizeNotification)
+    .filter((notification) => notification.id && !notification.isRead)
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+const markNotificationAsRead = async (notificationId) =>
+  await requestNotifications(`/${notificationId}/read`, { method: "PATCH" });
+
+const notifyNotificationsChanged = (detail = {}) => {
+  window.dispatchEvent(
+    new CustomEvent(NOTIFICATIONS_CHANGED_EVENT, {
+      detail: { source: "header", ...detail },
+    }),
+  );
+};
+
 export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout }) => {
   const displayName = user?.fullName || user?.name || "Nguoi dung";
   const displayEmail = user?.email || "";
   const displayRole = ROLE_LABELS[user?.role] || "Tai khoan";
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(() =>
-    getUnreadNotificationCount(user),
-  );
-  const [notificationItems, setNotificationItems] = useState(() => getVisibleNotifications(user));
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [notificationItems, setNotificationItems] = useState([]);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
   const hasAutoOpenedNotifications = useRef(false);
 
-  useEffect(() => {
-    const refreshUnreadCount = () => {
-      const nextUnreadCount = getUnreadNotificationCount(user);
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const unreadNotifications = await getUnreadNotifications();
+      const nextUnreadCount = unreadNotifications.length;
 
       setUnreadNotificationCount(nextUnreadCount);
-      setNotificationItems(getVisibleNotifications(user));
+      setNotificationItems(unreadNotifications);
 
       if (nextUnreadCount > 0 && !hasAutoOpenedNotifications.current) {
         setIsNotificationMenuOpen(true);
         hasAutoOpenedNotifications.current = true;
       }
-    };
+    } catch {
+      setUnreadNotificationCount(0);
+      setNotificationItems([]);
+    }
+  }, []);
 
-    refreshUnreadCount();
+  const applyNotificationChange = useCallback((event) => {
+    const { action, notificationId } = event.detail || {};
+
+    if (action === "read" && notificationId) {
+      setUnreadNotificationCount((count) => Math.max(0, count - 1));
+      setNotificationItems((items) => items.filter((item) => item.id !== notificationId));
+    } else if (action === "read-all") {
+      setUnreadNotificationCount(0);
+      setNotificationItems([]);
+    } else if (action === "unread" || action === "created" || action === "refresh") {
+      void refreshUnreadCount();
+      return;
+    }
+
+    window.setTimeout(() => {
+      void refreshUnreadCount();
+    }, 250);
+  }, [refreshUnreadCount]);
+
+  useEffect(() => {
+    void refreshUnreadCount();
     window.addEventListener("focus", refreshUnreadCount);
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, applyNotificationChange);
     document.addEventListener("visibilitychange", refreshUnreadCount);
-    const timer = window.setInterval(refreshUnreadCount, 1500);
+    const timer = window.setInterval(refreshUnreadCount, 30000);
 
     return () => {
       window.removeEventListener("focus", refreshUnreadCount);
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, applyNotificationChange);
       document.removeEventListener("visibilitychange", refreshUnreadCount);
       window.clearInterval(timer);
     };
-  }, [user]);
+  }, [applyNotificationChange, refreshUnreadCount]);
 
   return (
     <header className="app-header">
@@ -309,9 +265,12 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                           notification.isRead ? "bg-body" : "bg-primary-subtle"
                         }`}
                         onClick={() => {
-                          markNotificationAsRead(user, notification.id);
-                          setUnreadNotificationCount(getUnreadNotificationCount(user));
-                          setNotificationItems(getVisibleNotifications(user));
+                          setUnreadNotificationCount((count) => Math.max(0, count - 1));
+                          setNotificationItems((items) => items.filter((item) => item.id !== notification.id));
+                          void markNotificationAsRead(notification.id).catch(() => {
+                            void refreshUnreadCount();
+                          });
+                          notifyNotificationsChanged({ action: "read", notificationId: notification.id });
                           setIsNotificationMenuOpen(false);
                           onNavigate?.("notifications", { notificationId: notification.id });
                         }}

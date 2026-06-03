@@ -141,7 +141,7 @@ const buildUploadPreviewDocument = async (uploadForm, categories = []) => {
   const previewUrl =
     uploadForm.sourceType === "file" && uploadForm.file
       ? URL.createObjectURL(uploadForm.file)
-      : uploadForm.link.trim();
+      : getEmbeddableDocumentUrl(uploadForm.link.trim());
   const fileType =
     uploadForm.sourceType === "file"
       ? uploadForm.file?.name.split(".").pop()?.toLowerCase() || ""
@@ -524,6 +524,52 @@ const getAbsoluteDocumentUrl = (url) => {
   return `${apiOrigin}${cleanUrl.startsWith("/") ? "" : "/"}${cleanUrl}`;
 };
 
+const getGoogleDriveFileId = (url) => {
+  const cleanUrl = String(url || "").trim();
+
+  if (!cleanUrl || !/drive\.google\.com|docs\.google\.com/i.test(cleanUrl)) {
+    return "";
+  }
+
+  const patterns = [
+    /\/file\/d\/([^/?#]+)/i,
+    /\/document\/d\/([^/?#]+)/i,
+    /\/spreadsheets\/d\/([^/?#]+)/i,
+    /\/presentation\/d\/([^/?#]+)/i,
+    /[?&]id=([^&#]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = cleanUrl.match(pattern);
+
+    if (match?.[1]) {
+      return decodeURIComponent(match[1]);
+    }
+  }
+
+  return "";
+};
+
+const isGoogleDriveUrl = (url) => Boolean(getGoogleDriveFileId(url));
+
+const getGoogleDrivePreviewUrl = (url) => {
+  const fileId = getGoogleDriveFileId(url);
+
+  return fileId ? `https://drive.google.com/file/d/${fileId}/preview` : "";
+};
+
+const getEmbeddableDocumentUrl = (url) => getGoogleDrivePreviewUrl(url) || url;
+
+const getDocumentPreviewUrl = (document) => {
+  if (document.previewDataUrl) {
+    return document.previewDataUrl;
+  }
+
+  return getEmbeddableDocumentUrl(
+    document.previewUrl || document.previewImage || getDocumentActionUrl(document),
+  );
+};
+
 const isImagePreview = (document) => {
   const value = `${document.mimeType || ""} ${document.fileType || ""} ${document.sourceName || ""}`;
 
@@ -616,6 +662,7 @@ const normalizeDocument = (document) => {
     sourceName: fileName,
     fileType,
     fileUrl: absoluteFileUrl,
+    previewUrl: document.previewUrl || getGoogleDrivePreviewUrl(absoluteFileUrl),
     previewImage: document.previewImage || document.thumbnailUrl || "",
     metadata,
     canDownload,
@@ -707,6 +754,38 @@ async function requestReadableDocuments(path = "", options = {}) {
   }
 
   return payload?.data ?? payload;
+}
+
+async function uploadDocumentFile(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await authFetch(`${API_BASE_URL}/documents/upload`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Không thể tải file lên Google Drive.");
+  }
+
+  const data = payload?.data ?? payload ?? {};
+  const fileUrl = data.fileUrl || data.url || data.webViewLink || "";
+
+  if (!fileUrl) {
+    throw new Error("API upload chưa trả về đường link Google Drive.");
+  }
+
+  return {
+    fileUrl,
+    fileType: data.fileType || file.name.split(".").pop()?.toLowerCase() || "",
+    fileName: data.fileName || file.name,
+  };
 }
 
 const getReadableDocumentCategories = async () => {
@@ -1129,12 +1208,28 @@ export const DocumentsPage = ({ currentUser }) => {
     setUploadSuccess("");
 
     try {
+      const uploadedFile =
+        previewDocument.sourceType === "file" && uploadForm.file
+          ? await uploadDocumentFile(uploadForm.file)
+          : {
+              fileUrl: previewDocument.fileUrl,
+              fileType: previewDocument.fileType,
+              fileName: previewDocument.sourceName,
+            };
+      const fileUrl = uploadedFile.fileUrl || previewDocument.fileUrl;
+      const fileType = uploadedFile.fileType || previewDocument.fileType;
+      const sourceName = uploadedFile.fileName || previewDocument.sourceName;
+      const previewUrl =
+        previewDocument.previewDataUrl ||
+        getGoogleDrivePreviewUrl(fileUrl) ||
+        previewDocument.previewUrl ||
+        fileUrl;
       const createdDocument = await createReadableDocument({
         title: previewDocument.title,
         categoryId: previewDocument.categoryId,
         departmentId: previewDocument.departmentId,
-        fileUrl: previewDocument.fileUrl,
-        fileType: previewDocument.fileType,
+        fileUrl,
+        fileType,
         status: "draft",
         permissions: previewDocument.permissions,
       });
@@ -1143,24 +1238,38 @@ export const DocumentsPage = ({ currentUser }) => {
         departmentId: previewDocument.departmentId,
         permissions: previewDocument.permissions,
         sourceType: previewDocument.sourceType,
-        sourceName: previewDocument.sourceName,
+        sourceName,
         description: previewDocument.description,
         previewText: previewDocument.previewText,
-        previewUrl: previewDocument.previewUrl,
+        previewUrl,
         previewDataUrl: previewDocument.previewDataUrl,
         mimeType: previewDocument.mimeType,
-        canDownload: previewDocument.sourceType === "link",
+        fileUrl: getAbsoluteDocumentUrl(fileUrl),
+        fileType,
+        canDownload: true,
       };
 
       cacheDocumentPreview(importedDocument.id, previewDocument);
-      setDocuments((prev) => [importedDocument, ...prev]);
+      try {
+        const documentData = await getReadableDocuments({
+          categoryId: activeCategory,
+          limit: REMOTE_DOCUMENT_PAGE_SIZE,
+        });
+        const nextDocuments =
+          documentData.items.length > 0 ? documentData.items : [importedDocument, ...documents];
+
+        setDocuments(nextDocuments);
+        setDocumentTotal(documentData.items.length > 0 ? documentData.total : nextDocuments.length);
+      } catch {
+        setDocuments((prev) => [importedDocument, ...prev]);
+        setDocumentTotal((total) => total + 1);
+      }
       setSelectedPermissionDocId(String(importedDocument.id));
       setSelectedDocument(importedDocument);
       setUploadPreview(null);
       setUploadForm(emptyUploadForm);
       setUploadErrors({});
-      setDocumentTotal((total) => total + 1);
-      setUploadSuccess("Đã import tài liệu vào hệ thống.");
+      setUploadSuccess("Đã tải lên Google Drive và import tài liệu thành công!");
     } catch (error) {
       setDocumentError(error instanceof Error ? error.message : "Không thể import tài liệu.");
     } finally {
@@ -1253,7 +1362,10 @@ export const DocumentsPage = ({ currentUser }) => {
             ? getFileNameFromUrl(updateData.fileUrl) || updateData.title || document.title
             : document.sourceName,
         description: updateData.description ?? document.description,
-        previewUrl: document.previewUrl,
+        previewUrl:
+          updateData.fileUrl !== undefined
+            ? getGoogleDrivePreviewUrl(updateData.fileUrl)
+            : document.previewUrl,
         previewDataUrl: document.previewDataUrl,
         previewText: document.previewText,
         mimeType: document.mimeType,
@@ -3056,10 +3168,12 @@ function MetadataItem({ label, value, wide = false }) {
 function DocumentPreview({ categoryName, departmentName, document }) {
   const extension = document.sourceName?.split(".").pop()?.toUpperCase() || "DOC";
   const isLink = document.sourceType === "link";
-  const previewUrl = document.previewUrl || document.previewImage || getDocumentActionUrl(document);
+  const previewUrl = getDocumentPreviewUrl(document);
   const canRenderText = Boolean(document.previewText);
   const canRenderImage = previewUrl && isImagePreview(document);
-  const canRenderFrame = previewUrl && (isPdfPreview(document) || isTextPreview(document) || isLink);
+  const canRenderDriveFrame = previewUrl && isGoogleDriveUrl(previewUrl);
+  const canRenderFrame =
+    previewUrl && (canRenderDriveFrame || isPdfPreview(document) || isTextPreview(document) || isLink);
 
   return (
     <div className="rounded border bg-body-tertiary p-2">
