@@ -79,9 +79,7 @@ export const AuditLogPage = ({ currentUser }) => {
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Lịch sử thao tác</h4>
-          <span className="text-body-secondary" style={{ fontSize: "14px" }}>
-            Theo dõi actor, action, target, metadata và thời gian thao tác
-          </span>
+          
         </div>
         <button className="btn btn-outline-secondary" type="button" onClick={loadAuditLogs} disabled={loading}>
           Làm mới

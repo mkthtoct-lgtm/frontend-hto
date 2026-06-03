@@ -3,12 +3,11 @@ import { useForm } from "react-hook-form";
 import {
   assignUserToDepartment,
   createDepartment,
-  deleteDepartment as hideDepartment,
   getAssignableUsers,
   getDepartmentMembers,
   getDepartments,
   removeUserFromDepartment,
-  restoreDepartment,
+  toggleDepartmentVisibility,
   updateDepartment,
 } from "./departmentMockData.jsx";
 
@@ -187,8 +186,11 @@ export const DepartmentsPage = ({ currentUser }) => {
     }
   };
 
-  const handleHideDepartment = async (department) => {
-    if (!window.confirm(`Ẩn phòng ban "${department.name}"? Nhân sự sẽ được gỡ khỏi phòng ban này.`)) {
+  const handleToggleDepartmentVisibility = async (department) => {
+    const departmentHidden = isDepartmentHidden(department);
+    const actionLabel = departmentHidden ? "hiện lại" : "ẩn";
+
+    if (!window.confirm(`Bạn muốn ${actionLabel} phòng ban "${department.name}"?`)) {
       return;
     }
 
@@ -196,39 +198,24 @@ export const DepartmentsPage = ({ currentUser }) => {
     setApiError("");
 
     try {
-      await hideDepartment(department.id);
+      const updatedDepartment = await toggleDepartmentVisibility(department);
+      const nextIsHidden = isDepartmentHidden(updatedDepartment);
       setDepartments((currentDepartments) =>
         currentDepartments.map((item) =>
           item.id === department.id
-            ? { ...item, isHidden: true, hidden: true, memberCount: 0 }
+            ? {
+                ...item,
+                ...updatedDepartment,
+                isHidden: nextIsHidden,
+                hidden: nextIsHidden,
+              }
             : item,
         ),
       );
       setSelectedDepartmentId(department.id);
-      setMembers([]);
+      await loadMembers(department.id);
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Không thể ẩn phòng ban.");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleRestoreDepartment = async (department) => {
-    setActionLoading(true);
-    setApiError("");
-
-    try {
-      const restoredDepartment = await restoreDepartment(department);
-      setDepartments((currentDepartments) =>
-        currentDepartments.map((item) =>
-          item.id === department.id
-            ? { ...item, ...restoredDepartment, isHidden: false, hidden: false }
-            : item,
-        ),
-      );
-      setSelectedDepartmentId(department.id);
-    } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Không thể hiện lại phòng ban.");
+      setApiError(error instanceof Error ? error.message : `Không thể ${actionLabel} phòng ban.`);
     } finally {
       setActionLoading(false);
     }
@@ -287,9 +274,7 @@ export const DepartmentsPage = ({ currentUser }) => {
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý phòng ban</h4>
-          <span className="text-body-secondary" style={{ fontSize: "14px" }}>
-            Danh sách phòng ban, thành viên và phân bổ nhân sự
-          </span>
+       
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
           <PlusIcon />
@@ -376,11 +361,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                             <button
                               className={`action-btn h-8 w-8 flex-none ${departmentHidden ? "btn-edit" : "btn-lock"}`}
                               title={departmentHidden ? "Hiện lại phòng ban" : "Ẩn phòng ban"}
-                              onClick={() =>
-                                departmentHidden
-                                  ? handleRestoreDepartment(department)
-                                  : handleHideDepartment(department)
-                              }
+                              onClick={() => handleToggleDepartmentVisibility(department)}
                               disabled={actionLoading}
                             >
                               {departmentHidden ? <EyeIcon /> : <EyeOffIcon />}
@@ -426,11 +407,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                       </span>
                       <span className={`btn btn-sm ${departmentHidden ? "btn-outline-success" : "btn-outline-danger"}`} onClick={(event) => {
                         event.stopPropagation();
-                        if (departmentHidden) {
-                          handleRestoreDepartment(department);
-                        } else {
-                          handleHideDepartment(department);
-                        }
+                        handleToggleDepartmentVisibility(department);
                       }}>
                         {departmentHidden ? "Hiện lại" : "Ẩn"}
                       </span>

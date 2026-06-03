@@ -405,7 +405,6 @@ export const UserList = ({ currentUser }) => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý tài khoản</h4>
-          <span className="text-body-secondary" style={{ fontSize: "14px" }}>Quản lý phân quyền và nhân sự hệ thống</span>
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -550,9 +550,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">JD vị trí / phòng ban</h4>
-          <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-            Dữ liệu được đồng bộ từ API mô tả công việc.
-          </div>
+          
         </div>
         {canManage ? (
           <div className="d-flex flex-wrap justify-content-end gap-2">
