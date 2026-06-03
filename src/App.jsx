@@ -23,6 +23,7 @@ import { AIHistoryPage } from "./AIHistory/AIHistoryPage";
 import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
+import { ProductOverviewPage } from "./products/ProductOverviewPage";
 import { HomePage } from "./home/HomePage";
 import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
@@ -458,6 +459,8 @@ function App() {
           <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (
           <HomePage theme={theme} />
+        ) : currentPage === "productOverview" ? (
+          <ProductOverviewPage currentUser={user} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (
           <ProductsPage currentUser={user} currentPage={currentPage} onNavigate={setCurrentPage} />
         ) : (

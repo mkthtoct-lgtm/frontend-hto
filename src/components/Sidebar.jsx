@@ -114,7 +114,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
   const [openProductCategory, setOpenProductCategory] = useState("duhocduc");
   const sidebarProducts = getSidebarProducts();
   const isProductPage =
-    ["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham"].includes(currentPage) ||
+    ["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham", "productOverview"].includes(currentPage) ||
     currentPage.startsWith("product:");
   const handleGoHome = () => {
     onNavigate?.("dashboard");
@@ -213,7 +213,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               style={{ textDecoration: "none" }}
               onClick={(e) => {
                 e.preventDefault();
-                onNavigate?.("sanpham"); // Click vào thẻ a chỉ chuyển trang
+                onNavigate?.("productOverview"); // Click vào thẻ a chỉ chuyển trang
               }}
             >
               <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
@@ -240,7 +240,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "sanpham" ? "block" : "none", paddingLeft: "52px" }}>
               <li className="menu-item mb-1">
-                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "sanpham" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("sanpham"); }}>
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "productOverview" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("productOverview"); }}>
                   Tổng quan sản phẩm
                 </a>
               </li>
