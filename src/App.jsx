@@ -31,6 +31,44 @@ import { AUTH_EVENTS } from "./auth/session";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
+  BANGIAMDOC: "69fc5af582ef85451120772b",
+};
+
+const hasDashboardPermission = (user) => {
+  if (!user) return false;
+
+  // admin and bangiamdoc can always enter
+  if (user.roleId === "69fc5af582ef85451120772a" || user.roleId === "69fc5af582ef85451120772b") {
+    return true;
+  }
+
+  // check custom permissions in localStorage
+  try {
+    const stored = window.localStorage.getItem("hto_user_feature_permissions");
+    if (stored) {
+      const permissionsObj = JSON.parse(stored);
+      const userPerms = permissionsObj[user.id];
+      if (Array.isArray(userPerms)) {
+        return userPerms.includes("dashboard:view");
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  // Default rule: standard user role (69fc5af782ef854511207730) is NOT allowed by default
+  if (user.roleId === "69fc5af782ef854511207730") {
+    return false;
+  }
+
+  // Other roles (truongbophan, nhansu, daily, congtacvien) are allowed by default
+  const allowedRoleIds = [
+    "69fc5af582ef85451120772c", // truongbophan
+    "69fc5af582ef85451120772d", // nhansu
+    "69fc5af582ef85451120772e", // daily
+    "69fc5af682ef85451120772f", // congtacvien
+  ];
+  return allowedRoleIds.includes(user.roleId);
 };
 
 const ROLE_ID_MAP = {
@@ -402,8 +440,8 @@ function App() {
       <Header
         user={user}
         onNavigate={handleNavigate}
-        onToggleSidebar={handleToggleSidebar} 
-        onToggleTheme={handleToggleTheme} 
+        onToggleSidebar={handleToggleSidebar}
+        onToggleTheme={handleToggleTheme}
         onLogout={handleLogout}
       />
 
@@ -415,9 +453,8 @@ function App() {
       />
 
       <main
-        className={`app-wrapper${currentPage === "qna" ? " ai-chat-wrapper" : ""}${
-          currentPage === "notifications" ? " notifications-wrapper" : ""
-        }`}
+        className={`app-wrapper${currentPage === "qna" ? " ai-chat-wrapper" : ""}${currentPage === "notifications" ? " notifications-wrapper" : ""
+          }`}
       >
         {currentPage === "users" ? (
           // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
@@ -454,7 +491,19 @@ function App() {
         ) : currentPage === "qna" ? (
           <AiChatPage currentUser={user} />
         ) : currentPage === "dashboardStats" ? (
-          <DashboardPage currentUser={user} />
+          hasDashboardPermission(user) ? (
+            <DashboardPage currentUser={user} />
+          ) : (
+            <div className="container-fluid pt-3" style={{ maxWidth: "1600px" }}>
+              <div className="card border-0" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                <div className="card-body p-4 text-center">
+                  <div className="text-warning mb-3" style={{ fontSize: "48px" }}>⚠️</div>
+                  <h5 className="fw-bold text-body-emphasis mb-2">Không có quyền truy cập</h5>
+                  <p className="text-body-secondary mb-0">Trang Dashboard thống kê chỉ dành cho các tài khoản được cấp quyền truy cập.</p>
+                </div>
+              </div>
+            </div>
+          )
         ) : currentPage === "tintuc" ? (
           <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (

@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
+const BANGIAMDOC_ROLE_ID = "69fc5af582ef85451120772b";
 const PRODUCT_STORAGE_KEY = "hto_products";
 
 const ROLE_ID_MAP = {
@@ -52,6 +53,43 @@ const canViewAIManagement = (user) => {
   const roleKey = getUserRoleKey(user);
 
   return ["admin", "bangiamdoc", "truongbophan", "hethong"].includes(roleKey);
+};
+
+const hasDashboardPermission = (user) => {
+  if (!user) return false;
+  
+  // admin and bangiamdoc can always enter
+  if (user.roleId === ADMIN_ROLE_ID || user.roleId === BANGIAMDOC_ROLE_ID) {
+    return true;
+  }
+  
+  // check custom permissions in localStorage
+  try {
+    const stored = window.localStorage.getItem("hto_user_feature_permissions");
+    if (stored) {
+      const permissionsObj = JSON.parse(stored);
+      const userPerms = permissionsObj[user.id];
+      if (Array.isArray(userPerms)) {
+        return userPerms.includes("dashboard:view");
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  
+  // Default rule: standard user role (69fc5af782ef854511207730) is NOT allowed by default
+  if (user.roleId === "69fc5af782ef854511207730") {
+    return false;
+  }
+  
+  // Other roles (truongbophan, nhansu, daily, congtacvien) are allowed by default
+  const allowedRoleIds = [
+    "69fc5af582ef85451120772c", // truongbophan
+    "69fc5af582ef85451120772d", // nhansu
+    "69fc5af582ef85451120772e", // daily
+    "69fc5af682ef85451120772f", // congtacvien
+  ];
+  return allowedRoleIds.includes(user.roleId);
 };
 
 const normalizeProductType = (typeValue) => {
@@ -184,6 +222,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             </a>
           </li>
 
+          {hasDashboardPermission(currentUser) && (
           <li className="menu-item mb-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboardStats" ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -203,6 +242,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Dashboard thống kê</span>
             </a>
           </li>
+          )}
 
           {/* --- 2. SẢN PHẨM --- */}
           <li className="menu-item mb-2">

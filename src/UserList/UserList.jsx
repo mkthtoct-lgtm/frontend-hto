@@ -67,8 +67,8 @@ const DEFAULT_FEATURE_PERMISSIONS_BY_ROLE = {
   truongbophan: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "notifications:create"],
   nhansu: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "users:view"],
   daily: ["dashboard:view", "documents:view", "notifications:view"],
-  congtacvien: ["documents:view", "notifications:view"],
-  hethong: ["dashboard:view", "documents:view", "notifications:view"],
+  congtacvien: ["dashboard:view", "documents:view", "notifications:view"],
+  hethong: ["documents:view", "notifications:view"],
 };
 
 const readUserFeaturePermissions = () => {

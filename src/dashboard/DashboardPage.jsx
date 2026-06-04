@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+
+const API_BASE_URL = "http://localhost:3000/api/v1";
+const getToken = () => localStorage.getItem("token");
 
 const PERIOD_OPTIONS = [
   { id: "day", label: "Ngày", caption: "03/06/2026" },
@@ -118,70 +121,238 @@ const getDepartmentTotal = (department) =>
 
 const formatNumber = (value) => value.toLocaleString("vi-VN");
 
+
+// Giải mã JWT để lấy userId và departmentId
+const decodeToken = () => {
+  try {
+    const token = getToken();
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload; // { sub, roleId, departmentId, email }
+  } catch {
+    return null;
+  }
+};
+
+const ROLE_ID_MAP = {
+  "69fc5af582ef85451120772a": "admin",
+  "69fc5af582ef85451120772b": "bangiamdoc",
+  "69fc5af582ef85451120772c": "truongbophan",
+  "69fc5af582ef85451120772d": "nhansu",
+  "69fc5af582ef85451120772e": "daily",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
+};
+
+// Chọn đúng endpoint theo role trả về từ API
+const getApiEndpoint = (role, tokenPayload) => {
+  if (role === "board_of_directors" || role === "admin" || role === "bangiamdoc") {
+    return `${API_BASE_URL}/dashboard/board-of-directors`;
+  }
+  if (role === "truongbophan" || role === "department_head") {
+    return `${API_BASE_URL}/dashboard/department-head?departmentId=${tokenPayload?.departmentId}`;
+  }
+  if (role === "nhansu" || role === "employee" || role === "daily" || role === "congtacvien" || role === "user" || role === "hethong") {
+    return `${API_BASE_URL}/dashboard/employee?userId=${tokenPayload?.sub}`;
+  }
+  return `${API_BASE_URL}/dashboard/board-of-directors`; // fallback
+};
+
 export const DashboardPage = () => {
+  // --- tất cả hooks phải ở trên cùng, trước mọi early return ---
+  const [apiData, setApiData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState("month");
-  const selectedData = DASHBOARD_DATA[selectedPeriod];
-  const [selectedPointIndex, setSelectedPointIndex] = useState(selectedData.trend.length - 1);
+  const [selectedPointIndex, setSelectedPointIndex] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchData = async () => {
+      try {
+        // Bước 1: gọi /dashboard để biết role của user
+        const firstRes = await fetch(`${API_BASE_URL}/dashboard`, {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        });
+        const firstJson = await firstRes.json();
+        if (!firstRes.ok) throw new Error(firstJson?.message || `HTTP ${firstRes.status}`);
+        
+        let role = firstJson.data?.role;
+        const tokenPayload = decodeToken();
+        
+        // Fallback sang role trích xuất từ token nếu API không trả về
+        if (!role && tokenPayload?.roleId) {
+          role = ROLE_ID_MAP[tokenPayload.roleId];
+        }
+        
+        // Chuẩn hóa tên role
+        if (role === "admin" || role === "bangiamdoc" || role === "board_of_directors") {
+          role = "board_of_directors";
+        } else if (role === "department_head" || role === "truongbophan") {
+          role = "truongbophan";
+        } else if (role === "employee" || role === "nhansu") {
+          role = "nhansu";
+        } else if (role === "agent" || role === "daily") {
+          role = "daily";
+        } else if (role === "collaborator" || role === "congtacvien") {
+          role = "congtacvien";
+        } else if (role === "client" || role === "user" || role === "hethong") {
+          role = "user";
+        }
+
+        // Bước 2: gọi đúng endpoint theo role
+        const endpoint = getApiEndpoint(role, tokenPayload);
+        const res = await fetch(endpoint, {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+        if (!cancelled) {
+          const finalData = json.data ?? json;
+          if (!finalData.role) {
+            finalData.role = role;
+          }
+          setApiData(finalData);
+        }
+      } catch (err) {
+        if (!cancelled) setError(err.message || "Không thể tải dữ liệu dashboard.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchData();
+    return () => { cancelled = true; };
+  }, []);
+
+  const chartData = apiData?.chartData ?? DASHBOARD_DATA;
+  const selectedData = chartData[selectedPeriod] ?? DASHBOARD_DATA[selectedPeriod];
+
+  const departmentStats = apiData?.topDepartments?.length > 0
+    ? apiData.topDepartments.map((dept, index) => ({
+        name: dept.name,
+        completed: dept.memberCount ?? 0,
+        processing: 0,
+        pending: 0,
+        files: dept.memberCount ?? 0,
+        color: ["#2563eb", "#16a34a", "#f59e0b", "#0ea5e9", "#8b5cf6"][index % 5],
+      }))
+    : DEPARTMENT_STATS;
+
+  const events = apiData?.events?.length > 0 ? apiData.events : EVENTS;
+  const recentTasks = apiData?.recentTasks?.length > 0 ? apiData.recentTasks : RECENT_TASKS;
 
   const selectedPoint = selectedData.trend[Math.min(selectedPointIndex, selectedData.trend.length - 1)];
   const activeOption = PERIOD_OPTIONS.find((option) => option.id === selectedPeriod);
-  const metrics = useMemo(() => [
-    {
-      label: "Tổng công việc hoàn thành",
-      value: selectedData.totals.done,
-      change: "+24.5%",
-      caption: "xu hướng tăng",
-      color: "#2563eb",
-      bg: "bg-primary-subtle",
-      tone: "text-primary",
-      key: "done",
-    },
-    {
-      label: "Tổng hồ sơ xử lý",
-      value: selectedData.totals.files,
-      change: "+18.2%",
-      caption: "đạt kế hoạch",
-      color: "#16a34a",
-      bg: "bg-success-subtle",
-      tone: "text-success",
-      key: "files",
-    },
-    {
-      label: "Hồ sơ đang xử lý",
-      value: selectedData.totals.processing,
-      change: "-9 hồ sơ tồn",
-      caption: "đang kiểm soát",
-      color: "#f59e0b",
-      bg: "bg-warning-subtle",
-      tone: "text-warning",
-      key: "processing",
-    },
-    {
-      label: "Lịch sự kiện",
-      value: selectedData.totals.events,
-      change: "đã lên lịch",
-      caption: activeOption?.caption || "",
-      color: "#0ea5e9",
-      bg: "bg-info-subtle",
-      tone: "text-info",
-      key: "events",
-    },
-  ], [activeOption?.caption, selectedData]);
+  const stats = apiData?.stats;
+
+  const role = apiData?.role;
+  const periodTotals = selectedData.totals;
+
+  // Metrics thay đổi theo role
+  const metrics = useMemo(() => {
+    if (role === "truongbophan") {
+      const ms = apiData?.memberStats ?? {};
+      const ds = apiData?.documentStats ?? {};
+      return [
+        { label: "Tổng nhân sự", value: ms.total ?? 0, change: `${ms.active ?? 0} đang hoạt động`, caption: apiData?.department?.name ?? "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+        { label: "Nhân sự hoạt động", value: ms.active ?? 0, change: `${ms.inactive ?? 0} không hoạt động`, caption: "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+        { label: "Tổng tài liệu", value: ds.total ?? 0, change: `${ds.active ?? 0} đang hoạt động`, caption: "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+        { label: "Tài liệu chờ duyệt", value: ds.pending ?? 0, change: `${ds.draft ?? 0} bản nháp`, caption: "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+      ];
+    }
+    if (role === "nhansu") {
+      const ds = apiData?.documentStats ?? {};
+      return [
+        { label: "Tổng tài liệu của tôi", value: ds.total ?? 0, change: `${ds.active ?? 0} đang hoạt động`, caption: apiData?.user?.fullName ?? "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+        { label: "Tài liệu active", value: ds.active ?? 0, change: "đang hoạt động", caption: "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+        { label: "Bản nháp", value: ds.draft ?? 0, change: "chưa gửi", caption: "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+        { label: "Chờ duyệt", value: ds.pending ?? 0, change: "cần xử lý", caption: "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+      ];
+    }
+    if (role === "daily") {
+      const ds = apiData?.documentStats ?? {};
+      return [
+        { label: "Tổng tài liệu Đại lý", value: ds.total ?? 0, change: `${ds.active ?? 0} đang hoạt động`, caption: apiData?.user?.fullName ?? "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+        { label: "Tài liệu active", value: ds.active ?? 0, change: "đang hoạt động", caption: "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+        { label: "Hồ sơ nháp", value: ds.draft ?? 0, change: "chưa gửi", caption: "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+        { label: "Yêu cầu chờ duyệt", value: ds.pending ?? 0, change: "đang xử lý", caption: "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+      ];
+    }
+    if (role === "congtacvien") {
+      const ds = apiData?.documentStats ?? {};
+      return [
+        { label: "Tổng tài liệu CTV", value: ds.total ?? 0, change: `${ds.active ?? 0} đang hoạt động`, caption: apiData?.user?.fullName ?? "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+        { label: "Tài liệu active", value: ds.active ?? 0, change: "đang hoạt động", caption: "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+        { label: "Hồ sơ nháp", value: ds.draft ?? 0, change: "chưa gửi", caption: "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+        { label: "Yêu cầu chờ duyệt", value: ds.pending ?? 0, change: "đang xử lý", caption: "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+      ];
+    }
+    if (role === "user") {
+      const ds = apiData?.documentStats ?? {};
+      return [
+        { label: "Hồ sơ cá nhân", value: ds.total ?? 0, change: `${ds.active ?? 0} đang hoạt động`, caption: apiData?.user?.fullName ?? "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+        { label: "Tài liệu hoạt động", value: ds.active ?? 0, change: "đang hoạt động", caption: "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+        { label: "Bản nháp", value: ds.draft ?? 0, change: "chưa gửi", caption: "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+        { label: "Chờ duyệt", value: ds.pending ?? 0, change: "cần xử lý", caption: "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+      ];
+    }
+    // board_of_directors - dùng stats thật từ API
+    return [
+      { label: "Tổng người dùng", value: stats?.totalUsers ?? periodTotals.done, change: "trong hệ thống", caption: activeOption?.caption || "", color: "#2563eb", bg: "bg-primary-subtle", tone: "text-primary", key: "done" },
+      { label: "Tổng tài liệu", value: stats?.totalDocuments ?? periodTotals.files, change: `${stats?.totalActiveDocuments ?? 0} đang hoạt động`, caption: activeOption?.caption || "", color: "#16a34a", bg: "bg-success-subtle", tone: "text-success", key: "files" },
+      { label: "Tài liệu đang xử lý", value: stats?.totalActiveDocuments ?? periodTotals.processing, change: "đang xử lý", caption: activeOption?.caption || "", color: "#f59e0b", bg: "bg-warning-subtle", tone: "text-warning", key: "processing" },
+      { label: "Tổng phòng ban", value: stats?.totalDepartments ?? periodTotals.events, change: "phòng ban", caption: activeOption?.caption || "", color: "#0ea5e9", bg: "bg-info-subtle", tone: "text-info", key: "events" },
+    ];
+  }, [role, apiData, stats, periodTotals, activeOption?.caption]);
 
   const handleSelectPeriod = (periodId) => {
-    const nextData = DASHBOARD_DATA[periodId];
+    const nextData = (apiData?.chartData ?? DASHBOARD_DATA)[periodId] ?? DASHBOARD_DATA[periodId];
     setSelectedPeriod(periodId);
     setSelectedPointIndex(nextData.trend.length - 1);
   };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "60vh" }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status" />
+          <div className="text-body-secondary" style={{ fontSize: "13px" }}>Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-fluid pt-3" style={{ maxWidth: "1600px" }}>
+        <div className="alert alert-danger d-flex align-items-center justify-content-between gap-3">
+          <span>⚠️ {error}</span>
+          <button className="btn btn-sm btn-outline-danger" onClick={() => window.location.reload()}>Thử lại</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
       <div className="card border-0 mb-3" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
         <div className="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div>
-            <h5 className="fw-bold text-body-emphasis mb-1">Dashboard thống kê vận hành</h5>
+            <h5 className="fw-bold text-body-emphasis mb-1">
+              {role === "truongbophan" ? `Dashboard – ${apiData?.department?.name ?? "Phòng ban"}` :
+               role === "nhansu" ? `Dashboard – ${apiData?.user?.fullName ?? "Cá nhân"}` :
+               role === "daily" ? `Dashboard Đại lý – ${apiData?.user?.fullName ?? "Đại lý"}` :
+               role === "congtacvien" ? `Dashboard Cộng tác viên – ${apiData?.user?.fullName ?? "Cộng tác viên"}` :
+               role === "user" ? `Dashboard Khách hàng – ${apiData?.user?.fullName ?? "Cá nhân"}` :
+               "Dashboard thống kê vận hành"}
+            </h5>
             <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-              Lọc theo thời gian, xem tổng số và bấm vào từng mốc biểu đồ để xem chi tiết chỉ số.
+              {role === "board_of_directors" ? "Tổng quan toàn hệ thống – Ban Giám Đốc" :
+               role === "truongbophan" ? "Thống kê nhân sự và tài liệu phòng ban của bạn" :
+               role === "daily" ? "Thống kê tài liệu và hoạt động của Đại lý" :
+               role === "congtacvien" ? "Thống kê tài liệu và hoạt động của Cộng tác viên" :
+               role === "user" ? "Chi tiết tiến độ hồ sơ và tài liệu cá nhân của bạn" :
+               "Thống kê tài liệu và hoạt động cá nhân"}
             </div>
           </div>
           <div className="d-flex flex-wrap gap-2">
@@ -206,6 +377,75 @@ export const DashboardPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Section riêng cho Trưởng bộ phận: danh sách thành viên */}
+      {role === "truongbophan" && apiData?.members?.length > 0 && (
+        <div className="card border-0 mb-3" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="card-header bg-transparent border-0 p-3 pb-0">
+            <h6 className="fw-bold d-flex align-items-center mb-0 text-body-emphasis" style={{ fontSize: "14px" }}>
+              <DepartmentIcon /><span className="ms-2">THÀNH VIÊN PHÒNG BAN</span>
+            </h6>
+          </div>
+          <div className="card-body p-0 table-responsive">
+            <table className="table table-borderless align-middle mb-0" style={{ fontSize: "13px" }}>
+              <thead className="border-bottom">
+                <tr>
+                  <th className="ps-4 py-3">Họ tên</th>
+                  <th className="py-3">Email</th>
+                  <th className="py-3">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apiData.members.map((m) => (
+                  <tr className="border-bottom" key={m.id ?? m._id}>
+                    <td className="ps-4 py-3 fw-semibold text-body-emphasis">{m.fullName}</td>
+                    <td className="py-3 text-body-secondary">{m.email}</td>
+                    <td className="py-3"><span className={`badge ${m.status === "active" ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning"}`}>{m.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Section riêng cho Nhân sự/Đại lý/CTV/Khách hàng: tài liệu gần đây */}
+      {["nhansu", "daily", "congtacvien", "user"].includes(role) && (
+        <div className="card border-0 mb-3" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div className="card-header bg-transparent border-0 p-3 pb-0">
+            <h6 className="fw-bold d-flex align-items-center mb-0 text-body-emphasis" style={{ fontSize: "14px" }}>
+              <TaskIcon /><span className="ms-2">
+                {role === "daily" ? "TÀI LIỆU MỚI NHẤT CỦA ĐẠI LÝ" :
+                 role === "congtacvien" ? "TÀI LIỆU MỚI NHẤT CỦA CTV" :
+                 role === "user" ? "DANH SÁCH TÀI LIỆU CÁ NHÂN" :
+                 "TÀI LIỆU GẦN ĐÂY CỦA TÔI"}
+              </span>
+            </h6>
+          </div>
+          <div className="card-body p-0 table-responsive">
+            <table className="table table-borderless align-middle mb-0" style={{ fontSize: "13px" }}>
+              <thead className="border-bottom">
+                <tr>
+                  <th className="ps-4 py-3">Tên tài liệu</th>
+                  <th className="py-3">Trạng thái</th>
+                  <th className="text-end pe-4 py-3">Ngày tạo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(apiData?.recentDocuments ?? []).length === 0 ? (
+                  <tr><td colSpan="3" className="ps-4 py-3 text-body-secondary">Chưa có tài liệu nào.</td></tr>
+                ) : (apiData.recentDocuments.map((doc) => (
+                  <tr className="border-bottom" key={doc.id ?? doc._id}>
+                    <td className="ps-4 py-3 fw-semibold text-body-emphasis">{doc.title ?? doc.name}</td>
+                    <td className="py-3"><span className="badge bg-primary-subtle text-primary">{doc.status}</span></td>
+                    <td className="text-end pe-4 py-3 text-body-secondary">{doc.createdAt ? new Date(doc.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
+                  </tr>
+                )))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="row mb-3 gx-2 gx-xl-3 align-items-stretch">
         <div className="col-12 col-xl-8 mb-3 mb-xl-0">
@@ -285,7 +525,7 @@ export const DashboardPage = () => {
             </div>
             <div className="card-body p-3">
               <div className="d-flex flex-column gap-3">
-                {DEPARTMENT_STATS.map((department) => <DepartmentRow department={department} key={department.name} />)}
+                {departmentStats.map((department) => <DepartmentRow department={department} key={department.name} />)}
               </div>
             </div>
           </div>
@@ -300,8 +540,8 @@ export const DashboardPage = () => {
               </h6>
             </div>
             <div className="card-body p-3 d-flex flex-column gap-2">
-              {EVENTS.map((event, index) => (
-                <EventCard event={event} isLast={index === EVENTS.length - 1} key={`${event.date}-${event.time}-${event.title}`} />
+              {events.map((event, index) => (
+                <EventCard event={event} isLast={index === events.length - 1} key={`${event.date}-${event.time}-${event.title}`} />
               ))}
             </div>
           </div>
@@ -328,7 +568,7 @@ export const DashboardPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {RECENT_TASKS.map((task) => (
+                  {recentTasks.map((task) => (
                     <tr className="border-bottom" key={task.title}>
                       <td className="ps-4 py-3 fw-semibold text-body-emphasis">{task.title}</td>
                       <td className="py-3 text-body-secondary">{task.department}</td>
