@@ -74,6 +74,22 @@ const getUnreadNotifications = async () =>
 const markNotificationAsRead = async (notificationId) =>
   await requestNotifications(`/${notificationId}/read`, { method: "PATCH" });
 
+async function requestReferralInfo() {
+  const response = await authFetch(`${API_BASE_URL}/auth/me/referral`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.message || "Không thể tải mã giới thiệu.");
+  }
+
+  return payload?.data ?? payload;
+}
+
 const notifyNotificationsChanged = (detail = {}) => {
   window.dispatchEvent(
     new CustomEvent(NOTIFICATIONS_CHANGED_EVENT, {
@@ -89,6 +105,10 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [notificationItems, setNotificationItems] = useState([]);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
+  const [referralInfo, setReferralInfo] = useState(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralError, setReferralError] = useState("");
+  const [referralCopied, setReferralCopied] = useState(false);
   const hasAutoOpenedNotifications = useRef(false);
 
   const refreshUnreadCount = useCallback(async () => {
@@ -142,6 +162,56 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
       window.clearInterval(timer);
     };
   }, [applyNotificationChange, refreshUnreadCount]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReferralInfo = async () => {
+      setReferralLoading(true);
+      setReferralError("");
+
+      try {
+        const data = await requestReferralInfo();
+        if (!isMounted) return;
+        setReferralInfo({
+          referralCode: data?.referralCode || "",
+          referralUrl: data?.referralUrl || "",
+        });
+      } catch (error) {
+        if (!isMounted) return;
+        setReferralInfo(null);
+        setReferralError(error instanceof Error ? error.message : "Không thể tải mã giới thiệu.");
+      } finally {
+        if (isMounted) {
+          setReferralLoading(false);
+        }
+      }
+    };
+
+    if (user?.id) {
+      void loadReferralInfo();
+    } else {
+      setReferralInfo(null);
+      setReferralError("");
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const copyReferralUrl = async () => {
+    const url = referralInfo?.referralUrl;
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setReferralCopied(true);
+      window.setTimeout(() => setReferralCopied(false), 1800);
+    } catch {
+      setReferralError("Không thể sao chép link giới thiệu.");
+    }
+  };
 
   const handleGoHome = () => {
     onNavigate?.("dashboard");
@@ -372,7 +442,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                   <img src="/assets/images/avatar/avatar1.webp" alt="" />
                 </div>
               </a>
-              <ul className="dropdown-menu dropdown-menu-end w-225px mt-1">
+              <ul className="dropdown-menu dropdown-menu-end mt-1" style={{ width: "280px" }}>
                 <li className="d-flex align-items-center p-2">
                   <div className="avatar avatar-sm rounded-circle">
                     <img src="/assets/images/avatar/avatar1.webp" alt="" />
@@ -380,6 +450,45 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                   <div className="ms-2">
                     <div className="fw-bold text-dark">{displayName}</div>
                     <small className="text-body d-block lh-sm">{displayEmail}</small>
+                  </div>
+                </li>
+                <li>
+                  <div className="dropdown-divider my-1"></div>
+                </li>
+                <li className="px-2 py-2">
+                  <div className="rounded border bg-light p-2">
+                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                      <span className="fw-semibold text-dark" style={{ fontSize: "13px" }}>
+                        Mã giới thiệu
+                      </span>
+                      {referralLoading ? (
+                        <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                      ) : (
+                        <span className="badge bg-primary">
+                          {referralInfo?.referralCode || "--"}
+                        </span>
+                      )}
+                    </div>
+                    {referralError ? (
+                      <div className="text-danger" style={{ fontSize: "12px" }}>
+                        {referralError}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-body-secondary text-truncate mb-2" style={{ fontSize: "12px" }}>
+                          {referralInfo?.referralUrl || "Đang tải link giới thiệu..."}
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary w-100"
+                          disabled={!referralInfo?.referralUrl || referralLoading}
+                          onClick={copyReferralUrl}
+                        >
+                          <i className="fi fi-rr-copy-alt me-1"></i>
+                          {referralCopied ? "Đã sao chép" : "Sao chép link"}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </li>
                 <li>
