@@ -189,6 +189,7 @@ function App() {
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [user, setUser] = useState(() => getStoredUser());
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
+  const [registerLayoutMode, setRegisterLayoutMode] = useState("account");
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 
@@ -363,9 +364,11 @@ function App() {
     } else if (authMode === "register") {
       authContent = (
         <RegisterPage
+          onLayoutModeChange={setRegisterLayoutMode}
           onRegister={handleLogin}
           onSwitchToLogin={() => {
             resetAuthUrl();
+            setRegisterLayoutMode("account");
             setAuthMode("login");
           }}
         />
@@ -375,6 +378,7 @@ function App() {
         <ForgotPasswordPage
           onSwitchToLogin={() => {
             resetAuthUrl();
+            setRegisterLayoutMode("account");
             setAuthMode("login");
           }}
         />
@@ -384,6 +388,7 @@ function App() {
         <ResetPasswordPage
           onSwitchToLogin={() => {
             resetAuthUrl();
+            setRegisterLayoutMode("account");
             setAuthMode("login");
           }}
         />
@@ -391,7 +396,7 @@ function App() {
     }
 
     return (
-      <AuthLayout authMode={authMode} imageSrc="/assets/images/z7832613943587_bf4b220919f48d434d108e0de31e00e9.jpg">
+      <AuthLayout authMode={authMode} imageSrc="/assets/images/z7832613943587_bf4b220919f48d434d108e0de31e00e9.jpg" registerLayoutMode={registerLayoutMode}>
         {authContent}
       </AuthLayout>
     );

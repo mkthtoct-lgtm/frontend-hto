@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import { RegisterSuccessPopup } from "./components/RegisterSuccessPopup";
@@ -11,6 +11,9 @@ const GMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
 const PASSWORD_PATTERN =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
+const ACCOUNT_BLANK_MESSAGE = "Vui lòng điền đầy đủ các thông tin: Họ tên, Email và Mật khẩu.";
+const ACCOUNT_REQUIRED_MESSAGE = "Vui lòng nhập đầy đủ thông tin.";
+
 const getRegisteredUserFromResponse = (response, fallback) => {
   const user = response?.data?.user || response?.data || response?.user || {};
 
@@ -21,7 +24,55 @@ const getRegisteredUserFromResponse = (response, fallback) => {
   };
 };
 
-const LOCATION_OPTIONS = [
+const getApiMessage = (response, fallback) => {
+  return response?.message || response?.error || response?.data?.message || fallback;
+};
+
+const isEmailErrorMessage = (message) => {
+  const normalizedMessage = message.toLowerCase();
+  return (
+    normalizedMessage.includes("email") &&
+    (normalizedMessage.includes("tồn tại") ||
+      normalizedMessage.includes("sử dụng") ||
+      normalizedMessage.includes("đã"))
+  );
+};
+
+const isReferralErrorMessage = (message) => {
+  const normalizedMessage = message.toLowerCase();
+  return normalizedMessage.includes("mã giới thiệu") || normalizedMessage.includes("referral");
+};
+
+const checkEmailAvailability = async (email) => {
+  const res = await fetch(`${API_BASE_URL}/auth/check-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const response = await res.json().catch(() => null);
+  const message = getApiMessage(response, "Không thể kiểm tra email. Vui lòng thử lại.");
+  const available = response?.data?.available;
+
+  if (!res.ok) {
+    throw new Error(message);
+  }
+
+  if (available === false) {
+    return {
+      available: false,
+      message: response?.data?.message || message || "Email đã được sử dụng.",
+    };
+  }
+
+  return {
+    available: true,
+    message: response?.data?.message || message,
+  };
+};
+
+const ADDRESS_API_URL = "https://provinces.open-api.vn/api/v2/?depth=2";
+
+const FALLBACK_LOCATION_OPTIONS = [
   {
     city: "TP. Hồ Chí Minh",
     wards: [
@@ -76,13 +127,30 @@ const LOCATION_OPTIONS = [
   },
 ];
 
-export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
+const normalizeLocationOptions = (items) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
+    .map((province) => ({
+      city: province.name,
+      wards: Array.isArray(province.wards)
+        ? province.wards.map((ward) => ward.name).filter(Boolean)
+        : [],
+    }))
+    .filter((province) => province.city && province.wards.length > 0);
+};
+
+export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const [registrationStep, setRegistrationStep] = useState("account");
   const [registeredUser, setRegisteredUser] = useState(null);
+  const [pendingAccountData, setPendingAccountData] = useState(null);
+  const [profileDraft, setProfileDraft] = useState(null);
   const referralFromUrl = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return (
@@ -100,6 +168,10 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
     register,
     handleSubmit,
     watch,
+    getValues,
+    clearErrors,
+    setError,
+    trigger,
     formState: { errors },
   } = useForm({
     mode: "onChange",
@@ -114,33 +186,135 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
   });
 
   const password = watch("password");
+  const emailField = register("email", {
+    required: "Vui lòng nhập email.",
+    pattern: {
+      value: GMAIL_PATTERN,
+      message: "Email phải là địa chỉ Gmail hợp lệ (ví dụ: example@gmail.com).",
+    },
+  });
+  const shouldShowFieldError = (fieldName) => {
+    const error = errors[fieldName];
+    if (!error) return false;
+    if (fieldName === "agreed") return true;
+    return error.type !== "required";
+  };
+
+  useEffect(() => {
+    onLayoutModeChange?.(registrationStep === "account" ? "account" : "profile");
+  }, [onLayoutModeChange, registrationStep]);
 
   const onSubmit = async (data) => {
     setApiError("");
+    clearErrors("email");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: data.name,
-          email: data.email,
-          password: data.password,
-        }),
-      });
-      const response = await res.json().catch(() => null);
+      const emailCheck = await checkEmailAvailability(data.email);
 
-      if (!res.ok) {
-        throw new Error(response?.message || "Đăng ký thất bại");
+      if (!emailCheck.available) {
+        setError("email", {
+          type: "server",
+          message: emailCheck.message,
+        });
+        setApiError("");
+        return;
       }
 
-      setRegisteredUser(getRegisteredUserFromResponse(response, { name: data.name, email: data.email }));
+      const accountData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+
+      setPendingAccountData(accountData);
+      setRegisteredUser({
+        id: "",
+        name: data.name,
+        email: data.email,
+      });
       setRegistrationStep("profile");
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Đăng ký thất bại");
+      const message = err instanceof Error ? err.message : "Không thể kiểm tra email.";
+      setError("email", {
+        type: "server",
+        message,
+      });
+      setApiError("");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEmailBlur = async () => {
+    const isEmailValid = await trigger("email");
+    const email = getValues("email")?.trim();
+
+    if (!isEmailValid || !email) {
+      return;
+    }
+
+    try {
+      const emailCheck = await checkEmailAvailability(email);
+
+      if (!emailCheck.available) {
+        setError("email", {
+          type: "server",
+          message: emailCheck.message,
+        });
+        setApiError("");
+        return;
+      }
+
+      if (errors.email?.type === "server") {
+        clearErrors("email");
+      }
+    } catch (err) {
+      setError("email", {
+        type: "server",
+        message: err instanceof Error ? err.message : "Không thể kiểm tra email.",
+      });
+      setApiError("");
+    }
+  };
+
+  const handleAccountInvalid = (formErrors) => {
+    const hasInvalidFieldError = Object.entries(formErrors).some(([fieldName, error]) => {
+      if (!error) return false;
+      if (fieldName === "agreed") return false;
+      return error.type !== "required";
+    });
+
+    if (hasInvalidFieldError) {
+      setApiError("");
+      return;
+    }
+
+    const requiredAccountFields = ["name", "email", "password", "confirmPassword"];
+    const hasRequiredAccountError = requiredAccountFields.some(
+      (fieldName) => formErrors[fieldName]?.type === "required",
+    );
+
+    if (hasRequiredAccountError) {
+      const currentValues = getValues();
+      const isBlankAccountForm =
+        !currentValues.name?.trim() &&
+        !currentValues.email?.trim() &&
+        !currentValues.password &&
+        !currentValues.confirmPassword;
+
+      setApiError(isBlankAccountForm ? ACCOUNT_BLANK_MESSAGE : ACCOUNT_REQUIRED_MESSAGE);
+      return;
+    }
+
+    if (formErrors.agreed?.type === "required") {
+      setApiError("");
+      return;
+    }
+
+    const emailError = formErrors.email;
+    if (emailError?.type === "server") {
+      setError("email", emailError);
     }
   };
 
@@ -149,12 +323,17 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register-profile`, {
+      if (!pendingAccountData) {
+        throw new Error("Thiếu thông tin tài khoản. Vui lòng quay lại bước đăng ký.");
+      }
+
+      const registerRes = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: registeredUser?.id || "",
-          email: registeredUser?.email || "",
+          fullName: pendingAccountData.name,
+          email: pendingAccountData.email,
+          password: pendingAccountData.password,
           phone: profileData.phone,
           city: profileData.city,
           ward: profileData.ward,
@@ -164,17 +343,75 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
           socialUrl: profileData.socialLink,
           referralCode: profileData.referralCode || "",
           referral_code: profileData.referralCode || "",
+          referral: profileData.referralCode || "",
+          ref: profileData.referralCode || "",
+          referral_code_user: profileData.referralCode || "",
+          maGioiThieu: profileData.referralCode || "",
         }),
       });
-      const response = await res.json().catch(() => null);
+      const registerResponse = await registerRes.json().catch(() => null);
 
-      if (!res.ok) {
-        throw new Error(response?.message || "Không thể cập nhật thông tin bổ sung.");
+      if (!registerRes.ok) {
+        const message = getApiMessage(registerResponse, "Đăng ký thất bại");
+        if (isEmailErrorMessage(message)) {
+          setRegistrationStep("account");
+          setError("email", {
+            type: "server",
+            message,
+          });
+          setApiError("");
+          setLoading(false);
+          return;
+        }
+        if (isReferralErrorMessage(message)) {
+          throw new Error(message);
+        }
+        throw new Error(message);
       }
 
+      const createdUser = getRegisteredUserFromResponse(registerResponse, {
+        name: pendingAccountData.name,
+        email: pendingAccountData.email,
+      });
+
+      const profileRes = await fetch(`${API_BASE_URL}/auth/register-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: createdUser.id || "",
+          phone: profileData.phone,
+          socialLink: profileData.socialLink,
+          city: profileData.city,
+          ward: profileData.ward,
+          addressDetail: profileData.addressDetail,
+          referralCode: profileData.referralCode || "",
+        }),
+      });
+      const profileResponse = await profileRes.json().catch(() => null);
+
+      if (!profileRes.ok) {
+        const message = getApiMessage(
+          profileResponse,
+          "Không thể cập nhật thông tin bổ sung.",
+        );
+        if (isReferralErrorMessage(message)) {
+          throw new Error(message);
+        }
+        throw new Error(message);
+      }
+
+      setRegisteredUser(
+        getRegisteredUserFromResponse(profileResponse, createdUser),
+      );
+      setPendingAccountData(null);
+      setProfileDraft(null);
       setRegistrationStep("success");
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Không thể cập nhật thông tin bổ sung.");
+      const message = err instanceof Error ? err.message : "Không thể cập nhật thông tin bổ sung.";
+      if (message.toLowerCase().includes("mã giới thiệu")) {
+        throw err;
+      }
+      setApiError(message);
     } finally {
       setLoading(false);
     }
@@ -196,7 +433,14 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
           inputClass={inputClass}
           loading={loading}
           profileError={apiError}
+          initialData={profileDraft}
           onComplete={handleProfileComplete}
+          onDraftChange={setProfileDraft}
+          onBack={(draft) => {
+            setProfileDraft(draft);
+            setApiError("");
+            setRegistrationStep("account");
+          }}
           referralFromUrl={referralFromUrl}
           userName={registeredUser?.name}
         />
@@ -218,7 +462,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
       <h2 className="mb-1.5 text-center text-[22px] font-bold text-[#111827] app-dark:text-white">Tạo tài khoản</h2>
       <p className="mb-3 text-center text-[13px] leading-[1.45] text-[#6b7280]">Tham gia cùng chúng tôi và bắt đầu hành trình của bạn.</p>
 
-      {apiError && !errors.email && (
+      {apiError && (
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-[13px] text-[#be123c] app-dark:border-[#7f1d1d] app-dark:bg-[#2a1215] app-dark:text-[#fecdd3]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
@@ -229,7 +473,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
         </div>
       )}
 
-      <form noValidate onSubmit={handleSubmit(onSubmit)}>
+      <form autoComplete="off" noValidate onSubmit={(event) => event.preventDefault()}>
         <div className="mb-3">
           <label className="mb-1.5 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="name">Họ và tên</label>
           <input
@@ -237,10 +481,11 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
             id="name"
             className={inputClass}
             placeholder="Ví dụ: Nguyễn Văn A"
+            autoComplete="off"
             disabled={loading}
             {...register("name", { required: "Vui lòng nhập họ tên." })}
           />
-          {errors.name && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.name.message}</div>}
+          {shouldShowFieldError("name") && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.name.message}</div>}
         </div>
 
         <div className="mb-3">
@@ -250,16 +495,15 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
             id="email"
             className={`${inputClass} ${errors.email ? "border-[#f5365c]" : ""}`}
             placeholder="Ví dụ: name@gmail.com"
+            autoComplete="off"
             disabled={loading}
-            {...register("email", {
-              required: "Vui lòng nhập email.",
-              pattern: {
-                value: GMAIL_PATTERN,
-                message: "Email phải là địa chỉ Gmail hợp lệ (ví dụ: example@gmail.com).",
-              }
-            })}
+            {...emailField}
+            onBlur={(event) => {
+              emailField.onBlur(event);
+              void handleEmailBlur();
+            }}
           />
-          {errors.email && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.email.message}</div>}
+          {shouldShowFieldError("email") && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.email.message}</div>}
         </div>
 
         <div className="mb-3">
@@ -270,6 +514,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               id="password"
               className={inputClass}
               placeholder="Ít nhất 8 ký tự"
+              autoComplete="new-password"
               disabled={loading}
               {...register("password", {
                 required: "Vui lòng nhập mật khẩu.",
@@ -296,7 +541,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               )}
             </button>
           </div>
-          {errors.password && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.password.message}</div>}
+          {shouldShowFieldError("password") && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.password.message}</div>}
         </div>
 
         <div className="mb-3">
@@ -307,6 +552,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               id="confirmPassword"
               className={inputClass}
               placeholder="Ít nhất 8 ký tự"
+              autoComplete="new-password"
               disabled={loading}
               {...register("confirmPassword", {
                 required: "Vui lòng nhập lại mật khẩu.",
@@ -325,7 +571,7 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               )}
             </button>
           </div>
-          {errors.confirmPassword && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.confirmPassword.message}</div>}
+          {shouldShowFieldError("confirmPassword") && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.confirmPassword.message}</div>}
         </div>
 
         <div className="mt-2 mb-4">
@@ -335,11 +581,11 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
               Tôi đồng ý với <a href="#" className="text-[#4f46e5] no-underline" onClick={(e) => e.preventDefault()}>Điều khoản & Điều kiện</a>
             </label>
           </div>
-          {errors.agreed && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.agreed.message}</div>}
+          {shouldShowFieldError("agreed") && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.agreed.message}</div>}
         </div>
 
-        <button type="submit" className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] border-0 bg-[#111827] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-70 app-dark:bg-[#4f46e5] app-dark:hover:bg-[#4338ca]" disabled={loading}>
-          {loading ? <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[rgba(255,255,255,0.3)] border-t-white"></div> : "Đăng ký"}
+        <button type="button" className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] border-0 bg-[#111827] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-70 app-dark:bg-[#4f46e5] app-dark:hover:bg-[#4338ca]" disabled={loading} onClick={handleSubmit(onSubmit, handleAccountInvalid)}>
+          {loading ? <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[rgba(255,255,255,0.3)] border-t-white"></div> : "Tiếp theo"}
         </button>
       </form>
 
@@ -350,42 +596,126 @@ export const RegisterPage = ({ onSwitchToLogin, onRegister }) => {
   );
 };
 
-function RegistrationProfilePage({ inputClass, loading, onComplete, profileError, referralFromUrl, userName }) {
+function RegistrationProfilePage({
+  inputClass,
+  loading,
+  initialData,
+  onBack,
+  onComplete,
+  onDraftChange,
+  profileError,
+  referralFromUrl,
+  userName,
+}) {
   const {
     register,
     handleSubmit,
     watch,
+    getValues,
+    setError,
     setValue,
     formState: { errors },
   } = useForm({
     mode: "onChange",
     defaultValues: {
-      phone: "",
-      city: "",
-      ward: "",
-      addressDetail: "",
-      socialLink: "",
-      referralCode: referralFromUrl,
+      phone: initialData?.phone || "",
+      city: initialData?.city || "",
+      ward: initialData?.ward || "",
+      addressDetail: initialData?.addressDetail || "",
+      socialLink: initialData?.socialLink || "",
+      referralCode: initialData?.referralCode ?? referralFromUrl,
     },
   });
+  const [locationOptions, setLocationOptions] = useState(FALLBACK_LOCATION_OPTIONS);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState("");
   const selectedCity = watch("city");
   const selectedWard = watch("ward");
-  const wardOptions = LOCATION_OPTIONS.find((option) => option.city === selectedCity)?.wards || [];
+  const wardOptions = locationOptions.find((option) => option.city === selectedCity)?.wards || [];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLocationOptions = async () => {
+      setAddressLoading(true);
+      setAddressError("");
+
+      try {
+        const res = await fetch(ADDRESS_API_URL);
+        const data = await res.json().catch(() => null);
+        const normalizedOptions = normalizeLocationOptions(data);
+
+        if (!res.ok || normalizedOptions.length === 0) {
+          throw new Error("Không thể tải danh sách địa chỉ.");
+        }
+
+        if (isMounted) {
+          setLocationOptions(normalizedOptions);
+        }
+      } catch {
+        if (isMounted) {
+          setLocationOptions(FALLBACK_LOCATION_OPTIONS);
+          setAddressError("Không thể tải địa chỉ mới nhất, đang dùng danh sách dự phòng.");
+        }
+      } finally {
+        if (isMounted) {
+          setAddressLoading(false);
+        }
+      }
+    };
+
+    void loadLocationOptions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const submitProfile = async (data) => {
-    await onComplete({
-      ...data,
-      address: [data.addressDetail, data.ward, data.city].filter(Boolean).join(", "),
-    });
+    onDraftChange?.(data);
+    try {
+      await onComplete({
+        ...data,
+        address: [data.addressDetail, data.ward, data.city].filter(Boolean).join(", "),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Không thể cập nhật thông tin bổ sung.";
+      if (isReferralErrorMessage(message)) {
+        setError("referralCode", {
+          type: "server",
+          message,
+        });
+        return;
+      }
+      throw err;
+    }
+  };
+
+  const handleBack = () => {
+    onBack?.(getValues());
   };
 
   return (
     <>
-      <div className="mb-2 flex justify-center">
-        <img src="/assets/images/logo-HTO.png" alt="HTO Logo" className="h-12 w-auto" />
+      <div className="mb-2 grid grid-cols-[32px_1fr_32px] items-center">
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-full  bg-white text-[#374151] transition hover:bg-[#f3f4f6] disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-[#4b5563] app-dark:bg-[#374151] app-dark:text-white app-dark:hover:bg-[#4b5563]"
+          disabled={loading}
+          onClick={handleBack}
+          aria-label="Quay lại bước tạo tài khoản"
+          title="Quay lại"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5"></path>
+            <path d="M12 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <img src="/assets/images/logo-HTO.png" alt="HTO Logo" className="mx-auto h-12 w-auto" />
+        <span aria-hidden="true"></span>
       </div>
       <h2 className="mb-1 text-center text-[20px] font-bold text-[#111827] app-dark:text-white">Bổ sung thông tin</h2>
-      <p className="mb-2.5 text-center text-[13px] leading-[1.35] text-[#6b7280]">
+      <p className="mb-2.5 text-center text-[13px] leading-[1.35] text-[#6b7280]">Xin chào 
         {userName ? `${userName}, ` : ""}vui lòng hoàn tất thông tin liên hệ để tiếp tục.
       </p>
 
@@ -434,20 +764,21 @@ function RegistrationProfilePage({ inputClass, loading, onComplete, profileError
               buttonClassName={`!rounded-[8px] border bg-[#f9fafb] app-dark:border-[#4b5563] app-dark:bg-[#374151] ${
                 errors.city ? "border-[#f5365c]" : "border-[#d1d5db]"
               }`}
-              disabled={loading}
+              disabled={loading || addressLoading}
               error={Boolean(errors.city)}
               onChange={(value) => {
                 setValue("city", value, { shouldDirty: true, shouldValidate: true });
                 setValue("ward", "", { shouldDirty: true, shouldValidate: true });
               }}
               options={[
-                { label: "-- Chọn thành phố/tỉnh --", value: "" },
-                ...LOCATION_OPTIONS.map((option) => ({ label: option.city, value: option.city })),
+                { label: addressLoading ? "Đang tải địa chỉ..." : "-- Chọn thành phố/tỉnh --", value: "" },
+                ...locationOptions.map((option) => ({ label: option.city, value: option.city })),
               ]}
-              placeholder="-- Chọn thành phố/tỉnh --"
+              placeholder={addressLoading ? "Đang tải địa chỉ..." : "-- Chọn thành phố/tỉnh --"}
               value={selectedCity}
             />
             {errors.city && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.city.message}</div>}
+            {addressError && !errors.city && <div className="mt-1 text-[11px] font-medium text-[#f59e0b]">{addressError}</div>}
           </div>
           <div>
             <label className="mb-1 block text-[13px] font-semibold text-[#374151] app-dark:text-[#e5e7eb]" htmlFor="ward">Phường/Xã</label>
@@ -502,6 +833,7 @@ function RegistrationProfilePage({ inputClass, loading, onComplete, profileError
                 Mã giới thiệu được tự động áp dụng.
               </div>
             )}
+            {errors.referralCode && <div className="mt-1 text-[11px] font-medium text-[#f5365c]">{errors.referralCode.message}</div>}
           </div>
         </div>
 
