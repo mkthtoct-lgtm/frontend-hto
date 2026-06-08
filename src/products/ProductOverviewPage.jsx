@@ -1612,7 +1612,7 @@ export function ProductOverviewPage({ currentUser }) {
 
               return (
                 <div key={cat.id} className="flex flex-col">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all duration-305 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-cyan-900/10 flex flex-col h-full">
+                  <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all duration-305 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-cyan-900/10 flex flex-col h-full">
                     {/* Header Card với Nền Gradient */}
                     <div
                       className="h-[120px] p-6 text-white relative flex flex-col justify-end"
@@ -1626,26 +1626,26 @@ export function ProductOverviewPage({ currentUser }) {
                         <div className="absolute top-4 left-4 flex gap-2 z-10">
                           <button
                             type="button"
-                            className="bg-black/40 backdrop-blur-md text-white border border-white/20 w-8 h-8 rounded-full force-rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white/95 hover:text-cyan-900 hover:scale-110"
+                            className="bg-white/95 text-slate-700 border border-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white hover:text-cyan-900 hover:scale-110 shadow-sm"
                             title="Sửa danh mục"
                             onClick={() => handleEditCategory(cat)}
                           >
-                            <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-2.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                           </button>
                           <button
                             type="button"
-                            className="bg-black/40 backdrop-blur-md text-white border border-white/20 w-8 h-8 rounded-full force-rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white/95 hover:text-cyan-900 hover:scale-110"
+                            className="bg-white/95 text-slate-700 border border-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white hover:text-cyan-900 hover:scale-110 shadow-sm"
                             title={isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
                             onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
                           >
                             {isHidden ? (
-                              <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
                               </svg>
                             ) : (
-                              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
@@ -1654,7 +1654,7 @@ export function ProductOverviewPage({ currentUser }) {
                         </div>
                       )}
 
-                      <span className="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/15">
+                      <span className="absolute top-4 right-4 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold border border-white/15">
                         {displayPrograms.length} Chương trình
                       </span>
 
