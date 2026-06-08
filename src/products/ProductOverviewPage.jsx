@@ -558,33 +558,12 @@ export function ProductOverviewPage({ currentUser }) {
     loadData();
   }, [loadData]);
 
-  // Reset Mock Data về mặc định
-  const handleResetMockData = useCallback(() => {
-    if (confirm("Bạn có chắc chắn muốn khôi phục dữ liệu danh mục & sản phẩm về mặc định ban đầu không? Mọi thay đổi bạn đã lưu sẽ bị xóa.")) {
-      try {
-        localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(INITIAL_CATEGORIES));
-        setCategories(INITIAL_CATEGORIES);
-        alert("Đã khôi phục dữ liệu mặc định thành công!");
-      } catch (err) {
-        alert("Lỗi khi khôi phục dữ liệu: " + err.message);
-      }
-    }
-  }, []);
-
   // Toggle Collapse
   const toggleProgramsAccordion = (catId) => {
     setOpenCardPrograms(prev => ({
       ...prev,
       [catId]: !prev[catId]
     }));
-  };
-
-  // Reset Filters
-  const handleResetFilters = () => {
-    setSearchQuery("");
-    setSelectedCategoryName("Tất cả");
-    setSelectedCountry("Tất cả");
-    setSelectedStatus("all");
   };
 
   const handleGoBack = () => {
@@ -1397,22 +1376,14 @@ export function ProductOverviewPage({ currentUser }) {
               Kho danh mục chương trình và tài liệu tư vấn dành cho cộng tác viên, đại lý và nhân viên tư vấn.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          {canManageProducts && (
             <button
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold px-4 py-2 flex items-center gap-2 border border-slate-350 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
-              onClick={handleResetMockData}
+              className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
+              onClick={handleOpenNewCategory}
             >
-              🔄 Reset Dữ liệu
+              <i className="fa fa-folder-plus text-base"></i> + Thêm danh mục
             </button>
-            {canManageProducts && (
-              <button
-                className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
-                onClick={handleOpenNewCategory}
-              >
-                <i className="fa fa-folder-plus text-base"></i> + Thêm danh mục
-              </button>
-            )}
-          </div>
+          )}
         </div>
       ) : (
         <div className="mb-6">
@@ -1482,15 +1453,17 @@ export function ProductOverviewPage({ currentUser }) {
       {viewMode === "overview" && (
         <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm mb-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-4">
+            <div className="md:col-span-12 xl:col-span-6">
               <label className="block font-semibold text-xs text-slate-500 mb-1.5">Tìm kiếm chương trình</label>
               <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-slate-450">
-                  <i className="fa fa-search"></i>
+                <span className="absolute left-3.5 text-slate-400 flex items-center justify-center pointer-events-none">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </span>
                 <input
                   type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                  className="w-full h-11 bg-white border border-slate-200 rounded-xl pl-11 pr-4 text-sm md:text-base text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                   placeholder="Nhập tên chương trình, quốc gia, tag..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -1498,53 +1471,69 @@ export function ProductOverviewPage({ currentUser }) {
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
+            <div className="md:col-span-4 xl:col-span-2">
               <label className="block font-semibold text-xs text-slate-500 mb-1.5">Danh mục lớn</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
-                value={selectedCategoryName}
-                onChange={(e) => setSelectedCategoryName(e.target.value)}
-              >
-                {categoryNames.map((name, i) => (
-                  <option key={i} value={name}>{name}</option>
-                ))}
-              </select>
+              <div className="relative flex items-center">
+                <select
+                  className="w-full h-11 appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 text-sm md:text-base text-slate-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200 cursor-pointer"
+                  value={selectedCategoryName}
+                  onChange={(e) => setSelectedCategoryName(e.target.value)}
+                >
+                  {categoryNames.map((name, i) => (
+                    <option key={i} value={name} className="py-2 bg-white text-slate-700 hover:bg-slate-50">
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-3.5 pointer-events-none text-slate-400 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
+            <div className="md:col-span-4 xl:col-span-2">
               <label className="block font-semibold text-xs text-slate-500 mb-1.5">Quốc gia</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-              >
-                {ALL_COUNTRIES_MOCK.map((country, i) => (
-                  <option key={i} value={country}>{country}</option>
-                ))}
-              </select>
+              <div className="relative flex items-center">
+                <select
+                  className="w-full h-11 appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 text-sm md:text-base text-slate-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200 cursor-pointer"
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                >
+                  {ALL_COUNTRIES_MOCK.map((country, i) => (
+                    <option key={i} value={country} className="py-2 bg-white text-slate-700 hover:bg-slate-50">
+                      {country}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-3.5 pointer-events-none text-slate-400 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
+            <div className="md:col-span-4 xl:col-span-2">
               <label className="block font-semibold text-xs text-slate-500 mb-1.5">Trạng thái</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="all">Tất cả</option>
-                <option value="active">Đang hoạt động</option>
-                <option value="coming_soon">Sắp mở</option>
-                <option value="expired">Tạm ngưng</option>
-              </select>
-            </div>
-
-            <div className="col-span-1 md:col-span-2">
-              <button
-                className="w-full bg-transparent hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-xl py-2 flex items-center justify-center gap-2 font-semibold text-[13.5px] transition-colors"
-                onClick={handleResetFilters}
-              >
-                <i className="fa fa-rotate"></i> Reset
-              </button>
+              <div className="relative flex items-center">
+                <select
+                  className="w-full h-11 appearance-none bg-white border border-slate-200 rounded-xl pl-4 pr-10 text-sm md:text-base text-slate-700 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200 cursor-pointer"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  <option value="all" className="py-2 bg-white text-slate-700 hover:bg-slate-50">Tất cả</option>
+                  <option value="active" className="py-2 bg-white text-slate-700 hover:bg-slate-50">Đang hoạt động</option>
+                  <option value="coming_soon" className="py-2 bg-white text-slate-700 hover:bg-slate-50">Sắp mở</option>
+                  <option value="expired" className="py-2 bg-white text-slate-700 hover:bg-slate-50">Tạm ngưng</option>
+                </select>
+                <span className="absolute right-3.5 pointer-events-none text-slate-400 flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
         </div>
