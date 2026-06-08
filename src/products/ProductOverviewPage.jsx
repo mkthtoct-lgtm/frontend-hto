@@ -480,7 +480,7 @@ function CustomDropdown({ value, options, onChange }) {
         aria-expanded={isOpen}
         className={`w-full h-10 bg-white border ${
           isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200"
-        } rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="truncate pr-2">{selectedOption?.label}</span>
@@ -498,7 +498,7 @@ function CustomDropdown({ value, options, onChange }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl p-1 animate-fade-in">
+        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 bg-white shadow-xl p-1 animate-fade-in">
           <div role="listbox" className="flex flex-col gap-0.5">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -508,7 +508,7 @@ function CustomDropdown({ value, options, onChange }) {
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${
+                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${
                     isSelected
                       ? "bg-cyan-100 text-cyan-800 font-semibold"
                       : "text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
