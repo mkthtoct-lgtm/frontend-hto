@@ -252,51 +252,11 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
                   Tổng quan sản phẩm
                 </a>
               </li>
-              {PRODUCT_TYPES.map((type) => {
-                const products = sidebarProducts.filter((product) => product.type === type.id);
-                const isTypeActive =
-                  currentPage === type.id ||
-                  products.some((product) => currentPage === `product:${product.id}`);
-
-                return (
-                  <li className="menu-item mb-1" key={type.id}>
-                    <a
-                      className={`menu-link d-flex align-items-center px-3 py-2 rounded-2 ${isTypeActive ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
-                      href="#"
-                      style={{ textDecoration: "none", fontSize: "13px" }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setOpenProductCategory(openProductCategory === type.id ? "" : type.id);
-                        onNavigate?.(type.id);
-                      }}
-                    >
-                      <span style={{ flex: 1 }}>{type.label}</span>
-                      {products.length > 0 && (
-                        <span style={{ fontSize: "12px" }}>{openProductCategory === type.id ? "▲" : "▼"}</span>
-                      )}
-                    </a>
-                    {products.length > 0 && (
-                      <ul className="list-unstyled mb-0" style={{ display: openProductCategory === type.id ? "block" : "none", paddingLeft: "14px", marginTop: "4px" }}>
-                        {products.map((product) => (
-                          <li className="menu-item" key={product.id}>
-                            <a
-                              className={`menu-link d-block px-3 py-1 rounded-2 ${currentPage === `product:${product.id}` ? "text-primary fw-semibold" : "text-body-secondary"}`}
-                              href="#"
-                              style={{ textDecoration: "none", fontSize: "12px" }}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onNavigate?.(`product:${product.id}`);
-                              }}
-                            >
-                              {product.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("nophosoonline"); }}>
+                  Nộp hồ sơ online
+                </a>
+              </li>
             </ul>
           </li>
 
