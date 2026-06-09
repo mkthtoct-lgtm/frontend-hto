@@ -1,143 +1,11 @@
-import { useMemo, useState } from "react";
-import { TailwindDropdown } from "../components/ui/TailwindDropdown";
-
-const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const DIRECTOR_ROLE_ID = "69fc5af582ef85451120772b";
-const NEWS_EVENTS_STORAGE_KEY = "hto_news_events";
-const DEFAULT_NEWS_IMAGE = "/assets/images/banner-second.jpg";
-
-const ROLE_ID_MAP = {
-  "69fc5af582ef85451120772a": "admin",
-  "69fc5af582ef85451120772b": "bangiamdoc",
-  "69fc5af582ef85451120772c": "truongbophan",
-  "69fc5af582ef85451120772d": "nhansu",
-  "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "congtacvien",
-  "69fc5af782ef854511207730": "user",
-};
-
-const DEFAULT_ARTICLES = [
-  {
-    id: "event-webinar-du-hoc-duc",
-    title: "Webinar: Lộ trình du học nghề Đức năm 2026",
-    type: "event",
-    category: "Du học Đức",
-    date: "2026-06-15",
-    location: "Online Meet",
-    status: "Sắp diễn ra",
-    summary: "Cập nhật điều kiện, ngành nghề nổi bật, thời điểm học tiếng và checklist hồ sơ cần chuẩn bị.",
-    content: "Buổi webinar giúp học viên và phụ huynh hiểu rõ lộ trình từ tư vấn ban đầu, học tiếng Đức, chuẩn bị hồ sơ, xin visa đến giai đoạn nhập cảnh và ổn định tại Đức.",
-    image: "/assets/images/banner-web-korean.jpg",
-    author: "HTO Education",
-    featured: true,
-  },
-  {
-    id: "news-visa-checklist",
-    title: "Cập nhật checklist hồ sơ visa cho học viên tháng 06",
-    type: "news",
-    category: "Visa",
-    date: "2026-06-03",
-    location: "HT Ocean Group",
-    status: "Đã đăng",
-    summary: "HTO chuẩn hóa lại danh sách giấy tờ để giảm sai sót trước khi đặt lịch và nộp hồ sơ.",
-    content: "Bộ phận hồ sơ khuyến nghị học viên rà soát hộ chiếu, ảnh, giấy tờ học tập, chứng minh tài chính và các bản dịch công chứng theo từng nhóm hồ sơ.",
-    image: "/assets/images/banner-second.jpg",
-    author: "Phòng Hồ sơ",
-    featured: false,
-  },
-  {
-    id: "event-german-placement-test",
-    title: "Ngày kiểm tra trình độ tiếng Đức đầu vào",
-    type: "event",
-    category: "Đào tạo ngôn ngữ",
-    date: "2026-06-30",
-    location: "Văn phòng HTO",
-    status: "Đang mở đăng ký",
-    summary: "Kiểm tra năng lực, tư vấn lớp học và xây dựng kế hoạch học tiếng theo mục tiêu hồ sơ.",
-    content: "Học viên sẽ làm bài kiểm tra ngắn, trao đổi với giáo viên và nhận lộ trình học phù hợp với mốc nộp hồ sơ dự kiến.",
-    image: "/assets/images/hito_3.png",
-    author: "Phòng Đào tạo",
-    featured: false,
-  },
-];
-
-const emptyForm = {
-  title: "",
-  type: "news",
-  category: "Du học Đức",
-  date: new Date().toISOString().slice(0, 10),
-  location: "",
-  status: "Đã đăng",
-  summary: "",
-  content: "",
-  image: DEFAULT_NEWS_IMAGE,
-  author: "HT Ocean Group",
-  featured: false,
-};
-
-const normalizeRoleKey = (value) =>
-  String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
-
-const canManageNewsEvents = (user) => {
-  const roleKey = normalizeRoleKey(user?.role?.name || user?.roleName || user?.role || ROLE_ID_MAP[user?.roleId]);
-
-  return roleKey === "admin" || roleKey === "bangiamdoc" || user?.roleId === ADMIN_ROLE_ID || user?.roleId === DIRECTOR_ROLE_ID;
-};
-
-const normalizeImagePath = (image) => {
-  const value = String(image || "").trim();
-
-  if (!value) return DEFAULT_NEWS_IMAGE;
-  if (value.startsWith("./assets/")) return value.replace("./assets/", "/assets/");
-  return value;
-};
-
-const normalizeStoredArticle = (article) => ({
-  ...article,
-  image: normalizeImagePath(article?.image),
-});
-
-const readArticles = () => {
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(NEWS_EVENTS_STORAGE_KEY) || "null");
-    return Array.isArray(stored) && stored.length > 0
-      ? stored.map(normalizeStoredArticle)
-      : DEFAULT_ARTICLES;
-  } catch {
-    return DEFAULT_ARTICLES;
-  }
-};
-
-const writeArticles = (articles) => {
-  window.localStorage.setItem(NEWS_EVENTS_STORAGE_KEY, JSON.stringify(articles));
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DEFAULT_NEWS_IMAGE, fetchNewsPosts } from "./newsEventsApi";
 
 const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value || "-";
   return date.toLocaleDateString("vi-VN");
 };
-
-const normalizeArticle = (form, id) => ({
-  id: id || `news-event-${Date.now()}`,
-  title: form.title.trim(),
-  type: form.type,
-  category: form.category.trim(),
-  date: form.date,
-  location: form.location.trim(),
-  status: form.status.trim(),
-  summary: form.summary.trim(),
-  content: form.content.trim(),
-  image: normalizeImagePath(form.image),
-  author: form.author.trim(),
-  featured: Boolean(form.featured),
-});
 
 const getArticleImage = (article) => article?.image || DEFAULT_NEWS_IMAGE;
 
@@ -146,15 +14,32 @@ const handleImageFallback = (event) => {
   event.currentTarget.src = DEFAULT_NEWS_IMAGE;
 };
 
-export const NewsEventsPage = ({ currentUser }) => {
-  const canManage = canManageNewsEvents(currentUser);
-  const [articles, setArticles] = useState(() => readArticles());
+export const NewsEventsPage = () => {
+  const [articles, setArticles] = useState([]);
   const [activeType, setActiveType] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
   const [viewMode, setViewMode] = useState("list");
-  const [editingArticle, setEditingArticle] = useState(null);
-  const [form, setForm] = useState(null);
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
+
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    setApiError("");
+
+    try {
+      setArticles(await fetchNewsPosts());
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Không thể tải tin tức sự kiện.");
+      setArticles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(loadArticles);
+  }, [loadArticles]);
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -179,60 +64,6 @@ export const NewsEventsPage = ({ currentUser }) => {
   const popularArticles = articles.slice(0, 5);
   const eventArticles = articles.filter((article) => article.type === "event").slice(0, 4);
 
-  const updateArticles = (nextArticles) => {
-    setArticles(nextArticles);
-    writeArticles(nextArticles);
-  };
-
-  const openCreateModal = () => {
-    setEditingArticle(null);
-    setForm(emptyForm);
-  };
-
-  const openEditModal = (article) => {
-    setEditingArticle(article);
-    setForm({
-      title: article.title,
-      type: article.type,
-      category: article.category,
-      date: article.date,
-      location: article.location,
-      status: article.status,
-      summary: article.summary,
-      content: article.content,
-      image: article.image,
-      author: article.author,
-      featured: article.featured,
-    });
-  };
-
-  const closeModal = () => {
-    setEditingArticle(null);
-    setForm(null);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const nextArticle = normalizeArticle(form, editingArticle?.id);
-    const nextArticles = editingArticle
-      ? articles.map((article) => article.id === editingArticle.id ? nextArticle : article)
-      : [nextArticle, ...articles];
-
-    updateArticles(nextArticle.featured
-      ? nextArticles.map((article) => ({ ...article, featured: article.id === nextArticle.id }))
-      : nextArticles);
-    setSelectedId(nextArticle.id);
-    setViewMode("detail");
-    closeModal();
-  };
-
-  const handleDelete = (articleId) => {
-    const nextArticles = articles.filter((article) => article.id !== articleId);
-    updateArticles(nextArticles);
-    setSelectedId(null);
-    setViewMode("list");
-  };
-
   const openArticleDetail = (articleId) => {
     setSelectedId(articleId);
     setViewMode("detail");
@@ -256,11 +87,6 @@ export const NewsEventsPage = ({ currentUser }) => {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
-              {canManage && (
-                <button className="btn btn-sm btn-primary text-nowrap" type="button" onClick={openCreateModal}>
-                  Thêm mới
-                </button>
-              )}
             </div>
           </div>
           <div className="d-flex flex-wrap gap-2 border-top pt-3">
@@ -275,6 +101,11 @@ export const NewsEventsPage = ({ currentUser }) => {
             ))}
             <span className="badge bg-body-secondary text-body align-self-center ms-auto">{filteredArticles.length} bài viết</span>
           </div>
+          {(loading || apiError) && (
+            <div className={`alert ${apiError ? "alert-warning" : "alert-info"} py-2 px-3 mt-3 mb-0`} style={{ fontSize: "13px" }}>
+              {apiError || "Đang tải tin tức sự kiện từ API..."}
+            </div>
+          )}
         </div>
       </section>
 
@@ -309,9 +140,6 @@ export const NewsEventsPage = ({ currentUser }) => {
                         <div className="col-12 col-md-6" key={article.id}>
                           <ArticleCard
                             article={article}
-                            canManage={canManage}
-                            onDelete={() => handleDelete(article.id)}
-                            onEdit={() => openEditModal(article)}
                             onOpen={() => openArticleDetail(article.id)}
                           />
                         </div>
@@ -350,12 +178,6 @@ export const NewsEventsPage = ({ currentUser }) => {
                     <span className="badge bg-body-secondary text-body">{selectedArticle.category}</span>
                     <span className="badge bg-success-subtle text-success">{selectedArticle.status}</span>
                   </div>
-                  {canManage && (
-                    <div className="d-flex gap-2">
-                      <button className="btn btn-sm btn-outline-primary" type="button" onClick={() => openEditModal(selectedArticle)}>Sửa</button>
-                      <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => handleDelete(selectedArticle.id)}>Xóa</button>
-                    </div>
-                  )}
                 </div>
                 <h2 className="fw-bold text-body-emphasis mb-2">{selectedArticle.title}</h2>
                 <div className="d-flex flex-wrap gap-3 text-body-secondary mb-3" style={{ fontSize: "12px" }}>
@@ -379,15 +201,6 @@ export const NewsEventsPage = ({ currentUser }) => {
         </div>
       )}
 
-      {form && canManage && (
-        <NewsEventModal
-          editingArticle={editingArticle}
-          form={form}
-          onCancel={closeModal}
-          onChange={setForm}
-          onSubmit={handleSubmit}
-        />
-      )}
     </div>
   );
 };
@@ -475,7 +288,7 @@ function NewsSidebar({ events, onOpen, popularArticles }) {
   );
 }
 
-function ArticleCard({ article, canManage, onDelete, onEdit, onOpen }) {
+function ArticleCard({ article, onOpen }) {
   return (
     <article className="card border-0 h-100 overflow-hidden" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
       <button className="border-0 bg-transparent p-0 text-start" type="button" onClick={onOpen}>
@@ -501,12 +314,6 @@ function ArticleCard({ article, canManage, onDelete, onEdit, onOpen }) {
             {formatDate(article.date)} · {article.location}
           </div>
           <div className="d-flex gap-2">
-            {canManage && (
-              <>
-                <button className="btn btn-sm btn-outline-primary" type="button" onClick={onEdit}>Sửa</button>
-                <button className="btn btn-sm btn-outline-danger" type="button" onClick={onDelete}>Xóa</button>
-              </>
-            )}
             <button className="btn btn-sm btn-primary" type="button" onClick={onOpen}>Chi tiết</button>
           </div>
         </div>
@@ -527,74 +334,6 @@ function TimelineItem({ event, isLast }) {
         <div className="fw-bold text-body-emphasis" style={{ fontSize: "13px", lineHeight: 1.3 }}>{event.title}</div>
         <div className="text-body-secondary mt-1" style={{ fontSize: "12px" }}>{event.location}</div>
       </div>
-    </div>
-  );
-}
-
-function NewsEventModal({ editingArticle, form, onCancel, onChange, onSubmit }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1050, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.52)", padding: "12px", backdropFilter: "blur(2px)" }}>
-      <div style={{ width: "100%", maxWidth: "780px", maxHeight: "calc(100vh - 24px)", overflow: "hidden", borderRadius: "12px", backgroundColor: "var(--bs-body-bg)", boxShadow: "0 16px 48px rgba(0,0,0,0.22)" }}>
-        <div className="d-flex align-items-center justify-content-between border-bottom p-4">
-          <h5 className="fw-bold text-body-emphasis mb-0">{editingArticle ? "Sửa tin tức sự kiện" : "Thêm tin tức sự kiện"}</h5>
-          <button className="btn btn-sm btn-light border" type="button" onClick={onCancel}>Đóng</button>
-        </div>
-        <form onSubmit={onSubmit}>
-          <div className="p-4 overflow-y-auto" style={{ maxHeight: "calc(100vh - 180px)" }}>
-            <div className="row g-3">
-              <Field label="Tiêu đề" wide>
-                <input className="form-control" value={form.title} onChange={(event) => onChange({ ...form, title: event.target.value })} required />
-              </Field>
-              <Field label="Loại">
-                <TailwindDropdown onChange={(value) => onChange({ ...form, type: value })} options={[{ label: "Tin tức", value: "news" }, { label: "Sự kiện", value: "event" }]} placeholder="Chọn loại" value={form.type} />
-              </Field>
-              <Field label="Danh mục">
-                <input className="form-control" value={form.category} onChange={(event) => onChange({ ...form, category: event.target.value })} required />
-              </Field>
-              <Field label="Ngày">
-                <input className="form-control" type="date" value={form.date} onChange={(event) => onChange({ ...form, date: event.target.value })} required />
-              </Field>
-              <Field label="Trạng thái">
-                <input className="form-control" value={form.status} onChange={(event) => onChange({ ...form, status: event.target.value })} required />
-              </Field>
-              <Field label="Địa điểm">
-                <input className="form-control" value={form.location} onChange={(event) => onChange({ ...form, location: event.target.value })} required />
-              </Field>
-              <Field label="Tác giả/đơn vị">
-                <input className="form-control" value={form.author} onChange={(event) => onChange({ ...form, author: event.target.value })} required />
-              </Field>
-              <Field label="Ảnh đại diện" wide>
-                <input className="form-control" value={form.image} onChange={(event) => onChange({ ...form, image: event.target.value })} required />
-              </Field>
-              <Field label="Tóm tắt" wide>
-                <textarea className="form-control" rows="3" value={form.summary} onChange={(event) => onChange({ ...form, summary: event.target.value })} required />
-              </Field>
-              <Field label="Nội dung" wide>
-                <textarea className="form-control" rows="5" value={form.content} onChange={(event) => onChange({ ...form, content: event.target.value })} required />
-              </Field>
-              <div className="col-12">
-                <label className="form-check">
-                  <input className="form-check-input" type="checkbox" checked={form.featured} onChange={(event) => onChange({ ...form, featured: event.target.checked })} />
-                  <span className="form-check-label fw-semibold">Đặt làm tin nổi bật</span>
-                </label>
-              </div>
-            </div>
-          </div>
-          <div className="d-flex justify-content-end gap-2 border-top p-4">
-            <button className="btn btn-light border" type="button" onClick={onCancel}>Hủy</button>
-            <button className="btn btn-primary" type="submit">Lưu</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function Field({ children, label, wide = false }) {
-  return (
-    <div className={wide ? "col-12" : "col-12 col-md-6"}>
-      <label className="form-label fw-semibold">{label}</label>
-      {children}
     </div>
   );
 }

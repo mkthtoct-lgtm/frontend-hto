@@ -27,6 +27,7 @@ import { ProductOverviewPage } from "./products/ProductOverviewPage";
 import { HomePage } from "./home/HomePage";
 import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
+import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
 import { AUTH_EVENTS } from "./auth/session";
 
 const ROLE_IDS = {
@@ -460,6 +461,8 @@ function App() {
           <AiChatPage currentUser={user} />
         ) : currentPage === "dashboardStats" ? (
           <DashboardPage currentUser={user} />
+        ) : currentPage === "newsEventsManage" ? (
+          <NewsEventsManagementPage currentUser={user} />
         ) : currentPage === "tintuc" ? (
           <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (
