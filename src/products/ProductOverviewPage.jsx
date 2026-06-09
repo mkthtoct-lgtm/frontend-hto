@@ -513,15 +513,15 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full h-10 bg-white border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200"
-          } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        className={`w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200 app-dark:!border-slate-700"
+          } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 app-dark:!text-slate-200 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={`truncate pr-2 ${isAll ? "text-slate-700 font-medium" : "text-slate-800 font-semibold"}`}>
+        <span className={`truncate pr-2 ${isAll ? "text-slate-700 app-dark:!text-slate-400 font-medium" : "text-slate-800 app-dark:!text-slate-100 font-semibold"}`}>
           {displayLabel}
         </span>
         <svg
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+          className={`w-4 h-4 text-slate-400 app-dark:!text-slate-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
             }`}
           fill="none"
           stroke="currentColor"
@@ -533,7 +533,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 bg-white shadow-xl p-1 animate-fade-in">
+        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 app-dark:!border-slate-700 bg-white app-dark:!bg-[#252525] shadow-xl p-1 animate-fade-in">
           <div role="listbox" className="flex flex-col gap-0.5">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -544,8 +544,8 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                   role="option"
                   aria-selected={isSelected}
                   className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
-                      ? "bg-cyan-100 text-cyan-800 font-semibold"
-                      : "text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
+                      ? "bg-cyan-100 app-dark:!bg-cyan-900/40 text-cyan-800 app-dark:!text-cyan-100 font-semibold"
+                      : "text-slate-700 app-dark:!text-slate-200 hover:bg-cyan-50 app-dark:hover:!bg-cyan-900/30 hover:text-cyan-700 app-dark:hover:text-cyan-400"
                     }`}
                   onClick={() => {
                     onChange(opt.value);
@@ -554,7 +554,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                 >
                   <span className="truncate pr-2">{opt.label}</span>
                   {isSelected && (
-                    <svg className="w-4 h-4 text-cyan-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4 text-cyan-700 app-dark:!text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
@@ -1784,9 +1784,9 @@ export function ProductOverviewPage({ currentUser }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 m-0">Tổng quan sản phẩm</h1>
+              <h1 className="text-2xl font-bold text-slate-900 app-dark:!text-slate-100 m-0">Tổng quan sản phẩm</h1>
             </div>
-            <p className="text-slate-500 text-sm m-0 mt-1">
+            <p className="text-slate-500 app-dark:!text-slate-400 text-sm m-0 mt-1">
               Kho danh mục chương trình và tài liệu tư vấn dành cho cộng tác viên, đại lý và nhân viên tư vấn.
             </p>
           </div>
@@ -1802,7 +1802,7 @@ export function ProductOverviewPage({ currentUser }) {
       ) : (
         <div className="mb-6">
           <button
-            className="border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
+            className="border border-slate-300 app-dark:!border-white/15 hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-700 app-dark:!text-slate-300 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
             onClick={handleGoBack}
           >
             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1816,48 +1816,48 @@ export function ProductOverviewPage({ currentUser }) {
       {/* 1. THỐNG KÊ (Chỉ hiện ở view tổng quan) */}
       {viewMode === "overview" && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white rounded-2xl p-4.5 shadow-sm border border-slate-100 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-900 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:!bg-cyan-955/40 text-cyan-900 app-dark:!text-cyan-300 flex-shrink-0 mr-4">
               <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-450 text-xs block font-medium">Danh mục lớn</span>
-              <span className="font-bold text-slate-800 text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
+              <span className="text-slate-450 app-dark:!text-slate-400 text-xs block font-medium">Danh mục lớn</span>
+              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-4.5 shadow-sm border border-slate-100 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-650 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 app-dark:!bg-emerald-955/40 text-emerald-650 app-dark:!text-emerald-350 flex-shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-7.244-2.244L12 20l7.244-2.244" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 text-xs block font-medium">Sản phẩm/Chương trình con</span>
-              <span className="font-bold text-slate-800 text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
+              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Sản phẩm/Chương trình con</span>
+              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-4.5 shadow-sm border border-slate-100 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-650 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 app-dark:!bg-sky-955/40 text-sky-650 app-dark:!text-sky-300 flex-shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 text-xs block font-medium">Đang tuyển sinh</span>
-              <span className="font-bold text-slate-800 text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
+              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Đang tuyển sinh</span>
+              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-4.5 shadow-sm border border-slate-100 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-650 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 app-dark:!bg-amber-955/40 text-amber-650 app-dark:!text-amber-300 flex-shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
-              <span className="font-bold text-slate-800 text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
+              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
+              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
             </div>
           </div>
         </div>
@@ -1865,18 +1865,18 @@ export function ProductOverviewPage({ currentUser }) {
 
       {/* 2. BỘ LỌC TÌM KIẾM (Chỉ hiện ở view tổng quan) */}
       {viewMode === "overview" && (
-        <div className="bg-white rounded-2xl border border-slate-100 px-4 py-3 shadow-sm mb-5">
+        <div className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
             <div className="md:col-span-12 xl:col-span-6">
               <div className="relative flex items-center">
-                <span className="absolute left-3 text-slate-400 flex items-center justify-center pointer-events-none">
+                <span className="absolute left-3 text-slate-400 app-dark:!text-slate-500 flex items-center justify-center pointer-events-none">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </span>
                 <input
                   type="text"
-                  className="w-full h-10 bg-white border border-slate-200 rounded-xl pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
+                  className="w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border border-slate-200 app-dark:!border-slate-700 rounded-xl pl-9 pr-3 text-sm text-slate-700 app-dark:!text-slate-100 placeholder-slate-400 app-dark:!placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                   placeholder="Tìm kiếm chương trình..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -1925,11 +1925,11 @@ export function ProductOverviewPage({ currentUser }) {
 
               return (
                 <div key={cat.id} className="flex flex-col">
-                  <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-shadow duration-200 hover:shadow-md flex flex-col h-full">
+                  <div className="relative bg-white app-dark:!bg-[#252525] rounded-2xl overflow-hidden shadow-sm border border-slate-100 app-dark:!border-white/8 transition-shadow duration-200 hover:shadow-md flex flex-col h-full">
                     {/* Header Card với Ảnh Nền */}
                     <div className={`relative overflow-hidden rounded-t-2xl h-[180px] md:h-[190px] ${isHidden ? "opacity-75" : ""}`}>
                       {/* Fallback pattern in case image fails or is empty */}
-                      <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center text-slate-400 gap-1.5 force-rounded-t-2xl">
+                      <div className="absolute inset-0 bg-slate-100 app-dark:!bg-[#1a1a1a] flex flex-col items-center justify-center text-slate-400 app-dark:!text-slate-500 gap-1.5 force-rounded-t-2xl">
                         <svg className="w-10 h-10 text-slate-350" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -1961,7 +1961,7 @@ export function ProductOverviewPage({ currentUser }) {
                                   event.stopPropagation();
                                   handleEditCategory(cat);
                                 }}
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/90 text-amber-500 shadow-sm transition hover:scale-105 hover:bg-white force-rounded-full cursor-pointer"
+                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 app-dark:!border-white/20 bg-white/90 app-dark:!bg-white/10 text-amber-500 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:!bg-white/20 force-rounded-full cursor-pointer"
                                 aria-label="Sửa danh mục"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1974,7 +1974,7 @@ export function ProductOverviewPage({ currentUser }) {
                                   event.stopPropagation();
                                   handleToggleCategoryStatus(cat.id, cat.status);
                                 }}
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/90 text-cyan-700 shadow-sm transition hover:scale-105 hover:bg-white force-rounded-full cursor-pointer"
+                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 app-dark:!border-white/20 bg-white/90 app-dark:!bg-white/10 text-cyan-700 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:!bg-white/20 force-rounded-full cursor-pointer"
                                 aria-label="Ẩn hoặc hiện danh mục"
                               >
                                 {isHidden ? (
@@ -2011,15 +2011,15 @@ export function ProductOverviewPage({ currentUser }) {
 
                     {/* Body Card */}
                     <div className="p-5 flex-grow flex flex-col">
-                      <p className="text-slate-500 text-xs mb-4 line-clamp-2 h-10 overflow-hidden leading-relaxed">
+                      <p className="text-slate-500 app-dark:!text-slate-400 text-xs mb-4 line-clamp-2 h-10 overflow-hidden leading-relaxed">
                         {cat.description || "Chưa có mô tả danh mục lớn."}
                       </p>
 
                       {/* Dropdown toggle programs list */}
-                      <div className="border-t border-slate-100 pt-4 mt-4">
+                      <div className="border-t border-slate-100 app-dark:!border-white/8 pt-4 mt-4">
                         <button
                           type="button"
-                          className="w-full flex justify-between items-center font-semibold text-xs text-cyan-905 hover:text-cyan-955 transition-colors"
+                          className="w-full flex justify-between items-center font-semibold text-xs text-slate-600 app-dark:!text-slate-300 hover:text-cyan-955 transition-colors"
                           onClick={() => toggleProgramsAccordion(cat.id)}
                         >
                           <span>Các chương trình cụ thể</span>
@@ -2035,26 +2035,26 @@ export function ProductOverviewPage({ currentUser }) {
                                   return (
                                     <div key={prog.id} className="h-full">
                                       <div
-                                        className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 transition-all duration-200 hover:bg-cyan-50/50 hover:border-cyan-200 hover:translate-x-0.5 cursor-pointer h-full flex flex-col justify-between"
+                                        className="bg-slate-50 app-dark:!bg-[#1e1e1e] border border-slate-200/80 app-dark:!border-slate-700 rounded-xl p-3.5 transition-all duration-200 hover:bg-cyan-50/50 app-dark:hover:!bg-cyan-955/40 hover:border-cyan-200 app-dark:hover:!border-cyan-900/60 hover:translate-x-0.5 cursor-pointer h-full flex flex-col justify-between"
                                         onClick={() => {
                                           setSelectedProduct(prog);
                                           setViewMode("detail");
                                         }}
                                       >
                                         <div>
-                                          <div className="font-semibold text-xs text-slate-800 mb-2 line-clamp-2 leading-snug min-h-[2.8em]" title={prog.name}>
+                                          <div className="font-semibold text-xs text-slate-800 app-dark:!text-slate-100 mb-2 line-clamp-2 leading-snug min-h-[2.8em]" title={prog.name}>
                                             {prog.name}
                                           </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-slate-200/40">
-                                          <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
-                                            <i className="fa fa-earth-asia text-cyan-705"></i>
+                                        <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-slate-200/40 app-dark:!border-white/8/60">
+                                          <span className="bg-slate-100 app-dark:!bg-[#252525] text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/8 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
+                                            <i className="fa fa-earth-asia text-cyan-750 app-dark:!text-cyan-400"></i>
                                             {prog.country}
                                           </span>
 
-                                          <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                                            <i className="fa fa-folder-open text-slate-400"></i>
+                                          <span className="text-[10px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-1">
+                                            <i className="fa fa-folder-open text-slate-400 app-dark:!text-slate-500"></i>
                                             {totalDocs} Tài liệu
                                           </span>
                                         </div>
@@ -2064,7 +2064,7 @@ export function ProductOverviewPage({ currentUser }) {
                                 })}
                               </div>
                             ) : (
-                              <div className="text-slate-400 text-xs italic py-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                              <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic py-4 text-center bg-slate-50 app-dark:!bg-[#1e1e1e] rounded-xl border border-dashed border-slate-200 app-dark:!border-slate-700">
                                 Chưa có chương trình nào hoạt động khớp bộ lọc.
                               </div>
                             )}
@@ -2077,10 +2077,10 @@ export function ProductOverviewPage({ currentUser }) {
               );
             })
           ) : (
-            <div className="col-span-full text-center py-16 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <i className="fa fa-folder-open text-slate-350 text-5xl mb-4 d-block"></i>
-              <h5 className="text-slate-500 font-semibold text-sm">Không tìm thấy danh mục sản phẩm nào phù hợp</h5>
-              <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-4 py-2 rounded-xl mt-3 transition-colors" onClick={handleResetFilters}>
+            <div className="col-span-full text-center py-16 bg-white app-dark:!bg-[#252525] border border-slate-100 app-dark:!border-white/8 rounded-2xl shadow-sm app-dark:!shadow-none">
+              <i className="fa fa-folder-open text-slate-350 app-dark:!text-slate-500 text-5xl mb-4 d-block"></i>
+              <h5 className="text-slate-500 app-dark:!text-slate-400 font-semibold text-sm">Không tìm thấy danh mục sản phẩm nào phù hợp</h5>
+              <button className="bg-slate-100 app-dark:!bg-slate-800 hover:bg-slate-200 app-dark:hover:!bg-slate-700 text-slate-700 app-dark:!text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl mt-3 transition-colors" onClick={handleResetFilters}>
                 Xóa bộ lọc để thử lại
               </button>
             </div>
@@ -2090,9 +2090,9 @@ export function ProductOverviewPage({ currentUser }) {
 
       {/* 4. MÀN HÌNH CHI TIẾT SẢN PHẨM (Detail View) */}
       {viewMode === "detail" && selectedProduct && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
+        <div className="bg-white app-dark:!bg-[#252525] rounded-2xl shadow-sm border border-slate-100 app-dark:!border-white/8 p-6 md:p-8">
           {/* Header Chi tiết */}
-          <div className="border-b border-slate-100 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start gap-4">
+          <div className="border-b border-slate-100 app-dark:!border-white/8 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex gap-4 items-start">
               <div
                 className="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl flex-shrink-0"
@@ -2105,7 +2105,7 @@ export function ProductOverviewPage({ currentUser }) {
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-slate-800 m-0 leading-tight">{selectedProduct.name}</h2>
+                  <h2 className="text-xl font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-tight">{selectedProduct.name}</h2>
                   <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-150">
                     {selectedProduct.categoryName || "Chương trình"}
                   </span>
@@ -2113,7 +2113,7 @@ export function ProductOverviewPage({ currentUser }) {
                     {selectedProduct.region} · {selectedProduct.country}
                   </span>
                 </div>
-                <p className="text-slate-400 text-xs m-0 mt-1.5 font-medium">
+                <p className="text-slate-400 app-dark:!text-slate-500 text-xs m-0 mt-1.5 font-medium">
                   Cập nhật lần cuối: {selectedProduct.updatedAt || "2026-06-01"}
                 </p>
               </div>
@@ -2144,21 +2144,21 @@ export function ProductOverviewPage({ currentUser }) {
             <div className="lg:col-span-2 space-y-6">
               {/* Mô tả chi tiết */}
               <div>
-                <h5 className="font-bold text-cyan-900 text-sm tracking-wide uppercase mb-3 flex items-center gap-2">
+                <h5 className="font-bold text-cyan-900 app-dark:!text-cyan-400 text-sm tracking-wide uppercase mb-3 flex items-center gap-2">
                   <i className="fa fa-circle-info text-cyan-800"></i>Tổng quan chương trình
                 </h5>
-                <p className="text-slate-600 text-[13.5px] leading-relaxed whitespace-pre-line">
+                <p className="text-slate-600 app-dark:!text-slate-300 text-[13.5px] leading-relaxed whitespace-pre-line">
                   {selectedProduct.detailDescription || selectedProduct.description || "Đang cập nhật nội dung chi tiết..."}
                 </p>
               </div>
 
               {/* Đối tượng phù hợp */}
               {selectedProduct.targetAudience && (
-                <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-105">
-                  <h6 className="font-bold text-slate-800 text-xs tracking-wide uppercase mb-2 flex items-center gap-2">
+                <div className="p-4 rounded-2xl bg-slate-50/70 app-dark:!bg-white/5 border border-slate-100 app-dark:!border-white/8">
+                  <h6 className="font-bold text-slate-800 app-dark:!text-slate-200 text-xs tracking-wide uppercase mb-2 flex items-center gap-2">
                     <i className="fa fa-users text-cyan-800"></i>Đối tượng tuyển sinh phù hợp
                   </h6>
-                  <p className="text-slate-600 text-[13px] leading-relaxed m-0">{selectedProduct.targetAudience}</p>
+                  <p className="text-slate-600 app-dark:!text-slate-300 text-[13px] leading-relaxed m-0">{selectedProduct.targetAudience}</p>
                 </div>
               )}
 
@@ -2187,9 +2187,9 @@ export function ProductOverviewPage({ currentUser }) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {selectedProduct.processSteps.map((step, i) => (
-                      <div className="flex items-center gap-4 bg-slate-50/80 p-3.5 border border-slate-100 rounded-2xl" key={i}>
+                      <div className="flex items-center gap-4 bg-slate-50/80 app-dark:!bg-white/5 p-3.5 border border-slate-100 app-dark:!border-white/8 rounded-2xl" key={i}>
                         <span className="w-6 h-6 bg-cyan-900 text-white font-bold rounded-full flex items-center justify-center text-[11px] flex-shrink-0">{i + 1}</span>
-                        <span className="text-slate-700 text-[13px] font-medium leading-normal">{step}</span>
+                        <span className="text-slate-700 app-dark:!text-slate-300 text-[13px] font-medium leading-normal">{step}</span>
                       </div>
                     ))}
                   </div>
@@ -2201,7 +2201,7 @@ export function ProductOverviewPage({ currentUser }) {
                 <div className="flex items-center flex-wrap gap-2 pt-2">
                   <span className="text-slate-400 text-xs font-semibold">Nhãn nhãn dán:</span>
                   {selectedProduct.tags.map((tag, i) => (
-                    <span key={i} className="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-lg text-[11px] font-medium">
+                    <span key={i} className="bg-slate-100 app-dark:!bg-white/8 text-slate-600 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/10 px-2.5 py-1 rounded-lg text-[11px] font-medium">
                       #{tag}
                     </span>
                   ))}
@@ -2211,8 +2211,8 @@ export function ProductOverviewPage({ currentUser }) {
 
             {/* Cột phải: Brochures, Tài liệu tư vấn, Nút quan tâm */}
             <div className="space-y-6">
-              <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/40">
-                <h5 className="font-bold text-slate-800 mb-4 text-[14.5px] border-b border-slate-100 pb-3 flex items-center gap-2">
+              <div className="border border-slate-100 app-dark:!border-white/8 rounded-2xl p-5 bg-slate-50/40 app-dark:!bg-white/5">
+                <h5 className="font-bold text-slate-800 app-dark:!text-slate-200 mb-4 text-[14.5px] border-b border-slate-100 app-dark:!border-white/8 pb-3 flex items-center gap-2">
                   <i className="fa fa-folder-open text-cyan-900"></i> Tài liệu &amp; Brochure
                 </h5>
 
@@ -2220,7 +2220,7 @@ export function ProductOverviewPage({ currentUser }) {
                 <div className="mb-5">
                   <label className="font-bold text-slate-550 text-xs tracking-wider uppercase d-block mb-2.5">Brochure chính thức:</label>
                   {selectedProduct.brochure ? (
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                    <div className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center shadow-sm">
                       <div className="text-truncate pr-2 flex items-center" style={{ minWidth: 0 }}>
                         {selectedProduct.brochure.sourceType === "link" ? (
                           <i className="fa fa-link text-cyan-900 mr-2.5 text-lg flex-shrink-0"></i>
@@ -2268,7 +2268,7 @@ export function ProductOverviewPage({ currentUser }) {
                       )}
                     </div>
                   ) : (
-                    <div className="text-slate-400 text-xs italic bg-white border border-dashed border-slate-200 rounded-xl py-3 px-4 text-center">Chưa có brochure riêng cho sản phẩm này.</div>
+                    <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic bg-white app-dark:!bg-white/5 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl py-3 px-4 text-center">Chưa có brochure riêng cho sản phẩm này.</div>
                   )}
                 </div>
 
@@ -2278,7 +2278,7 @@ export function ProductOverviewPage({ currentUser }) {
                   {selectedProduct.documents && selectedProduct.documents.length > 0 ? (
                     <div className="flex flex-col gap-2">
                       {selectedProduct.documents.map((doc) => (
-                        <div key={doc.id} className="bg-white border border-slate-200/80 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                        <div key={doc.id} className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center shadow-sm">
                           <div className="text-truncate pr-2 flex-grow" style={{ minWidth: 0 }}>
                             <div className="flex items-center text-truncate">
                               {doc.sourceType === "link" ? (
@@ -2286,7 +2286,7 @@ export function ProductOverviewPage({ currentUser }) {
                               ) : (
                                 <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-lines text-sky-505")} mr-2 flex-shrink-0`}></i>
                               )}
-                              <span className="font-semibold text-xs text-slate-800 text-truncate" title={doc.name}>{doc.name}</span>
+                              <span className="font-semibold text-xs text-slate-800 app-dark:!text-slate-200 text-truncate" title={doc.name}>{doc.name}</span>
                             </div>
                             {doc.sourceType === "link" ? (
                               <span className="text-slate-400 d-block text-[10px] mt-1 pl-6">Link đính kèm ({doc.type}) · {doc.updatedAt || "2026-06-01"}</span>
@@ -2307,7 +2307,7 @@ export function ProductOverviewPage({ currentUser }) {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-400 text-xs italic bg-white border border-dashed border-slate-200 rounded-xl py-3 px-4 text-center">Chưa đính kèm tài liệu tư vấn nào khác.</div>
+                    <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic bg-white app-dark:!bg-white/5 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl py-3 px-4 text-center">Chưa đính kèm tài liệu tư vấn nào khác.</div>
                   )}
                 </div>
               </div>
