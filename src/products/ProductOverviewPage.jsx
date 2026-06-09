@@ -1,18 +1,412 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { productService } from "./services/productService";
-import "./ProductOverviewPage.css";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 
 // ==========================================
-// PREDEFINED PALETTES FOR CARD BG
+// INITIAL MOCK CATEGORIES AND PROGRAMS
 // ==========================================
-const BG_PALETTES = [
-  { value: "linear-gradient(135deg, #003366 0%, #002244 100%)", label: "Xanh dương HTO" },
-  { value: "linear-gradient(135deg, #10B981 0%, #059669 100%)", label: "Xanh lá cây" },
-  { value: "linear-gradient(135deg, #FF9900 0%, #FF5E36 100%)", label: "Cam mùa hè" },
-  { value: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)", label: "Tím du học" },
-  { value: "linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)", label: "Xanh ngọc TTS" },
-  { value: "custom", label: "Màu tùy chỉnh (Nhập mã gradient)" }
+const INITIAL_CATEGORIES = [
+  {
+    id: "cat-1",
+    name: "Du học hè",
+    description: "Các chương trình du học hè ngắn hạn kết hợp học tập, rèn luyện kỹ năng và giao lưu văn hóa tại nhiều quốc gia phát triển.",
+    status: "active",
+    coverImageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-1-1",
+        name: "Du học hè Philippines (Mô hình Sparta)",
+        categoryId: "cat-1",
+        categoryName: "Du học hè",
+        country: "Philippines",
+        region: "Châu Á",
+        status: "active",
+        description: "Trại hè tiếng Anh cường độ cao tại Philippines giúp học viên nâng cao kỹ năng nhanh chóng.",
+        detailDescription: "Chương trình trại hè Anh ngữ tại các thành phố học thuật lớn của Philippines như Cebu, Baguio. Áp dụng mô hình Sparta học tập 10-12 tiếng mỗi ngày, kết hợp hoạt động dã ngoại cuối tuần bổ ích.",
+        targetAudience: "Học sinh từ 7 đến 17 tuổi muốn cải thiện tiếng Anh cấp tốc trong kỳ nghỉ hè.",
+        highlights: [
+          "Học tập mô hình 1 kèm 1 và 1 kèm 4 với giáo viên bản xứ",
+          "Môi trường bắt buộc sử dụng 100% tiếng Anh (EOP)",
+          "Hệ thống quản lý và chăm sóc học viên 24/7 từ quản lý người Việt",
+          "Hoạt động dã ngoại cuối tuần tại bãi biển, resort cao cấp"
+        ],
+        processSteps: [
+          "Đăng ký tư vấn và kiểm tra trình độ đầu vào",
+          "Chọn trường, khóa học và thời gian học tập",
+          "Đóng phí ghi danh và nhận thư mời nhập học (LOA)",
+          "Chuẩn bị hồ sơ du học, mua vé máy bay và ủy quyền giám hộ",
+          "Xuất cảnh và bắt đầu chương trình học tập tại Philippines"
+        ],
+        tags: ["Tiếng Anh cấp tốc", "Mô hình Sparta", "Học 1-kèm-1", "Phù hợp mọi trình độ"],
+        websiteUrl: "https://htocean.edu.vn/du-hoc-he-philippines",
+        brochure: { name: "Brochure_SummerCamp_Philippines_2026.pdf", size: "3.2 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-1-1-1", name: "Checklist hồ sơ ủy quyền giám hộ WEG.docx", type: "DOCX", sourceType: "file", fileType: "DOCX", size: "120 KB", updatedAt: "2026-05-15" },
+          { id: "doc-1-1-2", name: "Bảng chi phí chi tiết trại hè Philippines 4 tuần.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "850 KB", updatedAt: "2026-05-15" },
+          { id: "doc-1-1-3", name: "Nội quy và cẩm nang chuẩn bị hành lý.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "1.4 MB", updatedAt: "2026-05-15" }
+        ],
+        updatedAt: "2026-05-15"
+      },
+      {
+        id: "prod-1-2",
+        name: "Trại hè Tiếng Anh Singapore (2 tuần)",
+        categoryId: "cat-1",
+        categoryName: "Du học hè",
+        country: "Singapore",
+        region: "Châu Á",
+        status: "active",
+        description: "Trải nghiệm môi trường sống văn minh an toàn bậc nhất kết hợp học tiếng Anh và kỹ năng lãnh đạo.",
+        detailDescription: "Khóa học ngắn hạn 2 tuần kết hợp giảng dạy tiếng Anh chuẩn quốc tế và các hoạt động teambuilding, tham quan các địa danh nổi tiếng tại Singapore như Universal Studios, Marina Bay Sands.",
+        targetAudience: "Học sinh từ 8 đến 16 tuổi muốn phát triển kỹ năng mềm tự lập.",
+        highlights: [
+          "Môi trường sống văn minh an toàn bậc nhất thế giới",
+          "Tham quan và giao lưu tại Đại học Quốc gia Singapore (NUS)",
+          "Rèn luyện kỹ năng sinh hoạt độc lập và làm việc nhóm"
+        ],
+        processSteps: [
+          "Tư vấn chọn lịch trình và khóa học",
+          "Đóng chi phí trọn gói",
+          "Hoàn tất tờ khai nhập cảnh trực tuyến",
+          "Xuất phát cùng trưởng đoàn HTO"
+        ],
+        tags: ["Sinh hoạt tự lập", "Quốc tế hóa", "An toàn cao"],
+        websiteUrl: "https://htocean.edu.vn/du-hoc-he-singapore",
+        brochure: { name: "Brochure_Singapore_Summer_2026.pdf", size: "2.8 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-1-2-1", name: "Quy chế bảo hiểm du lịch quốc tế.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "1.1 MB", updatedAt: "2026-05-18" },
+          { id: "doc-1-2-2", name: "Lịch trình sinh hoạt 14 ngày chi tiết.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "1.9 MB", updatedAt: "2026-05-18" }
+        ],
+        updatedAt: "2026-05-18"
+      },
+      {
+        id: "prod-1-3",
+        name: "Trải nghiệm văn hóa Hàn Quốc",
+        categoryId: "cat-1",
+        categoryName: "Du học hè",
+        country: "Hàn Quốc",
+        region: "Châu Á",
+        status: "active",
+        description: "Tìm hiểu văn hóa xứ sở Kim Chi, giao lưu ngôn ngữ và tham quan các trường đại học nổi tiếng.",
+        detailDescription: "Học tiếng Hàn cơ bản kết hợp tham quan các cung điện cổ kính, lớp học nhảy K-pop và trải nghiệm giảng đường thực tế tại các trường Đại học danh tiếng ở Seoul.",
+        targetAudience: "Học sinh THPT yêu thích văn hóa Hàn Quốc và có định hướng du học tương lai.",
+        highlights: [
+          "Trải nghiệm văn hóa nghệ thuật ẩm thực độc đáo",
+          "Thực hành giao tiếp tiếng Hàn cơ bản với sinh viên bản địa",
+          "Định hướng chọn trường đại học phù hợp tại Seoul"
+        ],
+        processSteps: [
+          "Tư vấn & Nhận hồ sơ",
+          "Xin Visa du lịch ngắn hạn C-3",
+          "Hướng dẫn chuẩn bị trang phục & đồ cá nhân",
+          "Xuất phát đoàn bay"
+        ],
+        tags: ["Văn hóa K-Pop", "Học tiếng Hàn", "Hướng nghiệp"],
+        websiteUrl: "https://htocean.edu.vn/du-hoc-he-han-quoc",
+        brochure: { name: "Brochure_Trai_Nghiem_Han_Quoc.pdf", size: "4.1 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-1-3-1", name: "Checklist xin Visa du lịch Hàn Quốc tự túc.docx", type: "DOCX", sourceType: "file", fileType: "DOCX", size: "90 KB", updatedAt: "2026-05-20" }
+        ],
+        updatedAt: "2026-05-20"
+      }
+    ]
+  },
+  {
+    id: "cat-2",
+    name: "Du học nghề",
+    description: "Lộ trình du học nghề kép vừa học vừa làm có hưởng lương. Miễn 100% học phí, nhận trợ cấp thực hành và cam kết việc làm sau tốt nghiệp.",
+    status: "active",
+    coverImageUrl: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-2-1",
+        name: "Du học nghề Đức (Điều dưỡng, Nhà hàng, Cơ khí)",
+        categoryId: "cat-2",
+        categoryName: "Du học nghề",
+        country: "Đức",
+        region: "Châu Âu",
+        status: "active",
+        description: "Chương trình vừa học vừa làm miễn 100% học phí và nhận lương thực hành từ 1.100 - 1.300 Euro/tháng.",
+        detailDescription: "Lộ trình định cư bền vững tại Đức thông qua học nghề kép. Thời gian đào tạo 3 năm kết hợp 30% lý thuyết và 70% thực hành trực tiếp tại các bệnh viện, nhà hàng, xưởng cơ khí đối tác của HTO.",
+        targetAudience: "Học sinh tốt nghiệp THPT tuổi từ 18 - 30, sức khỏe tốt, mong muốn lập nghiệp lâu dài tại Châu Âu.",
+        highlights: [
+          "Miễn 100% học phí trong suốt 3 năm học học nghề",
+          "Trợ cấp sinh hoạt phí thực hành hàng tháng đảm bảo tự trang trải cuộc sống",
+          "Cam kết hợp đồng lao động chính thức ngay sau khi tốt nghiệp",
+          "Cơ hội định cư vĩnh viễn sau 5 năm học tập và làm việc tại Đức"
+        ],
+        processSteps: [
+          "Học tiếng Đức tại Việt Nam đạt chứng chỉ B1/B2",
+          "Thẩm định hồ sơ và phỏng vấn với doanh nghiệp đối tác tại Đức",
+          "Nhận hợp đồng học nghề và hợp đồng thực hành từ bên Đức",
+          "Chuẩn bị hồ sơ xin Visa và chứng minh tài chính nếu cần",
+          "Nhập cảnh Đức, bắt đầu học tiếng bổ trợ và học chuyên môn"
+        ],
+        tags: ["Miễn học phí", "Trợ cấp cao", "Định cư Châu Âu", "Cam kết việc làm"],
+        websiteUrl: "https://htocean.edu.vn/du-hoc-nghe-duc",
+        brochure: { name: "Cam_nang_Nghe_Duc_HTO_2026.pdf", size: "5.5 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-2-1-1", name: "Mẫu hợp đồng đào tạo nghề song ngữ Đức-Việt.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "2.1 MB", updatedAt: "2026-05-15" },
+          { id: "doc-2-1-2", name: "Checklist hồ sơ xin Visa Đại sứ quán Đức.docx", type: "DOCX", sourceType: "file", fileType: "DOCX", size: "130 KB", updatedAt: "2026-05-15" },
+          { id: "doc-2-1-3", name: "Quy trình chuyển đổi bằng cấp và thẩm định Defa.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "980 KB", updatedAt: "2026-05-15" }
+        ],
+        updatedAt: "2026-05-15"
+      },
+      {
+        id: "prod-2-2",
+        name: "Du học nghề Hàn Quốc (Visa D4-6)",
+        categoryId: "cat-2",
+        categoryName: "Du học nghề",
+        country: "Hàn Quốc",
+        region: "Châu Á",
+        status: "active",
+        description: "Học nghề kết hợp làm thêm có thu nhập tốt. Visa linh hoạt chuyển đổi sang E-7 sau khi ra trường.",
+        detailDescription: "Học nghề tại các trường Cao đẳng/Đại học Hàn Quốc đào tạo các ngành Làm đẹp (Beauty), Nấu ăn, Công nghệ thông tin, Thiết kế. Lịch học linh động cho phép sinh viên đi làm thêm trang trải chi phí.",
+        targetAudience: "Nam/nữ tốt nghiệp THPT, điểm GPA từ 6.0 trở lên.",
+        highlights: [
+          "Học tập thời gian ngắn (chỉ từ 1.5 - 2 năm)",
+          "Quy định làm thêm thông thoáng giúp tự lập tài chính",
+          "Cơ hội chuyển đổi sang Visa lao động chuyên môn E-7 dễ dàng"
+        ],
+        processSteps: [
+          "Nộp hồ sơ phỏng vấn chọn trường",
+          "Học tiếng Hàn sơ cấp đạt Topik 1 hoặc 2",
+          "Nộp hồ sơ xin mã code Visa từ Cục xuất nhập cảnh Hàn Quốc",
+          "Nhận Visa và xuất cảnh học tập"
+        ],
+        tags: ["Học phí ưu đãi", "Làm thêm 30h/tuần", "Visa D4-6"],
+        websiteUrl: "https://htocean.edu.vn/du-hoc-nghe-han-quoc",
+        brochure: { name: "Cam_nang_Nghe_Han_Quoc.pdf", size: "3.7 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-2-2-1", name: "Danh sách các trường Cao đẳng liên kết Visa D4-6.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "640 KB", updatedAt: "2026-05-22" }
+        ],
+        updatedAt: "2026-05-22"
+      }
+    ]
+  },
+  {
+    id: "cat-3",
+    name: "Visa",
+    description: "Dịch vụ tư vấn, thẩm định hồ sơ, luyện phỏng vấn và hoàn thiện thủ tục xin Visa du học, du lịch, định cư và công tác các nước.",
+    status: "active",
+    coverImageUrl: "https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-3-1",
+        name: "Dịch vụ Visa du học & thăm thân Đức",
+        categoryId: "cat-3",
+        categoryName: "Visa",
+        country: "Đức",
+        region: "Châu Âu",
+        status: "active",
+        description: "Tư vấn hồ sơ và xử lý visa thăm thân, visa du học tự túc đạt tỷ lệ đỗ cao.",
+        detailDescription: "Dịch vụ hỗ trợ điền tờ khai, chuẩn bị checklist giấy tờ pháp lý, dịch thuật công chứng, mở tài khoản phong tỏa và mua bảo hiểm du lịch đúng chuẩn của Đại Sứ Quán Đức.",
+        targetAudience: "Khách hàng cần xin visa du học tự túc hoặc có người thân bảo lãnh sang Đức.",
+        highlights: [
+          "Tỷ lệ đỗ visa đạt trên 98% nhờ đội ngũ thẩm định hồ sơ dày dặn kinh nghiệm",
+          "Xử lý nhanh chóng các trường hợp hồ sơ khó, khoảng trống học tập dài",
+          "Tư vấn lộ trình chứng minh tài chính tối ưu nhất"
+        ],
+        processSteps: [
+          "Tiếp nhận thông tin hồ sơ và đánh giá sơ bộ tỷ lệ đỗ",
+          "Ký hợp đồng dịch vụ và hoàn thiện checklist giấy tờ",
+          "Đặt lịch hẹn nộp hồ sơ tại VFS Global",
+          "Nhận kết quả Visa bàn giao khách hàng"
+        ],
+        tags: ["Tỷ lệ đỗ 98%", "Xử lý nhanh", "Tài khoản phong tỏa"],
+        websiteUrl: "https://htocean.edu.vn/visa-du-hoc-duc",
+        brochure: { name: "Cam_nang_Visa_Duc_HTO.pdf", size: "1.9 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-3-1-1", name: "Checklist giấy tờ xin Visa du học Đức tự túc.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "750 KB", updatedAt: "2026-05-20" }
+        ],
+        updatedAt: "2026-05-20"
+      }
+    ]
+  },
+  {
+    id: "cat-4",
+    name: "Định cư",
+    description: "Giải pháp định cư an toàn cho cả gia đình thông qua các chương trình lao động tay nghề cao, đầu tư kinh doanh hoặc bảo lãnh nhân thân.",
+    status: "active",
+    coverImageUrl: "https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-4-1",
+        name: "Định cư Canada Express Entry (PR)",
+        categoryId: "cat-4",
+        categoryName: "Định cư",
+        country: "Canada",
+        region: "Châu Mỹ",
+        status: "active",
+        description: "Hỗ trợ nộp hồ sơ định cư tay nghề cao nhanh nhất để nhận thẻ Thường trú nhân (PR) Canada.",
+        detailDescription: "Tư vấn tối ưu hóa điểm số CRS, thẩm định bằng cấp ECA, chuẩn bị chứng chỉ ngôn ngữ IELTS/CELPIP và nộp hồ sơ Express Entry vào các luồng định cư liên bang.",
+        targetAudience: "Khách hàng có trình độ đại học trở lên, khả năng tiếng Anh tốt và kinh nghiệm làm việc chuyên môn.",
+        highlights: [
+          "Nhận trực tiếp thẻ Thường trú nhân PR cho cả gia đình",
+          "Được hưởng đầy đủ phúc lợi y tế, giáo dục miễn phí của Canada",
+          "Thời gian xét duyệt hồ sơ nhanh từ 6 - 8 tháng sau khi nhận thư mời ITA"
+        ],
+        processSteps: [
+          "Đánh giá điểm số CRS sơ bộ",
+          "Thẩm định bằng cấp nước ngoài (ECA) và thi chứng chỉ tiếng Anh",
+          "Tạo hồ sơ Express Entry trên hệ thống IRCC",
+          "Nhận thư mời nộp hồ sơ (ITA) và hoàn tất nộp giấy tờ",
+          "Nhận COPR và nhập cảnh Canada nhận thẻ PR"
+        ],
+        tags: ["Thẻ PR định cư", "Express Entry", "Xét duyệt nhanh"],
+        websiteUrl: "https://htocean.edu.vn/dinh-cu-canada",
+        brochure: { name: "Cam_nang_Dinh_cu_Canada_PR.pdf", size: "4.8 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-4-1-1", name: "Hướng dẫn tính điểm CRS định cư Canada.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "1.2 MB", updatedAt: "2026-05-25" }
+        ],
+        updatedAt: "2026-05-25"
+      }
+    ]
+  },
+  {
+    id: "cat-5",
+    name: "Đào tạo ngôn ngữ",
+    description: "Khóa đào tạo ngoại ngữ cấp tốc chất lượng cao (Tiếng Đức, Anh, Hàn, Nhật) cam kết chuẩn đầu ra phục vụ làm việc và xin visa.",
+    status: "active",
+    coverImageUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-5-1",
+        name: "Tiếng Đức sơ cấp & trung cấp (A1 - B1/B2)",
+        categoryId: "cat-5",
+        categoryName: "Đào tạo ngôn ngữ",
+        country: "Đức",
+        region: "Châu Âu",
+        status: "active",
+        description: "Khóa đào tạo tiếng Đức bài bản từ con số 0 giúp học viên tự tin thi đạt B1/B2.",
+        detailDescription: "Chương trình học tiếng Đức chất lượng cao tại HTO. Đội ngũ giáo viên bản xứ và giáo viên Việt Nam giàu kinh nghiệm, lộ trình cá nhân hóa kết hợp các bài thi thử Goethe/Telc hàng tuần.",
+        targetAudience: "Học viên chuẩn bị đi du học nghề Đức hoặc làm việc định cư tại Đức.",
+        highlights: [
+          "Lớp học sĩ số vàng tối đa 12 học viên đảm bảo tương tác liên tục",
+          "Luyện phản xạ nghe nói hàng tuần với giáo viên người Đức bản địa",
+          "Cam kết đào tạo lại miễn phí nếu không đạt đầu ra đúng tiến độ"
+        ],
+        processSteps: [
+          "Kiểm tra trình độ đầu vào miễn phí",
+          "Đăng ký lớp học theo khung giờ sáng / chiều / tối",
+          "Học tập chuyên sâu theo giáo trình chuẩn quốc tế",
+          "Thi thử và tham gia kỳ thi chứng chỉ chính thức tại viện Goethe"
+        ],
+        tags: ["Luyện thi B1/B2", "Cam kết đầu ra", "Sĩ số 12 học viên"],
+        websiteUrl: "https://htocean.edu.vn/hoc-tieng-duc",
+        brochure: { name: "Lich_Khai_Giang_Tieng_Duc_HTO.pdf", size: "2.5 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-5-1-1", name: "Đề thi mẫu Goethe B1 có đáp án chi tiết.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "3.2 MB", updatedAt: "2026-05-28" }
+        ],
+        updatedAt: "2026-05-28"
+      }
+    ]
+  },
+  {
+    id: "cat-6",
+    name: "TTS Quốc tế",
+    description: "Chương trình thực tập sinh, làm việc ngắn hạn có lương dành cho sinh viên các trường Đại học, Cao đẳng tích lũy kinh nghiệm nước ngoài.",
+    status: "coming_soon",
+    coverImageUrl: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-6-1",
+        name: "TTS ngành dịch vụ & du học nghề Nhật Bản",
+        categoryId: "cat-6",
+        categoryName: "TTS Quốc tế",
+        country: "Nhật Bản",
+        region: "Châu Á",
+        status: "active",
+        description: "Cơ hội làm việc tại hệ thống khách sạn, nhà hàng Nhật Bản với mức lương hấp dẫn.",
+        detailDescription: "Chương trình Internship quốc tế 1 năm dành cho sinh viên ngành Khách sạn, Nhà hàng, Quản trị du lịch. Làm việc thực tế nhận lương như nhân viên chính thức, tích lũy chứng chỉ quốc tế.",
+        targetAudience: "Sinh viên năm 3 hoặc năm cuối các trường Đại học, Cao đẳng trên toàn quốc.",
+        highlights: [
+          "Mức lương thực tập sinh từ 130.000 - 150.000 Yên/tháng",
+          "Hỗ trợ chỗ ở ký túc xá và bữa ăn trong ca làm việc",
+          "Nhận chứng nhận thực tập quốc tế thuận lợi xin việc sau tốt nghiệp"
+        ],
+        processSteps: [
+          "Nộp bảng điểm và CV tiếng Nhật theo mẫu HTO",
+          "Phỏng vấn trực tiếp qua Zoom với quản lý nghiệp đoàn Nhật Bản",
+          "Xin COE và hoàn tất thủ tục cấp Visa Internship",
+          "Nhập cảnh thực tập 1 năm"
+        ],
+        tags: ["Internship 1 năm", "Lương 150k Yên", "Ngành Khách sạn"],
+        websiteUrl: "https://htocean.edu.vn/thuc-tap-sinh-nhat-ban",
+        brochure: { name: "Thong_Tin_TTS_Nhat_Ban_HTO.pdf", size: "3.9 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-6-1-1", name: "Mẫu sơ yếu lý lịch CV tiếng Nhật tiêu chuẩn.docx", type: "DOCX", sourceType: "file", fileType: "DOCX", size: "110 KB", updatedAt: "2026-05-20" }
+        ],
+        updatedAt: "2026-05-20"
+      }
+    ]
+  },
+  {
+    id: "cat-7",
+    name: "Du học hè Thụy Sĩ (Quản trị Khách sạn) - Bản nháp",
+    description: "Chương trình trại hè cao cấp trải nghiệm làm bánh, quản trị du lịch, khách sạn chuẩn Thụy Sĩ. Đang trong tiến trình kiểm duyệt.",
+    status: "hidden",
+    coverImageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80",
+    programs: [
+      {
+        id: "prod-7-1",
+        name: "Trại hè Quản trị du lịch học viện BHMS Thụy Sĩ",
+        categoryId: "cat-7",
+        categoryName: "Du học hè Thụy Sĩ (Quản trị Khách sạn) - Bản nháp",
+        country: "Thụy Sĩ",
+        region: "Châu Âu",
+        status: "active",
+        description: "Khóa trải nghiệm cuộc sống sinh viên Thụy Sĩ và tham gia các hội thảo chuyên ngành du lịch.",
+        detailDescription: "Hành trình 10 ngày tại học viện BHMS Lucerne. Học sinh được học về văn hóa giao tiếp Âu Châu, quy trình vận hành khách sạn 5 sao, tham quan các xưởng sản xuất chocolate truyền thống.",
+        targetAudience: "Học sinh khá giả có định hướng du học Thụy Sĩ.",
+        highlights: [
+          "Trực tiếp sinh hoạt tại campus hiện đại của BHMS tại Lucerne",
+          "Chứng chỉ hoàn thành khóa trại hè cấp bởi BHMS Thụy Sĩ",
+          "Gặp gỡ và chia sẻ kinh nghiệm cùng cựu học sinh thành đạt"
+        ],
+        processSteps: [
+          "Xét duyệt điều kiện hồ sơ và phỏng vấn ngoại ngữ",
+          "Xin Visa Schengen qua Đại sứ quán Thụy Sĩ",
+          "Hoàn thiện học phí và xuất cảnh theo đoàn"
+        ],
+        tags: ["Trại hè Thụy Sĩ", "Học viện BHMS", "Định hướng Quản trị"],
+        brochure: { name: "Brochure_Summer_Camp_Swiss_BHMS.pdf", size: "5.1 MB", type: "PDF", sourceType: "file", fileType: "PDF", url: "" },
+        documents: [
+          { id: "doc-7-1-1", name: "Lịch trình hoạt động 10 ngày Thụy Sĩ.pdf", type: "PDF", sourceType: "file", fileType: "PDF", size: "2.3 MB", updatedAt: "2026-06-01" }
+        ],
+        updatedAt: "2026-06-01"
+      }
+    ]
+  }
 ];
+
+const PRODUCT_STORAGE_KEY = "hto_products_categories_data";
+
+// Fallback & validation helpers for mock data
+const getMockData = () => {
+  try {
+    const stored = localStorage.getItem(PRODUCT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Validate basic keys of the first item to ensure correct structure
+        const first = parsed[0];
+        if (first && typeof first === "object" && "id" in first && "name" in first && "programs" in first) {
+          return parsed;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[LocalStorage] Error parsing mock categories data, using defaults:", e);
+  }
+  return INITIAL_CATEGORIES;
+};
+
+const saveMockData = (data) => {
+  try {
+    localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error("[LocalStorage] Error writing mock categories data:", e);
+  }
+};
+
 
 const ALL_COUNTRIES_MOCK = [
   "Tất cả", "Đức", "Hàn Quốc", "Nhật Bản", "Đài Loan", "Úc", "Mỹ", "Canada", "Singapore", "Philippines", "Anh Quốc", "Thụy Sĩ"
@@ -43,6 +437,91 @@ const getUserRoleKey = (user) => {
   const roleFromId = ROLE_ID_MAP[user?.roleId];
   return normalizeRoleKey(roleFromObject || roleFromId || "user");
 };
+
+// ==========================================
+// CUSTOM DROPDOWN COMPONENT
+// ==========================================
+function CustomDropdown({ value, options, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        className={`w-full h-10 bg-white border ${
+          isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200"
+        } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="truncate pr-2">{selectedOption?.label}</span>
+        <svg
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 bg-white shadow-xl p-1 animate-fade-in">
+          <div role="listbox" className="flex flex-col gap-0.5">
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${
+                    isSelected
+                      ? "bg-cyan-100 text-cyan-800 font-semibold"
+                      : "text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
+                  }`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="truncate pr-2">{opt.label}</span>
+                  {isSelected && (
+                    <svg className="w-4 h-4 text-cyan-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ProductOverviewPage({ currentUser }) {
   // 1. Phân quyền người dùng thật từ currentUser
@@ -89,6 +568,8 @@ export function ProductOverviewPage({ currentUser }) {
   // Drag & drop visual states
   const [isBrochureDragging, setIsBrochureDragging] = useState(false);
   const [isDocsDragging, setIsDocsDragging] = useState(false);
+  const [isCategoryCoverDragging, setIsCategoryCoverDragging] = useState(false);
+  const categoryCoverInputRef = useRef(null);
 
   // Form states
   const [formCategory, setFormCategory] = useState({
@@ -96,8 +577,7 @@ export function ProductOverviewPage({ currentUser }) {
     name: "",
     description: "",
     status: "active",
-    imagePalette: "linear-gradient(135deg, #003366 0%, #002244 100%)",
-    customGradient: "",
+    coverImageUrl: "",
     programs: []
   });
 
@@ -133,14 +613,14 @@ export function ProductOverviewPage({ currentUser }) {
     return currentUser?.name || currentUser?.username || "CTV/Đại lý HTO";
   }, [currentUser]);
 
-  // Load danh sách dữ liệu từ Service
-  const loadData = useCallback(async () => {
+  // Load danh sách dữ liệu từ localStorage
+  const loadData = useCallback(() => {
     setLoading(true);
     setError("");
     try {
-      const res = await productService.getProductCategories();
-      setCategories(res.data);
-      setApiMode(res.apiMode);
+      const data = getMockData();
+      setCategories(data);
+      setApiMode("mock");
     } catch (err) {
       console.error(err);
       setError("Không thể tải danh sách sản phẩm.");
@@ -159,14 +639,6 @@ export function ProductOverviewPage({ currentUser }) {
       ...prev,
       [catId]: !prev[catId]
     }));
-  };
-
-  // Reset Filters
-  const handleResetFilters = () => {
-    setSearchQuery("");
-    setSelectedCategoryName("Tất cả");
-    setSelectedCountry("Tất cả");
-    setSelectedStatus("all");
   };
 
   const handleGoBack = () => {
@@ -220,6 +692,21 @@ export function ProductOverviewPage({ currentUser }) {
   const categoryNames = useMemo(() => {
     return ["Tất cả", ...categories.map(c => c.name)];
   }, [categories]);
+
+  const categoryOptions = useMemo(() => {
+    return categoryNames.map(name => ({ label: name, value: name }));
+  }, [categoryNames]);
+
+  const countryOptions = useMemo(() => {
+    return ALL_COUNTRIES_MOCK.map(c => ({ label: c, value: c }));
+  }, []);
+
+  const statusOptions = useMemo(() => [
+    { label: "Tất cả", value: "all" },
+    { label: "Đang hoạt động", value: "active" },
+    { label: "Sắp mở", value: "coming_soon" },
+    { label: "Tạm ngưng", value: "expired" }
+  ], []);
 
   // Tính toán thống kê dashboard
   const stats = useMemo(() => {
@@ -287,12 +774,6 @@ export function ProductOverviewPage({ currentUser }) {
   const handleSubmitInterest = async (e) => {
     e.preventDefault();
     try {
-      await productService.createProductInterestLead({
-        ...interestForm,
-        productProgramId: selectedProduct.id,
-        productProgramName: selectedProduct.name,
-        sourceUser: currentUserName
-      });
       alert(`Gửi yêu cầu tư vấn thành công!\nKhách hàng: ${interestForm.customerName}\nSản phẩm: ${selectedProduct.name}`);
       setShowInterestModal(false);
     } catch (err) {
@@ -308,8 +789,7 @@ export function ProductOverviewPage({ currentUser }) {
       name: "",
       description: "",
       status: "active",
-      imagePalette: "linear-gradient(135deg, #003366 0%, #002244 100%)",
-      customGradient: "",
+      coverImageUrl: "",
       programs: []
     });
     setActiveCategoryTab("info");
@@ -323,8 +803,7 @@ export function ProductOverviewPage({ currentUser }) {
       name: cat.name,
       description: cat.description || "",
       status: cat.status || "active",
-      imagePalette: BG_PALETTES.some(p => p.value === cat.imageGradient) ? cat.imageGradient : "custom",
-      customGradient: BG_PALETTES.some(p => p.value === cat.imageGradient) ? "" : cat.imageGradient,
+      coverImageUrl: cat.coverImageUrl || "",
       programs: cat.programs || []
     });
     setActiveCategoryTab("info");
@@ -337,9 +816,12 @@ export function ProductOverviewPage({ currentUser }) {
     const statusText = newStatus === "active" ? "hiện" : "ẩn";
     if (confirm(`Bạn có chắc chắn muốn ${statusText} danh mục này không?`)) {
       try {
-        await productService.toggleProductCategoryStatus(catId, newStatus);
+        const updated = categories.map(cat => 
+          cat.id === catId ? { ...cat, status: newStatus } : cat
+        );
+        saveMockData(updated);
+        setCategories(updated);
         alert(`Đã ${statusText} danh mục!`);
-        loadData();
       } catch (err) {
         alert("Lỗi khi thay đổi trạng thái danh mục: " + err.message);
       }
@@ -355,27 +837,37 @@ export function ProductOverviewPage({ currentUser }) {
       return;
     }
 
-    const imageGradient = formCategory.imagePalette === "custom"
-      ? (formCategory.customGradient || "linear-gradient(135deg, #64748B 0%, #475569 100%)")
-      : formCategory.imagePalette;
-
-    const payload = {
-      name: formCategory.name,
-      description: formCategory.description,
-      status: formCategory.status,
-      imageGradient
-    };
-
     try {
+      let updated;
       if (editingCategory === "new") {
-        await productService.createProductCategory(payload);
+        const newCat = {
+          id: `cat-${Date.now()}`,
+          name: formCategory.name,
+          description: formCategory.description,
+          status: formCategory.status,
+          coverImageUrl: formCategory.coverImageUrl,
+          programs: []
+        };
+        updated = [...categories, newCat];
         alert("Đã thêm danh mục mới thành công!");
       } else {
-        await productService.updateProductCategory(editingCategory, payload);
+        updated = categories.map(cat => {
+          if (cat.id === editingCategory) {
+            return {
+              ...cat,
+              name: formCategory.name,
+              description: formCategory.description,
+              status: formCategory.status,
+              coverImageUrl: formCategory.coverImageUrl
+            };
+          }
+          return cat;
+        });
         alert("Đã cập nhật danh mục thành công!");
       }
+      saveMockData(updated);
+      setCategories(updated);
       setEditingCategory(null);
-      loadData();
     } catch (err) {
       alert("Lỗi khi lưu danh mục: " + err.message);
     }
@@ -443,24 +935,19 @@ export function ProductOverviewPage({ currentUser }) {
     if (!canManageProducts) return;
     if (confirm("Bạn có chắc chắn muốn xóa sản phẩm con này không?")) {
       try {
-        // Mock remove by updating category programs list directly via update
-        const data = categories;
-        let success = false;
-        for (let cat of data) {
-          const pIdx = cat.programs?.findIndex(p => p.id === prodId);
-          if (pIdx !== -1 && pIdx !== undefined) {
-            cat.programs = cat.programs.filter(p => p.id !== prodId);
-            await productService.updateProductCategory(cat.id, { programs: cat.programs });
-            success = true;
-            break;
+        const updated = categories.map(cat => {
+          const hasProg = cat.programs?.some(p => p.id === prodId);
+          if (hasProg) {
+            return {
+              ...cat,
+              programs: cat.programs.filter(p => p.id !== prodId)
+            };
           }
-        }
-        if (success) {
-          alert("Đã xóa sản phẩm con!");
-          loadData();
-        } else {
-          throw new Error("Không tìm thấy sản phẩm");
-        }
+          return cat;
+        });
+        saveMockData(updated);
+        setCategories(updated);
+        alert("Đã xóa sản phẩm con!");
       } catch (err) {
         alert("Lỗi khi xóa sản phẩm con: " + err.message);
       }
@@ -497,24 +984,64 @@ export function ProductOverviewPage({ currentUser }) {
       tags,
       websiteUrl: formProduct.websiteUrl,
       brochure: formProduct.brochure,
-      documents: formProduct.documents
+      documents: formProduct.documents,
+      updatedAt: new Date().toISOString().split("T")[0]
     };
 
     try {
+      let updated;
+      let savedProd = null;
       if (editingProduct === "new") {
-        await productService.createProductChild(editingProductParentCatId, payload);
+        const newProd = {
+          ...payload,
+          id: `prod-${Date.now()}`,
+          categoryId: editingProductParentCatId,
+          categoryName: categories.find(c => c.id === editingProductParentCatId)?.name || ""
+        };
+        savedProd = newProd;
+        updated = categories.map(cat => {
+          if (cat.id === editingProductParentCatId) {
+            return {
+              ...cat,
+              programs: [...(cat.programs || []), newProd]
+            };
+          }
+          return cat;
+        });
         alert("Đã thêm sản phẩm con mới thành công!");
       } else {
-        await productService.updateProductChild(editingProduct, payload);
+        updated = categories.map(cat => {
+          const hasProg = cat.programs?.some(p => p.id === editingProduct);
+          if (hasProg) {
+            return {
+              ...cat,
+              programs: cat.programs.map(p => {
+                if (p.id === editingProduct) {
+                  const updatedP = {
+                    ...p,
+                    ...payload,
+                    id: editingProduct,
+                    categoryId: editingProductParentCatId,
+                    categoryName: categories.find(c => c.id === editingProductParentCatId)?.name || ""
+                  };
+                  savedProd = updatedP;
+                  return updatedP;
+                }
+                return p;
+              })
+            };
+          }
+          return cat;
+        });
         alert("Đã cập nhật sản phẩm con thành công!");
       }
+      saveMockData(updated);
+      setCategories(updated);
       setEditingProduct(null);
-      loadData();
       
       // Update selected view details if active
       if (selectedProduct && selectedProduct.id === editingProduct) {
-        const detailRes = await productService.getProductDetail(editingProduct);
-        setSelectedProduct(detailRes.data);
+        setSelectedProduct(savedProd);
       }
     } catch (err) {
       alert("Lỗi khi lưu sản phẩm con: " + err.message);
@@ -559,7 +1086,20 @@ export function ProductOverviewPage({ currentUser }) {
           setFormProduct(prev => ({ ...prev, brochure: brochureData }));
         } else {
           try {
-            await productService.uploadProductBrochure(editingProduct, { file, ...brochureData });
+            const updated = categories.map(cat => {
+              const hasProg = cat.programs?.some(p => p.id === editingProduct);
+              if (hasProg) {
+                return {
+                  ...cat,
+                  programs: cat.programs.map(p => 
+                    p.id === editingProduct ? { ...p, brochure: brochureData } : p
+                  )
+                };
+              }
+              return cat;
+            });
+            saveMockData(updated);
+            setCategories(updated);
             setFormProduct(prev => ({ ...prev, brochure: brochureData }));
             alert(`Đã tải brochure: ${file.name}`);
           } catch (err) {
@@ -610,7 +1150,20 @@ export function ProductOverviewPage({ currentUser }) {
           setFormProduct(prev => ({ ...prev, brochure: brochureData }));
         } else {
           try {
-            await productService.uploadProductBrochure(editingProduct, { file, ...brochureData });
+            const updated = categories.map(cat => {
+              const hasProg = cat.programs?.some(p => p.id === editingProduct);
+              if (hasProg) {
+                return {
+                  ...cat,
+                  programs: cat.programs.map(p => 
+                    p.id === editingProduct ? { ...p, brochure: brochureData } : p
+                  )
+                };
+              }
+              return cat;
+            });
+            saveMockData(updated);
+            setCategories(updated);
             setFormProduct(prev => ({ ...prev, brochure: brochureData }));
             alert(`Đã tải brochure: ${file.name}`);
           } catch (err) {
@@ -646,7 +1199,20 @@ export function ProductOverviewPage({ currentUser }) {
         setFormProduct(prev => ({ ...prev, brochure: brochureData }));
       } else {
         try {
-          await productService.uploadProductBrochure(editingProduct, brochureData);
+          const updated = categories.map(cat => {
+            const hasProg = cat.programs?.some(p => p.id === editingProduct);
+            if (hasProg) {
+              return {
+                ...cat,
+                programs: cat.programs.map(p => 
+                  p.id === editingProduct ? { ...p, brochure: brochureData } : p
+                )
+              };
+            }
+            return cat;
+          });
+          saveMockData(updated);
+          setCategories(updated);
           setFormProduct(prev => ({ ...prev, brochure: brochureData }));
           alert("Đã gắn link Brochure thành công!");
         } catch (err) {
@@ -697,7 +1263,20 @@ export function ProductOverviewPage({ currentUser }) {
         }));
       } else {
         try {
-          await productService.uploadProductDocuments(editingProduct, { files: validFiles, newDocs });
+          const updated = categories.map(cat => {
+            const hasProg = cat.programs?.some(p => p.id === editingProduct);
+            if (hasProg) {
+              return {
+                ...cat,
+                programs: cat.programs.map(p => 
+                  p.id === editingProduct ? { ...p, documents: [...(p.documents || []), ...newDocs] } : p
+                )
+              };
+            }
+            return cat;
+          });
+          saveMockData(updated);
+          setCategories(updated);
           setFormProduct(prev => ({
             ...prev,
             documents: [...(prev.documents || []), ...newDocs]
@@ -757,7 +1336,20 @@ export function ProductOverviewPage({ currentUser }) {
         }));
       } else {
         try {
-          await productService.uploadProductDocuments(editingProduct, { files: validFiles, newDocs });
+          const updated = categories.map(cat => {
+            const hasProg = cat.programs?.some(p => p.id === editingProduct);
+            if (hasProg) {
+              return {
+                ...cat,
+                programs: cat.programs.map(p => 
+                  p.id === editingProduct ? { ...p, documents: [...(p.documents || []), ...newDocs] } : p
+                )
+              };
+            }
+            return cat;
+          });
+          saveMockData(updated);
+          setCategories(updated);
           setFormProduct(prev => ({
             ...prev,
             documents: [...(prev.documents || []), ...newDocs]
@@ -811,7 +1403,20 @@ export function ProductOverviewPage({ currentUser }) {
         }));
       } else {
         try {
-          await productService.removeProductDocument(editingProduct, docId);
+          const updated = categories.map(cat => {
+            const hasProg = cat.programs?.some(p => p.id === editingProduct);
+            if (hasProg) {
+              return {
+                ...cat,
+                programs: cat.programs.map(p => 
+                  p.id === editingProduct ? { ...p, documents: (p.documents || []).filter(d => d.id !== docId) } : p
+                )
+              };
+            }
+            return cat;
+          });
+          saveMockData(updated);
+          setCategories(updated);
           setFormProduct(prev => ({
             ...prev,
             documents: (prev.documents || []).filter(d => d.id !== docId)
@@ -823,6 +1428,7 @@ export function ProductOverviewPage({ currentUser }) {
       }
     }
   };
+
   if (loading) {
     return (
       <div className="w-full py-20 text-center flex flex-col items-center justify-center">
@@ -847,7 +1453,7 @@ export function ProductOverviewPage({ currentUser }) {
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
                   : "bg-amber-50 text-amber-700 border-amber-200"
               }`}>
-                {apiMode === "real" ? "API Live" : "Mock Data Mode"}
+                {apiMode === "real" ? "API Live" : "Mock Local Storage"}
               </span>
             </div>
             <p className="text-slate-500 text-sm m-0 mt-1">
@@ -856,7 +1462,7 @@ export function ProductOverviewPage({ currentUser }) {
           </div>
           {canManageProducts && (
             <button
-              className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200"
+              className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
               onClick={handleOpenNewCategory}
             >
               <i className="fa fa-folder-plus text-base"></i> + Thêm danh mục
@@ -929,17 +1535,19 @@ export function ProductOverviewPage({ currentUser }) {
 
       {/* 2. BỘ LỌC TÌM KIẾM (Chỉ hiện ở view tổng quan) */}
       {viewMode === "overview" && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-4">
-              <label className="block font-semibold text-xs text-slate-500 mb-1.5">Tìm kiếm chương trình</label>
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 md:p-5 shadow-sm mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <div className="md:col-span-12 xl:col-span-6">
+              <label className="block font-semibold text-xs text-slate-500 mb-1">Tìm kiếm chương trình</label>
               <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-slate-450">
-                  <i className="fa fa-search"></i>
+                <span className="absolute left-3 text-slate-400 flex items-center justify-center pointer-events-none">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </span>
                 <input
                   type="text"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                  className="w-full h-10 bg-white border border-slate-200 rounded-xl pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                   placeholder="Nhập tên chương trình, quốc gia, tag..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -947,53 +1555,31 @@ export function ProductOverviewPage({ currentUser }) {
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1.5">Danh mục lớn</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
+            <div className="md:col-span-4 xl:col-span-2">
+              <label className="block font-semibold text-xs text-slate-500 mb-1">Danh mục lớn</label>
+              <CustomDropdown
                 value={selectedCategoryName}
-                onChange={(e) => setSelectedCategoryName(e.target.value)}
-              >
-                {categoryNames.map((name, i) => (
-                  <option key={i} value={name}>{name}</option>
-                ))}
-              </select>
+                options={categoryOptions}
+                onChange={setSelectedCategoryName}
+              />
             </div>
 
-            <div className="col-span-1 md:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1.5">Quốc gia</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
+            <div className="md:col-span-4 xl:col-span-2">
+              <label className="block font-semibold text-xs text-slate-500 mb-1">Quốc gia</label>
+              <CustomDropdown
                 value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-              >
-                {ALL_COUNTRIES_MOCK.map((country, i) => (
-                  <option key={i} value={country}>{country}</option>
-                ))}
-              </select>
+                options={countryOptions}
+                onChange={setSelectedCountry}
+              />
             </div>
 
-            <div className="col-span-1 md:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1.5">Trạng thái</label>
-              <select
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
+            <div className="md:col-span-4 xl:col-span-2">
+              <label className="block font-semibold text-xs text-slate-500 mb-1">Trạng thái</label>
+              <CustomDropdown
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="all">Tất cả</option>
-                <option value="active">Đang hoạt động</option>
-                <option value="coming_soon">Sắp mở</option>
-                <option value="expired">Tạm ngưng</option>
-              </select>
-            </div>
-
-            <div className="col-span-1 md:col-span-2">
-              <button
-                className="w-full bg-transparent hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-xl py-2 flex items-center justify-center gap-2 font-semibold text-[13.5px] transition-colors"
-                onClick={handleResetFilters}
-              >
-                <i className="fa fa-rotate"></i> Reset
-              </button>
+                options={statusOptions}
+                onChange={setSelectedStatus}
+              />
             </div>
           </div>
         </div>
@@ -1010,59 +1596,87 @@ export function ProductOverviewPage({ currentUser }) {
 
               return (
                 <div key={cat.id} className="flex flex-col">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all duration-305 hover:-translate-y-1.5 hover:shadow-lg hover:shadow-cyan-900/10 flex flex-col h-full">
-                    {/* Header Card với Nền Gradient */}
-                    <div
-                      className="h-[120px] p-6 text-white relative flex flex-col justify-end"
-                      style={{
-                        background: cat.imageGradient || "linear-gradient(135deg, #003366 0%, #002244 100%)",
-                        opacity: isHidden ? 0.75 : 1
-                      }}
-                    >
-                      {/* Quản lý category buttons (Admin/Quản lý mới thấy) */}
-                      {canManageProducts && (
-                        <div className="absolute top-4 left-4 flex gap-2 z-10">
-                          <button
-                            type="button"
-                            className="bg-black/40 backdrop-blur-md text-white border border-white/20 w-8 h-8 rounded-full force-rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white/95 hover:text-cyan-900 hover:scale-110"
-                            title="Sửa danh mục"
-                            onClick={() => handleEditCategory(cat)}
-                          >
-                            <svg className="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-2.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            className="bg-black/40 backdrop-blur-md text-white border border-white/20 w-8 h-8 rounded-full force-rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white/95 hover:text-cyan-900 hover:scale-110"
-                            title={isHidden ? "Hiện danh mục" : "Ẩn danh mục"}
-                            onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                          >
-                            {isHidden ? (
-                              <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                              </svg>
-                            ) : (
-                              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
+                  <div className="relative bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-shadow duration-200 hover:shadow-md flex flex-col h-full">
+                    {/* Header Card với Ảnh Nền */}
+                    <div className={`relative overflow-hidden rounded-t-2xl h-[180px] md:h-[190px] ${isHidden ? "opacity-75" : ""}`}>
+                      {/* Fallback pattern in case image fails or is empty */}
+                      <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center text-slate-400 gap-1.5 force-rounded-t-2xl">
+                        <svg className="w-10 h-10 text-slate-350" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-[11px] font-medium tracking-wide">Chưa có ảnh bìa</span>
+                      </div>
+
+                      {/* Actual Image */}
+                      {cat.coverImageUrl && (
+                        <img
+                          src={cat.coverImageUrl}
+                          alt={cat.name}
+                          className="absolute inset-0 h-full w-full object-cover force-rounded-t-2xl"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
                       )}
+                      
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-900/25 to-slate-900/15" />
 
-                      <span className="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/15">
-                        {displayPrograms.length} Chương trình
-                      </span>
-
-                      <div>
-                        <h5 className="text-xl font-bold m-0 [text-shadow:0_2px_4px_rgba(0,0,0,0.15)] leading-tight flex items-center flex-wrap gap-2">
-                          {cat.name}
-                          {isHidden && (
-                            <span className="bg-red-650 text-white font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">ĐÃ ẨN</span>
+                      <div className="relative z-10 flex h-full flex-col p-5 justify-between">
+                        <div className="flex items-start justify-between gap-3">
+                          {canManageProducts ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEditCategory(cat);
+                                }}
+                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/90 text-amber-500 shadow-sm transition hover:scale-105 hover:bg-white force-rounded-full cursor-pointer"
+                                aria-label="Sửa danh mục"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-2.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleToggleCategoryStatus(cat.id, cat.status);
+                                }}
+                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/90 text-cyan-700 shadow-sm transition hover:scale-105 hover:bg-white force-rounded-full cursor-pointer"
+                                aria-label="Ẩn hoặc hiện danh mục"
+                              >
+                                {isHidden ? (
+                                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <div />
                           )}
-                        </h5>
+
+                          <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold border border-white/15 text-white">
+                            {displayPrograms.length} Chương trình
+                          </span>
+                        </div>
+
+                        <div>
+                          <h5 className="text-xl font-bold m-0 [text-shadow:0_2px_4px_rgba(0,0,0,0.15)] leading-tight flex items-center flex-wrap gap-2 text-white">
+                            {cat.name}
+                            {isHidden && (
+                              <span className="bg-red-650 text-white font-bold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">ĐÃ ẨN</span>
+                            )}
+                          </h5>
+                        </div>
                       </div>
                     </div>
 
@@ -1455,48 +2069,160 @@ export function ProductOverviewPage({ currentUser }) {
                     </div>
 
                     <div>
-                      <label className="block font-semibold text-xs text-slate-500 mb-1.5">Nền Gradient danh mục (Chọn bảng màu hoặc điền mã màu)</label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {BG_PALETTES.slice(0, 5).map((palette, i) => (
-                          <div
-                            key={i}
-                            className={`w-10 h-10 rounded-lg cursor-pointer border-2 transition-all duration-200 [box-shadow:inset_0_2px_4px_rgba(0,0,0,0.1)] hover:scale-105 ${
-                              formCategory.imagePalette === palette.value 
-                                ? "border-slate-900 scale-110 shadow-md" 
-                                : "border-transparent"
-                            }`}
-                            style={{ background: palette.value }}
-                            title={palette.label}
-                            onClick={() => setFormCategory({ ...formCategory, imagePalette: palette.value, customGradient: "" })}
-                          />
-                        ))}
-                        <button
-                          type="button"
-                          className={`border rounded-xl text-xs px-3.5 py-2 font-semibold transition-all ${
-                            formCategory.imagePalette === "custom" 
-                              ? "bg-slate-800 text-white border-slate-800" 
-                              : "bg-transparent text-slate-650 border-slate-250 hover:bg-slate-50"
+                      <label className="block font-semibold text-xs text-slate-500 mb-1.5">Ảnh bìa danh mục</label>
+                      
+                      {!formCategory.coverImageUrl ? (
+                        <div
+                          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                            isCategoryCoverDragging ? "border-cyan-500 bg-cyan-50/30" : "border-slate-200 hover:border-slate-350 bg-slate-50/50"
                           }`}
-                          onClick={() => setFormCategory({ ...formCategory, imagePalette: "custom" })}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsCategoryCoverDragging(true);
+                          }}
+                          onDragLeave={() => setIsCategoryCoverDragging(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsCategoryCoverDragging(false);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) {
+                              if (!file.type.startsWith("image/")) {
+                                alert("Vui lòng chọn file ảnh hợp lệ!");
+                                return;
+                              }
+                              if (file.size > 2 * 1024 * 1024) {
+                                alert("Kích thước ảnh không được vượt quá 2MB!");
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                setFormCategory(prev => ({ ...prev, coverImageUrl: reader.result }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          onClick={() => categoryCoverInputRef.current?.click()}
                         >
-                          Tự điền mã màu
-                        </button>
-                      </div>
-
-                      {formCategory.imagePalette === "custom" && (
-                        <div className="animate-[fadeIn_0.2s_ease-out]">
                           <input
-                            type="text"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
-                            placeholder="Ví dụ: linear-gradient(135deg, #FF0000 0%, #000000 100%)"
-                            value={formCategory.customGradient}
-                            onChange={(e) => setFormCategory({ ...formCategory, customGradient: e.target.value })}
+                            type="file"
+                            ref={categoryCoverInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (!file.type.startsWith("image/")) {
+                                  alert("Vui lòng chọn file ảnh hợp lệ!");
+                                  return;
+                                }
+                                if (file.size > 2 * 1024 * 1024) {
+                                  alert("Kích thước ảnh không được vượt quá 2MB!");
+                                  return;
+                                }
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  setFormCategory(prev => ({ ...prev, coverImageUrl: reader.result }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
                           />
-                          <span className="text-slate-400 block mt-1.5 text-[11px]">
-                            Điền mã CSS Gradient hợp lệ. Định dạng: linear-gradient(...)
-                          </span>
+                          <svg className="mx-auto h-8 w-8 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-xs font-semibold text-slate-600 mb-1">
+                            Kéo thả ảnh vào đây hoặc nhấp để chọn ảnh
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            Hỗ trợ PNG, JPG, JPEG, WEBP lên đến 2MB
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="relative border border-slate-200 rounded-2xl overflow-hidden bg-slate-50">
+                          <div className="h-[140px] w-full relative">
+                            {/* Fallback pattern in case the URL is invalid or broken */}
+                            <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center text-slate-400 gap-1.5">
+                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-[10px] font-medium tracking-wide">Đường dẫn ảnh không khả dụng</span>
+                            </div>
+                            
+                            <img
+                              src={formCategory.coverImageUrl}
+                              alt="Preview"
+                              className="absolute inset-0 w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                          <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between gap-2">
+                            <div className="text-[11px] text-slate-500 truncate max-w-[65%]" title={formCategory.coverImageUrl}>
+                              Link: {formCategory.coverImageUrl}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                className="px-2.5 py-1.5 text-[11.5px] font-semibold border border-slate-250 hover:bg-slate-50 text-slate-650 rounded-xl transition-colors cursor-pointer"
+                                onClick={() => categoryCoverInputRef.current?.click()}
+                              >
+                                Thay đổi
+                              </button>
+                              <button
+                                type="button"
+                                className="px-2.5 py-1.5 text-[11.5px] font-semibold bg-red-50 hover:bg-red-100 text-red-650 rounded-xl transition-colors cursor-pointer"
+                                onClick={() => setFormCategory({ ...formCategory, coverImageUrl: "" })}
+                              >
+                                Xóa ảnh
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <input
+                            type="file"
+                            ref={categoryCoverInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (!file.type.startsWith("image/")) {
+                                  alert("Vui lòng chọn file ảnh hợp lệ!");
+                                  return;
+                                }
+                                if (file.size > 2 * 1024 * 1024) {
+                                  alert("Kích thước ảnh không được vượt quá 2MB!");
+                                  return;
+                                }
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  setFormCategory(prev => ({ ...prev, coverImageUrl: reader.result }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
                         </div>
                       )}
+                      
+                      <div className="mt-3">
+                        <input
+                          type="text"
+                          placeholder="Dán hoặc nhập trực tiếp link ảnh bìa (URL)..."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                          value={formCategory.coverImageUrl}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            if (value && !/^https?:\/\//i.test(value) && !value.startsWith("data:")) {
+                              if (value.includes(".") && value.length > 3) {
+                                value = "https://" + value;
+                              }
+                            }
+                            setFormCategory({ ...formCategory, coverImageUrl: value });
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <div>

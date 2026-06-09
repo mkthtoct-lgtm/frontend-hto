@@ -111,8 +111,6 @@ const getSidebarProducts = () => {
 export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar }) => {
   // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
   const [openMenu, setOpenMenu] = useState("sanpham");
-  const [openProductCategory, setOpenProductCategory] = useState("duhocduc");
-  const sidebarProducts = getSidebarProducts();
   const isProductPage =
     ["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham", "productOverview"].includes(currentPage) ||
     currentPage.startsWith("product:");
@@ -244,52 +242,11 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
                   Tổng quan sản phẩm
                 </a>
               </li>
-              {PRODUCT_TYPES.map((type) => {
-                const products = sidebarProducts.filter((product) => product.type === type.id);
-                const isTypeActive =
-                  currentPage === type.id ||
-                  products.some((product) => currentPage === `product:${product.id}`);
-
-                return (
-                  <li className="menu-item mb-1" key={type.id}>
-                    <a className={`menu-link d-flex align-items-center px-3 py-2 rounded-2 ${isTypeActive ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.(type.id); }}>
-                      <span style={{ flex: 1 }}>{type.label}</span>
-                      <span
-                        className="d-inline-flex"
-                        style={{ cursor: "pointer", padding: "2px" }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setOpenProductCategory(openProductCategory === type.id ? "" : type.id);
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openProductCategory === type.id || isTypeActive ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </span>
-                    </a>
-                    {products.length > 0 && (openProductCategory === type.id || isTypeActive) && (
-                      <ul className="list-unstyled mb-1" style={{ paddingLeft: "14px" }}>
-                        {products.map((product) => (
-                          <li className="menu-item" key={product.id}>
-                            <a
-                              className={`menu-link d-block px-3 py-1 rounded-2 ${currentPage === `product:${product.id}` ? "text-primary fw-semibold" : "text-body-secondary"}`}
-                              style={{ textDecoration: "none", fontSize: "12px" }}
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                onNavigate?.(`product:${product.id}`);
-                              }}
-                            >
-                              {product.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("nophosoonline"); }}>
+                  Nộp hồ sơ online
+                </a>
+              </li>
             </ul>
           </li>
 
