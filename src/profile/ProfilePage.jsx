@@ -668,17 +668,20 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   return (
     <div className="profile-page mx-auto w-full max-w-[1280px] bg-[#f8fbff] px-3 py-4 text-slate-900 app-dark:bg-[#151515] app-dark:text-slate-100 sm:px-4">
         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(30,64,175,0.08)] app-dark:border-slate-700 app-dark:bg-slate-900">
-        <div className="relative h-[150px] overflow-hidden bg-gradient-to-br from-indigo-500 via-sky-300 to-blue-500 sm:h-[180px]">
-          <div className="absolute inset-0 opacity-70">
-            <div className="absolute -left-16 top-5 h-48 w-[520px] rotate-[-8deg] rounded-[100%] bg-white/20 blur-sm" />
-            <div className="absolute left-[16%] top-20 h-28 w-[520px] rotate-[11deg] rounded-[100%] bg-white/35 blur-[2px]" />
-            <div className="absolute right-[-8%] top-[-28px] h-72 w-72 rounded-full border-[34px] border-white/18" />
-          </div>
+        <div className="relative h-[150px] overflow-hidden  sm:h-[180px]">
+          
           <img
-            className="absolute inset-0 h-full w-full object-cover opacity-35 mix-blend-screen"
+            className="absolute inset-0 h-full w-full object-cover"
             src={profile.bannerUrl || "/assets/images/banner-second.jpg"}
             alt="Ảnh banner hồ sơ"
+            onLoad={(event) => {
+              event.currentTarget.style.display = "block";
+            }}
             onError={(event) => {
+              if (!event.currentTarget.src.includes("/assets/images/banner-second.jpg")) {
+                event.currentTarget.src = "/assets/images/banner-second.jpg";
+                return;
+              }
               event.currentTarget.style.display = "none";
             }}
           />
@@ -1024,20 +1027,23 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
                           Nhập URL, chọn ảnh từ máy hoặc kéo thả ảnh vào khung xem trước.
                         </p>
                       </div>
-                      <label className="mt-4 grid gap-[7px] text-[13px] font-extrabold text-slate-700 app-dark:text-slate-200">
-                        URL {label.toLowerCase()}
-                        <input className={ui.input} value={formData[field]} onChange={(event) => handleFieldChange(field, event.target.value)} />
-                      </label>
-                      <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 app-dark:border-slate-700 app-dark:text-slate-100 app-dark:hover:bg-slate-800">
-                        <Icon name="camera" className="h-4 w-4" />
-                        Chọn ảnh từ máy
-                        <input
-                          className="hidden"
-                          type="file"
-                          accept="image/*"
-                          onChange={(event) => handleImageFile(field, event.target.files?.[0])}
-                        />
-                      </label>
+                      
+                      <div className="mt-4 grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_184px]">
+                        <label className="flex-1 grid gap-[7px] text-[13px] font-extrabold text-slate-700 app-dark:text-slate-200">
+                          URL {label.toLowerCase()}
+                          <input className={ui.input} value={formData[field]} onChange={(event) => handleFieldChange(field, event.target.value)} />
+                        </label>
+                        <label className="inline-flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 app-dark:border-slate-700 app-dark:text-slate-100 app-dark:hover:bg-slate-800">
+                          <Icon name="camera" className="h-4 w-4" />
+                          Chọn ảnh từ máy
+                          <input
+                            className="hidden"
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) => handleImageFile(field, event.target.files?.[0])}
+                          />
+                        </label>
+                      </div>
                     </>
                   );
                 })()}
