@@ -14,6 +14,48 @@ const ROLE_LABELS = {
   user: "Nguoi dung",
 };
 
+const COLLABORATOR_ROLE_ID = "69fc5af682ef85451120772f";
+const PROFILE_EXTRAS_KEY = "hto_profile_extras";
+
+const getInitials = (name = "") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "HT";
+
+const readProfileExtras = (userId) => {
+  try {
+    const allExtras = JSON.parse(window.localStorage.getItem(PROFILE_EXTRAS_KEY) || "{}");
+    return allExtras[userId] || {};
+  } catch {
+    return {};
+  }
+};
+
+const HeaderAvatar = ({ avatarUrl, name, status = false }) => {
+  const [imageError, setImageError] = useState(false);
+  const showImage = avatarUrl && !imageError;
+
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
+
+  return (
+    <div className={`avatar avatar-sm rounded-circle ${status ? "avatar-status-success" : ""}`}>
+      {showImage ? (
+        <img src={avatarUrl} alt={name || "Avatar"} onError={() => setImageError(true)} />
+      ) : (
+        <div className="d-flex h-100 w-100 align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold">
+          {getInitials(name)}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const formatDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -99,9 +141,12 @@ const notifyNotificationsChanged = (detail = {}) => {
 };
 
 export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout }) => {
+  const profileExtras = user?.id ? readProfileExtras(user.id) : {};
   const displayName = user?.fullName || user?.name || "Nguoi dung";
   const displayEmail = user?.email || "";
   const displayRole = ROLE_LABELS[user?.role] || "Tai khoan";
+  const avatarUrl = user?.avatarUrl || profileExtras.avatarUrl || "";
+  const isCollaborator = user?.role === "congtacvien" || user?.roleId === COLLABORATOR_ROLE_ID;
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [notificationItems, setNotificationItems] = useState([]);
   const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
@@ -188,7 +233,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
       }
     };
 
-    if (user?.id) {
+    if (user?.id && isCollaborator) {
       void loadReferralInfo();
     } else {
       setReferralInfo(null);
@@ -198,7 +243,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [isCollaborator, user?.id]);
 
   const copyReferralUrl = async () => {
     const url = referralInfo?.referralUrl;
@@ -317,10 +362,10 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
               </a>
               {isNotificationMenuOpen && (
                 <div
-                  className="position-absolute end-0 mt-2 card shadow-lg border-0 text-start"
+                  className="header-notification-popover position-absolute end-0 mt-2 card shadow-lg border-0 text-start"
                   style={{ width: "340px", maxWidth: "calc(100vw - 24px)", zIndex: 1085 }}
                 >
-                  <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                  <div className="header-notification-head card-header bg-white border-0 d-flex justify-content-between align-items-center">
                     <div>
                       <h6 className="mb-0">Thông báo nội bộ</h6>
                       <div className="text-body-secondary" style={{ fontSize: "12px" }}>
@@ -335,12 +380,12 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                       </span>
                     )}
                   </div>
-                  <div className="card-body p-2" style={{ maxHeight: "320px", overflowY: "auto" }}>
+                  <div className="header-notification-body card-body p-2" style={{ maxHeight: "320px", overflowY: "auto" }}>
                     {notificationItems.slice(0, 6).map((notification) => (
                       <button
                         key={notification.id}
                         type="button"
-                        className={`w-100 border-0 rounded text-start p-2 mb-1 ${
+                        className={`header-notification-item w-100 border-0 rounded-3 text-start p-2 mb-1 ${
                           notification.isRead ? "bg-body" : "bg-primary-subtle"
                         }`}
                         onClick={() => {
@@ -384,7 +429,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                       </div>
                     )}
                   </div>
-                  <div className="card-footer bg-white border-0 p-2">
+                  <div className="header-notification-foot card-footer bg-white border-0 p-2">
                     <button
                       type="button"
                       className="btn btn-primary w-100"
@@ -406,13 +451,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
               <i className="icon-message-square-text"></i>
               <span className="visually-hidden">Inbox</span>
             </a>
-            <a
-              href="calendar.html"
-              className="btn btn-md btn-icon btn-action-gray d-none d-sm-flex"
-            >
-              <i className="icon-calendar"></i>
-              <span className="visually-hidden">Calendar</span>
-            </a>
+         
             <a
               href="#"
               className="btn btn-md btn-icon btn-action-gray theme-btn"
@@ -438,15 +477,11 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                     {displayRole}
                   </small>
                 </div>
-                <div className="avatar avatar-sm rounded-circle avatar-status-success">
-                  <img src="/assets/images/avatar/avatar1.webp" alt="" />
-                </div>
+                <HeaderAvatar avatarUrl={avatarUrl} name={displayName} status />
               </a>
               <ul className="dropdown-menu dropdown-menu-end mt-1" style={{ width: "280px" }}>
                 <li className="d-flex align-items-center p-2">
-                  <div className="avatar avatar-sm rounded-circle">
-                    <img src="/assets/images/avatar/avatar1.webp" alt="" />
-                  </div>
+                  <HeaderAvatar avatarUrl={avatarUrl} name={displayName} />
                   <div className="ms-2">
                     <div className="fw-bold text-dark">{displayName}</div>
                     <small className="text-body d-block lh-sm">{displayEmail}</small>
@@ -455,51 +490,59 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                 <li>
                   <div className="dropdown-divider my-1"></div>
                 </li>
-                <li className="px-2 py-2">
-                  <div className="rounded border bg-light p-2">
-                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
-                      <span className="fw-semibold text-dark" style={{ fontSize: "13px" }}>
-                        Mã giới thiệu
-                      </span>
-                      {referralLoading ? (
-                        <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
-                      ) : (
-                        <span className="badge bg-primary">
-                          {referralInfo?.referralCode || "--"}
-                        </span>
-                      )}
-                    </div>
-                    {referralError ? (
-                      <div className="text-danger" style={{ fontSize: "12px" }}>
-                        {referralError}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-body-secondary text-truncate mb-2" style={{ fontSize: "12px" }}>
-                          {referralInfo?.referralUrl || "Đang tải link giới thiệu..."}
+                {isCollaborator && (
+                  <>
+                    <li className="px-2 py-2">
+                      <div className="rounded border bg-light p-2">
+                        <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                          <span className="fw-semibold text-dark" style={{ fontSize: "13px" }}>
+                            Mã giới thiệu
+                          </span>
+                          {referralLoading ? (
+                            <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                          ) : (
+                            <span className="badge bg-primary">
+                              {referralInfo?.referralCode || "--"}
+                            </span>
+                          )}
                         </div>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-primary w-100"
-                          disabled={!referralInfo?.referralUrl || referralLoading}
-                          onClick={copyReferralUrl}
-                        >
-                          <i className="fi fi-rr-copy-alt me-1"></i>
-                          {referralCopied ? "Đã sao chép" : "Sao chép link"}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </li>
-                <li>
-                  <div className="dropdown-divider my-1"></div>
-                </li>
+                        {referralError ? (
+                          <div className="text-danger" style={{ fontSize: "12px" }}>
+                            {referralError}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-body-secondary text-truncate mb-2" style={{ fontSize: "12px" }}>
+                              {referralInfo?.referralUrl || "Đang tải link giới thiệu..."}
+                            </div>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-primary w-100"
+                              disabled={!referralInfo?.referralUrl || referralLoading}
+                              onClick={copyReferralUrl}
+                            >
+                              <i className="fi fi-rr-copy-alt me-1"></i>
+                              {referralCopied ? "Đã sao chép" : "Sao chép link"}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                    <li>
+                      <div className="dropdown-divider my-1"></div>
+                    </li>
+                  </>
+                )}
                 <li>
                   <a
                     className="dropdown-item d-flex align-items-center gap-2"
-                    href="profile.html"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate?.("profile");
+                    }}
                   >
-                    <i className="fi fi-rr-user scale-1x"></i> View Profile
+                    <i className="fi fi-rr-user scale-1x"></i> Hồ sơ cá nhân
                   </a>
                 </li>
                 <li>
@@ -514,10 +557,13 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                 <li>
                   <a
                     className="dropdown-item d-flex align-items-center gap-2"
-                    href="profile.html"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate?.("profile");
+                    }}
                   >
-                    <i className="fi fi-rr-settings scale-1x"></i> Account
-                    Settings
+                    <i className="fi fi-rr-settings scale-1x"></i> Cài đặt tài khoản
                   </a>
                 </li>
                 <li>

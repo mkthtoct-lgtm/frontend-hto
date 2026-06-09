@@ -72,7 +72,7 @@ export function TailwindDropdown({
       <button
         ref={buttonRef}
         type="button"
-        className={`flex min-h-[42px] w-full items-center justify-between gap-3 rounded-2xl bg-white px-3.5 py-2 text-left text-sm transition app-dark:bg-slate-900 ${
+        className={`tailwind-dropdown-button flex min-h-[42px] w-full items-center justify-between gap-3 rounded-2xl bg-white px-3.5 py-2 text-left text-sm transition app-dark:bg-slate-900 ${
           error
             ? "text-red-900 ring-4 ring-red-100 app-dark:text-red-100 app-dark:ring-red-950"
             : "text-slate-800 hover:bg-slate-50 focus:bg-white focus:outline-none app-dark:text-slate-100 app-dark:hover:bg-slate-800"
@@ -80,7 +80,7 @@ export function TailwindDropdown({
         disabled={disabled}
         onClick={toggleOpen}
       >
-        <span className={`min-w-0 truncate leading-5 ${selectedOption ? "" : "text-slate-400"}`}>
+        <span className={`tailwind-dropdown-label min-w-0 truncate leading-5 ${selectedOption ? "" : "text-slate-400"}`}>
           {displayLabel}
         </span>
         <svg
@@ -102,7 +102,7 @@ export function TailwindDropdown({
         createPortal(
           <div
             ref={popupRef}
-            className="fixed z-[2000] max-h-64 overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl ring-1 ring-black/5 app-dark:border-slate-700 app-dark:bg-slate-900"
+            className="tailwind-dropdown-menu fixed z-[2000] max-h-64 overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl ring-1 ring-black/5 app-dark:border-slate-700 app-dark:bg-slate-900"
             style={{
               left: popupStyle.left,
               top: popupStyle.top,
@@ -118,10 +118,10 @@ export function TailwindDropdown({
                 <button
                   key={`${option.value}-${option.label}`}
                   type="button"
-                  className={`flex w-full min-w-max items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                  className={`tailwind-dropdown-item flex w-full min-w-max items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
                     selected
-                      ? "bg-sky-50 font-semibold text-sky-700 app-dark:bg-sky-950 app-dark:text-sky-200"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 app-dark:text-slate-200 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
+                      ? "tailwind-dropdown-item-selected bg-sky-50 font-semibold text-sky-700 app-dark:bg-sky-950 app-dark:text-sky-200"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 app-dark:text-slate-100 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
                   }`}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {

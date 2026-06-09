@@ -27,6 +27,7 @@ import { ProductOverviewPage } from "./products/ProductOverviewPage";
 import { HomePage } from "./home/HomePage";
 import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
+import { ProfilePage } from "./profile/ProfilePage";
 import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
 import { AUTH_EVENTS } from "./auth/session";
 
@@ -348,6 +349,18 @@ function App() {
     setAuthMode("login");
   };
 
+  const handleUserUpdate = (nextUserData) => {
+    const nextUser = {
+      ...user,
+      ...nextUserData,
+      name: nextUserData.name || nextUserData.fullName || user?.name || "",
+      fullName: nextUserData.fullName || nextUserData.name || user?.fullName || "",
+    };
+
+    setUser(nextUser);
+    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(nextUser));
+  };
+
   if (!user) {
     let authContent;
 
@@ -425,7 +438,9 @@ function App() {
           currentPage === "notifications" ? " notifications-wrapper" : ""
         }`}
       >
-        {currentPage === "users" ? (
+        {currentPage === "profile" ? (
+          <ProfilePage currentUser={user} onUserUpdate={handleUserUpdate} />
+        ) : currentPage === "users" ? (
           // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
           <UserList currentUser={user} />
         ) : currentPage === "departments" ? (

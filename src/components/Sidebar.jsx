@@ -192,6 +192,8 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             </a>
           </li>
 
+          
+
           <li className="menu-item mb-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboardStats" ? "text-primary fw-bold" : "text-body-secondary"}`}
