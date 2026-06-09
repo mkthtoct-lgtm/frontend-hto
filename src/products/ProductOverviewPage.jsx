@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { API_BASE_URL } from "../config/api";
+import { authFetch, getAuthHeaders } from "../auth/session";
 
 // ==========================================
 // INITIAL MOCK CATEGORIES AND PROGRAMS
@@ -407,6 +409,48 @@ const saveMockData = (data) => {
   }
 };
 
+const USE_MOCK_WHEN_API_FAIL = true;
+
+const CATEGORY_UI_META_BY_NAME = {};
+INITIAL_CATEGORIES.forEach(cat => {
+  CATEGORY_UI_META_BY_NAME[cat.name] = {
+    coverImageUrl: cat.coverImageUrl,
+    programs: cat.programs || [],
+    products: cat.programs || []
+  };
+});
+
+const mapApiCategoryToUiCategory = (apiCategory) => {
+  const name = apiCategory.name || "";
+  const meta = CATEGORY_UI_META_BY_NAME[name] || {};
+  const progs = Array.isArray(meta.programs || meta.products) ? (meta.programs || meta.products) : [];
+
+  return {
+    id: apiCategory._id || apiCategory.id,
+    name: name,
+    description: apiCategory.description || "",
+    status: apiCategory.status || "active",
+    updatedAt: apiCategory.updatedAt || "",
+    coverImageUrl: meta.coverImageUrl || "",
+    programs: progs,
+    products: progs
+  };
+};
+
+const normalizeSingleResponse = (payload) => {
+  if (!payload) return null;
+  if (payload.success && payload.data && typeof payload.data === "object") {
+    return payload.data;
+  }
+  if (typeof payload === "object" && !Array.isArray(payload)) {
+    return payload;
+  }
+  return null;
+};
+
+const safeText = (value) => String(value || "").toLowerCase().trim();
+const safeArray = (value) => Array.isArray(value) ? value : [];
+
 
 const ALL_COUNTRIES_MOCK = [
   "Tất cả", "Đức", "Hàn Quốc", "Nhật Bản", "Đài Loan", "Úc", "Mỹ", "Canada", "Singapore", "Philippines", "Anh Quốc", "Thụy Sĩ"
@@ -441,7 +485,7 @@ const getUserRoleKey = (user) => {
 // ==========================================
 // CUSTOM DROPDOWN COMPONENT
 // ==========================================
-function CustomDropdown({ value, options, onChange }) {
+function CustomDropdown({ value, options, onChange, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -460,6 +504,8 @@ function CustomDropdown({ value, options, onChange }) {
   }, [isOpen]);
 
   const selectedOption = options.find(opt => opt.value === value) || options[0];
+  const isAll = value === "Tất cả" || value === "all";
+  const displayLabel = isAll ? placeholder : (selectedOption?.label || placeholder);
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -467,16 +513,16 @@ function CustomDropdown({ value, options, onChange }) {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full h-10 bg-white border ${
-          isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200"
-        } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        className={`w-full h-10 bg-white border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200"
+          } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="truncate pr-2">{selectedOption?.label}</span>
+        <span className={`truncate pr-2 ${isAll ? "text-slate-700 font-medium" : "text-slate-800 font-semibold"}`}>
+          {displayLabel}
+        </span>
         <svg
-          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+            }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -497,11 +543,10 @@ function CustomDropdown({ value, options, onChange }) {
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${
-                    isSelected
+                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
                       ? "bg-cyan-100 text-cyan-800 font-semibold"
                       : "text-slate-700 hover:bg-cyan-50 hover:text-cyan-700"
-                  }`}
+                    }`}
                   onClick={() => {
                     onChange(opt.value);
                     setIsOpen(false);
@@ -613,17 +658,60 @@ export function ProductOverviewPage({ currentUser }) {
     return currentUser?.name || currentUser?.username || "CTV/Đại lý HTO";
   }, [currentUser]);
 
-  // Load danh sách dữ liệu từ localStorage
-  const loadData = useCallback(() => {
+  // Load danh sách dữ liệu từ API / LocalStorage Fallback
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = getMockData();
-      setCategories(data);
-      setApiMode("mock");
+      const headers = {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      };
+
+      const response = await authFetch(`${API_BASE_URL}/product-categories`, {
+        method: "GET",
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned status ${response.status}`);
+      }
+
+      const payload = await response.json().catch(() => null);
+
+      const normalizeArrayResponse = (p) => {
+        if (!p) return [];
+        if (Array.isArray(p)) return p;
+        if (p.success && Array.isArray(p.data)) return p.data;
+        if (Array.isArray(p.items)) return p.items;
+        if (Array.isArray(p.categories)) return p.categories;
+        return [];
+      };
+
+      const apiData = normalizeArrayResponse(payload);
+
+      if (apiData && apiData.length > 0) {
+        const mappedCategories = apiData.map(mapApiCategoryToUiCategory);
+        setCategories(mappedCategories);
+        setApiMode("api");
+      } else {
+        if (USE_MOCK_WHEN_API_FAIL) {
+          console.warn("[API] Empty categories returned, falling back to mock data");
+          setCategories(getMockData());
+          setApiMode("mock");
+        } else {
+          setCategories([]);
+          setApiMode("api");
+        }
+      }
     } catch (err) {
-      console.error(err);
-      setError("Không thể tải danh sách sản phẩm.");
+      console.warn("[API] Failed to fetch product categories:", err.message);
+      if (USE_MOCK_WHEN_API_FAIL) {
+        setCategories(getMockData());
+        setApiMode("mock");
+      } else {
+        setError("Không thể tải danh sách sản phẩm.");
+      }
     } finally {
       setLoading(false);
     }
@@ -648,19 +736,22 @@ export function ProductOverviewPage({ currentUser }) {
 
   // Lọc danh mục & sản phẩm con
   const filteredCategories = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return categories
+    const q = safeText(searchQuery);
+    return safeArray(categories)
       .map(cat => {
+        if (!cat) return null;
+        const progs = safeArray(cat.programs || cat.products);
         // Lọc các sản phẩm con
-        const filteredProgs = (cat.programs || []).filter(prog => {
+        const filteredProgs = progs.filter(prog => {
+          if (!prog) return false;
           const matchSearch =
             !q ||
-            prog.name.toLowerCase().includes(q) ||
-            prog.country.toLowerCase().includes(q) ||
-            (prog.tags && prog.tags.some(t => t.toLowerCase().includes(q)));
+            safeText(prog.name).includes(q) ||
+            safeText(prog.country).includes(q) ||
+            safeArray(prog.tags).some(t => safeText(t).includes(q));
 
-          const matchCountry = selectedCountry === "Tất cả" || prog.country === selectedCountry;
-          const matchStatus = selectedStatus === "all" || prog.status === selectedStatus;
+          const matchCountry = selectedCountry === "Tất cả" || safeText(prog.country) === safeText(selectedCountry);
+          const matchStatus = selectedStatus === "all" || safeText(prog.status) === safeText(selectedStatus);
 
           return matchSearch && matchCountry && matchStatus;
         });
@@ -668,14 +759,14 @@ export function ProductOverviewPage({ currentUser }) {
         // Kiểm tra xem danh mục có khớp tìm kiếm không
         const isCatMatch =
           !q ||
-          cat.name.toLowerCase().includes(q) ||
-          cat.description.toLowerCase().includes(q);
+          safeText(cat.name).includes(q) ||
+          safeText(cat.description).includes(q);
 
         const hasMatchingPrograms = filteredProgs.length > 0;
 
         // Nếu lọc theo nước/trạng thái hoặc có từ khóa tìm kiếm
         const shouldShow =
-          (selectedCategoryName === "Tất cả" || cat.name === selectedCategoryName) &&
+          (selectedCategoryName === "Tất cả" || safeText(cat.name) === safeText(selectedCategoryName)) &&
           (isCatMatch || hasMatchingPrograms || (!q && selectedCountry === "Tất cả" && selectedStatus === "all"));
 
         if (!shouldShow) return null;
@@ -714,22 +805,24 @@ export function ProductOverviewPage({ currentUser }) {
     let activeChildren = 0;
     let docsCount = 0;
 
-    categories.forEach(c => {
-      const progs = c.programs || [];
+    safeArray(categories).forEach(c => {
+      if (!c) return;
+      const progs = safeArray(c.programs || c.products);
       totalChildren += progs.length;
       progs.forEach(p => {
+        if (!p) return;
         if (p.status === "active") activeChildren++;
         if (p.brochure) docsCount++;
-        docsCount += p.documents?.length || 0;
+        docsCount += safeArray(p.documents).length;
       });
     });
 
     return {
-      totalCategories: categories.length,
+      totalCategories: safeArray(categories).length,
       totalPrograms: totalChildren,
       activePrograms: activeChildren,
       totalDocuments: docsCount,
-      hiddenCategories: categories.filter(c => c.status === "hidden").length
+      hiddenCategories: safeArray(categories).filter(c => c && c.status === "hidden").length
     };
   }, [categories]);
 
@@ -816,14 +909,127 @@ export function ProductOverviewPage({ currentUser }) {
     const statusText = newStatus === "active" ? "hiện" : "ẩn";
     if (confirm(`Bạn có chắc chắn muốn ${statusText} danh mục này không?`)) {
       try {
-        const updated = categories.map(cat => 
+        const catToUpdate = categories.find(cat => cat.id === catId);
+        if (!catToUpdate) return;
+
+        if (apiMode === "api") {
+          const payload = {
+            name: catToUpdate.name,
+            description: catToUpdate.description || "",
+            status: newStatus
+          };
+
+          const headers = {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          };
+
+          const response = await authFetch(`${API_BASE_URL}/product-categories/${catId}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            if (response.status === 403) {
+              alert("Bạn không có quyền thực hiện thao tác này.");
+              return;
+            }
+            if (response.status === 400) {
+              const errPayload = await response.json().catch(() => null);
+              alert(errPayload?.message || errPayload?.error || `Yêu cầu không hợp lệ (Lỗi 400).`);
+              return;
+            }
+            throw new Error(`API returned status ${response.status}`);
+          }
+
+          const resPayload = await response.json().catch(() => null);
+          const normalized = normalizeSingleResponse(resPayload);
+          if (normalized) {
+            const mapped = mapApiCategoryToUiCategory(normalized);
+            const updated = categories.map(cat =>
+              cat.id === catId ? { ...cat, ...mapped, coverImageUrl: cat.coverImageUrl, programs: cat.programs } : cat
+            );
+            setCategories(updated);
+            alert(`Đã ${statusText} danh mục!`);
+            return;
+          }
+        }
+
+        // Fallback local mock
+        const updated = categories.map(cat =>
           cat.id === catId ? { ...cat, status: newStatus } : cat
         );
         saveMockData(updated);
         setCategories(updated);
         alert(`Đã ${statusText} danh mục!`);
       } catch (err) {
-        alert("Lỗi khi thay đổi trạng thái danh mục: " + err.message);
+        console.warn("[API PATCH] Failed to toggle category status:", err.message);
+        if (USE_MOCK_WHEN_API_FAIL) {
+          const updated = categories.map(cat =>
+            cat.id === catId ? { ...cat, status: newStatus } : cat
+          );
+          saveMockData(updated);
+          setCategories(updated);
+          alert(`Đã ${statusText} danh mục (Local Fallback)!`);
+        } else {
+          alert("Lỗi khi thay đổi trạng thái danh mục: " + err.message);
+        }
+      }
+    }
+  };
+
+  const handleDeleteCategory = async (catId) => {
+    if (!canManageProducts) return;
+    if (confirm("Bạn có chắc chắn muốn xóa danh mục này không? Thao tác này không thể hoàn tác.")) {
+      try {
+        if (apiMode === "api") {
+          const headers = {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          };
+          const response = await authFetch(`${API_BASE_URL}/product-categories/${catId}`, {
+            method: "DELETE",
+            headers
+          });
+
+          if (!response.ok) {
+            if (response.status === 403) {
+              alert("Bạn không có quyền thực hiện thao tác này.");
+              return;
+            }
+            if (response.status === 400) {
+              const errPayload = await response.json().catch(() => null);
+              alert(errPayload?.message || errPayload?.error || `Yêu cầu không hợp lệ (Lỗi 400).`);
+              return;
+            }
+            throw new Error(`API returned status ${response.status}`);
+          }
+
+          const updated = categories.filter(cat => cat.id !== catId);
+          setCategories(updated);
+          setEditingCategory(null);
+          alert("Đã xóa danh mục thành công!");
+          return;
+        }
+
+        // Fallback local mock
+        const updated = categories.filter(cat => cat.id !== catId);
+        saveMockData(updated);
+        setCategories(updated);
+        setEditingCategory(null);
+        alert("Đã xóa danh mục thành công!");
+      } catch (err) {
+        console.warn("[API DELETE] Failed to delete category:", err.message);
+        if (USE_MOCK_WHEN_API_FAIL) {
+          const updated = categories.filter(cat => cat.id !== catId);
+          saveMockData(updated);
+          setCategories(updated);
+          setEditingCategory(null);
+          alert("Đã xóa danh mục thành công (Local Fallback)!");
+        } else {
+          alert("Lỗi khi xóa danh mục: " + err.message);
+        }
       }
     }
   };
@@ -838,6 +1044,103 @@ export function ProductOverviewPage({ currentUser }) {
     }
 
     try {
+      if (apiMode === "api") {
+        if (editingCategory === "new") {
+          const headers = {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          };
+
+          const response = await authFetch(`${API_BASE_URL}/product-categories`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              name: formCategory.name,
+              description: formCategory.description,
+              status: formCategory.status
+            })
+          });
+
+          if (!response.ok) {
+            if (response.status === 403) {
+              alert("Bạn không có quyền thực hiện thao tác này.");
+              return;
+            }
+            if (response.status === 400) {
+              const errPayload = await response.json().catch(() => null);
+              alert(errPayload?.message || errPayload?.error || `Yêu cầu không hợp lệ (Lỗi 400).`);
+              return;
+            }
+            throw new Error(`API returned status ${response.status}`);
+          }
+
+          const resPayload = await response.json().catch(() => null);
+          const normalized = normalizeSingleResponse(resPayload);
+          if (normalized) {
+            const mapped = mapApiCategoryToUiCategory(normalized);
+            if (formCategory.coverImageUrl) {
+              mapped.coverImageUrl = formCategory.coverImageUrl;
+            }
+            const updated = [...categories, mapped];
+            setCategories(updated);
+            setEditingCategory(null);
+            alert("Đã thêm danh mục mới thành công!");
+            return;
+          }
+        } else {
+          const headers = {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          };
+
+          const response = await authFetch(`${API_BASE_URL}/product-categories/${editingCategory}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({
+              name: formCategory.name,
+              description: formCategory.description,
+              status: formCategory.status
+            })
+          });
+
+          if (!response.ok) {
+            if (response.status === 403) {
+              alert("Bạn không có quyền thực hiện thao tác này.");
+              return;
+            }
+            if (response.status === 400) {
+              const errPayload = await response.json().catch(() => null);
+              alert(errPayload?.message || errPayload?.error || `Yêu cầu không hợp lệ (Lỗi 400).`);
+              return;
+            }
+            throw new Error(`API returned status ${response.status}`);
+          }
+
+          const resPayload = await response.json().catch(() => null);
+          const normalized = normalizeSingleResponse(resPayload);
+          if (normalized) {
+            const mapped = mapApiCategoryToUiCategory(normalized);
+            const oldCategory = categories.find(cat => cat.id === editingCategory) || {};
+            const updated = categories.map(cat => {
+              if (cat.id === editingCategory) {
+                return {
+                  ...oldCategory,
+                  ...mapped,
+                  coverImageUrl: formCategory.coverImageUrl || oldCategory.coverImageUrl,
+                  programs: oldCategory.programs || []
+                };
+              }
+              return cat;
+            });
+            setCategories(updated);
+            setEditingCategory(null);
+            alert("Đã cập nhật danh mục thành công!");
+            return;
+          }
+        }
+      }
+
+      // Fallback local mock hoặc nếu apiMode !== "api"
       let updated;
       if (editingCategory === "new") {
         const newCat = {
@@ -869,7 +1172,41 @@ export function ProductOverviewPage({ currentUser }) {
       setCategories(updated);
       setEditingCategory(null);
     } catch (err) {
-      alert("Lỗi khi lưu danh mục: " + err.message);
+      console.warn("[API POST/PATCH] Failed to save category:", err.message);
+      if (USE_MOCK_WHEN_API_FAIL) {
+        let updated;
+        if (editingCategory === "new") {
+          const newCat = {
+            id: `cat-${Date.now()}`,
+            name: formCategory.name,
+            description: formCategory.description,
+            status: formCategory.status,
+            coverImageUrl: formCategory.coverImageUrl,
+            programs: []
+          };
+          updated = [...categories, newCat];
+          alert("Đã thêm danh mục mới thành công (Local Fallback)!");
+        } else {
+          updated = categories.map(cat => {
+            if (cat.id === editingCategory) {
+              return {
+                ...cat,
+                name: formCategory.name,
+                description: formCategory.description,
+                status: formCategory.status,
+                coverImageUrl: formCategory.coverImageUrl
+              };
+            }
+            return cat;
+          });
+          alert("Đã cập nhật danh mục thành công (Local Fallback)!");
+        }
+        saveMockData(updated);
+        setCategories(updated);
+        setEditingCategory(null);
+      } else {
+        alert("Lỗi khi lưu danh mục: " + err.message);
+      }
     }
   };
 
@@ -1038,7 +1375,7 @@ export function ProductOverviewPage({ currentUser }) {
       saveMockData(updated);
       setCategories(updated);
       setEditingProduct(null);
-      
+
       // Update selected view details if active
       if (selectedProduct && selectedProduct.id === editingProduct) {
         setSelectedProduct(savedProd);
@@ -1091,7 +1428,7 @@ export function ProductOverviewPage({ currentUser }) {
               if (hasProg) {
                 return {
                   ...cat,
-                  programs: cat.programs.map(p => 
+                  programs: cat.programs.map(p =>
                     p.id === editingProduct ? { ...p, brochure: brochureData } : p
                   )
                 };
@@ -1155,7 +1492,7 @@ export function ProductOverviewPage({ currentUser }) {
               if (hasProg) {
                 return {
                   ...cat,
-                  programs: cat.programs.map(p => 
+                  programs: cat.programs.map(p =>
                     p.id === editingProduct ? { ...p, brochure: brochureData } : p
                   )
                 };
@@ -1204,7 +1541,7 @@ export function ProductOverviewPage({ currentUser }) {
             if (hasProg) {
               return {
                 ...cat,
-                programs: cat.programs.map(p => 
+                programs: cat.programs.map(p =>
                   p.id === editingProduct ? { ...p, brochure: brochureData } : p
                 )
               };
@@ -1268,7 +1605,7 @@ export function ProductOverviewPage({ currentUser }) {
             if (hasProg) {
               return {
                 ...cat,
-                programs: cat.programs.map(p => 
+                programs: cat.programs.map(p =>
                   p.id === editingProduct ? { ...p, documents: [...(p.documents || []), ...newDocs] } : p
                 )
               };
@@ -1341,7 +1678,7 @@ export function ProductOverviewPage({ currentUser }) {
             if (hasProg) {
               return {
                 ...cat,
-                programs: cat.programs.map(p => 
+                programs: cat.programs.map(p =>
                   p.id === editingProduct ? { ...p, documents: [...(p.documents || []), ...newDocs] } : p
                 )
               };
@@ -1408,7 +1745,7 @@ export function ProductOverviewPage({ currentUser }) {
             if (hasProg) {
               return {
                 ...cat,
-                programs: cat.programs.map(p => 
+                programs: cat.programs.map(p =>
                   p.id === editingProduct ? { ...p, documents: (p.documents || []).filter(d => d.id !== docId) } : p
                 )
               };
@@ -1448,13 +1785,6 @@ export function ProductOverviewPage({ currentUser }) {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-bold text-slate-900 m-0">Tổng quan sản phẩm</h1>
-              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                apiMode === "real" 
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-                  : "bg-amber-50 text-amber-700 border-amber-200"
-              }`}>
-                {apiMode === "real" ? "API Live" : "Mock Local Storage"}
-              </span>
             </div>
             <p className="text-slate-500 text-sm m-0 mt-1">
               Kho danh mục chương trình và tài liệu tư vấn dành cho cộng tác viên, đại lý và nhân viên tư vấn.
@@ -1471,8 +1801,8 @@ export function ProductOverviewPage({ currentUser }) {
         </div>
       ) : (
         <div className="mb-6">
-          <button 
-            className="border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200" 
+          <button
+            className="border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
             onClick={handleGoBack}
           >
             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1485,7 +1815,7 @@ export function ProductOverviewPage({ currentUser }) {
 
       {/* 1. THỐNG KÊ (Chỉ hiện ở view tổng quan) */}
       {viewMode === "overview" && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div className="bg-white rounded-2xl p-4.5 shadow-sm border border-slate-100 flex items-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-900 flex-shrink-0 mr-4">
               <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1535,10 +1865,9 @@ export function ProductOverviewPage({ currentUser }) {
 
       {/* 2. BỘ LỌC TÌM KIẾM (Chỉ hiện ở view tổng quan) */}
       {viewMode === "overview" && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 md:p-5 shadow-sm mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+        <div className="bg-white rounded-2xl border border-slate-100 px-4 py-3 shadow-sm mb-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
             <div className="md:col-span-12 xl:col-span-6">
-              <label className="block font-semibold text-xs text-slate-500 mb-1">Tìm kiếm chương trình</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-slate-400 flex items-center justify-center pointer-events-none">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1548,7 +1877,7 @@ export function ProductOverviewPage({ currentUser }) {
                 <input
                   type="text"
                   className="w-full h-10 bg-white border border-slate-200 rounded-xl pl-9 pr-3 text-sm text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
-                  placeholder="Nhập tên chương trình, quốc gia, tag..."
+                  placeholder="Tìm kiếm chương trình..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -1556,29 +1885,29 @@ export function ProductOverviewPage({ currentUser }) {
             </div>
 
             <div className="md:col-span-4 xl:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1">Danh mục lớn</label>
               <CustomDropdown
                 value={selectedCategoryName}
                 options={categoryOptions}
                 onChange={setSelectedCategoryName}
+                placeholder="Danh mục"
               />
             </div>
 
             <div className="md:col-span-4 xl:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1">Quốc gia</label>
               <CustomDropdown
                 value={selectedCountry}
                 options={countryOptions}
                 onChange={setSelectedCountry}
+                placeholder="Quốc gia"
               />
             </div>
 
             <div className="md:col-span-4 xl:col-span-2">
-              <label className="block font-semibold text-xs text-slate-500 mb-1">Trạng thái</label>
               <CustomDropdown
                 value={selectedStatus}
                 options={statusOptions}
                 onChange={setSelectedStatus}
+                placeholder="Trạng thái"
               />
             </div>
           </div>
@@ -1618,7 +1947,7 @@ export function ProductOverviewPage({ currentUser }) {
                           }}
                         />
                       )}
-                      
+
                       {/* Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-900/25 to-slate-900/15" />
 
@@ -2016,22 +2345,20 @@ export function ProductOverviewPage({ currentUser }) {
               <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                 <button
                   type="button"
-                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${
-                    activeCategoryTab === "info"
+                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${activeCategoryTab === "info"
                       ? "text-cyan-900 border-cyan-900"
                       : "text-slate-400 border-transparent hover:text-slate-600"
-                  }`}
+                    }`}
                   onClick={() => setActiveCategoryTab("info")}
                 >
                   <i className="fa fa-info-circle mr-1.5"></i> 1. Thông tin danh mục
                 </button>
                 <button
                   type="button"
-                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${
-                    activeCategoryTab === "programs"
+                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${activeCategoryTab === "programs"
                       ? "text-cyan-900 border-cyan-900"
                       : "text-slate-400 border-transparent hover:text-slate-600 disabled:opacity-40"
-                  }`}
+                    }`}
                   onClick={() => setActiveCategoryTab("programs")}
                   disabled={editingCategory === "new"}
                 >
@@ -2070,12 +2397,11 @@ export function ProductOverviewPage({ currentUser }) {
 
                     <div>
                       <label className="block font-semibold text-xs text-slate-500 mb-1.5">Ảnh bìa danh mục</label>
-                      
+
                       {!formCategory.coverImageUrl ? (
                         <div
-                          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                            isCategoryCoverDragging ? "border-cyan-500 bg-cyan-50/30" : "border-slate-200 hover:border-slate-350 bg-slate-50/50"
-                          }`}
+                          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${isCategoryCoverDragging ? "border-cyan-500 bg-cyan-50/30" : "border-slate-200 hover:border-slate-350 bg-slate-50/50"
+                            }`}
                           onDragOver={(e) => {
                             e.preventDefault();
                             setIsCategoryCoverDragging(true);
@@ -2143,11 +2469,11 @@ export function ProductOverviewPage({ currentUser }) {
                             {/* Fallback pattern in case the URL is invalid or broken */}
                             <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center text-slate-400 gap-1.5">
                               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
                               <span className="text-[10px] font-medium tracking-wide">Đường dẫn ảnh không khả dụng</span>
                             </div>
-                            
+
                             <img
                               src={formCategory.coverImageUrl}
                               alt="Preview"
@@ -2178,7 +2504,7 @@ export function ProductOverviewPage({ currentUser }) {
                               </button>
                             </div>
                           </div>
-                          
+
                           <input
                             type="file"
                             ref={categoryCoverInputRef}
@@ -2205,7 +2531,7 @@ export function ProductOverviewPage({ currentUser }) {
                           />
                         </div>
                       )}
-                      
+
                       <div className="mt-3">
                         <input
                           type="text"
@@ -2289,11 +2615,20 @@ export function ProductOverviewPage({ currentUser }) {
                 )}
               </div>
 
-              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end">
-                <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors" onClick={() => setEditingCategory(null)}>
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end items-center">
+                {editingCategory !== "new" && (
+                  <button
+                    type="button"
+                    className="bg-transparent hover:bg-red-50 text-red-650 border border-red-200 hover:border-red-350 text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 mr-auto cursor-pointer flex items-center gap-1.5"
+                    onClick={() => handleDeleteCategory(editingCategory)}
+                  >
+                    <i className="fa fa-trash-can text-sm"></i> Xóa danh mục
+                  </button>
+                )}
+                <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors cursor-pointer" onClick={() => setEditingCategory(null)}>
                   Hủy bỏ
                 </button>
-                <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors">
+                <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors cursor-pointer">
                   {editingCategory === "new" ? "Lưu danh mục" : "Cập nhật danh mục"}
                 </button>
               </div>
@@ -2322,33 +2657,30 @@ export function ProductOverviewPage({ currentUser }) {
               <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                 <button
                   type="button"
-                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${
-                    activeProductTab === "basic"
+                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${activeProductTab === "basic"
                       ? "text-cyan-900 border-cyan-900"
                       : "text-slate-400 border-transparent hover:text-slate-600"
-                  }`}
+                    }`}
                   onClick={() => setActiveProductTab("basic")}
                 >
                   <i className="fa fa-info-circle mr-1.5"></i> 1. Thông tin cơ bản
                 </button>
                 <button
                   type="button"
-                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${
-                    activeProductTab === "content"
+                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${activeProductTab === "content"
                       ? "text-cyan-900 border-cyan-900"
                       : "text-slate-400 border-transparent hover:text-slate-600"
-                  }`}
+                    }`}
                   onClick={() => setActiveProductTab("content")}
                 >
                   <i className="fa fa-file-invoice mr-1.5"></i> 2. Nội dung tư vấn
                 </button>
                 <button
                   type="button"
-                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${
-                    activeProductTab === "docs"
+                  className={`border-b-2 px-1 py-3 text-[13.5px] font-semibold transition-all duration-200 ${activeProductTab === "docs"
                       ? "text-cyan-900 border-cyan-900"
                       : "text-slate-400 border-transparent hover:text-slate-600"
-                  }`}
+                    }`}
                   onClick={() => setActiveProductTab("docs")}
                 >
                   <i className="fa fa-file-pdf mr-1.5"></i> 3. Tài liệu ({formProduct.brochure ? 1 : 0} Brochure / {formProduct.documents?.length || 0} Tư vấn)
@@ -2524,11 +2856,10 @@ export function ProductOverviewPage({ currentUser }) {
 
                           {/* Drag and Drop Zone */}
                           <div
-                            className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all duration-200 cursor-pointer ${
-                              isBrochureDragging 
-                                ? "border-cyan-600 bg-cyan-50/50" 
+                            className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all duration-200 cursor-pointer ${isBrochureDragging
+                                ? "border-cyan-600 bg-cyan-50/50"
                                 : "border-slate-300 bg-white hover:bg-slate-55"
-                            }`}
+                              }`}
                             onDragOver={handleBrochureDragOver}
                             onDragLeave={handleBrochureDragLeave}
                             onDrop={handleBrochureDrop}
@@ -2664,11 +2995,10 @@ export function ProductOverviewPage({ currentUser }) {
 
                           {/* Drag and Drop Zone */}
                           <div
-                            className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all duration-200 cursor-pointer ${
-                              isDocsDragging 
-                                ? "border-sky-500 bg-sky-50/50" 
+                            className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all duration-200 cursor-pointer ${isDocsDragging
+                                ? "border-sky-500 bg-sky-50/50"
                                 : "border-slate-300 bg-white hover:bg-slate-50"
-                            }`}
+                              }`}
                             onDragOver={handleDocsDragOver}
                             onDragLeave={handleDocsDragLeave}
                             onDrop={handleDocsDrop}
