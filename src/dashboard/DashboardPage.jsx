@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.hto.edu.vn/api/v1";
 
 // ─── STATIC DATA (chart trend – backend chưa có endpoint) ────────────────────
 const PERIOD_OPTIONS = [
@@ -1021,7 +1021,7 @@ export const DashboardPage = () => {
         if (!ALLOWED_ROLES.includes(roleSlug)) { if (!cancelled) setAccessDenied(true); return; }
         const endpoint = roleSlug === "truongbophan"
           ? `${API_BASE_URL}/dashboard/department-head`
-          : `${API_BASE_URL}/dashboard`;
+          : `${API_BASE_URL}/dashboard/board-of-directors`;
         const res = await fetch(endpoint, { headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" } });
         if (cancelled) return;
         if (res.status === 403) { if (!cancelled) setAccessDenied(true); return; }
