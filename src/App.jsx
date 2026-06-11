@@ -315,6 +315,13 @@ function App() {
     );
   };
 
+  // Lắng nghe navigate event từ DashboardPage
+  useEffect(() => {
+    const handler = (e) => handleNavigate(e.detail?.page);
+    window.addEventListener("app:navigate", handler);
+    return () => window.removeEventListener("app:navigate", handler);
+  }, []);
+
   const handleLogin = (userData) => {
     if (!hasStoredSession()) {
       setUser(null);

@@ -302,16 +302,23 @@ function CardBody({ children, style = {} }) {
 }
 
 // ─── KPI CARD ─────────────────────────────────────────────────────────────────
-function KpiCard({ label, value, change, caption, tone, trend, metricKey }) {
+function KpiCard({ label, value, change, caption, tone, trend, metricKey, href }) {
   const T = useT();
   const TONE = makeTone(T);
   const t = TONE[tone] || TONE["text-primary"];
+  const handleNavigate = (page) => window.dispatchEvent(new CustomEvent("app:navigate", { detail: { page } }));
   const maxValue = Math.max(...(trend || []).map((item) => item[metricKey] ?? 0), 1);
   const points = (trend || []).map((item, index) => {
     const x = trend.length === 1 ? 0 : index * (280 / (trend.length - 1));
     const y = 52 - ((item[metricKey] ?? 0) / maxValue) * 40;
     return `${x},${y}`;
   }).join(" ");
+
+  const iconJsx = (
+    <div style={{ width:"38px", height:"38px", borderRadius:"10px", background:t.soft, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill={t.color}><path d="M3 17h2.75l3.5-4.5 3 3.5L19 7.5V11h2V4h-7v2h3.52l-5.35 6.74-3-3.5L3 17Z"/></svg>
+    </div>
+  );
 
   return (
     <div className="dash-fadein" style={{ background: T.surface, borderRadius: T.r, boxShadow: T.sh, border: `1px solid ${T.borderFaint}`, overflow:"hidden", display:"flex", flexDirection:"column" }}>
@@ -326,9 +333,17 @@ function KpiCard({ label, value, change, caption, tone, trend, metricKey }) {
             {change}{caption ? <span style={{ color:T.inkFaint, fontWeight:400 }}> {caption}</span> : null}
           </span>
         </div>
-        <div style={{ width:"38px", height:"38px", borderRadius:"10px", background:t.soft, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={t.color}><path d="M3 17h2.75l3.5-4.5 3 3.5L19 7.5V11h2V4h-7v2h3.52l-5.35 6.74-3-3.5L3 17Z"/></svg>
-        </div>
+        {href ? (
+          <button
+            onClick={() => handleNavigate(href)}
+            title={`Xem chi tiết ${label}`}
+            style={{ display:"flex", background:"none", border:"none", padding:0, cursor:"pointer", borderRadius:"10px", transition:"opacity .15s", opacity:1 }}
+            onMouseEnter={e => e.currentTarget.style.opacity=".75"}
+            onMouseLeave={e => e.currentTarget.style.opacity="1"}
+          >
+            {iconJsx}
+          </button>
+        ) : iconJsx}
       </div>
       {trend && (
         <svg viewBox="0 0 280 56" style={{ width:"100%", height:"44px", display:"block", marginTop:"auto" }}>
@@ -550,8 +565,35 @@ function PeriodTabs({ selected, onChange }) {
 function BoardDashboard({ data }) {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [selectedPointIndex, setSelectedPointIndex] = useState(STATIC_TREND.month.trend.length - 1);
-  const [showAllDocs, setShowAllDocs] = useState(false);
+  const [allDepartments, setAllDepartments] = useState(data?.topDepartments || []);
   const T = useT();
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("token");
+    if (!token) return;
+    fetch(`${API_BASE_URL}/departments?includeHidden=true`, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    })
+      .then(r => r.json())
+      .then(json => {
+        // Parse theo mọi dạng response có thể có
+        const raw = json?.data ?? json ?? [];
+        const list = Array.isArray(raw) ? raw
+          : Array.isArray(raw?.items) ? raw.items
+          : Array.isArray(raw?.departments) ? raw.departments
+          : [];
+        const normalized = list
+          .map(d => ({
+            ...d,
+            id: String(d.id || d._id || ""),
+            name: d.name || "",
+            memberCount: Number(d.memberCount ?? 0),
+          }))
+          .filter(d => d.id);
+        if (normalized.length > 0) setAllDepartments(normalized);
+      })
+      .catch(() => {});
+  }, []);
 
   const trendData = STATIC_TREND[selectedPeriod].trend;
   const activeOption = PERIOD_OPTIONS.find(o => o.id === selectedPeriod);
@@ -565,10 +607,10 @@ function BoardDashboard({ data }) {
   const kpiCards = useMemo(() => {
     const s = data?.stats || {};
     return [
-      { label:"Tổng người dùng",  value:s.totalUsers,          change:"đang hoạt động",            tone:"text-primary", metricKey:"done"       },
-      { label:"Tổng phòng ban",   value:s.totalDepartments,    change:"đang hoạt động",            tone:"text-success", metricKey:"files"      },
-      { label:"Tổng tài liệu",    value:s.totalDocuments,      change:`${s.totalActiveDocuments ?? "—"} đang active`, tone:"text-warning", metricKey:"processing" },
-      { label:"Tài liệu active",  value:s.totalActiveDocuments,change:"đã được duyệt",             tone:"text-info",    metricKey:"events"     },
+      { label:"Tổng người dùng",  value:s.totalUsers,          change:"đang hoạt động",            tone:"text-primary", metricKey:"done",       href:"users"       },
+      { label:"Tổng phòng ban",   value:s.totalDepartments,    change:"đang hoạt động",            tone:"text-success", metricKey:"files",      href:"departments" },
+      { label:"Tổng tài liệu",    value:s.totalDocuments,      change:`${s.totalActiveDocuments ?? "—"} đang active`, tone:"text-warning", metricKey:"processing", href:"documents"   },
+      { label:"Tài liệu active",  value:s.totalActiveDocuments,change:"đã được duyệt",             tone:"text-info",    metricKey:"events",     href:"documents"   },
     ];
   }, [data?.stats]);
 
@@ -659,16 +701,16 @@ function BoardDashboard({ data }) {
         <Card style={{ display:"flex", flexDirection:"column" }}>
           <CardHeader
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill={T.blue}><path d="M3 21V7l6-4 6 4v3h6v11h-7v-5H10v5H3Zm2-2h3v-5h8v5h3v-7h-6V8L9 5.35 5 8v11Z"/></svg>}
-            title="Top phòng ban"
+            title="Phòng ban"
           />
-          <CardBody style={{ flex: 1 }}>
-            {(data?.topDepartments || []).length === 0 ? (
+          <CardBody style={{ flex: 1, maxHeight:"320px", overflowY:"auto" }}>
+            {allDepartments.length === 0 ? (
               <p style={{ fontSize:"13px", color:T.inkFaint, textAlign:"center", padding:"24px 0" }}>Chưa có dữ liệu phòng ban.</p>
             ) : (
               <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
-                {(data?.topDepartments || []).map((dept, i) => {
-                  const maxC = Math.max(...(data.topDepartments || []).map(d => d.memberCount), 1);
-                  const pct = Math.round((dept.memberCount / maxC) * 100);
+                {[...allDepartments].sort((a, b) => (b.memberCount || 0) - (a.memberCount || 0)).map((dept, i) => {
+                  const maxC = Math.max(...allDepartments.map(d => d.memberCount || 0), 1);
+                  const pct = Math.round(((dept.memberCount || 0) / maxC) * 100);
                   const colors = [T.blue, T.green, T.amber, T.cyan, T.violet];
                   const rc = colors[i % colors.length];
                   return (
@@ -677,7 +719,7 @@ function BoardDashboard({ data }) {
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom:"6px" }}>
                           <span style={{ fontWeight:600, fontSize:"13px", color:T.ink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:"150px" }}>{dept.name}</span>
-                          <span style={{ fontWeight:700, fontSize:"14px", color:rc, flexShrink:0, marginLeft:"8px" }}>{formatNumber(dept.memberCount)}</span>
+                          <span style={{ fontWeight:700, fontSize:"14px", color:rc, flexShrink:0, marginLeft:"8px" }}>{formatNumber(dept.memberCount || 0)}</span>
                         </div>
                         <div style={{ height:"5px", borderRadius:"999px", background:T.borderFaint, overflow:"hidden" }}>
                           <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg, ${rc}, ${rc}aa)`, borderRadius:"999px", transition:"width .4s ease" }}/>
@@ -702,16 +744,44 @@ function BoardDashboard({ data }) {
               <p style={{ fontSize:"13px", color:T.inkFaint, textAlign:"center", padding:"24px 0" }}>Chưa có hoạt động nào.</p>
             ) : (
               <div>
-                {(data?.recentActivities || []).map((act, i) => (
-                  <div key={act.id || i} className="dash-act-row" style={{ display:"flex", gap:"10px", alignItems:"flex-start", padding:"10px 0" }}>
-                    <Avatar name={act.actor?.fullName} size={32}/>
-                    <div style={{ minWidth:0, flex:1 }}>
-                      <div style={{ fontWeight:600, fontSize:"12px", color:T.ink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{act.actor?.fullName || "Hệ thống"}</div>
-                      <div style={{ fontSize:"11.5px", color:T.inkMuted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{act.action}{act.target ? ` · ${act.target}` : ""}</div>
-                      <div style={{ fontSize:"10.5px", color:T.inkFaint, marginTop:"1px" }}>{formatDate(act.createdAt)}</div>
+                {(data?.recentActivities || []).map((act, i) => {
+                  const ACTION_MAP = {
+                    "auth.login":               "Đăng nhập",
+                    "auth.logout":              "Đăng xuất",
+                    "auth.register":            "Đăng ký tài khoản",
+                    "user.create":              "Tạo người dùng",
+                    "user.update":              "Cập nhật người dùng",
+                    "user.delete":              "Xóa người dùng",
+                    "department.create":        "Tạo phòng ban",
+                    "department.update":        "Cập nhật phòng ban",
+                    "department.delete":        "Xóa phòng ban",
+                    "department.add_user":      "Thêm nhân viên vào phòng ban",
+                    "department.assign_user":   "Thêm nhân viên vào phòng ban",
+                    "department.remove_user":   "Xóa thành viên khỏi phòng ban",
+                    "document.create":          "Tạo tài liệu",
+                    "document.update":          "Cập nhật tài liệu",
+                    "document.delete":          "Xóa tài liệu",
+                    "document.approve":         "Duyệt tài liệu",
+                    "document.reject":          "Từ chối tài liệu",
+                    "document.upload":          "Tải lên tài liệu",
+                  };
+                  const actionLabel = ACTION_MAP[act.action] || act.action || "";
+                  const targetLabel = typeof act.target === "string"
+                    ? act.target
+                    : act.target?.name || act.target?.title || act.target?.fullName || act.target?.email || "";
+                  return (
+                    <div key={act.id || i} className="dash-act-row" style={{ display:"flex", gap:"10px", alignItems:"flex-start", padding:"10px 0" }}>
+                      <Avatar name={act.actor?.fullName} size={32}/>
+                      <div style={{ minWidth:0, flex:1 }}>
+                        <div style={{ fontWeight:600, fontSize:"12px", color:T.ink, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{act.actor?.fullName || "Hệ thống"}</div>
+                        <div style={{ fontSize:"11.5px", color:T.inkMuted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                          {actionLabel}{targetLabel ? ` · ${targetLabel}` : ""}
+                        </div>
+                        <div style={{ fontSize:"10.5px", color:T.inkFaint, marginTop:"1px" }}>{formatDate(act.createdAt)}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardBody>
@@ -723,20 +793,15 @@ function BoardDashboard({ data }) {
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill={T.blue}><path d="M20 6H12L10 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V8C22 6.9 21.1 6 20 6ZM14 16H6V14H14V16ZM18 12H6V10H18V12Z"/></svg>}
             title="Tài liệu mới nhất"
             right={
-              (data?.recentDocuments || []).length > 5 && (
-                <button className="dash-link-viewall" onClick={() => setShowAllDocs(!showAllDocs)}>
-                  {showAllDocs ? "Thu gọn" : "Xem tất cả"}
-                  <svg 
-                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: showAllDocs ? "rotate(-90deg)" : "rotate(90deg)", transition: "transform 0.2s" }}
-                  >
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
-              )
+              <button className="dash-link-viewall" onClick={() => window.dispatchEvent(new CustomEvent("app:navigate", { detail: { page: "documents" } }))}>
+                Xem tất cả
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
             }
           />
-          <CardBody style={{ padding:"0 0 14px 0", flex: 1, overflowX: "auto", maxHeight: showAllDocs ? "400px" : "none", overflowY: showAllDocs ? "auto" : "hidden" }}>
+          <CardBody style={{ padding:"0 0 14px 0", flex: 1, overflowX: "auto", maxHeight: "320px", overflowY: "auto" }}>
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"13px" }}>
               <thead>
                 <tr style={{ borderTop:`1px solid ${T.borderFaint}`, borderBottom:`1px solid ${T.border}` }}>
@@ -748,7 +813,7 @@ function BoardDashboard({ data }) {
                 {(data?.recentDocuments || []).length === 0 ? (
                   <tr><td colSpan="2" style={{ textAlign:"center", color:T.inkFaint, padding:"32px", fontSize:"13px" }}>Chưa có tài liệu nào.</td></tr>
                 ) : (
-                  (showAllDocs ? (data?.recentDocuments || []) : (data?.recentDocuments || []).slice(0, 5)).map((doc, i) => (
+                  (data?.recentDocuments || []).map((doc, i) => (
                     <tr key={doc.id || i} className="dash-row-hover" style={{ borderBottom:`1px solid ${T.borderFaint}`, transition:"background .12s" }}>
                       <td style={{ padding:"13px 20px", fontWeight:600, color:T.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"140px" }}>{doc.title}</td>
                       <td style={{ padding:"13px 12px" }}><Badge status={doc.status}/></td>
@@ -769,7 +834,6 @@ function DepartmentHeadDashboard({ data }) {
   const dept = data?.department || {};
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [selectedPointIndex, setSelectedPointIndex] = useState(STATIC_TREND.month.trend.length - 1);
-  const [showAllDocs, setShowAllDocs] = useState(false);
   const T = useT();
 
   const trendData = STATIC_TREND[selectedPeriod].trend;
@@ -785,10 +849,10 @@ function DepartmentHeadDashboard({ data }) {
     const ms = data?.memberStats || {};
     const ds = data?.documentStats || {};
     return [
-      { label:"Tổng nhân sự",   value:ms.total,   change:`${ms.active ?? "—"} đang hoạt động`, tone:"text-primary", metricKey:"done"       },
-      { label:"Nhân sự active", value:ms.active,  change:"đang hoạt động",                     tone:"text-success", metricKey:"files"      },
-      { label:"Tổng tài liệu",  value:ds.total,   change:`${ds.active ?? "—"} đang active`,    tone:"text-warning", metricKey:"processing" },
-      { label:"Chờ duyệt",      value:ds.pending, change:"tài liệu cần xử lý",                 tone:"text-info",    metricKey:"events"     },
+      { label:"Tổng nhân sự",   value:ms.total,   change:`${ms.active ?? "—"} đang hoạt động`, tone:"text-primary", metricKey:"done",       href:"users"     },
+      { label:"Nhân sự active", value:ms.active,  change:"đang hoạt động",                     tone:"text-success", metricKey:"files",      href:"users"     },
+      { label:"Tổng tài liệu",  value:ds.total,   change:`${ds.active ?? "—"} đang active`,    tone:"text-warning", metricKey:"processing", href:"documents" },
+      { label:"Chờ duyệt",      value:ds.pending, change:"tài liệu cần xử lý",                 tone:"text-info",    metricKey:"events",     href:"documents" },
     ];
   }, [data?.memberStats, data?.documentStats]);
 
@@ -934,20 +998,15 @@ function DepartmentHeadDashboard({ data }) {
             icon={<svg width="16" height="16" viewBox="0 0 24 24" fill={T.blue}><path d="M20 6H12L10 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V8C22 6.9 21.1 6 20 6Z"/></svg>}
             title="Tài liệu phòng ban"
             right={
-              (data?.recentDocuments || []).length > 5 && (
-                <button className="dash-link-viewall" onClick={() => setShowAllDocs(!showAllDocs)}>
-                  {showAllDocs ? "Thu gọn" : "Xem tất cả"}
-                  <svg 
-                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: showAllDocs ? "rotate(-90deg)" : "rotate(90deg)", transition: "transform 0.2s" }}
-                  >
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
-              )
+              <button className="dash-link-viewall" onClick={() => window.dispatchEvent(new CustomEvent("app:navigate", { detail: { page: "documents" } }))}>
+                Xem tất cả
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
             }
           />
-          <CardBody style={{ padding:"0 0 14px 0", flex: 1, overflowX: "auto", maxHeight: showAllDocs ? "400px" : "none", overflowY: showAllDocs ? "auto" : "hidden" }}>
+          <CardBody style={{ padding:"0 0 14px 0", flex: 1, overflowX: "auto", maxHeight: "320px", overflowY: "auto" }}>
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"13px" }}>
               <thead>
                 <tr style={{ borderTop:`1px solid ${T.borderFaint}`, borderBottom:`1px solid ${T.border}` }}>
@@ -959,7 +1018,7 @@ function DepartmentHeadDashboard({ data }) {
                 {(data?.recentDocuments || []).length === 0 ? (
                   <tr><td colSpan="2" style={{ textAlign:"center", color:T.inkFaint, padding:"32px", fontSize:"13px" }}>Chưa có tài liệu nào.</td></tr>
                 ) : (
-                  (showAllDocs ? (data?.recentDocuments || []) : (data?.recentDocuments || []).slice(0, 5)).map((doc, i) => (
+                  (data?.recentDocuments || []).map((doc, i) => (
                     <tr key={doc.id || i} className="dash-row-hover" style={{ borderBottom:`1px solid ${T.borderFaint}`, transition:"background .12s" }}>
                       <td style={{ padding:"13px 20px", fontWeight:600, color:T.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"140px" }}>{doc.title}</td>
                       <td style={{ padding:"13px 12px" }}><Badge status={doc.status}/></td>
