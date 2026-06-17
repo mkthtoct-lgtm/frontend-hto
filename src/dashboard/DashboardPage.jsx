@@ -626,12 +626,12 @@ function BoardDashboard({ data }) {
       </div>
 
       {/* ── KPI CARDS ───────────────────────────────────────────────────── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:"14px", marginBottom:"18px" }}>
+      <div id="stats-kpi-cards" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:"14px", marginBottom:"18px" }}>
         {kpiCards.map(c => <KpiCard key={c.label} {...c} trend={trendData}/>)}
       </div>
 
       {/* ── TREND CHART + DETAIL ─────────────────────────────────────────── */}
-      <div style={{ display:"grid", gridTemplateColumns:"minmax(0,2fr) minmax(0,1fr)", gap:"14px", marginBottom:"18px", alignItems:"stretch" }}>
+      <div id="stats-charts-container" style={{ display:"grid", gridTemplateColumns:"minmax(0,2fr) minmax(0,1fr)", gap:"14px", marginBottom:"18px", alignItems:"stretch" }}>
         <Card>
           <div style={{ padding:"16px 20px 0", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"10px" }}>
             <div style={{ display:"flex", alignItems:"center", gap:"10px", flexWrap:"wrap" }}>
@@ -690,7 +690,7 @@ function BoardDashboard({ data }) {
       </div>
 
       {/* ── 3 BẢNG NẰM CÙNG 1 HÀNG ── */}
-      <div style={{ 
+      <div id="stats-tables-container" style={{ 
         display: "grid", 
         gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
         gap: "14px", 

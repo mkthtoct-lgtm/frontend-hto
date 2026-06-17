@@ -625,21 +625,7 @@ const normalizeDocument = (document) => {
   });
 };
 
-const applyStoredPermissions = (documents) => {
-  const storedPermissions = readStoredPermissions();
-  const storedStatuses = readStoredStatuses();
 
-  return documents.map((document) =>
-    applyStoredPreview({
-      ...document,
-      status: storedStatuses[document.id] || document.status,
-      permissions: normalizePermissions(
-        storedPermissions[document.id] || document.permissions,
-        document.departmentId,
-      ),
-    }),
-  );
-};
 
 const normalizeCategory = (category) => ({
   id: category.id || category._id,
@@ -1649,7 +1635,7 @@ export const DocumentsPage = ({ currentUser }) => {
         )}
 
         <div className={canManageCategories ? "col-xxl-8" : "col-12"}>
-          <div className="card">
+          <div id="documents-categories-card" className="card">
             <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
               <h6 className="card-title mb-0">Danh mục tài liệu</h6>
               <span className="badge bg-primary-subtle text-primary">
@@ -1795,7 +1781,7 @@ export const DocumentsPage = ({ currentUser }) => {
       </div>
 
       {canUpload && (
-        <div className="card mt-3">
+        <div id="documents-upload-card" className="card mt-3">
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Upload tài liệu</h6>
@@ -2042,7 +2028,7 @@ export const DocumentsPage = ({ currentUser }) => {
       )}
 
       {canConfigurePermissions && (
-        <div className="card mt-3" ref={permissionConfigRef}>
+        <div id="documents-permission-card" className="card mt-3" ref={permissionConfigRef}>
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Cấu hình quyền tài liệu</h6>
@@ -2227,7 +2213,7 @@ export const DocumentsPage = ({ currentUser }) => {
 
       {isDetailPanelOpen && (documentError || selectedDocument) && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1080,
@@ -2582,7 +2568,7 @@ export const DocumentsPage = ({ currentUser }) => {
 
       {deleteTargetDocument && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1090,
@@ -2653,7 +2639,7 @@ export const DocumentsPage = ({ currentUser }) => {
         </div>
       )}
 
-      <div className="card mt-3">
+      <div id="documents-list-card" className="card mt-3">
         <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
           <div>
             <h6 className="card-title mb-0">Danh sách tài liệu</h6>
@@ -2663,7 +2649,7 @@ export const DocumentsPage = ({ currentUser }) => {
               </div>
             )}
           </div>
-          <div className="min-w-[220px]">
+          <div id="documents-category-filter" className="min-w-[220px]">
             <TailwindDropdown
               onChange={setActiveCategory}
               options={[
@@ -2913,7 +2899,7 @@ function DocumentActionButtons({
 function DocumentDownloadBadge({ currentUser, document, hasDownloadAccess }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${
+      className={`badge shrink-0 ${
         hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
       }`}
       title={
@@ -3004,7 +2990,7 @@ function PermissionActionDropdown({ actionLabel, children, rule }) {
 function CategoryStatusBadge({ isHidden }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${
+      className={`badge shrink-0 ${
         isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
       }`}
     >

@@ -277,7 +277,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý phòng ban</h4>
        
         </div>
-        <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
+        <button id="departments-create-btn" className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
           <PlusIcon />
           Thêm phòng ban
         </button>
@@ -288,7 +288,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           <SearchIcon />
           <input
             type="text"
-            className="form-control !pl-11 bg-body"
+            className="form-control pl-11! bg-body"
             placeholder="Tìm theo tên hoặc mô tả phòng ban..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -307,7 +307,7 @@ export const DepartmentsPage = ({ currentUser }) => {
       )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="departments-list-card" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách phòng ban</span>
             <span className="badge text-bg-light">{filteredDepartments.length} phòng ban</span>
@@ -336,7 +336,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                       return (
                       <tr
                         key={department.id}
-                        className={`cursor-pointer ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                        className={`cursor-pointer ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "[&>td]:bg-(--bs-primary-bg-subtle)!" : ""}`}
                         onClick={() => setSelectedDepartmentId(department.id)}
                       >
                         <td className="min-w-[220px]">
@@ -384,7 +384,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                   <button
                     type="button"
                     key={department.id}
-                    className={`w-100 border-0 border-b border-[var(--bs-border-color-translucent)] bg-transparent p-3 text-start ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                    className={`w-100 border-0 border-b border-(--bs-border-color-translucent) bg-transparent p-3 text-start ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "bg-(--bs-primary-bg-subtle)" : ""}`}
                     onClick={() => setSelectedDepartmentId(department.id)}
                   >
                     <div className="d-flex justify-content-between gap-2">
@@ -394,7 +394,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                           <span className="badge bg-warning-subtle text-warning">Đang ẩn</span>
                         )}
                       </div>
-                      <span className="badge text-bg-light flex-shrink-0">{department.memberCount || 0} người</span>
+                      <span className="badge text-bg-light shrink-0">{department.memberCount || 0} người</span>
                     </div>
                     <div className="text-body-secondary mt-1" style={{ fontSize: "13px" }}>
                       {department.description || "Chưa có mô tả"}
@@ -421,7 +421,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           )}
         </section>
 
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="departments-members-card" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom">
             <div className="d-flex justify-content-between align-items-start gap-2">
               <div>
@@ -498,9 +498,9 @@ export const DepartmentsPage = ({ currentUser }) => {
             ) : (
               <div className="flex flex-col gap-2.5">
                 {members.map((member) => (
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--bs-border-color-translucent)] p-2.5 max-md:items-start" key={member.id}>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-(--bs-border-color-translucent) p-2.5 max-md:items-start" key={member.id}>
                     <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
-                      <span className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--bs-primary-bg-subtle)] font-bold text-[var(--bs-primary)]">{getInitials(member.fullName)}</span>
+                      <span className="inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-(--bs-primary-bg-subtle) font-bold text-(--bs-primary)">{getInitials(member.fullName)}</span>
                       <div style={{ minWidth: 0 }}>
                         <div className="fw-bold text-body-emphasis text-truncate">{member.fullName}</div>
                         <div className="text-body-secondary text-truncate" style={{ fontSize: "12px" }}>
@@ -509,7 +509,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                       </div>
                     </div>
                     <button
-                      className="btn btn-sm btn-outline-danger flex-shrink-0"
+                      className="btn btn-sm btn-outline-danger shrink-0"
                       onClick={() => handleRemoveUser(member.id)}
                       disabled={actionLoading || selectedDepartmentHidden}
                     >
@@ -524,11 +524,11 @@ export const DepartmentsPage = ({ currentUser }) => {
       </div>
 
       {modalMode && (
-        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
-          <div className="flex max-h-[90vh] w-full max-w-[560px] flex-col rounded-xl bg-[var(--bs-body-bg)] shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--bs-border-color-translucent)] p-5">
-              <h5 className="m-0 font-bold text-[var(--bs-emphasis-color)]">{modalMode === "create" ? "Thêm phòng ban" : "Cập nhật phòng ban"}</h5>
-              <button className="border-0 bg-transparent p-1 text-[var(--bs-secondary-color)] hover:text-[var(--bs-emphasis-color)]" onClick={closeModal} type="button">
+        <div className="fixed inset-0 z-1050 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]">
+          <div className="flex max-h-[90vh] w-full max-w-[560px] flex-col rounded-xl bg-(--bs-body-bg) shadow-xl">
+            <div className="flex items-center justify-between border-b border-(--bs-border-color-translucent) p-5">
+              <h5 className="m-0 font-bold text-(--bs-emphasis-color)">{modalMode === "create" ? "Thêm phòng ban" : "Cập nhật phòng ban"}</h5>
+              <button className="border-0 bg-transparent p-1 text-(--bs-secondary-color) hover:text-(--bs-emphasis-color)" onClick={closeModal} type="button">
                 <CloseIcon />
               </button>
             </div>
@@ -582,7 +582,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2.5 border-t border-[var(--bs-border-color-translucent)] px-5 py-4">
+              <div className="flex justify-end gap-2.5 border-t border-(--bs-border-color-translucent) px-5 py-4">
                 <button type="button" className="btn btn-light border" onClick={closeModal} disabled={actionLoading}>
                   Hủy
                 </button>
@@ -601,7 +601,7 @@ export const DepartmentsPage = ({ currentUser }) => {
 
 function LoadingState({ label }) {
   return (
-    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
+    <div className="px-4 py-10 text-center text-(--bs-secondary-color)">
       <div className="spinner-border text-primary mb-2" role="status">
         <span className="visually-hidden">Loading...</span>
       </div>
@@ -612,7 +612,7 @@ function LoadingState({ label }) {
 
 function EmptyState({ label }) {
   return (
-    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
+    <div className="px-4 py-10 text-center text-(--bs-secondary-color)">
       <FolderIcon />
       <div className="mt-2">{label}</div>
     </div>
@@ -641,7 +641,7 @@ function PlusIcon() {
 function SearchIcon() {
   return (
     <svg
-      className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[var(--bs-secondary-color)]"
+      className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-(--bs-secondary-color)"
       width="18"
       height="18"
       viewBox="0 0 24 24"

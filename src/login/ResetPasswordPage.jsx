@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { API_BASE_URL } from "../config/api";
 
@@ -25,13 +25,13 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm({
     mode: "onTouched",
   });
 
-  const password = watch("password");
+  const password = useWatch({ control, name: "password" });
 
   const onSubmit = async (data) => {
     setApiError("");
@@ -153,7 +153,7 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
             />
             <button
               type="button"
-              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
+              className="absolute top-1/2 right-3 z-5 flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
@@ -189,7 +189,7 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
             />
             <button
               type="button"
-              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
+              className="absolute top-1/2 right-3 z-5 flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >

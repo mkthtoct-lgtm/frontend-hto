@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import { RegisterSuccessPopup } from "./components/RegisterSuccessPopup";
 
@@ -142,7 +142,7 @@ const normalizeLocationOptions = (items) => {
     .filter((province) => province.city && province.wards.length > 0);
 };
 
-export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }) => {
+export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -167,7 +167,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     getValues,
     clearErrors,
     setError,
@@ -185,7 +185,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
     },
   });
 
-  const password = watch("password");
+  const password = useWatch({ control, name: "password" });
   const emailField = register("email", {
     required: "Vui lòng nhập email.",
     pattern: {
@@ -531,7 +531,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
             />
             <button
               type="button"
-              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
+              className="absolute top-1/2 right-3 z-5 flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
@@ -561,7 +561,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
             />
             <button
               type="button"
-              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
+              className="absolute top-1/2 right-3 z-5 flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               {showConfirmPassword ? (
@@ -610,7 +610,7 @@ function RegistrationProfilePage({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     getValues,
     setError,
     setValue,
@@ -629,8 +629,8 @@ function RegistrationProfilePage({
   const [locationOptions, setLocationOptions] = useState(FALLBACK_LOCATION_OPTIONS);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState("");
-  const selectedCity = watch("city");
-  const selectedWard = watch("ward");
+  const selectedCity = useWatch({ control, name: "city" });
+  const selectedWard = useWatch({ control, name: "ward" });
   const wardOptions = locationOptions.find((option) => option.city === selectedCity)?.wards || [];
 
   useEffect(() => {

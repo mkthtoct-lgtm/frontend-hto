@@ -58,7 +58,7 @@ export const AUDIT_ACTION_OPTIONS = [
 
 export async function getAuditLogs(filters = {}) {
   return await withLocalFallback(
-    () => {
+    async () => {
       const searchParams = new URLSearchParams();
 
       if (filters.userId) searchParams.set("userId", filters.userId);
@@ -67,7 +67,8 @@ export async function getAuditLogs(filters = {}) {
       if (filters.to) searchParams.set("to", filters.to);
 
       const query = searchParams.toString();
-      return apiRequest(`/audit-logs${query ? `?${query}` : ""}`);
+      const res = await apiRequest(`/audit-logs${query ? `?${query}` : ""}`);
+      return Array.isArray(res) ? res : (res?.logs ?? []);
     },
     () => filterAuditLogs(readAuditLogs(), filters),
   );

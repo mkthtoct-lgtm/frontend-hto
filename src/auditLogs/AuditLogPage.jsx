@@ -82,12 +82,12 @@ export const AuditLogPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Lịch sử thao tác</h4>
           
         </div>
-        <button className="btn btn-outline-secondary" type="button" onClick={loadAuditLogs} disabled={loading}>
+        <button id="audit-refresh-btn" className="btn btn-outline-secondary" type="button" onClick={loadAuditLogs} disabled={loading}>
           Làm mới
         </button>
       </div>
 
-      <section className="card mb-3 overflow-hidden rounded-xl border-0 shadow-sm">
+      <section id="audit-filter-section" className="card mb-3 overflow-hidden rounded-xl border-0 shadow-sm">
         <div className="card-body">
           <div className="grid grid-cols-1 items-end gap-3 xl:grid-cols-[minmax(180px,1fr)_minmax(170px,0.8fr)_minmax(170px,0.8fr)_minmax(170px,0.8fr)_auto]">
             <div>
@@ -142,7 +142,7 @@ export const AuditLogPage = ({ currentUser }) => {
               />
             </div>
 
-            <button className="btn btn-light border" type="button" onClick={clearFilters}>
+            <button id="audit-clear-filter-btn" className="btn btn-light border" type="button" onClick={clearFilters}>
               Xóa lọc
             </button>
           </div>
@@ -157,7 +157,7 @@ export const AuditLogPage = ({ currentUser }) => {
       )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="audit-log-table" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách audit log</span>
             <span className="badge text-bg-light">{logs.length} log</span>
@@ -183,7 +183,7 @@ export const AuditLogPage = ({ currentUser }) => {
                     {logs.map((log) => (
                       <tr
                         key={log.id}
-                        className={`cursor-pointer ${selectedLogId === log.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                        className={`cursor-pointer ${selectedLogId === log.id ? "[&>td]:bg-(--bs-primary-bg-subtle)!" : ""}`}
                         onClick={() => setSelectedLogId(log.id)}
                       >
                         <td className="text-nowrap">{formatDateTime(log.createdAt)}</td>
@@ -191,7 +191,7 @@ export const AuditLogPage = ({ currentUser }) => {
                           <div className="fw-bold text-body-emphasis">{log.actor.fullName}</div>
                           <div className="text-body-secondary" style={{ fontSize: "12px" }}>{log.actor.email}</div>
                         </td>
-                        <td><span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--bs-secondary-bg)] px-2.5 py-1 text-xs font-bold text-[var(--bs-emphasis-color)]">{getActionLabel(log.action)}</span></td>
+                        <td><span className="inline-flex items-center whitespace-nowrap rounded-full bg-(--bs-secondary-bg) px-2.5 py-1 text-xs font-bold text-(--bs-emphasis-color)">{getActionLabel(log.action)}</span></td>
                         <td>
                           <div className="fw-semibold">{log.target.name}</div>
                           <div className="text-body-secondary" style={{ fontSize: "12px" }}>{log.target.type}</div>
@@ -207,14 +207,14 @@ export const AuditLogPage = ({ currentUser }) => {
                   <button
                     type="button"
                     key={log.id}
-                    className={`w-100 border-0 border-b border-[var(--bs-border-color-translucent)] bg-transparent p-3.5 text-start ${selectedLogId === log.id ? "bg-[var(--bs-primary-bg-subtle)]" : ""}`}
+                    className={`w-100 border-0 border-b border-(--bs-border-color-translucent) bg-transparent p-3.5 text-start ${selectedLogId === log.id ? "bg-(--bs-primary-bg-subtle)" : ""}`}
                     onClick={() => setSelectedLogId(log.id)}
                   >
                     <div className="d-flex justify-content-between gap-2">
                       <strong>{log.actor.fullName}</strong>
                       <span className="text-body-secondary" style={{ fontSize: "12px" }}>{formatDateTime(log.createdAt)}</span>
                     </div>
-                    <div className="mt-2"><span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--bs-secondary-bg)] px-2.5 py-1 text-xs font-bold text-[var(--bs-emphasis-color)]">{getActionLabel(log.action)}</span></div>
+                    <div className="mt-2"><span className="inline-flex items-center whitespace-nowrap rounded-full bg-(--bs-secondary-bg) px-2.5 py-1 text-xs font-bold text-(--bs-emphasis-color)">{getActionLabel(log.action)}</span></div>
                     <div className="text-body-secondary mt-2" style={{ fontSize: "13px" }}>
                       {log.target.type}: {log.target.name}
                     </div>
@@ -225,7 +225,7 @@ export const AuditLogPage = ({ currentUser }) => {
           )}
         </section>
 
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="audit-log-detail" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom">
             <span className="fw-bold text-body-emphasis">Chi tiết log</span>
           </div>
@@ -253,7 +253,7 @@ function DetailRow({ label, value, badge = false }) {
     <div>
       <div className="text-body-secondary fw-semibold mb-1" style={{ fontSize: "13px" }}>{label}</div>
       {badge ? (
-        <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--bs-secondary-bg)] px-2.5 py-1 text-xs font-bold text-[var(--bs-emphasis-color)]">{value}</span>
+        <span className="inline-flex items-center whitespace-nowrap rounded-full bg-(--bs-secondary-bg) px-2.5 py-1 text-xs font-bold text-(--bs-emphasis-color)">{value}</span>
       ) : (
         <div className="text-body-emphasis">{value}</div>
       )}
@@ -263,7 +263,7 @@ function DetailRow({ label, value, badge = false }) {
 
 function LoadingState({ label }) {
   return (
-    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
+    <div className="px-4 py-10 text-center text-(--bs-secondary-color)">
       <div className="spinner-border text-primary mb-2" role="status">
         <span className="visually-hidden">Loading...</span>
       </div>
@@ -274,7 +274,7 @@ function LoadingState({ label }) {
 
 function EmptyState({ label }) {
   return (
-    <div className="px-4 py-10 text-center text-[var(--bs-secondary-color)]">
+    <div className="px-4 py-10 text-center text-(--bs-secondary-color)">
       <LogIcon />
       <div className="mt-2">{label}</div>
     </div>

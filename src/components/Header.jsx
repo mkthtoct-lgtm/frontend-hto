@@ -37,11 +37,14 @@ const readProfileExtras = (userId) => {
 
 const HeaderAvatar = ({ avatarUrl, name, status = false }) => {
   const [imageError, setImageError] = useState(false);
-  const showImage = avatarUrl && !imageError;
+  const [prevAvatarUrl, setPrevAvatarUrl] = useState(avatarUrl);
 
-  useEffect(() => {
+  if (avatarUrl !== prevAvatarUrl) {
+    setPrevAvatarUrl(avatarUrl);
     setImageError(false);
-  }, [avatarUrl]);
+  }
+
+  const showImage = avatarUrl && !imageError;
 
   return (
     <div className={`avatar avatar-sm rounded-circle ${status ? "avatar-status-success" : ""}`}>
@@ -140,7 +143,15 @@ const notifyNotificationsChanged = (detail = {}) => {
   );
 };
 
-export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout }) => {
+export const Header = ({
+  user,
+  onNavigate,
+  onToggleSidebar,
+  onToggleTheme,
+  onLogout,
+  isNotificationMenuOpen,
+  setIsNotificationMenuOpen,
+}) => {
   const profileExtras = user?.id ? readProfileExtras(user.id) : {};
   const displayName = user?.fullName || user?.name || "Nguoi dung";
   const displayEmail = user?.email || "";
@@ -149,7 +160,6 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
   const isCollaborator = user?.role === "congtacvien" || user?.roleId === COLLABORATOR_ROLE_ID;
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [notificationItems, setNotificationItems] = useState([]);
-  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
   const [referralInfo, setReferralInfo] = useState(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState("");
@@ -172,7 +182,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
       setUnreadNotificationCount(0);
       setNotificationItems([]);
     }
-  }, []);
+  }, [setIsNotificationMenuOpen]);
 
   const applyNotificationChange = useCallback((event) => {
     const { action, notificationId } = event.detail || {};
@@ -194,13 +204,19 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
   }, [refreshUnreadCount]);
 
   useEffect(() => {
-    void refreshUnreadCount();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        void refreshUnreadCount();
+      }
+    });
     window.addEventListener("focus", refreshUnreadCount);
     window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, applyNotificationChange);
     document.addEventListener("visibilitychange", refreshUnreadCount);
     const timer = window.setInterval(refreshUnreadCount, 30000);
 
     return () => {
+      active = false;
       window.removeEventListener("focus", refreshUnreadCount);
       window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, applyNotificationChange);
       document.removeEventListener("visibilitychange", refreshUnreadCount);
@@ -212,6 +228,8 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
     let isMounted = true;
 
     const loadReferralInfo = async () => {
+      await Promise.resolve();
+      if (!isMounted) return;
       setReferralLoading(true);
       setReferralError("");
 
@@ -236,8 +254,11 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
     if (user?.id && isCollaborator) {
       void loadReferralInfo();
     } else {
-      setReferralInfo(null);
-      setReferralError("");
+      Promise.resolve().then(() => {
+        if (!isMounted) return;
+        setReferralInfo(null);
+        setReferralError("");
+      });
     }
 
     return () => {
@@ -316,7 +337,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
             />
             <button
               type="button"
-              className="btn btn-sm text-primary border-0 position-absolute end-0 me-3 p-0"
+              className="btn btn-sm text-primary border-0 position-absolute inset-e-0 me-3 p-0"
             >
               <i className="fi fi-rr-search"></i>
             </button>
@@ -362,7 +383,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
               </a>
               {isNotificationMenuOpen && (
                 <div
-                  className="header-notification-popover position-absolute end-0 mt-2 card shadow-lg border-0 text-start"
+                  className="header-notification-popover position-absolute inset-e-0 mt-2 card shadow-lg border-0 text-start"
                   style={{ width: "340px", maxWidth: "calc(100vw - 24px)", zIndex: 1085 }}
                 >
                   <div className="header-notification-head card-header bg-white border-0 d-flex justify-content-between align-items-center">
@@ -402,7 +423,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                         <div className="d-flex align-items-start gap-2">
                           {!notification.isRead && (
                             <span
-                              className="bg-danger rounded-circle flex-shrink-0 mt-1"
+                              className="bg-danger rounded-circle shrink-0 mt-1"
                               style={{ width: "8px", height: "8px" }}
                             />
                           )}

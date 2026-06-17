@@ -173,6 +173,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 1. DASHBOARD --- */}
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-home"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -196,6 +197,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
 
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-stats"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboardStats" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -217,6 +219,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 2. SẢN PHẨM --- */}
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-products"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isProductPage ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
@@ -265,6 +268,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
+              id="sidebar-nav-tasks"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
@@ -301,6 +305,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-support"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
@@ -350,6 +355,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 5. TIN TỨC & SỰ KIỆN --- */}
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-news"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -405,6 +411,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 7. TÀI LIỆU & BIỂU MẪU --- */}
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-notifications"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "notifications" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -425,6 +432,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
 
           <li className="menu-item mb-2">
             <a
+              id="sidebar-nav-documents"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["documents", "documentSearch"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
@@ -486,6 +494,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {canViewAIManagement(currentUser) && (
             <li className="menu-item mb-2">
               <a
+                id="sidebar-nav-ai"
                 className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["aiConfig", "aiPending", "aiHistory"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
                 href="#"
                 role="button"
@@ -570,6 +579,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
           <li className="menu-item mb-2 border-top pt-3 mt-3">
             <a
+              id="sidebar-nav-jd"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "jobDescriptions" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -592,6 +602,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
 
           <li className="menu-item mb-2 border-top pt-3 mt-3">
             <a
+              id="sidebar-nav-users"
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "users" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
@@ -616,6 +627,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             <>
               <li className="menu-item mb-2">
                 <a
+                  id="sidebar-nav-departments"
                   className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "departments" ? "text-primary fw-bold" : "text-body-secondary"}`}
                   href="#"
                   style={{ textDecoration: "none" }}
@@ -637,6 +649,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
 
               <li className="menu-item mb-2">
                 <a
+                  id="sidebar-nav-auditlogs"
                   className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "auditLogs" ? "text-primary fw-bold" : "text-body-secondary"}`}
                   href="#"
                   style={{ textDecoration: "none" }}

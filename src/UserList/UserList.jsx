@@ -1,6 +1,6 @@
 // src/UserList/UserList.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
@@ -217,11 +217,11 @@ export const UserList = ({ currentUser }) => {
   const [permissionUser, setPermissionUser] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm({
     mode: "onTouched"
   });
-  const selectedRoleValue = watch("role");
-  const selectedDepartmentValue = watch("departmentId");
+  const selectedRoleValue = useWatch({ control, name: "role" });
+  const selectedDepartmentValue = useWatch({ control, name: "departmentId" });
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -372,18 +372,14 @@ export const UserList = ({ currentUser }) => {
     return matchSearch && matchRole && matchDept;
   });
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USER_PAGE_SIZE));
-  const pageStartIndex = (currentPage - 1) * USER_PAGE_SIZE;
+
+  if (currentPage > totalPages) {
+    setCurrentPage(totalPages);
+  }
+
+  const activePage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (activePage - 1) * USER_PAGE_SIZE;
   const paginatedUsers = filteredUsers.slice(pageStartIndex, pageStartIndex + USER_PAGE_SIZE);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterRole, filterDepartment]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
 
   // Lấy danh sách phòng ban unique (dùng cho bộ lọc)
   const departments = departmentOptions.length > 0
@@ -464,7 +460,7 @@ export const UserList = ({ currentUser }) => {
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý tài khoản</h4>
         </div>
-        <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
+        <button id="users-add-btn" className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -474,7 +470,7 @@ export const UserList = ({ currentUser }) => {
       </div>
 
       {/* Filter Bar */}
-      <div className="filter-bar">
+      <div id="users-filter-bar" className="filter-bar">
         <div className="search-box">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -482,16 +478,22 @@ export const UserList = ({ currentUser }) => {
           </svg>
           <input 
             type="text" 
-            className="form-control form-control-sm bg-body border-1" 
+            className="form-control form-control-sm bg-body border" 
             placeholder="Tìm theo tên hoặc email..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
         
         <div className="filter-select min-w-[170px]">
           <TailwindDropdown
-            onChange={setFilterRole}
+            onChange={(val) => {
+              setFilterRole(val);
+              setCurrentPage(1);
+            }}
             options={[
               { label: "Tất cả vai trò", value: "" },
               ...Object.entries(ROLE_MAP).map(([key, data]) => ({
@@ -507,7 +509,10 @@ export const UserList = ({ currentUser }) => {
         <div className="filter-select min-w-[190px]">
           <TailwindDropdown
             disabled={departmentsLoading}
-            onChange={setFilterDepartment}
+            onChange={(val) => {
+              setFilterDepartment(val);
+              setCurrentPage(1);
+            }}
             options={[
               { label: "Tất cả phòng ban", value: "" },
               ...departments.map(([departmentId, departmentName]) => ({
@@ -522,7 +527,7 @@ export const UserList = ({ currentUser }) => {
       </div>
 
       {/* Main Table Card */}
-      <div className="card table-card">
+      <div id="users-table-card" className="card table-card">
         <div className="table-responsive">
           <table className="table custom-table">
             <thead>
@@ -586,7 +591,7 @@ export const UserList = ({ currentUser }) => {
                           )}
                         </span>
                       </td>
-                      <td className="text-center" onClick={(event) => event.stopPropagation()}>
+                      <td id="users-permission-col" className="text-center" onClick={(event) => event.stopPropagation()}>
                         <button
                           type="button"
                           className={`btn btn-sm ${featurePermissionCount > 0 ? "btn-outline-primary" : "btn-light border"}`}
@@ -597,7 +602,7 @@ export const UserList = ({ currentUser }) => {
                           {featurePermissionCount} quyền
                         </button>
                       </td>
-                      <td className="text-center">
+                      <td id="users-action-col" className="text-center">
                         <div className="d-inline-flex align-items-center justify-content-center gap-2" style={{ minWidth: "76px" }} onClick={(event) => event.stopPropagation()}>
                         <button
                           className="action-btn btn-view"

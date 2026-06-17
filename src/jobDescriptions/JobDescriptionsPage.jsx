@@ -345,7 +345,15 @@ export const JobDescriptionsPage = ({ currentUser }) => {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        void loadData();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   const filteredJds = useMemo(() => {
@@ -575,6 +583,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
               Import JD
             </button>
             <button
+              id="jd-create-btn"
               className="btn btn-primary d-flex align-items-center gap-2"
               disabled={actionLoading || departments.length === 0}
               onClick={openCreateForm}
@@ -607,6 +616,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
           <div className="position-relative">
             <SearchIcon />
             <input
+              id="jd-search-input"
               type="text"
               className="form-control bg-body ps-5"
               placeholder="Tìm theo vị trí, phòng ban, địa điểm hoặc nội dung JD..."
@@ -647,7 +657,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
       <div className="row g-4">
         <div className="col-12 col-xl-5">
-          <section className="card border-0 shadow-sm h-100">
+          <section id="jd-list-card" className="card border-0 shadow-sm h-100">
             <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
               <span className="fw-bold text-body-emphasis">Danh sách JD</span>
               <span className="badge bg-body-secondary text-body">
@@ -684,7 +694,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                               {getDepartmentName(jd)} {jd.location ? `- ${jd.location}` : ""}
                             </div>
                           </div>
-                          <div className="d-flex flex-column align-items-end gap-1 flex-shrink-0">
+                          <div className="d-flex flex-column align-items-end gap-1 shrink-0">
                             <span className={`badge ${status.badge}`}>{status.label}</span>
                             <span className="badge bg-body text-body border">{getWorkingTypeLabel(jd.workingType)}</span>
                           </div>
@@ -703,7 +713,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
         <div className="col-12 col-xl-7">
           {selectedJd ? (
-            <section className="card border-0 shadow-sm h-100">
+            <section id="jd-detail-card" className="card border-0 shadow-sm h-100">
               <div className="card-header bg-transparent border-bottom">
                 <div className="d-flex justify-content-between align-items-start gap-3">
                   <div style={{ minWidth: 0 }}>
@@ -712,7 +722,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                       {getDepartmentName(selectedJd)} {selectedJd.location ? `- ${selectedJd.location}` : ""}
                     </div>
                   </div>
-                  <div className="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+                  <div className="d-flex flex-column align-items-end gap-2 shrink-0">
                     <div className="d-flex flex-wrap gap-2 justify-content-end">
                       <span className={`badge ${getStatusOption(selectedJd.status).badge}`}>
                         {getStatusOption(selectedJd.status).label}
@@ -796,12 +806,12 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       </div>
 
       {formMode && canManage && (
-        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-1050 flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
           <div
-            className="flex w-full max-w-[820px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl"
+            className="flex w-full max-w-[820px] flex-col overflow-hidden rounded-xl bg-(--bs-body-bg) shadow-xl"
             style={{ maxHeight: "calc(100vh - 24px)" }}
           >
-            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
+            <div className="d-flex shrink-0 justify-content-between align-items-center border-bottom p-4">
               <h5 className="m-0 fw-bold text-body-emphasis">
                 {formMode === "create" ? "Tạo JD mới" : "Chỉnh sửa JD"}
               </h5>
@@ -930,7 +940,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                   </Field>
                 </div>
               </div>
-              <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
+              <div className="d-flex shrink-0 justify-content-end gap-2 border-top p-4">
                 <button type="button" className="btn btn-light border" disabled={actionLoading} onClick={closeForm}>
                   Hủy
                 </button>

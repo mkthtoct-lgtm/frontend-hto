@@ -22,6 +22,10 @@ function normalizeRole(roleId) {
   return ROLE_ID_MAP[roleId] || "user";
 }
 
+const setAuthCookie = (token, maxAge) => {
+  document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+};
+
 function getLoginErrorMessage(response, status) {
   const detailMessages = response?.error?.details;
 
@@ -99,7 +103,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         localStorage.setItem("refresh_token", responseData.refresh_token);
       }
 
-      document.cookie = `token=${responseData.access_token}; path=/; max-age=${data.remember ? 604800 : 86400}; SameSite=Lax`;
+      setAuthCookie(responseData.access_token, data.remember ? 604800 : 86400);
 
       const user = {
         id: responseData.user.id,
@@ -174,7 +178,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
             />
             <button
               type="button"
-              className="absolute top-1/2 right-3 z-[5] flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
+              className="absolute top-1/2 right-3 z-5 flex -translate-y-1/2 items-center border-0 bg-transparent p-0 text-[#9ca3af]"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >

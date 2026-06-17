@@ -70,9 +70,9 @@ export const NewsEventsPage = () => {
   return (
     <div className="container-fluid p-0 bg-body text-body" style={{ maxWidth: "1600px" }}>
       <section className="position-relative overflow-hidden mb-4 border-bottom" style={{ minHeight: "320px", background: "linear-gradient(110deg, var(--bs-body-bg) 0%, var(--bs-tertiary-bg) 52%, var(--bs-body-bg) 100%)" }}>
-        <div className="position-absolute top-0 end-0 h-100 d-none d-lg-block" style={{ width: "48%", opacity: 0.9 }}>
+        <div className="position-absolute top-0 inset-e-0 h-100 d-none d-lg-block" style={{ width: "48%", opacity: 0.9 }}>
           <img src="/assets/images/properties/listing/pic1.jpg" alt="" className="h-100 w-100" style={{ objectFit: "cover", clipPath: "ellipse(70% 72% at 74% 44%)" }} />
-          <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: "linear-gradient(90deg, var(--bs-body-bg), color-mix(in srgb, var(--bs-body-bg) 22%, transparent))" }} />
+          <div className="position-absolute top-0 inset-s-0 w-100 h-100" style={{ background: "linear-gradient(90deg, var(--bs-body-bg), color-mix(in srgb, var(--bs-body-bg) 22%, transparent))" }} />
         </div>
         <div className="position-absolute rounded-circle d-none d-md-block" style={{ width: "170px", height: "170px", right: "34%", top: "28px", background: "color-mix(in srgb, var(--bs-primary) 10%, transparent)" }} />
         <div className="position-absolute rounded-circle d-none d-md-block" style={{ width: "86px", height: "86px", right: "43%", top: "150px", background: "color-mix(in srgb, var(--bs-info) 10%, transparent)" }} />
@@ -88,6 +88,7 @@ export const NewsEventsPage = () => {
             <div className="position-relative" style={{ width: "min(100%, 360px)" }}>
               <span className="position-absolute top-50 translate-middle-y text-body-secondary" style={{ left: "15px" }}><SearchIcon /></span>
               <input
+                id="news-search-input"
                 className="form-control border shadow-sm bg-body text-body"
                 placeholder="Tìm kiếm tin tức..."
                 style={{ height: "52px", borderRadius: "10px", paddingLeft: "42px" }}
@@ -95,7 +96,7 @@ export const NewsEventsPage = () => {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
-            <div className="d-flex flex-wrap gap-2">
+            <div id="news-type-filter-group" className="d-flex flex-wrap gap-2">
               {[
                 { id: "all", label: "Tất cả" },
                 { id: "news", label: "Tin tức" },
@@ -119,7 +120,7 @@ export const NewsEventsPage = () => {
       {viewMode === "list" && (
         <div className="row mb-4 gx-3 gx-xl-4 align-items-start px-3 px-xl-4">
           <div className="col-12 col-xl-8 mb-3 mb-xl-0">
-            <div className="d-flex flex-column gap-3">
+            <div id="news-articles-list" className="d-flex flex-column gap-3">
               {filteredArticles.length > 0 ? (
                 filteredArticles.map((article) => (
                   <ArticleCard
@@ -136,7 +137,7 @@ export const NewsEventsPage = () => {
             </div>
           </div>
 
-          <div className="col-12 col-xl-4">
+          <div id="news-sidebar" className="col-12 col-xl-4">
             <NewsSidebar
               events={eventArticles}
               latestArticles={latestArticles}
@@ -163,11 +164,11 @@ export const NewsEventsPage = () => {
                 <section className="card border bg-body overflow-hidden mb-4" style={{ borderRadius: "16px", boxShadow: "0 14px 34px color-mix(in srgb, var(--bs-body-color) 9%, transparent)" }}>
                   <div className="position-relative">
                     <img src={getArticleImage(selectedArticle)} alt={selectedArticle.title} className="w-100 bg-body-tertiary" style={{ height: "clamp(280px, 40vw, 420px)", objectFit: "cover" }} onError={handleImageFallback} />
-                    <div className="position-absolute top-0 start-0 m-3 d-flex flex-wrap gap-2">
+                    <div className="position-absolute top-0 inset-s-0 m-3 d-flex flex-wrap gap-2">
                       <span className="badge bg-body text-primary border shadow-sm px-3 py-2">{selectedArticle.type === "event" ? "Sự kiện" : "Tin tức"}</span>
                       <span className="badge bg-body text-primary border shadow-sm px-3 py-2">{selectedArticle.category}</span>
                     </div>
-                    <div className="position-absolute top-0 end-0 m-3">
+                    <div className="position-absolute top-0 inset-e-0 m-3">
                       <span className="badge bg-success shadow-sm px-3 py-2">{selectedArticle.status}</span>
                     </div>
                   </div>
@@ -182,7 +183,7 @@ export const NewsEventsPage = () => {
                     </div>
 
                     <div className="d-flex gap-3 align-items-center rounded border px-3 px-md-4 py-3 mb-4" style={{ background: "var(--bs-tertiary-bg)", boxShadow: "0 10px 24px color-mix(in srgb, var(--bs-primary) 10%, transparent)" }}>
-                      <span className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0 text-primary bg-primary-subtle" style={{ width: "58px", height: "58px" }}>
+                      <span className="d-inline-flex align-items-center justify-content-center rounded-circle shrink-0 text-primary bg-primary-subtle" style={{ width: "58px", height: "58px" }}>
                         <ClipboardCheckIcon />
                       </span>
                       <p className="fw-semibold text-body-secondary mb-0" style={{ fontSize: "15px", lineHeight: 1.7 }}>{selectedArticle.summary}</p>
@@ -215,7 +216,7 @@ export const NewsEventsPage = () => {
                           </div>
                         </div>
                         <div className="col-12 col-lg-4 d-flex align-items-center justify-content-center p-4">
-                          <img src={getArticleImage(selectedArticle)} alt="" className="rounded-circle border border-4 shadow-sm" style={{ width: "190px", height: "190px", objectFit: "cover", borderColor: "var(--bs-body-bg)" }} onError={handleImageFallback} />
+                          <img src={getArticleImage(selectedArticle)} alt="" className="rounded-circle border-4 shadow-sm" style={{ width: "190px", height: "190px", objectFit: "cover", borderColor: "var(--bs-body-bg)" }} onError={handleImageFallback} />
                         </div>
                       </div>
                     </section>
@@ -262,7 +263,7 @@ function NewsSidebar({ events, latestArticles, onOpen, popularArticles }) {
         <div className="card-body p-3 d-flex flex-column gap-3">
           {latestArticles.map((article) => (
             <button className="d-flex gap-3 border-0 bg-transparent p-0 text-start" key={article.id} type="button" onClick={() => onOpen(article.id)}>
-              <img src={getArticleImage(article)} alt={article.title} className="rounded bg-body-tertiary flex-shrink-0" style={{ width: "86px", height: "64px", objectFit: "cover" }} onError={handleImageFallback} />
+              <img src={getArticleImage(article)} alt={article.title} className="rounded bg-body-tertiary shrink-0" style={{ width: "86px", height: "64px", objectFit: "cover" }} onError={handleImageFallback} />
               <span style={{ minWidth: 0 }}>
                 <span className={`badge ${article.type === "event" ? "bg-primary-subtle text-primary" : "bg-success-subtle text-success"} mb-1`} style={{ fontSize: "10px" }}>{article.status || (article.type === "event" ? "Sự kiện" : "Tin tức")}</span>
                 <span className="fw-bold text-body-emphasis d-block" style={{ fontSize: "13px", lineHeight: 1.35 }}>{article.title}</span>
@@ -281,8 +282,8 @@ function NewsSidebar({ events, latestArticles, onOpen, popularArticles }) {
         <div className="card-body p-3 d-flex flex-column gap-3">
           {popularArticles.slice(0, 3).map((article, index) => (
             <button className="d-flex gap-3 border-0 bg-transparent p-0 text-start align-items-center" key={article.id} type="button" onClick={() => onOpen(article.id)}>
-              <span className={`fw-bold rounded text-center flex-shrink-0 ${index === 0 ? "bg-primary-subtle text-primary" : index === 1 ? "bg-info-subtle text-info" : "bg-warning-subtle text-warning"}`} style={{ fontSize: "18px", width: "36px", lineHeight: "36px" }}>{index + 1}</span>
-              <img src={getArticleImage(article)} alt={article.title} className="rounded bg-body-tertiary flex-shrink-0" style={{ width: "58px", height: "48px", objectFit: "cover" }} onError={handleImageFallback} />
+              <span className={`fw-bold rounded text-center shrink-0 ${index === 0 ? "bg-primary-subtle text-primary" : index === 1 ? "bg-info-subtle text-info" : "bg-warning-subtle text-warning"}`} style={{ fontSize: "18px", width: "36px", lineHeight: "36px" }}>{index + 1}</span>
+              <img src={getArticleImage(article)} alt={article.title} className="rounded bg-body-tertiary shrink-0" style={{ width: "58px", height: "48px", objectFit: "cover" }} onError={handleImageFallback} />
               <span style={{ minWidth: 0 }}>
                 <span className="fw-bold text-body-emphasis d-block" style={{ fontSize: "13px", lineHeight: 1.35 }}>{article.title}</span>
                 <span className="text-body-secondary" style={{ fontSize: "11px" }}>{formatDate(article.date)} · {article.category}</span>
@@ -313,7 +314,7 @@ function ArticleCard({ article, onOpen }) {
       <button className="border-0 bg-transparent p-0 text-start w-100" type="button" onClick={onOpen}>
         <div className="position-relative">
           <img src={getArticleImage(article)} alt={article.title} className="w-100 bg-body-tertiary" style={{ height: "280px", objectFit: "cover" }} onError={handleImageFallback} />
-          <div className="position-absolute top-0 start-0 m-3 d-flex gap-2">
+          <div className="position-absolute top-0 inset-s-0 m-3 d-flex gap-2">
             <span className="badge bg-primary">{article.type === "event" ? "Sự kiện" : "Tin tức"}</span>
             <span className="badge bg-body text-primary border">{article.category}</span>
             {article.featured && <span className="badge bg-warning text-dark">Nổi bật</span>}
@@ -324,7 +325,7 @@ function ArticleCard({ article, onOpen }) {
         <button className="border-0 bg-transparent p-0 text-start" type="button" onClick={onOpen}>
           <h5 className="fw-bold text-body-emphasis mb-2" style={{ fontSize: "22px", lineHeight: 1.25 }}>{article.title}</h5>
         </button>
-        <p className="text-body-secondary mb-4 flex-grow-1" style={{ fontSize: "14px", lineHeight: 1.65 }}>{article.summary}</p>
+        <p className="text-body-secondary mb-4 grow" style={{ fontSize: "14px", lineHeight: 1.65 }}>{article.summary}</p>
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex flex-wrap gap-3 text-body-secondary" style={{ fontSize: "12px" }}>
             <span className="d-inline-flex align-items-center gap-1"><CalendarMiniIcon />{formatDate(article.date)}</span>
@@ -346,11 +347,11 @@ function TimelineItem({ event, isLast }) {
   return (
     <div className="d-flex gap-3 position-relative">
       {!isLast && <div className="position-absolute" style={{ left: "34px", top: "48px", bottom: "-10px", width: "2px", backgroundColor: "var(--bs-border-color)" }} />}
-      <div className="rounded bg-primary text-white text-center flex-shrink-0 position-relative" style={{ width: "68px", padding: "7px 4px", zIndex: 1 }}>
+      <div className="rounded bg-primary text-white text-center shrink-0 position-relative" style={{ width: "68px", padding: "7px 4px", zIndex: 1 }}>
         <div className="fw-bold" style={{ fontSize: "12px" }}>{formatDate(event.date).slice(0, 5)}</div>
         <div style={{ fontSize: "10px", opacity: 0.88 }}>{event.status}</div>
       </div>
-      <div className="rounded border bg-body-tertiary p-2 flex-grow-1" style={{ minWidth: 0 }}>
+      <div className="rounded border bg-body-tertiary p-2 grow" style={{ minWidth: 0 }}>
         <div className="fw-bold text-body-emphasis" style={{ fontSize: "13px", lineHeight: 1.3 }}>{event.title}</div>
         <div className="text-body-secondary mt-1" style={{ fontSize: "12px" }}>{event.location}</div>
       </div>

@@ -23,22 +23,22 @@ export function ToastProvider({ children }) {
 
   const ICONS = {
     success: (
-      <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     error: (
-      <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     warning: (
-      <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
     ),
     info: (
-      <svg className="w-5 h-5 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-cyan-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -54,7 +54,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastDispatchContext.Provider value={dispatch}>
       {children}
-      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+      <div className="fixed top-4 right-4 z-9999 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
         {toasts.map(t => (
           <div
             key={t.id}
@@ -67,7 +67,7 @@ export function ToastProvider({ children }) {
             </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5"
+              className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 mt-0.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -101,10 +101,10 @@ function ConfirmModal({ isOpen, title, message, confirmLabel = "Xác nhận", ca
   const s = iconStyles[variant] || iconStyles.danger;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] flex items-center justify-center p-4 z-[9998] animate-[fadeIn_0.15s_ease-out]">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] flex items-center justify-center p-4 z-9998 animate-[fadeIn_0.15s_ease-out]">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-[slideUp_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         <div className="flex items-start gap-4">
-          <div className={`flex-shrink-0 w-10 h-10 rounded-full ${s.bg} flex items-center justify-center`}>
+          <div className={`shrink-0 w-10 h-10 rounded-full ${s.bg} flex items-center justify-center`}>
             <svg className={`w-5 h-5 ${s.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={s.path} />
             </svg>
@@ -422,15 +422,15 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200 app-dark:!border-slate-700"
-          } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 app-dark:!text-slate-200 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        className={`w-full h-10 bg-white app-dark:bg-[#1e1e1e]! border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200 app-dark:border-slate-700!"
+          } force-rounded-xl px-3 text-sm text-slate-700 app-dark:text-slate-200! flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={`truncate pr-2 ${isAll ? "text-slate-700 app-dark:!text-slate-400 font-medium" : "text-slate-800 app-dark:!text-slate-100 font-semibold"}`}>
+        <span className={`truncate pr-2 ${isAll ? "text-slate-700 app-dark:text-slate-400! font-medium" : "text-slate-800 app-dark:text-slate-100! font-semibold"}`}>
           {displayLabel}
         </span>
         <svg
-          className={`w-4 h-4 text-slate-400 app-dark:!text-slate-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+          className={`w-4 h-4 text-slate-400 app-dark:text-slate-500! transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""
             }`}
           fill="none"
           stroke="currentColor"
@@ -442,7 +442,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 app-dark:!border-slate-700 bg-white app-dark:!bg-[#252525] shadow-xl p-1 animate-fade-in">
+        <div className="absolute left-0 right-0 z-100 mt-1.5 max-h-[280px] overflow-y-auto force-rounded-xl border border-slate-200 app-dark:border-slate-700! bg-white app-dark:bg-[#252525]! shadow-xl p-1 animate-fade-in">
           <div role="listbox" className="flex flex-col gap-0.5">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -452,9 +452,9 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
-                      ? "bg-cyan-100 app-dark:!bg-cyan-900/40 text-cyan-800 app-dark:!text-cyan-100 font-semibold"
-                      : "text-slate-700 app-dark:!text-slate-200 hover:bg-cyan-50 app-dark:hover:!bg-cyan-900/30 hover:text-cyan-700 app-dark:hover:text-cyan-400"
+                  className={`w-full force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
+                      ? "bg-cyan-100 app-dark:bg-cyan-900/40! text-cyan-800 app-dark:text-cyan-100! font-semibold"
+                      : "text-slate-700 app-dark:text-slate-200! hover:bg-cyan-50 app-dark:hover:bg-cyan-900/30! hover:text-cyan-700 app-dark:hover:text-cyan-400"
                     }`}
                   onClick={() => {
                     onChange(opt.value);
@@ -463,7 +463,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                 >
                   <span className="truncate pr-2">{opt.label}</span>
                   {isSelected && (
-                    <svg className="w-4 h-4 text-cyan-700 app-dark:!text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4 text-cyan-700 app-dark:text-cyan-400! shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
@@ -653,7 +653,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, onS
       {isOpen && (
         <div
           className="
-            absolute left-0 top-full mt-2 z-[200]
+            absolute left-0 top-full mt-2 z-200
             bg-white rounded-2xl
             border border-slate-200
             shadow-[0_20px_60px_rgba(0,0,0,0.12)]
@@ -664,7 +664,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, onS
         >
           <div className="flex flex-col md:flex-row max-h-[520px]">
             {/* Cột 1: Danh mục */}
-            <div className="w-full md:w-[240px] lg:w-[280px] flex-shrink-0 border-r border-slate-100">
+            <div className="w-full md:w-[240px] lg:w-[280px] shrink-0 border-r border-slate-100">
               <div className="p-3 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Danh mục
@@ -753,7 +753,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, onS
                         )}
                         <span className="truncate text-sm">{cat.name}</span>
                         {count > 0 && (
-                          <span className="text-[10px] text-slate-400 ml-auto flex-shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] text-slate-400 ml-auto shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">
                             {count}
                           </span>
                         )}
@@ -769,7 +769,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, onS
             </div>
 
             {/* Cột 2: Quốc gia */}
-            <div className="w-full md:w-[200px] lg:w-[220px] flex-shrink-0 border-r border-slate-100 bg-slate-50/30">
+            <div className="w-full md:w-[200px] lg:w-[220px] shrink-0 border-r border-slate-100 bg-slate-50/30">
               <div className="p-3 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Quốc gia
@@ -818,7 +818,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, onS
             </div>
 
             {/* Cột 3: Chương trình */}
-            <div className="w-full md:w-[240px] lg:w-[280px] flex-shrink-0 bg-white">
+            <div className="w-full md:w-[240px] lg:w-[280px] shrink-0 bg-white">
               <div className="p-3 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Chương trình
@@ -932,6 +932,7 @@ function ProductOverviewPageInner({ currentUser }) {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingProductParentCatId, setEditingProductParentCatId] = useState("");
   const [showInterestModal, setShowInterestModal] = useState(false);
+  const [submittingInterest, setSubmittingInterest] = useState(false);
 
   const [activeCategoryTab, setActiveCategoryTab] = useState("info");
   const [activeProductTab, setActiveProductTab] = useState("basic");
@@ -1249,6 +1250,18 @@ function ProductOverviewPageInner({ currentUser }) {
 
   const handleSubmitInterest = async (e) => {
     e.preventDefault();
+
+    if (!interestForm.customerName.trim()) {
+      toast.warning("Vui lòng nhập họ tên khách hàng.", "Thiếu thông tin");
+      return;
+    }
+    if (!interestForm.phone.trim()) {
+      toast.warning("Vui lòng nhập số điện thoại.", "Thiếu thông tin");
+      return;
+    }
+
+    setSubmittingInterest(true);
+
     try {
       const leadPayload = {
         customerName: interestForm.customerName,
@@ -1271,6 +1284,65 @@ function ProductOverviewPageInner({ currentUser }) {
       setShowInterestModal(false);
     } catch (err) {
       toast.error(err.message, "Gửi liên hệ thất bại");
+    } finally {
+      setSubmittingInterest(false);
+    }
+  };
+
+  const handleTestSendInterest = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!interestForm.customerName.trim()) {
+      toast.warning("Vui lòng nhập họ tên khách hàng.", "Thiếu thông tin");
+      return;
+    }
+    if (!interestForm.phone.trim()) {
+      toast.warning("Vui lòng nhập số điện thoại.", "Thiếu thông tin");
+      return;
+    }
+
+    setSubmittingInterest(true);
+
+    const payload = {
+      customerName: interestForm.customerName.trim(),
+      phone: interestForm.phone.trim(),
+      email: interestForm.email.trim(),
+      source: interestForm.sourceChannel || "CTV/Đại lý",
+      productInterest: selectedProduct.name,
+      countryInterest: selectedProduct.country || "Đức",
+      budgetRange: "",
+      urgency: "Chưa xác định",
+      preferredContact: "Zalo/Điện thoại",
+      note: (interestForm.note || "").trim() + " (Gửi thử nghiệm từ UI)",
+      status: "new",
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      };
+
+      const response = await authFetch(`${API_BASE_URL}/leads`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.message || `HTTP error ${response.status}`);
+      }
+
+      toast.success(`Đã gửi lead thử nghiệm vào CRM thành công!`, "Gửi thử thành công");
+      setShowInterestModal(false);
+    } catch (err) {
+      console.error("Lỗi gửi thử API thật:", err);
+      toast.error(`Không thể kết nối hoặc gửi vào CRM: ${err.message}`, "Gửi thử thất bại");
+    } finally {
+      setSubmittingInterest(false);
     }
   };
 
@@ -2002,15 +2074,16 @@ function ProductOverviewPageInner({ currentUser }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 app-dark:!text-slate-100 m-0">Tổng quan sản phẩm</h1>
+              <h1 className="text-2xl font-bold text-slate-900 app-dark:text-slate-100! m-0">Tổng quan sản phẩm</h1>
             </div>
-            <p className="text-slate-500 app-dark:!text-slate-400 text-sm m-0 mt-1">
+            <p className="text-slate-500 app-dark:text-slate-400! text-sm m-0 mt-1">
               Kho danh mục chương trình và tài liệu tư vấn dành cho cộng tác viên, đại lý và nhân viên tư vấn.
             </p>
           </div>
           {canManageProducts && (
             <button
-              className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
+              id="products-add-category-btn"
+              className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm force-rounded-xl transition-all duration-200 cursor-pointer"
               onClick={handleOpenNewCategory}
             >
               <i className="fa fa-folder-plus text-base"></i> + Thêm danh mục
@@ -2020,7 +2093,8 @@ function ProductOverviewPageInner({ currentUser }) {
       ) : (
         <div className="mb-6">
           <button
-            className="border border-slate-300 app-dark:!border-white/15 hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-700 app-dark:!text-slate-300 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
+            id="tour-back-btn"
+            className="border border-slate-300 app-dark:border-white/15! hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-700 app-dark:text-slate-300! text-sm font-semibold force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
             onClick={handleGoBack}
           >
             <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -2033,49 +2107,49 @@ function ProductOverviewPageInner({ currentUser }) {
 
       {/* STATS SECTION */}
       {viewMode === "overview" && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:!bg-cyan-955/40 text-cyan-900 app-dark:!text-cyan-300 flex-shrink-0 mr-4">
+        <div id="products-stats-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:bg-cyan-955/40! text-cyan-900 app-dark:text-cyan-300! shrink-0 mr-4">
               <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-450 app-dark:!text-slate-400 text-xs block font-medium">Danh mục lớn</span>
-              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
+              <span className="text-slate-450 app-dark:text-slate-400! text-xs block font-medium">Danh mục lớn</span>
+              <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
             </div>
           </div>
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 app-dark:!bg-emerald-955/40 text-emerald-650 app-dark:!text-emerald-350 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 app-dark:bg-emerald-955/40! text-emerald-650 app-dark:text-emerald-350! shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-7.244-2.244L12 20l7.244-2.244" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Sản phẩm/Chương trình con</span>
-              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
+              <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Sản phẩm/Chương trình con</span>
+              <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
             </div>
           </div>
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 app-dark:!bg-sky-955/40 text-sky-650 app-dark:!text-sky-300 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 app-dark:bg-sky-955/40! text-sky-650 app-dark:text-sky-300! shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Đang tuyển sinh</span>
-              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
+              <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Đang tuyển sinh</span>
+              <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
             </div>
           </div>
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 app-dark:!bg-amber-955/40 text-amber-650 app-dark:!text-amber-300 flex-shrink-0 mr-4">
+          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 app-dark:bg-amber-955/40! text-amber-650 app-dark:text-amber-300! shrink-0 mr-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
-              <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
+              <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
+              <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
             </div>
           </div>
         </div>
@@ -2094,19 +2168,19 @@ function ProductOverviewPageInner({ currentUser }) {
         const hasActiveFilter = activeFilters.length > 0;
 
         return (
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5">
+          <div id="products-filter-section" className="bg-white app-dark:bg-[#252525]! rounded-2xl border border-slate-100 app-dark:border-white/8! px-4 py-3 shadow-sm app-dark:shadow-none! mb-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
               {/* Search */}
               <div className="md:col-span-12 xl:col-span-6">
                 <div className="relative flex items-center">
-                  <span className="absolute left-3 text-slate-400 app-dark:!text-slate-500 flex items-center justify-center pointer-events-none">
+                  <span className="absolute left-3 text-slate-400 app-dark:text-slate-500! flex items-center justify-center pointer-events-none">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </span>
                   <input
                     type="text"
-                    className="w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border border-slate-200 app-dark:!border-slate-700 rounded-xl pl-9 pr-8 text-sm text-slate-700 app-dark:!text-slate-100 placeholder-slate-400 app-dark:!placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
+                    className="w-full h-10 bg-white app-dark:bg-[#1e1e1e]! border border-slate-200 app-dark:border-slate-700! rounded-xl pl-9 pr-8 text-sm text-slate-700 app-dark:text-slate-100! placeholder-slate-400 app-dark:placeholder-slate-500! focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                     placeholder="Tìm kiếm theo tên, quốc gia, tag..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -2114,7 +2188,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   {searchQuery && (
                     <button
                       type="button"
-                      className="absolute right-2.5 text-slate-400 hover:text-slate-600 app-dark:hover:!text-slate-200 transition-colors"
+                      className="absolute right-2.5 text-slate-400 hover:text-slate-600 app-dark:hover:text-slate-200! transition-colors"
                       onClick={() => setSearchQuery("")}
                       aria-label="Xóa tìm kiếm"
                     >
@@ -2152,21 +2226,21 @@ function ProductOverviewPageInner({ currentUser }) {
 
             {/* Active filter badges + result count */}
             {hasActiveFilter && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:!border-white/8">
-                <span className="text-xs text-slate-400 app-dark:!text-slate-500 font-medium flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:border-white/8!">
+                <span className="text-xs text-slate-400 app-dark:text-slate-500! font-medium shrink-0">
                   {filteredCategories.length > 0
-                    ? <><span className="text-cyan-800 app-dark:!text-cyan-400 font-bold">{totalResults}</span> chương trình trong <span className="text-cyan-800 app-dark:!text-cyan-400 font-bold">{filteredCategories.length}</span> danh mục</>
+                    ? <><span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{totalResults}</span> chương trình trong <span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{filteredCategories.length}</span> danh mục</>
                     : <span className="text-orange-500 font-semibold">Không tìm thấy kết quả</span>
                   }
                 </span>
-                <span className="text-slate-200 app-dark:!text-slate-700 mx-1 hidden sm:inline">·</span>
+                <span className="text-slate-200 app-dark:text-slate-700! mx-1 hidden sm:inline">·</span>
                 {activeFilters.map(f => (
-                  <span key={f.key} className="inline-flex items-center gap-1 bg-cyan-50 app-dark:!bg-cyan-955/30 border border-cyan-200 app-dark:!border-cyan-900/60 text-cyan-800 app-dark:!text-cyan-300 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                  <span key={f.key} className="inline-flex items-center gap-1 bg-cyan-50 app-dark:bg-cyan-955/30! border border-cyan-200 app-dark:border-cyan-900/60! text-cyan-800 app-dark:text-cyan-300! text-[11px] font-semibold px-2.5 py-1 rounded-full">
                     {f.label}
                     <button
                       type="button"
                       onClick={f.onClear}
-                      className="ml-0.5 text-cyan-500 hover:text-cyan-800 app-dark:hover:!text-cyan-100 transition-colors"
+                      className="ml-0.5 text-cyan-500 hover:text-cyan-800 app-dark:hover:text-cyan-100! transition-colors"
                       aria-label={`Xóa lọc ${f.label}`}
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2179,7 +2253,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   <button
                     type="button"
                     onClick={handleResetFilters}
-                    className="text-[11px] text-slate-400 hover:text-red-500 app-dark:hover:!text-red-400 font-semibold transition-colors underline underline-offset-2"
+                    className="text-[11px] text-slate-400 hover:text-red-500 app-dark:hover:text-red-400! font-semibold transition-colors underline underline-offset-2"
                   >
                     Xóa tất cả
                   </button>
@@ -2210,10 +2284,10 @@ function ProductOverviewPageInner({ currentUser }) {
 
               return (
                 <div key={cat.id} className="flex flex-col">
-                  <div className="relative bg-white app-dark:!bg-[#252525] rounded-2xl overflow-hidden shadow-sm border border-slate-100 app-dark:!border-white/8 transition-shadow duration-200 hover:shadow-md flex flex-col h-full">
+                  <div className="relative bg-white app-dark:bg-[#252525]! rounded-2xl overflow-hidden shadow-sm border border-slate-100 app-dark:border-white/8! transition-shadow duration-200 hover:shadow-md flex flex-col h-full">
                     {/* Header Card với Ảnh Nền */}
                     <div className={`relative overflow-hidden rounded-t-2xl h-[180px] md:h-[190px] ${isInactiveOrHidden ? "opacity-75" : ""}`}>
-                      <div className="absolute inset-0 bg-slate-100 app-dark:!bg-[#1a1a1a] flex flex-col items-center justify-center text-slate-400 app-dark:!text-slate-500 gap-1.5 force-rounded-t-2xl">
+                      <div className="absolute inset-0 bg-slate-100 app-dark:bg-[#1a1a1a]! flex flex-col items-center justify-center text-slate-400 app-dark:text-slate-500! gap-1.5 force-rounded-t-2xl">
                         <svg className="w-10 h-10 text-slate-350" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -2231,7 +2305,7 @@ function ProductOverviewPageInner({ currentUser }) {
                         />
                       )}
 
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-900/25 to-slate-900/15" />
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-950/65 via-slate-900/25 to-slate-900/15" />
 
                       <div className="relative flex h-full flex-col p-5 justify-between">
                         <div className="flex items-start justify-between gap-3">
@@ -2243,7 +2317,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                   event.stopPropagation();
                                   handleEditCategory(cat);
                                 }}
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 app-dark:!border-white/20 bg-white/90 app-dark:!bg-white/10 text-amber-500 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:!bg-white/20 force-rounded-full cursor-pointer"
+                                className="flex h-9 w-9 items-center justify-center border border-white/60 app-dark:border-white/20! bg-white/90 app-dark:bg-white/10! text-amber-500 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:bg-white/20! force-rounded-full cursor-pointer"
                                 aria-label="Sửa danh mục"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -2256,7 +2330,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                   event.stopPropagation();
                                   handleToggleCategoryStatus(cat.id, cat.status);
                                 }}
-                                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/60 app-dark:!border-white/20 bg-white/90 app-dark:!bg-white/10 text-cyan-700 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:!bg-white/20 force-rounded-full cursor-pointer"
+                                className="flex h-9 w-9 items-center justify-center border border-white/60 app-dark:border-white/20! bg-white/90 app-dark:bg-white/10! text-cyan-700 shadow-sm transition hover:scale-105 hover:bg-white app-dark:hover:bg-white/20! force-rounded-full cursor-pointer"
                                 aria-label="Thay đổi trạng thái danh mục"
                               >
                                 {isInactiveOrHidden ? (
@@ -2294,15 +2368,15 @@ function ProductOverviewPageInner({ currentUser }) {
                     </div>
 
                     {/* Body Card */}
-                    <div className="p-5 flex-grow flex flex-col">
-                      <p className="text-slate-500 app-dark:!text-slate-400 text-xs mb-4 line-clamp-2 h-10 overflow-hidden leading-relaxed">
+                    <div className="p-5 grow flex flex-col">
+                      <p className="text-slate-500 app-dark:text-slate-400! text-xs mb-4 line-clamp-2 h-10 overflow-hidden leading-relaxed">
                         {cat.description || "Chưa có mô tả danh mục lớn."}
                       </p>
 
-                      <div className="border-t border-slate-100 app-dark:!border-white/8 pt-4 mt-4">
+                      <div className="border-t border-slate-100 app-dark:border-white/8! pt-4 mt-4">
                         <button
                           type="button"
-                          className="w-full flex justify-between items-center font-semibold text-xs text-slate-600 app-dark:!text-slate-300 hover:text-cyan-955 transition-colors"
+                          className="w-full flex justify-between items-center font-semibold text-xs text-slate-600 app-dark:text-slate-300! hover:text-cyan-955 transition-colors"
                           onClick={() => toggleProgramsAccordion(cat.id)}
                         >
                           <span>Các chương trình cụ thể</span>
@@ -2310,46 +2384,47 @@ function ProductOverviewPageInner({ currentUser }) {
                         </button>
 
                         {isExpanded && (
-                          <div className="mt-4 animate-[fadeIn_0.2s_ease-out]">
+                          <div className="mt-4 animate-fade-in">
                             {displayPrograms.length > 0 ? (
                               <>
                                 <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                                   {displayPrograms.map((prog) => {
-                                        const totalDocs = (prog.brochure ? 1 : 0) + (prog.documents?.length || 0);
-                                        return (
-                                          <div key={prog.id} className="snap-start flex-shrink-0 w-[calc(50%-0.375rem)] sm:w-[200px]">
-                                            <div
-                                              className="bg-slate-50 app-dark:!bg-[#1e1e1e] border border-slate-200/80 app-dark:!border-slate-700 rounded-xl p-3.5 transition-all duration-200 hover:bg-cyan-50/50 app-dark:hover:!bg-cyan-955/40 hover:border-cyan-200 app-dark:hover:!border-cyan-900/60 hover:translate-x-0.5 cursor-pointer h-full flex flex-col justify-between"
-                                              onClick={() => {
-                                                setSelectedProduct(prog);
-                                                setViewMode("detail");
-                                              }}
-                                            >
-                                              <div>
-                                                <div className="font-semibold text-xs text-slate-800 app-dark:!text-slate-100 mb-2 line-clamp-2 leading-snug min-h-[2.8em]" title={prog.name}>
-                                                  {prog.name}
-                                                </div>
-                                              </div>
-
-                                              <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-slate-200/40 app-dark:!border-white/8/60">
-                                                <span className="bg-slate-100 app-dark:!bg-[#252525] text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/8 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
-                                                  <i className="fa fa-earth-asia text-cyan-750 app-dark:!text-cyan-400"></i>
-                                                  {resolveCountryName(prog.country)}
-                                                </span>
-
-                                                <span className="text-[10px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-1">
-                                                  <i className="fa fa-folder-open text-slate-400 app-dark:!text-slate-500"></i>
-                                                  {totalDocs} Tài liệu
-                                                </span>
-                                              </div>
+                                    const totalDocs = (prog.brochure ? 1 : 0) + (prog.documents?.length || 0);
+                                    return (
+                                      <div key={prog.id} className="snap-start shrink-0 w-[calc(50%-0.375rem)] sm:w-[200px]">
+                                        <div
+                                          id={prog.id === "prod-1-1" ? "tour-first-program-card" : undefined}
+                                          className="bg-slate-50 app-dark:bg-[#1e1e1e]! border border-slate-200/80 app-dark:border-slate-700! rounded-xl p-3.5 transition-all duration-200 hover:bg-cyan-50/50 app-dark:hover:bg-cyan-955/40! hover:border-cyan-200 app-dark:hover:border-cyan-900/60! hover:translate-x-0.5 cursor-pointer h-full flex flex-col justify-between"
+                                          onClick={() => {
+                                            setSelectedProduct(prog);
+                                            setViewMode("detail");
+                                          }}
+                                        >
+                                          <div>
+                                            <div className="font-semibold text-xs text-slate-800 app-dark:text-slate-100! mb-2 line-clamp-2 leading-snug min-h-[2.8em]" title={prog.name}>
+                                              {prog.name}
                                             </div>
                                           </div>
-                                        );
-                                      })}
+
+                                          <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-slate-200/40 app-dark:border-white/8/60!">
+                                            <span className="bg-slate-100 app-dark:bg-[#252525]! text-slate-700 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/8! px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
+                                              <i className="fa fa-earth-asia text-cyan-750 app-dark:text-cyan-400!"></i>
+                                              {resolveCountryName(prog.country)}
+                                            </span>
+
+                                            <span className="text-[10px] text-slate-400 app-dark:text-slate-500! font-medium flex items-center gap-1">
+                                              <i className="fa fa-folder-open text-slate-400 app-dark:text-slate-500!"></i>
+                                              {totalDocs} Tài liệu
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </>
                             ) : (
-                              <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic py-4 text-center bg-slate-50 app-dark:!bg-[#1e1e1e] rounded-xl border border-dashed border-slate-200 app-dark:!border-slate-700">
+                              <div className="text-slate-400 app-dark:text-slate-500! text-xs italic py-4 text-center bg-slate-50 app-dark:bg-[#1e1e1e]! rounded-xl border border-dashed border-slate-200 app-dark:border-slate-700!">
                                 Chưa có chương trình nào hoạt động khớp bộ lọc.
                               </div>
                             )}
@@ -2363,12 +2438,12 @@ function ProductOverviewPageInner({ currentUser }) {
             })
             })()
           ) : (
-            <div className="col-span-full text-center py-16 bg-white app-dark:!bg-[#252525] border border-slate-100 app-dark:!border-white/8 rounded-2xl shadow-sm app-dark:!shadow-none">
-              <svg className="w-12 h-12 text-slate-300 app-dark:!text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="col-span-full text-center py-16 bg-white app-dark:bg-[#252525]! border border-slate-100 app-dark:border-white/8! rounded-2xl shadow-sm app-dark:shadow-none!">
+              <svg className="w-12 h-12 text-slate-300 app-dark:text-slate-600! mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <h5 className="text-slate-500 app-dark:!text-slate-400 font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
-              <p className="text-slate-400 app-dark:!text-slate-500 text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
+              <h5 className="text-slate-500 app-dark:text-slate-400! font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
+              <p className="text-slate-400 app-dark:text-slate-500! text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
               <button className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold px-4 py-2 rounded-xl mt-1 transition-colors" onClick={handleResetFilters}>
                 Xóa bộ lọc
               </button>
@@ -2387,7 +2462,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 type="button"
                 disabled={safeCatPage === 0}
                 onClick={() => setCategoryPage(p => Math.max(0, p - 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:!bg-[#252525] transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
                 aria-label="Trang trước"
               >
                 <i className="fa fa-chevron-left text-xs"></i>
@@ -2402,7 +2477,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     className={`rounded-full transition-all duration-200 font-semibold text-xs ${
                       idx === safeCatPage
                         ? "h-8 w-8 bg-cyan-900 text-white shadow-sm"
-                        : "h-8 w-8 bg-white app-dark:!bg-[#252525] border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-400 hover:bg-slate-50 app-dark:hover:!bg-[#2e2e2e]"
+                        : "h-8 w-8 bg-white app-dark:bg-[#252525]! border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-400! hover:bg-slate-50 app-dark:hover:bg-[#2e2e2e]!"
                     }`}
                     aria-label={`Trang ${idx + 1}`}
                   >
@@ -2415,13 +2490,13 @@ function ProductOverviewPageInner({ currentUser }) {
                 type="button"
                 disabled={safeCatPage === totalCatPages - 1}
                 onClick={() => setCategoryPage(p => Math.min(totalCatPages - 1, p + 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:!bg-[#252525] transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
                 aria-label="Trang sau"
               >
                 <i className="fa fa-chevron-right text-xs"></i>
               </button>
 
-              <span className="text-xs text-slate-400 app-dark:!text-slate-500 ml-2">
+              <span className="text-xs text-slate-400 app-dark:text-slate-500! ml-2">
                 Trang {safeCatPage + 1} / {totalCatPages}
               </span>
             </div>
@@ -2432,11 +2507,11 @@ function ProductOverviewPageInner({ currentUser }) {
 
       {/* PRODUCT DETAIL VIEW */}
       {viewMode === "detail" && selectedProduct && (
-        <div className="bg-white app-dark:!bg-[#252525] rounded-2xl shadow-sm border border-slate-100 app-dark:!border-white/8 p-6 md:p-8">
-          <div className="border-b border-slate-100 app-dark:!border-white/8 pb-6 mb-6 flex flex-col md:flex-row justify-between items-start gap-4">
+        <div id="tour-product-detail-view" className="bg-white app-dark:bg-[#252525]! rounded-2xl shadow-sm border border-slate-100 app-dark:border-white/8! p-6 md:p-8">
+          <div className="border-b border-slate-100 app-dark:border-white/8! pb-6 mb-6 flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex gap-4 items-start">
               <div
-                className="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl flex-shrink-0"
+                className="w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl shrink-0"
                 style={{
                   background: "linear-gradient(135deg, #003366 0%, #002244 100%)",
                   boxShadow: "0 4px 10px rgba(0,51,102,0.2)"
@@ -2446,7 +2521,7 @@ function ProductOverviewPageInner({ currentUser }) {
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-tight">{selectedProduct.name}</h2>
+                  <h2 className="text-xl font-bold text-slate-800 app-dark:text-slate-100! m-0 leading-tight">{selectedProduct.name}</h2>
                   <span className="px-2 py-0.5 rounded-lg text-xs font-semibold bg-cyan-50 text-cyan-800 border border-cyan-150">
                     {selectedProduct.categoryName || "Chương trình"}
                   </span>
@@ -2454,7 +2529,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     {selectedProduct.region} · {selectedProduct.country}
                   </span>
                 </div>
-                <p className="text-slate-400 app-dark:!text-slate-500 text-xs m-0 mt-1.5 font-medium">
+                <p className="text-slate-400 app-dark:text-slate-500! text-xs m-0 mt-1.5 font-medium">
                   Cập nhật lần cuối: {selectedProduct.updatedAt || new Date().toISOString().split("T")[0]}
                 </p>
               </div>
@@ -2463,7 +2538,7 @@ function ProductOverviewPageInner({ currentUser }) {
             <div className="flex gap-2 w-full md:w-auto flex-wrap">
               {selectedProduct.websiteUrl && (
                 <button
-                  className="flex-1 md:flex-none bg-transparent hover:bg-slate-50 text-cyan-900 hover:text-cyan-950 font-semibold text-xs border-2 border-cyan-900 rounded-xl force-rounded-xl px-4 py-2 flex items-center justify-center gap-1.5 transition-all duration-200"
+                  className="flex-1 md:flex-none bg-transparent hover:bg-slate-50 text-cyan-900 hover:text-cyan-950 font-semibold text-xs border-2 border-cyan-900 force-rounded-xl px-4 py-2 flex items-center justify-center gap-1.5 transition-all duration-200"
                   onClick={() => handleOpenWebsite(selectedProduct.websiteUrl)}
                 >
                   <i className="fa fa-globe"></i> Xem trang web sản phẩm
@@ -2471,7 +2546,7 @@ function ProductOverviewPageInner({ currentUser }) {
               )}
               {canManageProducts && (
                 <button
-                  className="flex-1 md:flex-none bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs rounded-xl force-rounded-xl px-4 py-2 flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm"
+                  className="flex-1 md:flex-none bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs force-rounded-xl px-4 py-2 flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm"
                   onClick={() => handleEditProduct(selectedProduct)}
                 >
                   <i className="fa fa-pen"></i> Sửa sản phẩm
@@ -2483,20 +2558,20 @@ function ProductOverviewPageInner({ currentUser }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div>
-                <h5 className="font-bold text-cyan-900 app-dark:!text-cyan-400 text-sm tracking-wide uppercase mb-3 flex items-center gap-2">
+                <h5 className="font-bold text-cyan-900 app-dark:text-cyan-400! text-sm tracking-wide uppercase mb-3 flex items-center gap-2">
                   <i className="fa fa-circle-info text-cyan-800"></i>Tổng quan chương trình
                 </h5>
-                <p className="text-slate-600 app-dark:!text-slate-300 text-[13.5px] leading-relaxed whitespace-pre-line">
+                <p className="text-slate-600 app-dark:text-slate-300! text-[13.5px] leading-relaxed whitespace-pre-line">
                   {selectedProduct.detailDescription || selectedProduct.description || "Đang cập nhật nội dung chi tiết..."}
                 </p>
               </div>
 
               {selectedProduct.targetAudience && (
-                <div className="p-4 rounded-2xl bg-slate-50/70 app-dark:!bg-white/5 border border-slate-100 app-dark:!border-white/8">
-                  <h6 className="font-bold text-slate-800 app-dark:!text-slate-200 text-xs tracking-wide uppercase mb-2 flex items-center gap-2">
+                <div className="p-4 rounded-2xl bg-slate-50/70 app-dark:bg-white/5! border border-slate-100 app-dark:border-white/8!">
+                  <h6 className="font-bold text-slate-800 app-dark:text-slate-200! text-xs tracking-wide uppercase mb-2 flex items-center gap-2">
                     <i className="fa fa-users text-cyan-800"></i>Đối tượng tuyển sinh phù hợp
                   </h6>
-                  <p className="text-slate-600 app-dark:!text-slate-300 text-[13px] leading-relaxed m-0">{selectedProduct.targetAudience}</p>
+                  <p className="text-slate-600 app-dark:text-slate-300! text-[13px] leading-relaxed m-0">{selectedProduct.targetAudience}</p>
                 </div>
               )}
 
@@ -2508,7 +2583,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {selectedProduct.highlights.map((hl, i) => (
                       <div key={i} className="bg-emerald-50/40 border border-emerald-100 text-emerald-800 rounded-xl p-3 text-[13px] flex items-start gap-2.5">
-                        <i className="fa fa-circle-check text-emerald-650 text-base mt-0.5 flex-shrink-0"></i>
+                        <i className="fa fa-circle-check text-emerald-650 text-base mt-0.5 shrink-0"></i>
                         <span className="leading-relaxed font-medium">{hl}</span>
                       </div>
                     ))}
@@ -2523,9 +2598,9 @@ function ProductOverviewPageInner({ currentUser }) {
                   </h5>
                   <div className="flex flex-col gap-3">
                     {selectedProduct.processSteps.map((step, i) => (
-                      <div className="flex items-center gap-4 bg-slate-50/80 app-dark:!bg-white/5 p-3.5 border border-slate-100 app-dark:!border-white/8 rounded-2xl" key={i}>
-                        <span className="w-6 h-6 bg-cyan-900 text-white font-bold rounded-full flex items-center justify-center text-[11px] flex-shrink-0">{i + 1}</span>
-                        <span className="text-slate-700 app-dark:!text-slate-300 text-[13px] font-medium leading-normal">{step}</span>
+                      <div className="flex items-center gap-4 bg-slate-50/80 app-dark:bg-white/5! p-3.5 border border-slate-100 app-dark:border-white/8! rounded-2xl" key={i}>
+                        <span className="w-6 h-6 bg-cyan-900 text-white font-bold rounded-full flex items-center justify-center text-[11px] shrink-0">{i + 1}</span>
+                        <span className="text-slate-700 app-dark:text-slate-300! text-[13px] font-medium leading-normal">{step}</span>
                       </div>
                     ))}
                   </div>
@@ -2536,7 +2611,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 <div className="flex items-center flex-wrap gap-2 pt-2">
                   <span className="text-slate-400 text-xs font-semibold">Nhãn dán:</span>
                   {selectedProduct.tags.map((tag, i) => (
-                    <span key={i} className="bg-slate-100 app-dark:!bg-white/8 text-slate-600 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/10 px-2.5 py-1 rounded-lg text-[11px] font-medium">
+                    <span key={i} className="bg-slate-100 app-dark:bg-white/8! text-slate-600 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/10! px-2.5 py-1 rounded-lg text-[11px] font-medium">
                       #{tag}
                     </span>
                   ))}
@@ -2545,30 +2620,30 @@ function ProductOverviewPageInner({ currentUser }) {
             </div>
 
             <div className="space-y-6">
-              <div className="border border-slate-100 app-dark:!border-white/8 rounded-2xl p-5 bg-slate-50/40 app-dark:!bg-white/5">
-                <h5 className="font-bold text-slate-800 app-dark:!text-slate-200 mb-4 text-[14.5px] border-b border-slate-100 app-dark:!border-white/8 pb-3 flex items-center gap-2">
+              <div className="border border-slate-100 app-dark:border-white/8! rounded-2xl p-5 bg-slate-50/40 app-dark:bg-white/5!">
+                <h5 className="font-bold text-slate-800 app-dark:text-slate-200! mb-4 text-[14.5px] border-b border-slate-100 app-dark:border-white/8! pb-3 flex items-center gap-2">
                   <i className="fa fa-folder-open text-cyan-900"></i> Tài liệu &amp; Brochure
                 </h5>
 
-                <div className="mb-5">
+                <div id="tour-product-brochure" className="mb-5">
                   <label className="font-bold text-slate-550 text-xs tracking-wider uppercase d-block mb-2.5">Brochure chính thức:</label>
                   {selectedProduct.brochure ? (
-                    <div className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                    <div className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center shadow-sm">
                       <div className="text-truncate pr-2 flex items-center" style={{ minWidth: 0 }}>
                         {selectedProduct.brochure.sourceType === "link" ? (
-                          <i className="fa fa-link text-cyan-900 mr-2.5 text-lg flex-shrink-0"></i>
+                          <i className="fa fa-link text-cyan-900 mr-2.5 text-lg shrink-0"></i>
                         ) : selectedProduct.brochure.fileType === "IMAGE" ? (
                           selectedProduct.brochure.url ? (
                             <img
                               src={selectedProduct.brochure.url}
                               alt="preview"
-                              className="rounded border mr-2.5 w-8 h-8 object-cover flex-shrink-0"
+                              className="rounded border mr-2.5 w-8 h-8 object-cover shrink-0"
                             />
                           ) : (
-                            <i className="fa fa-file-image text-emerald-650 mr-2.5 text-lg flex-shrink-0"></i>
+                            <i className="fa fa-file-image text-emerald-650 mr-2.5 text-lg shrink-0"></i>
                           )
                         ) : (
-                          <i className="fa fa-file-pdf text-red-500 mr-2.5 text-lg flex-shrink-0"></i>
+                          <i className="fa fa-file-pdf text-red-500 mr-2.5 text-lg shrink-0"></i>
                         )}
                         <div className="text-truncate" style={{ minWidth: 0 }}>
                           <span className="font-semibold text-xs text-slate-800 d-block text-truncate" title={selectedProduct.brochure.name}>{selectedProduct.brochure.name}</span>
@@ -2582,7 +2657,7 @@ function ProductOverviewPageInner({ currentUser }) {
                         </div>
                       </div>
                       {selectedProduct.brochure.sourceType === "link" ? (
-                        <button className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>
+                        <button className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>
                           Mở link
                         </button>
                       ) : selectedProduct.brochure.fileType === "IMAGE" && selectedProduct.brochure.url ? (
@@ -2590,35 +2665,35 @@ function ProductOverviewPageInner({ currentUser }) {
                           href={selectedProduct.brochure.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg text-decoration-none transition-colors flex-shrink-0 inline-block text-center"
+                          className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg text-decoration-none transition-colors shrink-0 inline-block text-center"
                         >
                           Xem ảnh
                         </a>
                       ) : (
-                        <button className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>
+                        <button className="bg-transparent hover:bg-slate-50 text-cyan-900 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>
                           Tải về
                         </button>
                       )}
                     </div>
                   ) : (
-                    <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic bg-white app-dark:!bg-white/5 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl py-3 px-4 text-center">Chưa có brochure riêng cho sản phẩm này.</div>
+                    <div className="text-slate-400 app-dark:text-slate-500! text-xs italic bg-white app-dark:bg-white/5! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl py-3 px-4 text-center">Chưa có brochure riêng cho sản phẩm này.</div>
                   )}
                 </div>
 
-                <div>
+                <div id="tour-product-documents">
                   <label className="font-bold text-slate-550 text-xs tracking-wider uppercase d-block mb-2.5">Tài liệu hướng dẫn tư vấn:</label>
                   {selectedProduct.documents && selectedProduct.documents.length > 0 ? (
                     <div className="flex flex-col gap-2">
                       {selectedProduct.documents.map((doc) => (
-                        <div key={doc.id} className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                          <div className="text-truncate pr-2 flex-grow" style={{ minWidth: 0 }}>
+                        <div key={doc.id} className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center shadow-sm">
+                          <div className="text-truncate pr-2 grow" style={{ minWidth: 0 }}>
                             <div className="flex items-center text-truncate">
                               {doc.sourceType === "link" ? (
-                                <i className="fa fa-link text-cyan-900 mr-2 flex-shrink-0"></i>
+                                <i className="fa fa-link text-cyan-900 mr-2 shrink-0"></i>
                               ) : (
-                                <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-lines text-sky-505")} mr-2 flex-shrink-0`}></i>
+                                <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-lines text-sky-505")} mr-2 shrink-0`}></i>
                               )}
-                              <span className="font-semibold text-xs text-slate-800 app-dark:!text-slate-200 text-truncate" title={doc.name}>{doc.name}</span>
+                              <span className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! text-truncate" title={doc.name}>{doc.name}</span>
                             </div>
                             {doc.sourceType === "link" ? (
                               <span className="text-slate-400 d-block text-[10px] mt-1 pl-6">Link đính kèm ({doc.type}) · {doc.updatedAt || "2026-06-01"}</span>
@@ -2627,11 +2702,11 @@ function ProductOverviewPageInner({ currentUser }) {
                             )}
                           </div>
                           {doc.sourceType === "link" ? (
-                            <button className="bg-transparent hover:bg-slate-50 text-slate-750 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0" onClick={() => handleOpenWebsite(doc.url)}>
+                            <button className="bg-transparent hover:bg-slate-50 text-slate-750 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0" onClick={() => handleOpenWebsite(doc.url)}>
                               Mở link
                             </button>
                           ) : (
-                            <button className="bg-transparent hover:bg-slate-50 text-slate-750 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0" onClick={() => handleDownloadDoc(doc.name)}>
+                            <button className="bg-transparent hover:bg-slate-50 text-slate-750 border border-slate-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0" onClick={() => handleDownloadDoc(doc.name)}>
                               Tải về
                             </button>
                           )}
@@ -2639,13 +2714,14 @@ function ProductOverviewPageInner({ currentUser }) {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-400 app-dark:!text-slate-500 text-xs italic bg-white app-dark:!bg-white/5 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl py-3 px-4 text-center">Chưa đính kèm tài liệu tư vấn nào khác.</div>
+                    <div className="text-slate-400 app-dark:text-slate-500! text-xs italic bg-white app-dark:bg-white/5! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl py-3 px-4 text-center">Chưa đính kèm tài liệu tư vấn nào khác.</div>
                   )}
                 </div>
               </div>
 
               <button
-                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl force-rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-250 flex items-center justify-center gap-2"
+                id="tour-interest-btn"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 force-rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-250 flex items-center justify-center gap-2"
                 onClick={handleOpenInterestModal}
                 style={{ fontSize: "14.5px" }}
               >
@@ -2658,8 +2734,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
       {/* MODAL: THÊM / SỬA DANH MỤC LỚN */}
       {editingCategory && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1050] animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[650px] max-h-[90vh] flex flex-col overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1050 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[650px] max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
             <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
               <h5 className="font-bold text-slate-800 text-base m-0">
                 {editingCategory === "new" ? "Thêm danh mục lớn mới" : "Sửa danh mục lớn"}
@@ -2669,7 +2745,7 @@ function ProductOverviewPageInner({ currentUser }) {
               </button>
             </div>
 
-            <form onSubmit={handleSaveCategory} className="flex flex-col flex-grow overflow-hidden">
+            <form onSubmit={handleSaveCategory} className="flex flex-col grow overflow-hidden">
               <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                 <button
                   type="button"
@@ -2694,7 +2770,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto text-[13.5px] flex-grow">
+              <div className="p-6 overflow-y-auto text-[13.5px] grow">
                 {activeCategoryTab === "info" ? (
                   <div className="space-y-4">
                     <div>
@@ -2878,26 +2954,26 @@ function ProductOverviewPageInner({ currentUser }) {
                       <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
                         {formCategory.programs.map((prod) => (
                           <div key={prod.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center">
-                            <div className="text-truncate pr-4 flex-grow" style={{ minWidth: 0 }}>
+                            <div className="text-truncate pr-4 grow" style={{ minWidth: 0 }}>
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className="font-bold text-slate-800 text-[13px] block text-truncate" title={prod.name}>
                                   {prod.name}
                                 </span>
                                 {(prod.status === "hidden" || prod.isActive === false) && (
-                                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-500">Đã ẩn</span>
+                                  <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-500">Đã ẩn</span>
                                 )}
                                 {prod.status === "inactive" && (
-                                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600">Tạm ngưng</span>
+                                  <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600">Tạm ngưng</span>
                                 )}
                                 {prod.status === "coming_soon" && (
-                                  <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700">Sắp mở</span>
+                                  <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700">Sắp mở</span>
                                 )}
                               </div>
                               <span className="text-slate-450 block text-[11px]">
                                 {prod.region} · {prod.country}
                               </span>
                             </div>
-                            <div className="flex gap-2 flex-shrink-0">
+                            <div className="flex gap-2 shrink-0">
                               <button
                                 type="button"
                                 title={(prod.status === "hidden" || prod.isActive === false) ? "Hiện sản phẩm" : "Ẩn sản phẩm"}
@@ -2957,8 +3033,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
       {/* MODAL: THÊM / SỬA SẢN PHẨM CON */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1060] animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1060 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
             <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
               <h5 className="font-bold text-slate-800 text-base m-0">
                 {editingProduct === "new" ? "Thêm sản phẩm con mới" : "Sửa thông tin sản phẩm con"}
@@ -2968,7 +3044,7 @@ function ProductOverviewPageInner({ currentUser }) {
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="flex flex-col flex-grow overflow-hidden">
+            <form onSubmit={handleSaveProduct} className="flex flex-col grow overflow-hidden">
               <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                 <button
                   type="button"
@@ -3002,7 +3078,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto text-[13.5px] flex-grow">
+              <div className="p-6 overflow-y-auto text-[13.5px] grow">
                 {/* TAB 1: BASIC INFORMATION */}
                 {activeProductTab === "basic" && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -3230,9 +3306,9 @@ function ProductOverviewPageInner({ currentUser }) {
                           </div>
 
                           <div className="flex items-center my-4">
-                            <hr className="flex-grow border-slate-200 my-0" />
+                            <hr className="grow border-slate-200 my-0" />
                             <span className="mx-3 text-slate-400 text-xs font-semibold uppercase tracking-wider">hoặc</span>
-                            <hr className="flex-grow border-slate-200 my-0" />
+                            <hr className="grow border-slate-200 my-0" />
                           </div>
 
                           <div>
@@ -3262,19 +3338,19 @@ function ProductOverviewPageInner({ currentUser }) {
                             <div className="flex items-center justify-between p-2.5 border border-slate-100 rounded-xl bg-white shadow-sm">
                               <div className="text-truncate pr-3 flex items-center" style={{ minWidth: 0 }}>
                                 {formProduct.brochure.sourceType === "link" ? (
-                                  <i className="fa fa-link text-cyan-900 mr-2 text-base flex-shrink-0"></i>
+                                  <i className="fa fa-link text-cyan-900 mr-2 text-base shrink-0"></i>
                                 ) : formProduct.brochure.fileType === "IMAGE" ? (
                                   formProduct.brochure.url ? (
                                     <img
                                       src={formProduct.brochure.url}
                                       alt="preview"
-                                      className="rounded border mr-2 w-8 h-8 object-cover flex-shrink-0"
+                                      className="rounded border mr-2 w-8 h-8 object-cover shrink-0"
                                     />
                                   ) : (
-                                    <i className="fa fa-file-image text-emerald-600 mr-2 text-base flex-shrink-0"></i>
+                                    <i className="fa fa-file-image text-emerald-600 mr-2 text-base shrink-0"></i>
                                   )
                                 ) : (
-                                  <i className="fa fa-file-pdf text-red-500 mr-2 text-base flex-shrink-0"></i>
+                                  <i className="fa fa-file-pdf text-red-500 mr-2 text-base shrink-0"></i>
                                 )}
                                 <div className="text-truncate" style={{ minWidth: 0 }}>
                                   <span
@@ -3295,7 +3371,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                   </span>
                                 </div>
                               </div>
-                              <div className="flex gap-1.5 items-center flex-shrink-0">
+                              <div className="flex gap-1.5 items-center shrink-0">
                                 {formProduct.brochure.sourceType === "link" && (
                                   <button
                                     type="button"
@@ -3365,9 +3441,9 @@ function ProductOverviewPageInner({ currentUser }) {
                           </div>
 
                           <div className="flex items-center my-4">
-                            <hr className="flex-grow border-slate-200 my-0" />
+                            <hr className="grow border-slate-200 my-0" />
                             <span className="mx-3 text-slate-400 text-xs font-semibold uppercase tracking-wider">hoặc</span>
-                            <hr className="flex-grow border-slate-200 my-0" />
+                            <hr className="grow border-slate-200 my-0" />
                           </div>
 
                           <div className="p-3 border border-slate-150 rounded-xl bg-white shadow-sm mb-3 space-y-2">
@@ -3402,7 +3478,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                 </select>
                                 <button
                                   type="button"
-                                  className="bg-sky-800 hover:bg-sky-900 text-white text-xs font-semibold px-4 rounded-lg transition-colors flex-shrink-0"
+                                  className="bg-sky-800 hover:bg-sky-900 text-white text-xs font-semibold px-4 rounded-lg transition-colors shrink-0"
                                   onClick={handleAddDocLink}
                                 >
                                   Thêm link
@@ -3420,9 +3496,9 @@ function ProductOverviewPageInner({ currentUser }) {
                                 <div key={doc.id} className="flex items-center justify-between p-2.5 border border-slate-100 rounded-xl bg-white shadow-sm">
                                   <div className="text-truncate pr-3 flex items-center" style={{ minWidth: 0 }}>
                                     {doc.sourceType === "link" ? (
-                                      <i className="fa fa-link text-sky-850 mr-2 text-base flex-shrink-0"></i>
+                                      <i className="fa fa-link text-sky-850 mr-2 text-base shrink-0"></i>
                                     ) : (
-                                      <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-word text-primary")} mr-2 text-base flex-shrink-0`}></i>
+                                      <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-word text-primary")} mr-2 text-base shrink-0`}></i>
                                     )}
                                     <div className="text-truncate" style={{ minWidth: 0 }}>
                                       <span className="font-bold text-slate-800 text-xs block text-truncate" title={doc.name}>
@@ -3439,7 +3515,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                   </div>
                                   <button
                                     type="button"
-                                    className="bg-transparent hover:bg-red-50 text-red-600 border border-red-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0"
+                                    className="bg-transparent hover:bg-red-50 text-red-600 border border-red-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0"
                                     onClick={() => deleteProductDoc(doc.id)}
                                   >
                                     Xóa
@@ -3472,8 +3548,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
       {/* MODAL: FORM QUAN TÂM SẢN PHẨM */}
       {showInterestModal && selectedProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1050] animate-[fadeIn_0.2s_ease-out]">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[550px] max-h-[90vh] flex flex-col overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1050 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[550px] max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
             <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
               <h5 className="font-bold text-slate-800 text-base m-0 flex items-center gap-2">
                 <i className="fa fa-envelope-open-text text-red-500"></i> Đăng ký khách hàng quan tâm
@@ -3483,8 +3559,8 @@ function ProductOverviewPageInner({ currentUser }) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitInterest}>
-              <div className="p-6 overflow-y-auto text-[13.5px]">
+            <form onSubmit={handleSubmitInterest} className="flex flex-col grow overflow-hidden">
+              <div className="p-6 overflow-y-auto text-[13.5px] grow">
                 <div className="mb-4">
                   <label className="block font-semibold text-xs text-slate-500 mb-1.5">Sản phẩm quan tâm</label>
                   <input
@@ -3504,6 +3580,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     value={interestForm.customerName}
                     onChange={(e) => setInterestForm({ ...interestForm, customerName: e.target.value })}
                     required
+                    disabled={submittingInterest}
                   />
                 </div>
 
@@ -3517,6 +3594,7 @@ function ProductOverviewPageInner({ currentUser }) {
                       value={interestForm.phone}
                       onChange={(e) => setInterestForm({ ...interestForm, phone: e.target.value })}
                       required
+                      disabled={submittingInterest}
                     />
                   </div>
                   <div>
@@ -3527,6 +3605,7 @@ function ProductOverviewPageInner({ currentUser }) {
                       placeholder="customer@email.com"
                       value={interestForm.email}
                       onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })}
+                      disabled={submittingInterest}
                     />
                   </div>
                 </div>
@@ -3547,6 +3626,7 @@ function ProductOverviewPageInner({ currentUser }) {
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[13.5px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all cursor-pointer"
                       value={interestForm.sourceChannel}
                       onChange={(e) => setInterestForm({ ...interestForm, sourceChannel: e.target.value })}
+                      disabled={submittingInterest}
                     >
                       <option value="CTV/Đại lý">CTV / Đại lý</option>
                       <option value="Nhân viên tư vấn">Nhân viên tư vấn</option>
@@ -3567,16 +3647,20 @@ function ProductOverviewPageInner({ currentUser }) {
                     placeholder="Nhập yêu cầu đặc biệt của khách hàng hoặc khu giờ liên hệ phù hợp..."
                     value={interestForm.note}
                     onChange={(e) => setInterestForm({ ...interestForm, note: e.target.value })}
+                    disabled={submittingInterest}
                   />
                 </div>
               </div>
 
               <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end">
-                <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors" onClick={() => setShowInterestModal(false)}>
+                <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors" onClick={() => setShowInterestModal(false)} disabled={submittingInterest}>
                   Hủy bỏ
                 </button>
-                <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors">
-                  Gửi liên hệ tư vấn
+                <button type="button" className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-2 px-4 rounded-xl transition-colors" onClick={handleTestSendInterest} disabled={submittingInterest}>
+                  {submittingInterest ? "Đang gửi..." : "Gửi thử (CRM)"}
+                </button>
+                <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors" disabled={submittingInterest}>
+                  {submittingInterest ? "Đang gửi..." : "Gửi"}
                 </button>
               </div>
             </form>

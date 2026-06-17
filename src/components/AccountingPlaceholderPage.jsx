@@ -33,7 +33,7 @@ export function AccountingPlaceholderPage() {
         </div>
 
         <div className="d-flex flex-wrap gap-2">
-          <button className="btn btn-sm btn-outline-secondary" type="button" disabled>
+          <button id="nghiepvu-sync-crm-btn" className="btn btn-sm btn-outline-secondary" type="button" disabled>
             Đồng bộ CRM
           </button>
           <button className="btn btn-sm btn-primary" type="button" disabled>
@@ -42,7 +42,7 @@ export function AccountingPlaceholderPage() {
         </div>
       </div>
 
-      <div className="row g-2 g-xl-3 mb-3">
+      <div id="nghiepvu-metrics-grid" className="row g-2 g-xl-3 mb-3">
         {placeholderMetrics.map((metric) => (
           <div className="col-12 col-sm-6 col-xl-3" key={metric.label}>
             <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
@@ -57,7 +57,7 @@ export function AccountingPlaceholderPage() {
                     </div>
                   </div>
                   <span
-                    className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                    className="d-inline-flex align-items-center justify-content-center rounded-circle shrink-0"
                     style={{ width: "34px", height: "34px", backgroundColor: `${metric.accent}1a`, color: metric.accent }}
                     aria-hidden="true"
                   >
@@ -72,7 +72,7 @@ export function AccountingPlaceholderPage() {
 
       <div className="row g-2 g-xl-3 align-items-stretch">
         <div className="col-12 col-xl-8">
-          <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", minHeight: "360px" }}>
+          <section id="nghiepvu-empty-state" className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", minHeight: "360px" }}>
             <div className="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
               <div className="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary mb-3" style={{ width: "72px", height: "72px" }}>
                 <EmptyStateIcon />
@@ -91,7 +91,7 @@ export function AccountingPlaceholderPage() {
         </div>
 
         <div className="col-12 col-xl-4">
-          <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <section id="nghiepvu-conditions-card" className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
             <div className="card-header bg-transparent border-0 p-3 pb-0">
               <h6 className="fw-bold text-body-emphasis mb-0">Điều kiện hiển thị</h6>
             </div>
@@ -99,7 +99,7 @@ export function AccountingPlaceholderPage() {
               <div className="d-grid gap-3">
                 {dependencySteps.map((step, index) => (
                   <div className="d-flex gap-3" key={step.title}>
-                    <span className="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold flex-shrink-0" style={{ width: "28px", height: "28px", fontSize: "12px" }}>
+                    <span className="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold shrink-0" style={{ width: "28px", height: "28px", fontSize: "12px" }}>
                       {index + 1}
                     </span>
                     <div>

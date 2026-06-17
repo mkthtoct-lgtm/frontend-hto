@@ -230,7 +230,15 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
   }, []);
 
   useEffect(() => {
-    void loadNotifications();
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) {
+        void loadNotifications();
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [loadNotifications]);
 
   useEffect(() => {
@@ -402,13 +410,13 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
   return (
     <div className="notifications-page mx-auto flex w-full max-w-[1600px] flex-col px-3 pt-3 pb-3 xl:h-full xl:overflow-hidden">
-      <div className="app-page-head flex flex-shrink-0 flex-wrap items-center justify-between gap-3">
+      <div className="app-page-head flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="app-page-title mb-1">Thông báo nội bộ</h1>
           
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
+          <span id="notifications-unread-badge" className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={loadNotifications} disabled={loading}>
             Làm mới
           </button>
@@ -426,8 +434,8 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
       <div className="notifications-page-workspace grid min-h-0 flex-1 grid-cols-1 items-start gap-4 xl:grid-cols-12 xl:overflow-hidden">
         {canCreate && (
-          <div className="notifications-page-panel min-w-0 min-h-0 xl:col-span-4 xl:h-full">
-            <div className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
+          <div id="notifications-create-panel" className="notifications-page-panel min-w-0 min-h-0 xl:col-span-4 xl:h-full">
+            <div className="card flex! min-h-0 w-full flex-col! overflow-hidden xl:h-full">
               <div className="card-header border-0 pb-0">
                 <h6 className="card-title mb-1">Tạo thông báo</h6>
               </div>
@@ -509,10 +517,10 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
         )}
 
         <div className={`notifications-page-panel ${canCreate ? "min-w-0 min-h-0 xl:col-span-8 xl:h-full" : "min-w-0 min-h-0 xl:col-span-12 xl:h-full"}`}>
-          <div className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
+          <div id="notifications-list-card" className="card flex! min-h-0 w-full flex-col! overflow-hidden xl:h-full">
             <div className="card-header border-0 pb-0 flex flex-wrap items-center justify-between gap-2">
               <h6 className="card-title mb-0">Danh sách thông báo</h6>
-              <div className="btn-group flex-shrink-0" role="group" aria-label="Lọc thông báo">
+              <div id="notifications-filter-group" className="btn-group shrink-0" role="group" aria-label="Lọc thông báo">
                 {[
                   ["all", "Tất cả"],
                   ["unread", "Chưa đọc"],
@@ -559,17 +567,17 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <h6 className="mb-0 min-w-0 break-words text-body-emphasis">{notification.title}</h6>
-                            <span className={`badge flex-shrink-0 ${priority.className}`}>{priority.label}</span>
+                            <h6 className="mb-0 min-w-0 wrap-break-word text-body-emphasis">{notification.title}</h6>
+                            <span className={`badge shrink-0 ${priority.className}`}>{priority.label}</span>
                             {!isRead && <span className="badge bg-primary">Chưa đọc</span>}
                           </div>
-                          <div className="break-words text-body-secondary" style={{ fontSize: "12px" }}>
+                          <div className="wrap-break-word text-body-secondary" style={{ fontSize: "12px" }}>
                             {notification.createdBy} · {formatDateTime(notification.createdAt)}
                           </div>
                         </div>
                         <button
                           type="button"
-                          className={`btn btn-sm flex-shrink-0 ${isRead ? "btn-outline-secondary" : "btn-outline-primary"}`}
+                          className={`btn btn-sm shrink-0 ${isRead ? "btn-outline-secondary" : "btn-outline-primary"}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (isRead) {
@@ -582,7 +590,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                           {isRead ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc"}
                         </button>
                       </div>
-                      <p className="mb-0 mt-2 break-words text-body" style={{ whiteSpace: "pre-wrap" }}>
+                      <p className="mb-0 mt-2 wrap-break-word text-body" style={{ whiteSpace: "pre-wrap" }}>
                         {notification.content}
                       </p>
                       <NotificationAudience target={notification.target} />
@@ -718,7 +726,7 @@ function NotificationAudience({ target }) {
   return (
     <div className="mt-3 flex min-w-0 flex-wrap gap-2 overflow-hidden">
       {[...groups, ...roles, ...departments].map((option) => (
-        <span key={option.id} className="badge bg-body-secondary min-w-0 max-w-full break-words text-body">
+        <span key={option.id} className="badge bg-body-secondary min-w-0 max-w-full wrap-break-word text-body">
           {option.label || option.name}
         </span>
       ))}
