@@ -19,12 +19,16 @@ export const AuditLogPage = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ totalLogs: 0, totalPages: 1, currentPage: 1, limit: 30 });
+
   const selectedLog = useMemo(
     () => logs.find((log) => log.id === selectedLogId),
     [logs, selectedLogId],
   );
 
-  const loadAuditLogs = useCallback(async () => {
+  const loadAuditLogs = useCallback(async (page = 1) => {
     setLoading(true);
     setApiError("");
 
@@ -35,13 +39,19 @@ export const AuditLogPage = ({ currentUser }) => {
         from: filters.from ? new Date(filters.from).toISOString() : "",
         to: filters.to ? new Date(filters.to).toISOString() : "",
       };
-      const [logData, actorData] = await Promise.all([
-        getAuditLogs(normalizedFilters),
+      const [rawLogResult, rawActorData] = await Promise.all([
+        getAuditLogs(normalizedFilters, page),
         getAuditActors(),
       ]);
 
+      const logData = Array.isArray(rawLogResult?.logs) ? rawLogResult.logs : (Array.isArray(rawLogResult) ? rawLogResult : []);
+      const actorData = Array.isArray(rawActorData) ? rawActorData : [];
+      const paginationData = rawLogResult?.pagination || { totalLogs: logData.length, totalPages: 1, currentPage: page, limit: 30 };
+
       setLogs(logData);
       setActors(actorData);
+      setPagination(paginationData);
+      setCurrentPage(paginationData.currentPage || page);
       setSelectedLogId((currentId) =>
         logData.some((log) => log.id === currentId) ? currentId : logData[0]?.id || "",
       );
@@ -54,16 +64,23 @@ export const AuditLogPage = ({ currentUser }) => {
 
   useEffect(() => {
     if (isAdmin(currentUser)) {
-      void Promise.resolve().then(() => loadAuditLogs());
+      void Promise.resolve().then(() => loadAuditLogs(1));
     }
   }, [currentUser, loadAuditLogs]);
 
+  const goToPage = (page) => {
+    if (page < 1 || page > pagination.totalPages || page === currentPage) return;
+    loadAuditLogs(page);
+  };
+
   const updateFilter = (key, value) => {
     setFilters((currentFilters) => ({ ...currentFilters, [key]: value }));
+    setCurrentPage(1);
   };
 
   const clearFilters = () => {
     setFilters({ userId: "", action: "", from: "", to: "" });
+    setCurrentPage(1);
   };
 
   if (!isAdmin(currentUser)) {
@@ -82,7 +99,7 @@ export const AuditLogPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Lịch sử thao tác</h4>
           
         </div>
-        <button className="btn btn-outline-secondary" type="button" onClick={loadAuditLogs} disabled={loading}>
+        <button className="btn btn-outline-secondary" type="button" onClick={() => loadAuditLogs(currentPage)} disabled={loading}>
           Làm mới
         </button>
       </div>
@@ -160,7 +177,7 @@ export const AuditLogPage = ({ currentUser }) => {
         <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách audit log</span>
-            <span className="badge text-bg-light">{logs.length} log</span>
+            <span className="badge text-bg-light">{pagination.totalLogs} log</span>
           </div>
 
           {loading ? (
@@ -223,6 +240,54 @@ export const AuditLogPage = ({ currentUser }) => {
               </div>
             </>
           )}
+
+          {/* Pagination */}
+          {!loading && pagination.totalPages > 1 && (
+            <div className="card-footer bg-transparent border-top d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-2">
+              <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                Trang {currentPage} / {pagination.totalPages} ({pagination.totalLogs} log)
+              </span>
+              <nav>
+                <ul className="pagination pagination-sm mb-0 gap-1">
+                  <li className={`page-item ${currentPage <= 1 ? "disabled" : ""}`}>
+                    <button type="button" className="page-link" onClick={() => goToPage(1)} disabled={currentPage <= 1}>
+                      <ChevronDoubleLeftIcon />
+                    </button>
+                  </li>
+                  <li className={`page-item ${currentPage <= 1 ? "disabled" : ""}`}>
+                    <button type="button" className="page-link" onClick={() => goToPage(currentPage - 1)} disabled={currentPage <= 1}>
+                      <ChevronLeftIcon />
+                    </button>
+                  </li>
+
+                  {getPageNumbers(currentPage, pagination.totalPages).map((pageNum, idx) =>
+                    pageNum === "..." ? (
+                      <li key={`ellipsis-${idx}`} className="page-item disabled">
+                        <span className="page-link">…</span>
+                      </li>
+                    ) : (
+                      <li key={pageNum} className={`page-item ${pageNum === currentPage ? "active" : ""}`}>
+                        <button type="button" className="page-link" onClick={() => goToPage(pageNum)}>
+                          {pageNum}
+                        </button>
+                      </li>
+                    )
+                  )}
+
+                  <li className={`page-item ${currentPage >= pagination.totalPages ? "disabled" : ""}`}>
+                    <button type="button" className="page-link" onClick={() => goToPage(currentPage + 1)} disabled={currentPage >= pagination.totalPages}>
+                      <ChevronRightIcon />
+                    </button>
+                  </li>
+                  <li className={`page-item ${currentPage >= pagination.totalPages ? "disabled" : ""}`}>
+                    <button type="button" className="page-link" onClick={() => goToPage(pagination.totalPages)} disabled={currentPage >= pagination.totalPages}>
+                      <ChevronDoubleRightIcon />
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          )}
         </section>
 
         <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
@@ -247,6 +312,38 @@ export const AuditLogPage = ({ currentUser }) => {
     </div>
   );
 };
+
+/** Tính danh sách số trang hiển thị (có dấu "..." khi cần) */
+function getPageNumbers(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = [];
+
+  // Luôn hiển thị trang 1
+  pages.push(1);
+
+  if (current > 3) {
+    pages.push("...");
+  }
+
+  // Các trang xung quanh trang hiện tại
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+
+  if (current < total - 2) {
+    pages.push("...");
+  }
+
+  // Luôn hiển thị trang cuối
+  pages.push(total);
+
+  return pages;
+}
 
 function DetailRow({ label, value, badge = false }) {
   return (
@@ -311,6 +408,40 @@ function LogIcon() {
       <path d="M3 6h.01"></path>
       <path d="M3 12h.01"></path>
       <path d="M3 18h.01"></path>
+    </svg>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+function ChevronDoubleLeftIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 17l-5-5 5-5" />
+      <path d="M18 17l-5-5 5-5" />
+    </svg>
+  );
+}
+
+function ChevronDoubleRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 7l5 5-5 5" />
+      <path d="M6 7l5 5-5 5" />
     </svg>
   );
 }

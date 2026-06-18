@@ -56,20 +56,44 @@ export const AUDIT_ACTION_OPTIONS = [
   { value: "document.download", label: "Tải tài liệu" },
 ];
 
-export async function getAuditLogs(filters = {}) {
+const LOGS_PER_PAGE = 30;
+
+export async function getAuditLogs(filters = {}, page = 1) {
   return await withLocalFallback(
-    () => {
+    async () => {
       const searchParams = new URLSearchParams();
 
       if (filters.userId) searchParams.set("userId", filters.userId);
       if (filters.action) searchParams.set("action", filters.action);
       if (filters.from) searchParams.set("from", filters.from);
       if (filters.to) searchParams.set("to", filters.to);
+      searchParams.set("page", String(page));
+      searchParams.set("limit", String(LOGS_PER_PAGE));
 
       const query = searchParams.toString();
-      return apiRequest(`/audit-logs${query ? `?${query}` : ""}`);
+      const raw = await apiRequestRaw(`/audit-logs?${query}`);
+
+      // Backend trả về { data: { logs: [...], pagination: {...} } }
+      if (raw && !Array.isArray(raw) && Array.isArray(raw.logs)) {
+        return {
+          logs: raw.logs,
+          pagination: raw.pagination || { totalLogs: raw.logs.length, totalPages: 1, currentPage: page, limit: LOGS_PER_PAGE },
+        };
+      }
+
+      // Fallback nếu API trả về array trực tiếp
+      const logs = Array.isArray(raw) ? raw : [];
+      return { logs, pagination: { totalLogs: logs.length, totalPages: 1, currentPage: 1, limit: LOGS_PER_PAGE } };
     },
-    () => filterAuditLogs(readAuditLogs(), filters),
+    () => {
+      const allLogs = filterAuditLogs(readAuditLogs(), filters);
+      const totalLogs = allLogs.length;
+      const totalPages = Math.max(1, Math.ceil(totalLogs / LOGS_PER_PAGE));
+      const safePage = Math.min(Math.max(1, page), totalPages);
+      const start = (safePage - 1) * LOGS_PER_PAGE;
+      const logs = allLogs.slice(start, start + LOGS_PER_PAGE);
+      return { logs, pagination: { totalLogs, totalPages, currentPage: safePage, limit: LOGS_PER_PAGE } };
+    },
   );
 }
 
@@ -87,7 +111,8 @@ export async function getAuditActors() {
   );
 }
 
-async function apiRequest(path) {
+// Trả về payload.data nguyên bản (dùng cho getAuditLogs để xử lý pagination)
+async function apiRequestRaw(path) {
   const response = await authFetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
@@ -103,6 +128,12 @@ async function apiRequest(path) {
   }
 
   return payload?.data ?? payload ?? [];
+}
+
+// Trả về array (dùng cho getAuditActors)
+async function apiRequest(path) {
+  const result = await apiRequestRaw(path);
+  return Array.isArray(result) ? result : [];
 }
 
 async function withLocalFallback(apiCall, localCall) {

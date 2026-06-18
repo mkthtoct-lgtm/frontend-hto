@@ -73,10 +73,10 @@ const normalizeProductType = (typeValue) => {
 const normalizeProductItem = (product, index) => {
   const id = String(
     product?.id ||
-      product?._id ||
-      product?.slug ||
-      product?.code ||
-      `product-${index + 1}`,
+    product?._id ||
+    product?.slug ||
+    product?.code ||
+    `product-${index + 1}`,
   );
 
   return {
@@ -84,9 +84,9 @@ const normalizeProductItem = (product, index) => {
     name: product?.name || product?.title || product?.label || "Sản phẩm chưa đặt tên",
     type: normalizeProductType(
       product?.type ||
-        product?.productType ||
-        product?.category ||
-        product?.categoryId,
+      product?.productType ||
+      product?.category ||
+      product?.categoryId,
     ),
   };
 };
@@ -117,7 +117,9 @@ const getSidebarProducts = () => {
 export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar }) => {
   // State quản lý việc đóng/mở menu con (mặc định mở 'sanpham' cho giống hình mẫu)
   const [openMenu, setOpenMenu] = useState(() => ["tintuc", "newsEventsManage"].includes(currentPage) ? "newsEvents" : "sanpham");
+  // eslint-disable-next-line no-unused-vars
   const [openProductCategory, setOpenProductCategory] = useState("duhocduc");
+  // eslint-disable-next-line no-unused-vars
   const sidebarProducts = getSidebarProducts();
   const isProductPage =
     ["duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline", "sanpham", "productOverview"].includes(currentPage) ||
@@ -146,7 +148,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             height="40"
           />
         </button>
-        
+
         <button
           className="navbar-brand-mini visible-light"
           type="button"
@@ -166,10 +168,10 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           </span>
         </button>
       </div>
-      
+
       <nav className="app-navbar" data-simplebar>
         <ul className="menubar list-unstyled" style={{ padding: "0 12px" }}>
-          
+
           {/* --- 1. DASHBOARD --- */}
           <li className="menu-item mb-2">
             <a
@@ -192,7 +194,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
             </a>
           </li>
 
-          
+
 
           <li className="menu-item mb-2">
             <a
@@ -247,7 +249,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
                 </svg>
               </span>
             </a>
-            
+
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "sanpham" ? "block" : "none", paddingLeft: "52px" }}>
               <li className="menu-item mb-1">
                 <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "productOverview" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("productOverview"); }}>
@@ -330,7 +332,19 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </span>
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "hotro" ? "block" : "none", paddingLeft: "52px" }}>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Tạo Ticket</a></li>
+              <li className="menu-item mb-1">
+                <a
+                  className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary"
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("hotro", { activeTab: "ticket" });
+                  }}
+                >
+                  Tạo Ticket
+                </a>
+              </li>
               <li className="menu-item mb-1">
                 <a
                   className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "leadForm" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
@@ -472,13 +486,6 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
                   Tìm kiếm tài liệu
                 </a>
               </li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-elements.html">Form Elements</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-floating.html">Form floating</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-input-group.html">Form input group</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-layout.html">Form layout</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/form-validation.html">Form validation</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/flatpickr.html">Flatpickr</a></li>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="/forms/tagify.html">Tagify</a></li>
             </ul>
           </li>
 
@@ -664,7 +671,7 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* ========================================================================= */}
           {/* TOÀN BỘ CÁC ĐOẠN COMMENT CŨ GIỮ NGUYÊN BÊN DƯỚI (ĐÃ FIX LỖI /) */}
           {/* ========================================================================= */}
-          
+
           {/* <li className="menu-item">
               <a className="menu-link" href="/chat.html">
                 <i className="icon-message-square-text"></i>
@@ -821,13 +828,17 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
         </ul>
       </nav>
       <div className="app-footer">
-        <a
-          href="/pages/faq.html"
-          className="btn btn-outline-light btn-shadow btn-app-nav w-100 d-flex align-items-center justify-content-center"
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate?.("hotro");
+          }}
+          className="btn btn-outline-light btn-shadow btn-app-nav w-100 d-flex align-items-center justify-content-center bg-transparent border"
+          style={{ textDecoration: "none" }}
         >
           <i className="fi fi-rs-interrogation text-primary me-2"></i>
           <span className="nav-text">Help and Support</span>
-        </a>
+        </button>
       </div>
     </aside>
   );

@@ -30,6 +30,7 @@ import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
 import { ProfilePage } from "./profile/ProfilePage";
 import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
 import { AUTH_EVENTS } from "./auth/session";
+import { SupportPage } from "./components/SupportPage";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -190,6 +191,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(() => getStoredPage());
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const [supportInitialTab, setSupportInitialTab] = useState("faq");
   const [user, setUser] = useState(() => getStoredUser());
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
   const [registerLayoutMode, setRegisterLayoutMode] = useState("account");
@@ -319,6 +321,9 @@ function App() {
     setSelectedNotificationId(
       page === "notifications" ? options.notificationId || null : null,
     );
+    if (page === "hotro") {
+      setSupportInitialTab(options.activeTab || "faq");
+    }
   };
 
   // Lắng nghe navigate event từ DashboardPage
@@ -481,6 +486,8 @@ function App() {
             currentUser={user}
             selectedNotificationId={selectedNotificationId}
           />
+        ) : currentPage === "hotro" ? (
+          <SupportPage currentUser={user} initialTab={supportInitialTab} />
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
         ) : currentPage === "nghiepvu" ? (

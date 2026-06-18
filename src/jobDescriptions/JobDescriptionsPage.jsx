@@ -307,7 +307,10 @@ export const JobDescriptionsPage = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [apiError, setApiError] = useState("");
-  const fileInputRef = useRef(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importDepartmentId, setImportDepartmentId] = useState("");
+  const [importFilesList, setImportFilesList] = useState([]);
+  const modalFileInputRef = useRef(null);
 
   const canManage = isManager(currentUser);
   const canDelete = isAdmin(currentUser);
@@ -334,6 +337,9 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       setSelectedJdId((currentId) =>
         jdData.items.some((jd) => jd.id === currentId) ? currentId : jdData.items[0]?.id || "",
       );
+      if (departmentData.length > 0) {
+        setImportDepartmentId(departmentData[0].id);
+      }
     } catch (error) {
       setApiError(error instanceof Error ? error.message : "Không thể tải danh sách JD.");
       setDepartments([]);
@@ -345,7 +351,10 @@ export const JobDescriptionsPage = ({ currentUser }) => {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    const timer = setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadData]);
 
   const filteredJds = useMemo(() => {
@@ -460,16 +469,16 @@ export const JobDescriptionsPage = ({ currentUser }) => {
     }
   };
 
-  const importFiles = async (files) => {
+  const importFiles = async (files, targetDepartmentId) => {
     const fileList = Array.from(files || []);
-    const fallbackDepartmentId = departments[0]?.id || "";
+    const depId = targetDepartmentId || importDepartmentId || departments[0]?.id || "";
 
     if (fileList.length === 0) {
       return;
     }
 
-    if (!fallbackDepartmentId) {
-      setImportMessage("Vui lòng tạo phòng ban trước khi import JD.");
+    if (!depId) {
+      setImportMessage("Vui lòng chọn hoặc tạo phòng ban trước khi import JD.");
       return;
     }
 
@@ -478,7 +487,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
     try {
       const importedGroups = await Promise.all(
-        fileList.map(async (file) => parseImportedJds(await file.text(), file.name, fallbackDepartmentId)),
+        fileList.map(async (file) => parseImportedJds(await file.text(), file.name, depId)),
       );
       const importedInputs = importedGroups.flat().filter((item) => item.title && item.description);
 
@@ -492,6 +501,8 @@ export const JobDescriptionsPage = ({ currentUser }) => {
       setSelectedJdId(importedJds[0]?.id || "");
       setTotalJds((currentTotal) => currentTotal + importedJds.length);
       setImportMessage(`Đã import ${importedJds.length} JD từ ${fileList.length} file.`);
+      setShowImportModal(false);
+      setImportFilesList([]);
     } catch (error) {
       setImportMessage(error instanceof Error ? error.message : "Không thể import file JD.");
     } finally {
@@ -508,28 +519,19 @@ export const JobDescriptionsPage = ({ currentUser }) => {
     }
 
     if (event.dataTransfer.files.length > 0) {
-      void importFiles(event.dataTransfer.files);
+      setImportFilesList(Array.from(event.dataTransfer.files));
+      setShowImportModal(true);
+      setImportMessage("");
       return;
     }
 
     const droppedText = event.dataTransfer.getData("text/plain");
 
     if (droppedText.trim()) {
-      const fallbackDepartmentId = departments[0]?.id || "";
-      const importedInputs = parseImportedJds(droppedText, "noi-dung-keo-tha.txt", fallbackDepartmentId);
-
-      setActionLoading(true);
-      Promise.all(importedInputs.map(createJobDescription))
-        .then((importedJds) => {
-          setJds((currentJds) => [...importedJds, ...currentJds]);
-          setSelectedJdId(importedJds[0]?.id || "");
-          setTotalJds((currentTotal) => currentTotal + importedJds.length);
-          setImportMessage(`Đã tạo ${importedJds.length} JD từ nội dung kéo thả.`);
-        })
-        .catch((error) => {
-          setImportMessage(error instanceof Error ? error.message : "Không thể import nội dung JD.");
-        })
-        .finally(() => setActionLoading(false));
+      const virtualFile = new File([droppedText], "noi-dung-keo-tha.txt", { type: "text/plain" });
+      setImportFilesList([virtualFile]);
+      setShowImportModal(true);
+      setImportMessage("");
     }
   };
 
@@ -555,21 +557,14 @@ export const JobDescriptionsPage = ({ currentUser }) => {
         </div>
         {canManage ? (
           <div className="d-flex flex-wrap justify-content-end gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="d-none"
-              accept=".json,.csv,.txt"
-              multiple
-              onChange={(event) => {
-                void importFiles(event.target.files);
-                event.target.value = "";
-              }}
-            />
             <button
               className="btn btn-outline-primary d-flex align-items-center gap-2"
               disabled={actionLoading}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                setImportFilesList([]);
+                setImportMessage("");
+                setShowImportModal(true);
+              }}
             >
               <UploadIcon />
               Import JD
@@ -939,6 +934,138 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showImportModal && canManage && (
+        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
+          <div
+            className="flex w-full max-w-[520px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl"
+            style={{ maxHeight: "calc(100vh - 24px)" }}
+          >
+            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
+              <h5 className="m-0 fw-bold text-body-emphasis">
+                Import Mô tả công việc (JD)
+              </h5>
+              <button
+                className="btn btn-sm btn-light border"
+                type="button"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFilesList([]);
+                  setImportMessage("");
+                }}
+              >
+                Đóng
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto" style={{ minHeight: "0", flex: "1" }}>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Chọn phòng ban nhận import <span className="text-danger">*</span></label>
+                <TailwindDropdown
+                  onChange={setImportDepartmentId}
+                  options={departments.map((d) => ({ label: d.name, value: d.id }))}
+                  placeholder="Chọn phòng ban"
+                  value={importDepartmentId}
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Chọn file import (.json, .csv, .txt) <span className="text-danger">*</span></label>
+                <div
+                  className="border border-dashed rounded p-4 text-center cursor-pointer hover:bg-body-secondary/20 transition-colors"
+                  onClick={() => modalFileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.dataTransfer.files.length > 0) {
+                      setImportFilesList(Array.from(e.dataTransfer.files));
+                    }
+                  }}
+                  style={{ borderColor: "#cbd5e1" }}
+                >
+                  <input
+                    ref={modalFileInputRef}
+                    type="file"
+                    className="d-none"
+                    accept=".json,.csv,.txt"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setImportFilesList(Array.from(e.target.files));
+                      }
+                    }}
+                  />
+                  <div className="text-primary mb-2">
+                    <UploadIcon />
+                  </div>
+                  <div className="fw-semibold text-body-emphasis mb-1" style={{ fontSize: "14px" }}>
+                    Kéo thả file hoặc click để chọn file
+                  </div>
+                  <span className="text-body-secondary small">
+                    Hỗ trợ định dạng .json, .csv hoặc .txt
+                  </span>
+                </div>
+
+                {importFilesList.length > 0 && (
+                  <div className="mt-3">
+                    <div className="fw-semibold small text-body-emphasis mb-2">Các file đã chọn ({importFilesList.length}):</div>
+                    <div className="border rounded overflow-hidden" style={{ maxHeight: "150px", overflowY: "auto" }}>
+                      <ul className="list-group list-group-flush">
+                        {importFilesList.map((file, idx) => (
+                          <li key={idx} className="list-group-item d-flex justify-content-between align-items-center py-2 px-3 bg-body" style={{ fontSize: "13px" }}>
+                            <span className="text-truncate me-2" style={{ maxWidth: '85%' }}>{file.name}</span>
+                            <button
+                              type="button"
+                              className="btn-close"
+                              style={{ fontSize: '10px', padding: "0.25rem" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setImportFilesList((prev) => prev.filter((_, i) => i !== idx));
+                              }}
+                            ></button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {importMessage && (
+                <div className="alert alert-info py-2 px-3 small mb-0" role="alert">
+                  {importMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
+              <button
+                type="button"
+                className="btn btn-light border"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFilesList([]);
+                  setImportMessage("");
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={actionLoading || !importDepartmentId || importFilesList.length === 0}
+                onClick={() => void importFiles(importFilesList, importDepartmentId)}
+              >
+                {actionLoading ? "Đang import..." : "Bắt đầu Import"}
+              </button>
+            </div>
           </div>
         </div>
       )}
