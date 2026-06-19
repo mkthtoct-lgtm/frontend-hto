@@ -29,6 +29,7 @@ import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
 import { ProfilePage } from "./profile/ProfilePage";
 import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
+import { HelpCenterPage } from "./helpCenter/HelpCenterPage";
 import { AUTH_EVENTS } from "./auth/session";
 
 const ROLE_IDS = {
@@ -158,6 +159,10 @@ const storeAuthUser = (userData) => {
 };
 
 const getStoredPage = () => {
+  const path = window.location.pathname;
+  if (path === "/support") {
+    return "helpCenter";
+  }
   return window.localStorage.getItem(CURRENT_PAGE_STORAGE_KEY) || "dashboard";
 };
 
@@ -227,6 +232,28 @@ function App() {
 
     window.localStorage.setItem(CURRENT_PAGE_STORAGE_KEY, currentPage);
   }, [currentPage, user]);
+
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    const handlePopState = (e) => {
+      const path = window.location.pathname;
+      if (path === "/support") {
+        setCurrentPage("helpCenter");
+      } else if (e.state?.page) {
+        setCurrentPage(e.state.page);
+      } else {
+        setCurrentPage("dashboard");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -319,6 +346,12 @@ function App() {
     setSelectedNotificationId(
       page === "notifications" ? options.notificationId || null : null,
     );
+
+    if (page === "helpCenter") {
+      window.history.pushState({ page }, "", "/support");
+    } else {
+      window.history.pushState({ page }, "", "/");
+    }
   };
 
   // Lắng nghe navigate event từ DashboardPage
@@ -495,6 +528,8 @@ function App() {
           <HomePage theme={theme} />
         ) : currentPage === "productOverview" ? (
           <ProductOverviewPage currentUser={user} />
+        ) : currentPage === "helpCenter" ? (
+          <HelpCenterPage currentUser={user} onNavigate={handleNavigate} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (
           <ProductsPage currentUser={user} currentPage={currentPage} onNavigate={setCurrentPage} />
         ) : (

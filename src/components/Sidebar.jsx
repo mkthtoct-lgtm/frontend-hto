@@ -301,13 +301,13 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
-              href="#"
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["helpCenter", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              href="/support"
               role="button"
               style={{ textDecoration: "none" }}
               onClick={(e) => {
                 e.preventDefault();
-                onNavigate?.("hotro");
+                onNavigate?.("helpCenter");
               }}
             >
               <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
@@ -330,7 +330,19 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </span>
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "hotro" ? "block" : "none", paddingLeft: "52px" }}>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Tạo Ticket</a></li>
+              <li className="menu-item mb-1">
+                <a
+                  className="menu-link d-block px-3 py-2 text-body-secondary"
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="/support"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("helpCenter");
+                  }}
+                >
+                  Tạo Ticket
+                </a>
+              </li>
               <li className="menu-item mb-1">
                 <a
                   className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "leadForm" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
@@ -373,7 +385,18 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </div>
               <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>Tin tức & Sự kiện</span>
               {canManageNews && (
-                <i className={`fi ${openMenu === "newsEvents" ? "fi-br-angle-small-up" : "fi-br-angle-small-down"}`} style={{ fontSize: "16px" }}></i>
+                <span
+                  style={{ cursor: "pointer", padding: "4px" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents");
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: openMenu === "newsEvents" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
               )}
             </a>
             {canManageNews && (
@@ -822,7 +845,11 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
       </nav>
       <div className="app-footer">
         <a
-          href="/pages/faq.html"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate?.("helpCenter");
+          }}
           className="btn btn-outline-light btn-shadow btn-app-nav w-100 d-flex align-items-center justify-content-center"
         >
           <i className="fi fi-rs-interrogation text-primary me-2"></i>

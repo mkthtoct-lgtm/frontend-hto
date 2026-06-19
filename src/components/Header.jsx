@@ -546,36 +546,6 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                   </a>
                 </li>
                 <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="pages/faq.html"
-                  >
-                    <i className="fi fi-rs-interrogation scale-1x"></i> Help
-                    Center
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigate?.("profile");
-                    }}
-                  >
-                    <i className="fi fi-rr-settings scale-1x"></i> Cài đặt tài khoản
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="pages/pricing.html"
-                  >
-                    <i className="fi fi-rr-usd-circle scale-1x"></i> Upgrade
-                    Plan
-                  </a>
-                </li>
-                <li>
                   <div className="dropdown-divider my-1"></div>
                 </li>
                 <li>
