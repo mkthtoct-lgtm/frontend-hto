@@ -38,7 +38,7 @@ const MOCK_DEALS = [
     timeline: [
       { status: "Tạo deal", time: "10/05/2026 08:30", done: true },
       { status: "Ký hợp đồng", time: "12/05/2026 14:00", done: true },
-      { status: "Kế toán xác nhận thu tiền", time: "14/05/2026 09:15", done: true },
+      { status: "Xác nhận thu tiền", time: "14/05/2026 09:15", done: true },
       { status: "Đối soát hoàn tất", time: "15/05/2026 10:00", done: true },
     ],
   },
@@ -64,7 +64,7 @@ const MOCK_DEALS = [
     timeline: [
       { status: "Tạo deal", time: "01/06/2026 09:00", done: true },
       { status: "Ký hợp đồng", time: "03/06/2026 16:30", done: true },
-      { status: "Kế toán xác nhận thu tiền", time: "Chờ xác nhận", done: false },
+      { status: "Xác nhận thu tiền", time: "Chờ xác nhận", done: false },
       { status: "Đối soát hoàn tất", time: "", done: false },
     ],
   },
@@ -90,7 +90,7 @@ const MOCK_DEALS = [
     timeline: [
       { status: "Tạo deal", time: "12/06/2026 14:20", done: true },
       { status: "Ký hợp đồng", time: "Chờ ký kết", done: false },
-      { status: "Kế toán xác nhận thu tiền", time: "", done: false },
+      { status: "Xác nhận thu tiền", time: "", done: false },
       { status: "Đối soát hoàn tất", time: "", done: false },
     ],
   },
@@ -116,7 +116,7 @@ const MOCK_DEALS = [
     timeline: [
       { status: "Tạo deal", time: "18/05/2026 10:15", done: true },
       { status: "Ký hợp đồng", time: "20/05/2026 11:00", done: true },
-      { status: "Kế toán xác nhận thu tiền", time: "24/05/2026 14:45", done: true },
+      { status: "Xác nhận thu tiền", time: "24/05/2026 14:45", done: true },
       { status: "Đối soát hoàn tất", time: "25/05/2026 15:30", done: true },
     ],
   },
@@ -142,7 +142,7 @@ const MOCK_DEALS = [
     timeline: [
       { status: "Tạo deal", time: "02/05/2026 09:00", done: true },
       { status: "Ký hợp đồng", time: "Hủy bỏ", done: false },
-      { status: "Kế toán xác nhận thu tiền", time: "", done: false },
+      { status: "Xác nhận thu tiền", time: "", done: false },
       { status: "Đối soát hoàn tất", time: "", done: false },
     ],
   },
@@ -150,6 +150,9 @@ const MOCK_DEALS = [
 
 export function AccountingPlaceholderPage() {
   const [selectedDeal, setSelectedDeal] = useState(null);
+  const [dealPage, setDealPage] = useState(1);
+
+  const DEAL_PAGE_SIZE = 20;
 
   // Calculate stats based on mock data
   const totalExpectedCommission = MOCK_DEALS
@@ -163,28 +166,38 @@ export function AccountingPlaceholderPage() {
   const eligibleDealsCount = MOCK_DEALS.filter((d) => d.status !== "failed").length;
   const reconciledCount = MOCK_DEALS.filter((d) => d.status === "reconciled").length;
 
+  const dealPageCount = Math.max(
+    1,
+    Math.ceil(MOCK_DEALS.length / DEAL_PAGE_SIZE),
+  );
+  const safeDealPage = Math.min(dealPage, dealPageCount);
+  const paginatedDeals = MOCK_DEALS.slice(
+    (safeDealPage - 1) * DEAL_PAGE_SIZE,
+    safeDealPage * DEAL_PAGE_SIZE,
+  );
+
   const metrics = [
-    { label: "Hoa hồng dự kiến", value: totalExpectedCommission.toLocaleString("vi-VN") + " VND", accent: "#2563eb" },
-    { label: "Doanh thu đã ghi nhận", value: totalRecordedRevenue.toLocaleString("vi-VN") + " VND", accent: "#0f766e" },
-    { label: "Hồ sơ đủ điều kiện", value: `${eligibleDealsCount} hồ sơ`, accent: "#7c3aed" },
-    { label: "Đối soát kế toán", value: `Đã đối soát ${reconciledCount}/${eligibleDealsCount}`, accent: "#b45309" },
+    { label: "Hoa hồng dự kiến", value: totalExpectedCommission.toLocaleString("vi-VN") + " VND", accent: "#4F86F7" },
+    { label: "Doanh thu đã ghi nhận", value: totalRecordedRevenue.toLocaleString("vi-VN") + " VND", accent: "#50B8B0" },
+    { label: "Hồ sơ đủ điều kiện", value: `${eligibleDealsCount} hồ sơ`, accent: "#A162F7" },
+    { label: "Đối soát kế toán", value: `Đã đối soát ${reconciledCount}/${eligibleDealsCount}`, accent: "#F79F57" },
   ];
 
   return (
     <div className="container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
       <div className="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3 mb-3">
         <div>
-          <div className="text-uppercase fw-semibold text-primary mb-1" style={{ fontSize: "12px", letterSpacing: 0 }}>
-            Nghiệp vụ kế toán
-          </div>
-          <h4 className="fw-bold text-body-emphasis mb-1">Hoa hồng & Đối soát Deal</h4>
+
+          <h4 className="fw-bold text-body-emphasis mb-1">Đối soát & Quản lý Deal</h4>
         </div>
 
         <div className="d-flex flex-wrap gap-2">
-          <button className="btn btn-sm btn-outline-primary" type="button" onClick={() => alert("Đang đồng bộ dữ liệu với hệ thống CRM...")}>
+          <button className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={() => alert("Đang đồng bộ dữ liệu với hệ thống CRM...")}>
+            <RefreshCwIcon />
             Đồng bộ CRM
           </button>
-          <button className="btn btn-sm btn-primary" type="button" onClick={() => alert("Đang tải cấu hình thiết lập đối soát...")}>
+          <button className="btn btn-sm btn-primary d-inline-flex align-items-center" type="button" onClick={() => alert("Đang tải cấu hình thiết lập đối soát...")}>
+            <SettingsIcon />
             Thiết lập kế toán
           </button>
         </div>
@@ -194,7 +207,7 @@ export function AccountingPlaceholderPage() {
       <div className="row g-2 g-xl-3 mb-3">
         {metrics.map((metric) => (
           <div className="col-12 col-sm-6 col-xl-3" key={metric.label}>
-            <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+            <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", backgroundColor: `${metric.accent}15` }}>
               <div className="card-body p-3">
                 <div className="d-flex align-items-center justify-content-between gap-3">
                   <div style={{ minWidth: 0 }}>
@@ -206,8 +219,8 @@ export function AccountingPlaceholderPage() {
                     </div>
                   </div>
                   <span
-                    className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
-                    style={{ width: "34px", height: "34px", backgroundColor: `${metric.accent}1a`, color: metric.accent }}
+                    className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0 bg-white"
+                    style={{ width: "34px", height: "34px", color: metric.accent, boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}
                     aria-hidden="true"
                   >
                     <MetricIcon />
@@ -232,51 +245,56 @@ export function AccountingPlaceholderPage() {
                 <table className="table table-hover align-middle mb-0" style={{ fontSize: "13px" }}>
                   <thead className="table-light">
                     <tr>
-                      <th className="ps-3 py-3 text-body-secondary fw-semibold">Mã Deal / Tên dự án</th>
-                      <th className="py-3 text-body-secondary fw-semibold">Khách hàng</th>
-                      <th className="py-3 text-body-secondary fw-semibold">Giá trị hợp đồng</th>
-                      <th className="py-3 text-body-secondary fw-semibold">Hoa hồng dự kiến</th>
-                      <th className="py-3 text-body-secondary fw-semibold">Trạng thái</th>
-                      <th className="pe-3 py-3 text-body-secondary fw-semibold text-end">Hành động</th>
+                      <th className="ps-3 py-3 text-body-secondary fw-semibold text-nowrap" style={{ width: "160px" }}>Mã Deal / Dự án</th>
+                      <th className="py-3 text-body-secondary fw-semibold text-nowrap" style={{ width: "140px" }}>Khách hàng</th>
+                      <th className="py-3 text-body-secondary fw-semibold text-nowrap">Giá trị hợp đồng</th>
+                      <th className="py-3 text-body-secondary fw-semibold text-nowrap">Hoa hồng dự kiến</th>
+                      <th className="py-3 text-body-secondary fw-semibold text-nowrap">Trạng thái</th>
+                      <th className="pe-3 py-3 text-body-secondary fw-semibold text-end text-nowrap">Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {MOCK_DEALS.map((deal) => (
+                    {paginatedDeals.map((deal) => (
                       <tr key={deal.id} style={{ cursor: "pointer" }} onClick={() => setSelectedDeal(deal)}>
-                        <td className="ps-3 py-3">
+                        <td className="ps-3 py-3 text-nowrap" style={{ maxWidth: "160px" }}>
                           <div className="fw-bold text-body-emphasis">{deal.id}</div>
-                          <div className="text-body-secondary small text-truncate mt-1" style={{ maxWidth: "200px" }} title={deal.title}>
+                          <div className="text-body-secondary small text-truncate mt-1" style={{ maxWidth: "140px" }} title={deal.title}>
                             {deal.title}
                           </div>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 text-nowrap" style={{ maxWidth: "140px" }}>
                           <div className="fw-semibold text-body-emphasis">{deal.customer.name}</div>
-                          <div className="text-body-secondary small mt-0.5">{deal.customer.company}</div>
+                          <div className="text-body-secondary small mt-0.5 text-truncate" style={{ maxWidth: "120px" }} title={deal.customer.company}>
+                            {deal.customer.company}
+                          </div>
                         </td>
-                        <td className="py-3 fw-medium text-body-emphasis">
+                        <td className="py-3 fw-medium text-body-emphasis text-nowrap">
                           {deal.value.toLocaleString("vi-VN")} VND
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 text-nowrap">
                           <div className="fw-semibold text-success">
                             {deal.expectedCommission.toLocaleString("vi-VN")} VND
                           </div>
                           <div className="small text-body-secondary">({deal.commissionRate}%)</div>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3 text-nowrap">
                           <span className={`badge border px-2 py-1.5 ${deal.statusColor}`}>
                             {deal.statusLabel}
                           </span>
                         </td>
                         <td className="pe-3 py-3 text-end">
                           <button
-                            className="btn btn-sm btn-outline-primary"
+                            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                            style={{ width: "32px", height: "32px", padding: 0 }}
                             type="button"
+                            title="Xem chi tiết Deal"
+                            aria-label="Xem chi tiết Deal"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedDeal(deal);
                             }}
                           >
-                            Chi tiết
+                            <EyeIcon />
                           </button>
                         </td>
                       </tr>
@@ -284,6 +302,47 @@ export function AccountingPlaceholderPage() {
                   </tbody>
                 </table>
               </div>
+              {MOCK_DEALS.length > DEAL_PAGE_SIZE && (
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 p-3 border-top">
+                  <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                    Hiển thị {(safeDealPage - 1) * DEAL_PAGE_SIZE + 1}-
+                    {Math.min(safeDealPage * DEAL_PAGE_SIZE, MOCK_DEALS.length)} trong{" "}
+                    {MOCK_DEALS.length} Deal
+                  </span>
+                  <div className="btn-group gap-2" role="group" aria-label="Phân trang Deal">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => setDealPage((page) => Math.max(1, page - 1))}
+                      disabled={safeDealPage === 1}
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: dealPageCount }, (_, index) => index + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`btn btn-sm ${page === safeDealPage ? "btn-primary" : "btn-outline-secondary"}`}
+                          onClick={() => setDealPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        setDealPage((page) => Math.min(dealPageCount, page + 1))
+                      }
+                      disabled={safeDealPage === dealPageCount}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -339,7 +398,7 @@ export function AccountingPlaceholderPage() {
                 Đóng
               </button>
             </div>
-            
+
             <div className="p-4 overflow-y-auto min-h-0 flex-1">
               {/* Deal General Info */}
               <div className="mb-4">
@@ -401,46 +460,51 @@ export function AccountingPlaceholderPage() {
 
               {/* Progress Timeline */}
               <div className="mb-4">
-                <h6 className="fw-bold text-body-emphasis border-bottom pb-2 mb-3">Lịch sử trạng thái đối soát</h6>
-                <div className="ps-2">
-                  {selectedDeal.timeline.map((step, idx) => (
-                    <div key={idx} className="d-flex gap-3 position-relative pb-3">
-                      {idx !== selectedDeal.timeline.length - 1 && (
-                        <div
-                          className="position-absolute border-start"
-                          style={{
-                            left: "9px",
-                            top: "20px",
-                            bottom: 0,
-                            borderColor: step.done ? "#2563eb" : "#e5e7eb",
-                          }}
-                        ></div>
-                      )}
-                      <div
-                        className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                        style={{
-                          width: "20px",
-                          height: "20px",
-                          backgroundColor: step.done ? "#2563eb" : "#e5e7eb",
-                          color: "#fff",
-                          fontSize: "10px",
-                          zIndex: 1,
-                        }}
-                      >
-                        {step.done ? "✓" : ""}
-                      </div>
-                      <div>
-                        <div className={`fw-semibold ${step.done ? "text-body-emphasis" : "text-body-secondary"}`} style={{ fontSize: "13px" }}>
-                          {step.status}
-                        </div>
-                        {step.time && (
-                          <div className="text-body-secondary small" style={{ fontSize: "11px" }}>
-                            {step.time}
+                <h6 className="fw-bold text-body-emphasis border-bottom pb-2 mb-4">Lịch sử trạng thái đối soát</h6>
+                <div className="overflow-x-auto py-2">
+                  <div className="position-relative" style={{ minWidth: "450px" }}>
+                    {/* Background Line */}
+                    <div
+                      className="position-absolute"
+                      style={{
+                        top: "12px",
+                        left: `${100 / selectedDeal.timeline.length / 2}%`,
+                        right: `${100 / selectedDeal.timeline.length / 2}%`,
+                        height: "2px",
+                        backgroundColor: "#e2e8f0",
+                        zIndex: 0,
+                      }}
+                    ></div>
+                    <div className="d-flex justify-content-between align-items-start position-relative w-100" style={{ zIndex: 1 }}>
+                      {selectedDeal.timeline.map((step, idx) => (
+                        <div key={idx} className="d-flex flex-column align-items-center text-center flex-fill" style={{ width: `${100 / selectedDeal.timeline.length}%` }}>
+                          <div
+                            className="rounded-circle d-flex align-items-center justify-content-center mb-2"
+                            style={{
+                              width: "24px",
+                              height: "24px",
+                              backgroundColor: step.done ? "#2563eb" : "#cbd5e1",
+                              color: "#fff",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              border: "2px solid var(--bs-body-bg)",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {step.done ? "✓" : idx + 1}
                           </div>
-                        )}
-                      </div>
+                          <div className={`fw-semibold px-2 ${step.done ? "text-body-emphasis" : "text-body-secondary"}`} style={{ fontSize: "12px", lineHeight: 1.3 }}>
+                            {step.status}
+                          </div>
+                          {step.time && (
+                            <div className="text-body-secondary small mt-1 px-1" style={{ fontSize: "10px", minHeight: "15px" }}>
+                              {step.time}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
 
@@ -471,6 +535,34 @@ function MetricIcon() {
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 1v22"></path>
       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path>
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  );
+}
+
+function RefreshCwIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <polyline points="1 20 1 14 7 14"></polyline>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
     </svg>
   );
 }

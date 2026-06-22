@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 const FAQ_CATEGORIES = [
   { id: "all", label: "Tất cả câu hỏi" },
   { id: "account", label: "Tài khoản & Bảo mật" },
+  { id: "lead", label: "Quản lý Khách hàng (Lead)" },
+  { id: "jd", label: "Quản lý Job Description" },
   { id: "accounting", label: "Đối soát & Hoa hồng" },
+  { id: "audit", label: "Nhật ký hệ thống" },
   { id: "crm", label: "Đồng bộ CRM" },
   { id: "general", label: "Quy định & Hướng dẫn" }
 ];
@@ -78,6 +81,36 @@ const FAQ_ITEMS = [
     category: "account",
     question: "Tôi có thể thay đổi tên hiển thị không?",
     answer: "Không, tên tài khoản được thiết lập từ admin và không thể tự thay đổi. Để đổi tên, liên hệ quản trị viên hệ thống."
+  },
+  {
+    category: "lead",
+    question: "Làm thế nào để tạo Lead mới từ nguồn giới thiệu?",
+    answer: "Bạn truy cập trang Form Lead, điền đầy đủ thông tin khách hàng, chọn nguồn giới thiệu phù hợp và nhấn Gửi."
+  },
+  {
+    category: "lead",
+    question: "Làm sao để biết trạng thái Lead đang được xử lý?",
+    answer: "Sau khi gửi Lead, dữ liệu sẽ được chuyển về CRM. Bạn có thể kiểm tra trạng thái tương tác qua hệ thống CRM trung tâm."
+  },
+  {
+    category: "jd",
+    question: "Tôi có thể tạo mô tả công việc (JD) bằng AI không?",
+    answer: "Có, tại trang Quản lý JD, bạn có thể điền các thông tin cơ bản về vị trí và yêu cầu, sau đó sử dụng tính năng tạo nội dung bằng AI để hoàn thiện JD một cách nhanh chóng."
+  },
+  {
+    category: "jd",
+    question: "Làm sao để xuất file JD gửi cho ứng viên?",
+    answer: "Sau khi tạo và lưu JD thành công, bạn có thể nhấn vào nút xem chi tiết rồi chọn tính năng xuất/tải về hoặc sao chép nội dung để chia sẻ."
+  },
+  {
+    category: "audit",
+    question: "Ai có thể xem Nhật ký hoạt động (Audit Log)?",
+    answer: "Chỉ Admin và các tài khoản có phân quyền Quản lý hệ thống mới có thể truy cập trang Nhật ký hoạt động để theo dõi lịch sử thao tác của các thành viên."
+  },
+  {
+    category: "audit",
+    question: "Dữ liệu Audit Log được lưu trữ trong bao lâu?",
+    answer: "Nhật ký hệ thống được lưu trữ mặc định trong suốt thời gian hoạt động để phục vụ cho mục đích tra cứu, giám sát bảo mật và kiểm toán."
   }
 ];
 
@@ -117,6 +150,40 @@ const INITIAL_TICKETS = [
     ]
   },
   {
+    id: "HTO-TK-788",
+    title: "Không dùng được AI tạo Job Description",
+    category: "Quản lý JD",
+    priority: "Medium",
+    priorityLabel: "Trung bình",
+    priorityColor: "bg-warning-subtle text-warning border-warning-subtle",
+    status: "processing",
+    statusLabel: "Đang xử lý",
+    statusColor: "bg-info-subtle text-info border-info-subtle",
+    description: "Tôi đang sử dụng tính năng tạo JD bằng AI cho vị trí Marketing Manager nhưng sau khi nhập yêu cầu, hệ thống quay đều rồi báo lỗi 500.",
+    createdAt: "2026-06-20T08:00:00Z",
+    replies: [
+      { sender: "Hệ thống", time: "20/06/2026 08:00", message: "Yêu cầu hỗ trợ đã được gửi tới phòng Kỹ thuật." },
+      { sender: "Kỹ thuật viên (Nguyễn Minh Hoàng)", time: "20/06/2026 08:30", message: "Chào bạn, API của dịch vụ AI đang bị chập chờn. Chúng tôi đang liên hệ với nhà cung cấp để kiểm tra. Tạm thời bạn có thể tự tạo tay nội dung trước nhé." }
+    ]
+  },
+  {
+    id: "HTO-TK-785",
+    title: "Hướng dẫn xuất danh sách Lead tháng này",
+    category: "Quản lý Khách hàng (Lead)",
+    priority: "Low",
+    priorityLabel: "Thấp",
+    priorityColor: "bg-secondary-subtle text-secondary border-secondary-subtle",
+    status: "resolved",
+    statusLabel: "Đã giải quyết",
+    statusColor: "bg-success-subtle text-success border-success-subtle",
+    description: "Nhờ bộ phận hỗ trợ hướng dẫn tôi cách xuất toàn bộ danh sách khách hàng (Lead) mới tạo trong tháng 6 ra file Excel để báo cáo.",
+    createdAt: "2026-06-19T09:20:00Z",
+    replies: [
+      { sender: "Hệ thống", time: "19/06/2026 09:20", message: "Yêu cầu hỗ trợ đã được gửi tới phòng CSKH." },
+      { sender: "CSKH (Trần Hữu Kiên)", time: "19/06/2026 10:15", message: "Chào bạn, tại trang Form Lead, bạn xem mục danh sách bên dưới, sẽ có nút Export Excel nhé." }
+    ]
+  },
+  {
     id: "HTO-TK-780",
     title: "Hỏi về tỷ lệ hoa hồng dự án IT Outsource",
     category: "Nghiệp vụ kế toán",
@@ -140,6 +207,11 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [tickets, setTickets] = useState(INITIAL_TICKETS);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [faqPage, setFaqPage] = useState(1);
+  const [ticketPage, setTicketPage] = useState(1);
+
+  const FAQ_PAGE_SIZE = 20;
+  const TICKET_PAGE_SIZE = 20;
 
   // State for new ticket form
   const [formTitle, setFormTitle] = useState("");
@@ -158,6 +230,10 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
     }, 0);
     return () => clearTimeout(timer);
   }, [initialTab]);
+
+  useEffect(() => {
+    setFaqPage(1);
+  }, [faqCategory, searchQuery]);
 
   const handleCreateTicket = (e) => {
     e.preventDefault();
@@ -226,6 +302,30 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
     return matchesCategory && matchesQuery;
   });
 
+  const faqPageCount = Math.max(
+    1,
+    Math.ceil(filteredFaqs.length / FAQ_PAGE_SIZE),
+  );
+  const safeFaqPage = Math.min(faqPage, faqPageCount);
+  const paginatedFaqs = useMemo(() => {
+    return filteredFaqs.slice(
+      (safeFaqPage - 1) * FAQ_PAGE_SIZE,
+      safeFaqPage * FAQ_PAGE_SIZE,
+    );
+  }, [filteredFaqs, safeFaqPage]);
+
+  const ticketPageCount = Math.max(
+    1,
+    Math.ceil(tickets.length / TICKET_PAGE_SIZE),
+  );
+  const safeTicketPage = Math.min(ticketPage, ticketPageCount);
+  const paginatedTickets = useMemo(() => {
+    return tickets.slice(
+      (safeTicketPage - 1) * TICKET_PAGE_SIZE,
+      safeTicketPage * TICKET_PAGE_SIZE,
+    );
+  }, [tickets, safeTicketPage]);
+
   // DEBUG
   console.log("faqCategory:", faqCategory, "filteredFaqs count:", filteredFaqs.length, "FAQ_ITEMS:", FAQ_ITEMS);
 
@@ -286,8 +386,8 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
 
       {/* FAQ Tab Content */}
       {activeTab === "faq" && (
-        <div className="row g-4" style={{ minWidth: 0, maxWidth: "100%", overflow: "hidden" }}>
-          <div className="col-12 col-xl-3" style={{ minWidth: 0, overflow: "hidden" }}>
+        <div className="row g-4">
+          <div className="col-12 col-xl-3">
             <div className="card border-0 shadow-sm" style={{ borderRadius: "12px" }}>
               <div className="card-header bg-transparent border-0 pt-3 px-3 pb-1">
                 <h6 className="fw-bold text-body-emphasis mb-0">Chủ đề hỗ trợ</h6>
@@ -310,49 +410,81 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
             </div>
           </div>
 
-          <div className="col-12 col-xl-9" style={{ minWidth: 0, overflow: "hidden", maxWidth: "100%" }}>
-            <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: "12px" }}>
-              <div className="card-body p-3" style={{ overflow: "hidden" }}>
-                <div className="input-group" style={{ minWidth: 0 }}>
-                  <span className="input-group-text bg-transparent border-end-0 text-body-secondary">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control border-start-0 ps-1"
-                    placeholder="Tìm kiếm câu hỏi hoặc nội dung hỗ trợ..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ fontSize: "14px" }}
-                  />
-                </div>
-              </div>
+          <div style={{ flex: 1, padding: "20px", backgroundColor: "#fdfdfd", minHeight: "500px" }}>
+            <div style={{ marginBottom: "20px", padding: "12px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#fff" }}>
+              <input
+                type="text"
+                placeholder="Tìm kiếm câu hỏi hoặc nội dung hỗ trợ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: "100%", padding: "8px", border: "1px solid #ddd", borderRadius: "4px" }}
+              />
             </div>
 
-            <div className="d-grid gap-3" style={{ minWidth: 0, maxWidth: "100%" }}>
+            <div style={{ marginBottom: "12px", color: "#666", fontSize: "14px" }}>
+              Tìm thấy: {filteredFaqs.length} kết quả
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {filteredFaqs.length === 0 ? (
-                <div className="card border-0 shadow-sm py-5 text-center text-body-secondary" style={{ borderRadius: "12px" }}>
+                <div style={{ padding: "40px", textAlign: "center", color: "#888", border: "1px solid #eee", borderRadius: "8px" }}>
                   Không tìm thấy câu hỏi nào phù hợp với từ khóa của bạn.
                 </div>
               ) : (
-                filteredFaqs.map((faq, idx) => (
-                  <div key={idx} className="card border-0 shadow-sm" style={{ borderRadius: "12px", minWidth: 0, overflow: "hidden" }}>
-                    <div className="card-body p-4" style={{ minWidth: 0, overflow: "hidden" }}>
-                      <h6 className="fw-bold text-body-emphasis mb-2 d-flex gap-2 align-items-start" style={{ minWidth: 0 }}>
-                        <span className="text-primary mt-0.5" style={{ flexShrink: 0 }}>Q.</span>
-                        <span style={{ wordBreak: "break-word", overflowWrap: "break-word", minWidth: 0 }}>{faq.question}</span>
-                      </h6>
-                      <div className="text-body-secondary d-flex gap-2 align-items-start mb-0 ps-3 border-start" style={{ fontSize: "13.5px", lineHeight: 1.6, minWidth: 0 }}>
-                        <span style={{ wordBreak: "break-word", overflowWrap: "break-word", minWidth: 0 }}>{faq.answer}</span>
-                      </div>
-                    </div>
+                paginatedFaqs.map((faq, idx) => (
+                  <div key={idx} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "16px", backgroundColor: "#fff", display: "block" }}>
+                    <h3 style={{ margin: "0 0 8px 0", fontSize: "16px", fontWeight: "bold", color: "#000" }}>
+                      <span style={{ color: "#0d6efd", marginRight: "8px" }}>Q.</span>
+                      {faq.question}
+                    </h3>
+                    <p style={{ margin: "0", fontSize: "14px", color: "#333", lineHeight: "1.6", borderLeft: "3px solid #eee", paddingLeft: "16px" }}>
+                      {faq.answer}
+                    </p>
                   </div>
                 ))
               )}
             </div>
+            {filteredFaqs.length > FAQ_PAGE_SIZE && (
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+                <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                  Hiển thị {(safeFaqPage - 1) * FAQ_PAGE_SIZE + 1}-
+                  {Math.min(safeFaqPage * FAQ_PAGE_SIZE, filteredFaqs.length)} trong{" "}
+                  {filteredFaqs.length} câu hỏi
+                </span>
+                <div className="btn-group gap-2" role="group" aria-label="Phân trang câu hỏi">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => setFaqPage((page) => Math.max(1, page - 1))}
+                    disabled={safeFaqPage === 1}
+                  >
+                    Trước
+                  </button>
+                  {Array.from({ length: faqPageCount }, (_, index) => index + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`btn btn-sm ${page === safeFaqPage ? "btn-primary" : "btn-outline-secondary"}`}
+                        onClick={() => setFaqPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() =>
+                      setFaqPage((page) => Math.min(faqPageCount, page + 1))
+                    }
+                    disabled={safeFaqPage === faqPageCount}
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -395,6 +527,9 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
                       >
                         <option value="Lỗi phần mềm">Lỗi phần mềm</option>
                         <option value="Nghiệp vụ kế toán">Nghiệp vụ kế toán</option>
+                        <option value="Quản lý Khách hàng (Lead)">Quản lý Khách hàng (Lead)</option>
+                        <option value="Quản lý JD">Quản lý JD</option>
+                        <option value="Nhật ký hệ thống">Nhật ký hệ thống</option>
                         <option value="Phân quyền tài khoản">Phân quyền tài khoản</option>
                         <option value="Yêu cầu tính năng mới">Yêu cầu tính năng mới</option>
                         <option value="Khác">Khác</option>
@@ -479,7 +614,7 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets.map((ticket) => (
+                  {paginatedTickets.map((ticket) => (
                     <tr key={ticket.id} style={{ cursor: "pointer" }} onClick={() => setSelectedTicket(ticket)}>
                       <td className="ps-3 py-3 fw-bold text-body-emphasis">{ticket.id}</td>
                       <td className="py-3" style={{ minWidth: 0 }}>
@@ -515,12 +650,53 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {tickets.length > TICKET_PAGE_SIZE && (
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 p-3 border-top">
+                  <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                    Hiển thị {(safeTicketPage - 1) * TICKET_PAGE_SIZE + 1}-
+                    {Math.min(safeTicketPage * TICKET_PAGE_SIZE, tickets.length)} trong{" "}
+                    {tickets.length} Ticket
+                  </span>
+                  <div className="btn-group gap-2" role="group" aria-label="Phân trang Ticket">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => setTicketPage((page) => Math.max(1, page - 1))}
+                      disabled={safeTicketPage === 1}
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: ticketPageCount }, (_, index) => index + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`btn btn-sm ${page === safeTicketPage ? "btn-primary" : "btn-outline-secondary"}`}
+                          onClick={() => setTicketPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        setTicketPage((page) => Math.min(ticketPageCount, page + 1))
+                      }
+                      disabled={safeTicketPage === ticketPageCount}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
       )}
 
       {/* Ticket Details Modal */}

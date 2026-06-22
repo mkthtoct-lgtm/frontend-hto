@@ -295,9 +295,14 @@ export const JobDescriptionsPage = ({ currentUser }) => {
   const [departments, setDepartments] = useState([]);
   const [totalJds, setTotalJds] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState(() => {
+    const isSystemAdmin = ["admin", "bangiamdoc", "nhansu"].includes(currentUser?.role) || 
+                          [ADMIN_ROLE_ID, DIRECTOR_ROLE_ID, HR_ROLE_ID].includes(currentUser?.roleId);
+    return isSystemAdmin ? "all" : (currentUser?.departmentId || "all");
+  });
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedJdId, setSelectedJdId] = useState("");
+  const [jdListPage, setJdListPage] = useState(1);
   const [formMode, setFormMode] = useState(null);
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -330,7 +335,15 @@ export const JobDescriptionsPage = ({ currentUser }) => {
     setApiError("");
 
     try {
-      const [departmentData, jdData] = await Promise.all([fetchDepartments(), fetchJobDescriptions()]);
+      // Tải phòng ban và JD song song nhưng bắt lỗi phòng ban riêng biệt để tránh làm lỗi cả trang
+      const departmentPromise = fetchDepartments().catch((err) => {
+        console.warn("Không có quyền tải danh mục phòng ban hoặc API chưa sẵn sàng:", err);
+        return [];
+      });
+
+      const jdPromise = fetchJobDescriptions();
+
+      const [departmentData, jdData] = await Promise.all([departmentPromise, jdPromise]);
       setDepartments(departmentData);
       setJds(jdData.items);
       setTotalJds(jdData.total);
@@ -341,7 +354,11 @@ export const JobDescriptionsPage = ({ currentUser }) => {
         setImportDepartmentId(departmentData[0].id);
       }
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Không thể tải danh sách JD.");
+      const errMsg = error instanceof Error ? error.message : "";
+      // Không hiện lỗi cảnh báo nếu chỉ liên quan đến thiếu quyền phòng ban (departments:read)
+      if (!errMsg.includes("departments:read") && !errMsg.includes("403")) {
+        setApiError(errMsg || "Không thể tải danh sách JD.");
+      }
       setDepartments([]);
       setJds([]);
       setTotalJds(0);
@@ -359,8 +376,17 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
   const filteredJds = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
+    const isSystemAdmin = ["admin", "bangiamdoc", "nhansu"].includes(currentUser?.role) || 
+                          [ADMIN_ROLE_ID, DIRECTOR_ROLE_ID, HR_ROLE_ID].includes(currentUser?.roleId);
 
     return jds.filter((jd) => {
+      // Nếu không phải Admin/BGĐ/Nhân sự thì chỉ hiển thị JD thuộc phòng ban của mình
+      if (!isSystemAdmin) {
+        if (!currentUser?.departmentId || jd.departmentId !== currentUser.departmentId) {
+          return false;
+        }
+      }
+
       const matchesDepartment = departmentFilter === "all" || jd.departmentId === departmentFilter;
       const matchesStatus = statusFilter === "all" || jd.status === statusFilter;
       const matchesKeyword =
@@ -371,7 +397,20 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
       return matchesDepartment && matchesStatus && matchesKeyword;
     });
-  }, [departmentFilter, getDepartmentName, jds, searchTerm, statusFilter]);
+  }, [departmentFilter, getDepartmentName, jds, searchTerm, statusFilter, currentUser]);
+
+  useEffect(() => {
+    setJdListPage(1);
+  }, [searchTerm, departmentFilter, statusFilter]);
+
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filteredJds.length / ITEMS_PER_PAGE) || 1;
+  const currentPageClamped = Math.max(1, Math.min(jdListPage, totalPages));
+
+  const paginatedJds = useMemo(() => {
+    const startIndex = (currentPageClamped - 1) * ITEMS_PER_PAGE;
+    return filteredJds.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredJds, currentPageClamped]);
 
   const selectedJd = filteredJds.find((jd) => jd.id === selectedJdId) || filteredJds[0] || null;
 
@@ -613,13 +652,27 @@ export const JobDescriptionsPage = ({ currentUser }) => {
         <div className="col-12 col-md-6 col-lg-3">
           <TailwindDropdown
             onChange={setDepartmentFilter}
-            options={[
-              { label: "Tất cả phòng ban", value: "all" },
-              ...departments.map((department) => ({
-                label: department.name,
-                value: department.id,
-              })),
-            ]}
+            options={
+              (() => {
+                const isSystemAdmin = ["admin", "bangiamdoc", "nhansu"].includes(currentUser?.role) || 
+                                      [ADMIN_ROLE_ID, DIRECTOR_ROLE_ID, HR_ROLE_ID].includes(currentUser?.roleId);
+                if (isSystemAdmin) {
+                  return [
+                    { label: "Tất cả phòng ban", value: "all" },
+                    ...departments.map((department) => ({
+                      label: department.name,
+                      value: department.id,
+                    })),
+                  ];
+                } else {
+                  // Chỉ hiển thị phòng ban của chính user
+                  const myDep = departments.find(d => d.id === currentUser?.departmentId);
+                  return myDep 
+                    ? [{ label: myDep.name, value: myDep.id }] 
+                    : [{ label: "Phòng ban của tôi", value: currentUser?.departmentId || "none" }];
+                }
+              })()
+            }
             placeholder="Tất cả phòng ban"
             value={departmentFilter}
           />
@@ -660,7 +713,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
-                  {filteredJds.map((jd) => {
+                  {paginatedJds.map((jd) => {
                     const status = getStatusOption(jd.status);
 
                     return (
@@ -685,7 +738,9 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                           </div>
                         </div>
                         <p className="text-body-secondary mb-0 mt-2" style={{ fontSize: "13px", lineHeight: 1.45 }}>
-                          {jd.description}
+                          {jd.description && jd.description.length > 100
+                            ? jd.description.substring(0, 100) + "..."
+                            : jd.description}
                         </p>
                       </button>
                     );
@@ -693,6 +748,29 @@ export const JobDescriptionsPage = ({ currentUser }) => {
                 </div>
               )}
             </div>
+            {totalPages > 1 && (
+              <div className="card-footer bg-transparent border-top d-flex justify-content-between align-items-center py-2 px-3">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  disabled={currentPageClamped === 1}
+                  onClick={() => setJdListPage(currentPageClamped - 1)}
+                >
+                  Trước
+                </button>
+                <span className="small text-body-secondary">
+                  Trang {currentPageClamped} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  disabled={currentPageClamped === totalPages}
+                  onClick={() => setJdListPage(currentPageClamped + 1)}
+                >
+                  Sau
+                </button>
+              </div>
+            )}
           </section>
         </div>
 

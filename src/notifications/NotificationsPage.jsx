@@ -6,6 +6,7 @@ import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
 const NOTIFICATIONS_CHANGED_EVENT = "notifications:changed";
+const NOTIFICATION_PAGE_SIZE = 20;
 
 const ROLE_OPTIONS = [
   { id: "admin", roleId: ADMIN_ROLE_ID, label: "Admin" },
@@ -207,6 +208,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [notificationPage, setNotificationPage] = useState(1);
   const canCreate = canCreateNotification(currentUser);
   const activeNotificationId =
     manualActiveNotificationId ||
@@ -234,6 +236,10 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
   }, [loadNotifications]);
 
   useEffect(() => {
+    setNotificationPage(1);
+  }, [filter]);
+
+  useEffect(() => {
     const refreshFromExternalChange = (event) => {
       if (event.detail?.source !== "page") {
         void loadNotifications();
@@ -259,6 +265,18 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [currentUser, filter, notifications, readByNotificationId]);
+
+  const notificationPageCount = Math.max(
+    1,
+    Math.ceil(visibleNotifications.length / NOTIFICATION_PAGE_SIZE),
+  );
+  const safeNotificationPage = Math.min(notificationPage, notificationPageCount);
+  const paginatedNotifications = useMemo(() => {
+    return visibleNotifications.slice(
+      (safeNotificationPage - 1) * NOTIFICATION_PAGE_SIZE,
+      safeNotificationPage * NOTIFICATION_PAGE_SIZE,
+    );
+  }, [visibleNotifications, safeNotificationPage]);
 
   const unreadCount = visibleNotifications.filter(
     (notification) => !readByNotificationId[notification.id],
@@ -379,14 +397,14 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
     try {
       const nextNotification = await createNotificationRequest({
-      title: form.title.trim(),
-      content: form.content.trim(),
-      priority: form.priority,
-      target: {
-        groups: form.groups,
-        roles: form.roles,
-        departments: form.departments,
-      },
+        title: form.title.trim(),
+        content: form.content.trim(),
+        priority: form.priority,
+        target: {
+          groups: form.groups,
+          roles: form.roles,
+          departments: form.departments,
+        },
       });
 
       setNotifications((currentNotifications) => [nextNotification, ...currentNotifications]);
@@ -405,7 +423,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
       <div className="app-page-head flex flex-shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="app-page-title mb-1">Thông báo nội bộ</h1>
-          
+
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
@@ -512,7 +530,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
           <div className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
             <div className="card-header border-0 pb-0 flex flex-wrap items-center justify-between gap-2">
               <h6 className="card-title mb-0">Danh sách thông báo</h6>
-              <div className="btn-group flex-shrink-0" role="group" aria-label="Lọc thông báo">
+              <div className="btn-group flex-shrink-0 gap-2" role="group" aria-label="Lọc thông báo">
                 {[
                   ["all", "Tất cả"],
                   ["unread", "Chưa đọc"],
@@ -538,7 +556,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                     </div>
                     <div>Đang tải thông báo...</div>
                   </div>
-                ) : visibleNotifications.map((notification) => {
+                ) : paginatedNotifications.map((notification) => {
                   const isRead = Boolean(readByNotificationId[notification.id]);
                   const priority = getPriorityOption(notification.priority);
 
@@ -607,6 +625,47 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
                   </div>
                 )}
               </div>
+              {visibleNotifications.length > NOTIFICATION_PAGE_SIZE && (
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-3 border-top">
+                  <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                    Hiển thị {(safeNotificationPage - 1) * NOTIFICATION_PAGE_SIZE + 1}-
+                    {Math.min(safeNotificationPage * NOTIFICATION_PAGE_SIZE, visibleNotifications.length)} trong{" "}
+                    {visibleNotifications.length} thông báo
+                  </span>
+                  <div className="btn-group gap-2" role="group" aria-label="Phân trang thông báo">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => setNotificationPage((page) => Math.max(1, page - 1))}
+                      disabled={safeNotificationPage === 1}
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: notificationPageCount }, (_, index) => index + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`btn btn-sm ${page === safeNotificationPage ? "btn-primary" : "btn-outline-secondary"}`}
+                          onClick={() => setNotificationPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        setNotificationPage((page) => Math.min(notificationPageCount, page + 1))
+                      }
+                      disabled={safeNotificationPage === notificationPageCount}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

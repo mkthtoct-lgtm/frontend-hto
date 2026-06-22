@@ -56,7 +56,8 @@ const initialDepartments = [
 ];
 
 const emptyForm = { name: "", description: "" };
-const CATEGORY_PAGE_SIZE =4
+const CATEGORY_PAGE_SIZE = 4;
+const DOCUMENT_PAGE_SIZE = 20;
 const emptyUploadForm = {
   title: "",
   categoryId: "",
@@ -110,8 +111,8 @@ const buildUploadPreviewDocument = async (uploadForm, categories = []) => {
   const previewDataUrl = canCacheImage ? await readFileAsDataUrl(uploadForm.file) : "";
   const previewText =
     uploadForm.sourceType === "file" &&
-    uploadForm.file &&
-    isTextPreview({ fileType, mimeType, sourceName })
+      uploadForm.file &&
+      isTextPreview({ fileType, mimeType, sourceName })
       ? await uploadForm.file.text()
       : "";
 
@@ -590,15 +591,15 @@ const normalizeDocument = (document) => {
       : true;
   const permissions = normalizePermissions(
     storedPermissions[id] ||
-      document.permissions || {
-        view: { groups: ["all"], roles: [], departments: [] },
-        download: {
-          groups: canDownload ? ["all"] : [],
-          roles: [],
-          departments: [],
-        },
-        edit: { groups: ["manager"], roles: ["admin", "truongbophan"], departments: [] },
+    document.permissions || {
+      view: { groups: ["all"], roles: [], departments: [] },
+      download: {
+        groups: canDownload ? ["all"] : [],
+        roles: [],
+        departments: [],
       },
+      edit: { groups: ["manager"], roles: ["admin", "truongbophan"], departments: [] },
+    },
     departmentId,
   );
 
@@ -843,6 +844,7 @@ export const DocumentsPage = ({ currentUser }) => {
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const [categoryPage, setCategoryPage] = useState(1);
+  const [documentPage, setDocumentPage] = useState(1);
   const [editingId, setEditingId] = useState(null);
   const [selectedPermissionDocId, setSelectedPermissionDocId] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -900,6 +902,15 @@ export const DocumentsPage = ({ currentUser }) => {
     if (activeCategory === "all") return true;
     return String(doc.categoryId) === activeCategory;
   });
+  const documentPageCount = Math.max(
+    1,
+    Math.ceil(filteredDocuments.length / DOCUMENT_PAGE_SIZE),
+  );
+  const safeDocumentPage = Math.min(documentPage, documentPageCount);
+  const paginatedDocuments = filteredDocuments.slice(
+    (safeDocumentPage - 1) * DOCUMENT_PAGE_SIZE,
+    safeDocumentPage * DOCUMENT_PAGE_SIZE,
+  );
   const selectedPermissionDocument =
     documents.find((document) => String(document.id) === selectedPermissionDocId) ||
     documents[0] ||
@@ -922,6 +933,10 @@ export const DocumentsPage = ({ currentUser }) => {
 
     writeStoredStatuses(statusesByDocumentId);
   }, [documents]);
+
+  useEffect(() => {
+    setDocumentPage(1);
+  }, [activeCategory]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1160,10 +1175,10 @@ export const DocumentsPage = ({ currentUser }) => {
         previewDocument.sourceType === "file" && uploadForm.file
           ? await uploadDocumentFile(uploadForm.file)
           : {
-              fileUrl: previewDocument.fileUrl,
-              fileType: previewDocument.fileType,
-              fileName: previewDocument.sourceName,
-            };
+            fileUrl: previewDocument.fileUrl,
+            fileType: previewDocument.fileType,
+            fileName: previewDocument.sourceName,
+          };
       const fileUrl = uploadedFile.fileUrl || previewDocument.fileUrl;
       const fileType = uploadedFile.fileType || previewDocument.fileType;
       const sourceName = uploadedFile.fileName || previewDocument.sourceName;
@@ -1753,7 +1768,7 @@ export const DocumentsPage = ({ currentUser }) => {
                     {Math.min(safeCategoryPage * CATEGORY_PAGE_SIZE, displayedCategories.length)} trong{" "}
                     {displayedCategories.length} danh mục
                   </span>
-                  <div className="btn-group" role="group" aria-label="Phân trang danh mục">
+                  <div className="btn-group gap-2" role="group" aria-label="Phân trang danh mục">
                     <button
                       type="button"
                       className="btn btn-sm btn-outline-secondary"
@@ -1767,9 +1782,8 @@ export const DocumentsPage = ({ currentUser }) => {
                         <button
                           key={page}
                           type="button"
-                          className={`btn btn-sm ${
-                            page === safeCategoryPage ? "btn-primary" : "btn-outline-secondary"
-                          }`}
+                          className={`btn btn-sm ${page === safeCategoryPage ? "btn-primary" : "btn-outline-secondary"
+                            }`}
                           onClick={() => setCategoryPage(page)}
                         >
                           {page}
@@ -1803,240 +1817,240 @@ export const DocumentsPage = ({ currentUser }) => {
             <span className="badge bg-success-subtle text-success">Có quyền upload</span>
           </div>
           <div className="card-body">
-          {uploadSuccess && (
-            <div className="alert alert-success py-2" role="alert">
-              {uploadSuccess}
-            </div>
-          )}
-          {uploadPreview && (
-            <div className="alert alert-info py-2 d-flex flex-wrap justify-content-between align-items-center gap-2" role="alert">
-              <span>
-                Đã tạo preview cho "{uploadPreview.title}". Kiểm tra nội dung rồi xác nhận import.
-              </span>
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                  style={{ width: "32px", height: "32px", padding: 0 }}
-                  title="Xem preview"
-                  aria-label="Xem preview"
-                  onClick={() => {
-                    setSelectedDocument(uploadPreview);
-                    setIsDetailPanelOpen(true);
-                  }}
-                >
-                  <EyeIcon />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
-                  style={{ width: "32px", height: "32px", padding: 0 }}
-                  disabled={uploadSubmitting}
-                  title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
-                  aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
-                  onClick={confirmUploadImport}
-                >
-                  <ImportIcon />
-                </button>
+            {uploadSuccess && (
+              <div className="alert alert-success py-2" role="alert">
+                {uploadSuccess}
               </div>
-            </div>
-          )}
-
-          <form noValidate onSubmit={handleUploadPreview}>
-            <fieldset className="border-0 p-0 m-0">
-              <div className="row g-3">
-                <div className="col-lg-4">
-                  <label className="form-label">
-                    Tên tài liệu <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    className={`form-control ${uploadErrors.title ? "is-invalid" : ""}`}
-                    value={uploadForm.title}
-                    onChange={(e) =>
-                      setUploadForm((prev) => ({ ...prev, title: e.target.value }))
-                    }
-                    placeholder="Ví dụ: Mẫu hợp đồng mới"
-                  />
-                  {uploadErrors.title && (
-                    <div className="invalid-feedback">{uploadErrors.title}</div>
-                  )}
+            )}
+            {uploadPreview && (
+              <div className="alert alert-info py-2 d-flex flex-wrap justify-content-between align-items-center gap-2" role="alert">
+                <span>
+                  Đã tạo preview cho "{uploadPreview.title}". Kiểm tra nội dung rồi xác nhận import.
+                </span>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                    style={{ width: "32px", height: "32px", padding: 0 }}
+                    title="Xem preview"
+                    aria-label="Xem preview"
+                    onClick={() => {
+                      setSelectedDocument(uploadPreview);
+                      setIsDetailPanelOpen(true);
+                    }}
+                  >
+                    <EyeIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
+                    style={{ width: "32px", height: "32px", padding: 0 }}
+                    disabled={uploadSubmitting}
+                    title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                    aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                    onClick={confirmUploadImport}
+                  >
+                    <ImportIcon />
+                  </button>
                 </div>
+              </div>
+            )}
 
-                <div className="col-lg-4">
-                  <label className="form-label">
-                    Danh mục <span className="text-danger">*</span>
-                  </label>
-                  <TailwindDropdown
-                    error={Boolean(uploadErrors.categoryId)}
-                    onChange={(value) =>
-                      setUploadForm((prev) => ({ ...prev, categoryId: value }))
-                    }
-                    options={[
-                      { label: "Chọn danh mục", value: "" },
-                      ...visibleCategories.map((category) => ({
-                        label: category.name,
-                        value: category.id,
-                      })),
-                    ]}
-                    placeholder="Chọn danh mục"
-                    value={uploadForm.categoryId}
-                  />
-                  {uploadErrors.categoryId && (
-                    <div className="invalid-feedback">{uploadErrors.categoryId}</div>
-                  )}
-                </div>
-
-                <div className="col-lg-4">
-                  <label className="form-label">
-                    Phòng ban nhận <span className="text-danger">*</span>
-                  </label>
-                  <TailwindDropdown
-                    error={Boolean(uploadErrors.departmentId)}
-                    onChange={(value) =>
-                      setUploadForm((prev) => ({ ...prev, departmentId: value }))
-                    }
-                    options={[
-                      { label: "Chọn phòng ban", value: "" },
-                      ...initialDepartments.map((department) => ({
-                        label: department.name,
-                        value: department.id,
-                      })),
-                    ]}
-                    placeholder="Chọn phòng ban"
-                    value={uploadForm.departmentId}
-                  />
-                  {uploadErrors.departmentId && (
-                    <div className="invalid-feedback">{uploadErrors.departmentId}</div>
-                  )}
-                </div>
-
-                <div className="col-lg-3">
-                  <label className="form-label">Nguồn tài liệu</label>
-                  <div className="btn-group w-100" role="group" aria-label="Chọn nguồn tài liệu">
-                    <input
-                      type="radio"
-                      className="btn-check"
-                      name="document-source"
-                      id="document-source-file"
-                      checked={uploadForm.sourceType === "file"}
-                      onChange={() =>
-                        setUploadForm((prev) => ({ ...prev, sourceType: "file", link: "" }))
-                      }
-                    />
-                    <label className="btn btn-outline-primary" htmlFor="document-source-file">
-                      File
+            <form noValidate onSubmit={handleUploadPreview}>
+              <fieldset className="border-0 p-0 m-0">
+                <div className="row g-3">
+                  <div className="col-lg-4">
+                    <label className="form-label">
+                      Tên tài liệu <span className="text-danger">*</span>
                     </label>
                     <input
-                      type="radio"
-                      className="btn-check"
-                      name="document-source"
-                      id="document-source-link"
-                      checked={uploadForm.sourceType === "link"}
-                      onChange={() =>
-                        setUploadForm((prev) => ({ ...prev, sourceType: "link", file: null }))
+                      className={`form-control ${uploadErrors.title ? "is-invalid" : ""}`}
+                      value={uploadForm.title}
+                      onChange={(e) =>
+                        setUploadForm((prev) => ({ ...prev, title: e.target.value }))
                       }
+                      placeholder="Ví dụ: Mẫu hợp đồng mới"
                     />
-                    <label className="btn btn-outline-primary" htmlFor="document-source-link">
-                      Link
+                    {uploadErrors.title && (
+                      <div className="invalid-feedback">{uploadErrors.title}</div>
+                    )}
+                  </div>
+
+                  <div className="col-lg-4">
+                    <label className="form-label">
+                      Danh mục <span className="text-danger">*</span>
                     </label>
+                    <TailwindDropdown
+                      error={Boolean(uploadErrors.categoryId)}
+                      onChange={(value) =>
+                        setUploadForm((prev) => ({ ...prev, categoryId: value }))
+                      }
+                      options={[
+                        { label: "Chọn danh mục", value: "" },
+                        ...visibleCategories.map((category) => ({
+                          label: category.name,
+                          value: category.id,
+                        })),
+                      ]}
+                      placeholder="Chọn danh mục"
+                      value={uploadForm.categoryId}
+                    />
+                    {uploadErrors.categoryId && (
+                      <div className="invalid-feedback">{uploadErrors.categoryId}</div>
+                    )}
+                  </div>
+
+                  <div className="col-lg-4">
+                    <label className="form-label">
+                      Phòng ban nhận <span className="text-danger">*</span>
+                    </label>
+                    <TailwindDropdown
+                      error={Boolean(uploadErrors.departmentId)}
+                      onChange={(value) =>
+                        setUploadForm((prev) => ({ ...prev, departmentId: value }))
+                      }
+                      options={[
+                        { label: "Chọn phòng ban", value: "" },
+                        ...initialDepartments.map((department) => ({
+                          label: department.name,
+                          value: department.id,
+                        })),
+                      ]}
+                      placeholder="Chọn phòng ban"
+                      value={uploadForm.departmentId}
+                    />
+                    {uploadErrors.departmentId && (
+                      <div className="invalid-feedback">{uploadErrors.departmentId}</div>
+                    )}
+                  </div>
+
+                  <div className="col-lg-3">
+                    <label className="form-label">Nguồn tài liệu</label>
+                    <div className="btn-group w-100" role="group" aria-label="Chọn nguồn tài liệu">
+                      <input
+                        type="radio"
+                        className="btn-check"
+                        name="document-source"
+                        id="document-source-file"
+                        checked={uploadForm.sourceType === "file"}
+                        onChange={() =>
+                          setUploadForm((prev) => ({ ...prev, sourceType: "file", link: "" }))
+                        }
+                      />
+                      <label className="btn btn-outline-primary" htmlFor="document-source-file">
+                        File
+                      </label>
+                      <input
+                        type="radio"
+                        className="btn-check"
+                        name="document-source"
+                        id="document-source-link"
+                        checked={uploadForm.sourceType === "link"}
+                        onChange={() =>
+                          setUploadForm((prev) => ({ ...prev, sourceType: "link", file: null }))
+                        }
+                      />
+                      <label className="btn btn-outline-primary" htmlFor="document-source-link">
+                        Link
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    {uploadForm.sourceType === "file" ? (
+                      <>
+                        <label className="form-label">
+                          File tài liệu <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="file"
+                          className={`form-control ${uploadErrors.file ? "is-invalid" : ""}`}
+                          onChange={(e) =>
+                            setUploadForm((prev) => ({
+                              ...prev,
+                              file: e.target.files?.[0] || null,
+                            }))
+                          }
+                        />
+                        {uploadErrors.file && (
+                          <div className="invalid-feedback">{uploadErrors.file}</div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <label className="form-label">
+                          Link tài liệu <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="url"
+                          className={`form-control ${uploadErrors.link ? "is-invalid" : ""}`}
+                          value={uploadForm.link}
+                          onChange={(e) =>
+                            setUploadForm((prev) => ({ ...prev, link: e.target.value }))
+                          }
+                          placeholder="https://..."
+                        />
+                        {uploadErrors.link && (
+                          <div className="invalid-feedback">{uploadErrors.link}</div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="col-lg-4">
+                    <label className="form-label">Metadata ghi chú</label>
+                    <textarea
+                      className="form-control"
+                      rows="1"
+                      value={uploadForm.description}
+                      onChange={(e) =>
+                        setUploadForm((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      placeholder="Phiên bản, phạm vi áp dụng..."
+                    />
                   </div>
                 </div>
 
-                <div className="col-lg-5">
-                  {uploadForm.sourceType === "file" ? (
-                    <>
-                      <label className="form-label">
-                        File tài liệu <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="file"
-                        className={`form-control ${uploadErrors.file ? "is-invalid" : ""}`}
-                        onChange={(e) =>
-                          setUploadForm((prev) => ({
-                            ...prev,
-                            file: e.target.files?.[0] || null,
-                          }))
-                        }
-                      />
-                      {uploadErrors.file && (
-                        <div className="invalid-feedback">{uploadErrors.file}</div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <label className="form-label">
-                        Link tài liệu <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="url"
-                        className={`form-control ${uploadErrors.link ? "is-invalid" : ""}`}
-                        value={uploadForm.link}
-                        onChange={(e) =>
-                          setUploadForm((prev) => ({ ...prev, link: e.target.value }))
-                        }
-                        placeholder="https://..."
-                      />
-                      {uploadErrors.link && (
-                        <div className="invalid-feedback">{uploadErrors.link}</div>
-                      )}
-                    </>
-                  )}
+                <div className="d-flex justify-content-end gap-2 mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-light border d-inline-flex align-items-center justify-content-center"
+                    style={{ width: "38px", height: "38px", padding: 0 }}
+                    title="Làm mới"
+                    aria-label="Làm mới"
+                    onClick={() => {
+                      setUploadForm(emptyUploadForm);
+                      setUploadErrors({});
+                      setUploadSuccess("");
+                      setUploadPreview(null);
+                    }}
+                  >
+                    <RefreshIcon />
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                    style={{ width: "38px", height: "38px", padding: 0 }}
+                    disabled={uploadSubmitting}
+                    title="Xem preview"
+                    aria-label="Xem preview"
+                  >
+                    <EyeIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary d-inline-flex align-items-center justify-content-center"
+                    style={{ width: "38px", height: "38px", padding: 0 }}
+                    disabled={uploadSubmitting}
+                    title={uploadSubmitting ? "Đang import" : "Import tài liệu"}
+                    aria-label={uploadSubmitting ? "Đang import" : "Import tài liệu"}
+                    onClick={handleDirectUploadImport}
+                  >
+                    <ImportIcon />
+                  </button>
                 </div>
-
-                <div className="col-lg-4">
-                  <label className="form-label">Metadata ghi chú</label>
-                  <textarea
-                    className="form-control"
-                    rows="1"
-                    value={uploadForm.description}
-                    onChange={(e) =>
-                      setUploadForm((prev) => ({ ...prev, description: e.target.value }))
-                    }
-                    placeholder="Phiên bản, phạm vi áp dụng..."
-                  />
-                </div>
-              </div>
-
-              <div className="d-flex justify-content-end gap-2 mt-3">
-                <button
-                  type="button"
-                  className="btn btn-light border d-inline-flex align-items-center justify-content-center"
-                  style={{ width: "38px", height: "38px", padding: 0 }}
-                  title="Làm mới"
-                  aria-label="Làm mới"
-                  onClick={() => {
-                    setUploadForm(emptyUploadForm);
-                    setUploadErrors({});
-                    setUploadSuccess("");
-                    setUploadPreview(null);
-                  }}
-                >
-                  <RefreshIcon />
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                  style={{ width: "38px", height: "38px", padding: 0 }}
-                  disabled={uploadSubmitting}
-                  title="Xem preview"
-                  aria-label="Xem preview"
-                >
-                  <EyeIcon />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary d-inline-flex align-items-center justify-content-center"
-                  style={{ width: "38px", height: "38px", padding: 0 }}
-                  disabled={uploadSubmitting}
-                  title={uploadSubmitting ? "Đang import" : "Import tài liệu"}
-                  aria-label={uploadSubmitting ? "Đang import" : "Import tài liệu"}
-                  onClick={handleDirectUploadImport}
-                >
-                  <ImportIcon />
-                </button>
-              </div>
-            </fieldset>
-          </form>
+              </fieldset>
+            </form>
           </div>
         </div>
       )}
@@ -2046,7 +2060,7 @@ export const DocumentsPage = ({ currentUser }) => {
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Cấu hình quyền tài liệu</h6>
-              
+
             </div>
             {selectedPermissionDocument && (
               <div className="d-flex flex-wrap align-items-center gap-2">
@@ -2263,317 +2277,317 @@ export const DocumentsPage = ({ currentUser }) => {
                 </div>
               </div>
               <div className="card-body overflow-auto">
-            {documentError && (
-              <div className="alert alert-warning py-2" role="alert">
-                {documentError}
-              </div>
-            )}
-            {selectedDocument && (
-              <div className="row g-3">
-                <div className="col-lg-4">
-                  <DocumentPreview
-                    categoryName={
-                      selectedDocument.categoryName ||
-                      categoryMap.get(String(selectedDocument.categoryId))?.name ||
-                      "Danh mục ẩn"
-                    }
-                    departmentName={
-                      departmentMap.get(selectedDocument.departmentId)?.name || "Theo danh mục"
-                    }
-                    document={selectedDocument}
-                  />
-                </div>
-                <div className="col-lg-8">
-                  <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
-                    <div>
-                      <h5 className="mb-1 text-body-emphasis">{selectedDocument.title}</h5>
-                      <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-                        {selectedDocument.sourceName || "-"}
-                      </div>
-                    </div>
-                    <div className="d-flex gap-2 align-items-start">
-                      {!selectedDocument.isUploadPreview &&
-                        canUseDocumentAction(currentUser, selectedDocument, "edit") && (
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            title="Sửa chi tiết tài liệu"
-                            aria-label="Sửa chi tiết tài liệu"
-                            onClick={() => handleEditDocument(selectedDocument)}
-                          >
-                            <EditIcon />
-                          </button>
-                        )}
-                      {!selectedDocument.isUploadPreview &&
-                        canUseDocumentAction(currentUser, selectedDocument, "edit") && (
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-                            style={{ width: "32px", height: "32px", padding: 0 }}
-                            title="Xóa tài liệu"
-                            aria-label="Xóa tài liệu"
-                            onClick={() => openDeleteDocumentDialog(selectedDocument)}
-                          >
-                            <TrashIcon />
-                          </button>
-                        )}
-                      {selectedDocument.isUploadPreview && (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
-                          style={{ width: "32px", height: "32px", padding: 0 }}
-                          disabled={uploadSubmitting}
-                          title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
-                          aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
-                          onClick={confirmUploadImport}
-                        >
-                          <ImportIcon />
-                        </button>
-                      )}
-                      {getDocumentActionUrl(selectedDocument) ? (
-                        <a
-                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
-                          style={{ width: "32px", height: "32px", padding: 0 }}
-                          href={getDocumentActionUrl(selectedDocument)}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Mở preview/link"
-                          aria-label="Mở preview/link"
-                        >
-                          <ExternalLinkIcon />
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-                          style={{ width: "32px", height: "32px", padding: 0 }}
-                          disabled
-                          title="Chưa có link"
-                          aria-label="Chưa có link"
-                        >
-                          <ExternalLinkIcon />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center"
-                        style={{ width: "32px", height: "32px", padding: 0 }}
-                        disabled={Boolean(getDownloadDisabledReason(currentUser, selectedDocument))}
-                        title={
-                          getDownloadDisabledReason(currentUser, selectedDocument) ||
-                          "Tải tài liệu"
+                {documentError && (
+                  <div className="alert alert-warning py-2" role="alert">
+                    {documentError}
+                  </div>
+                )}
+                {selectedDocument && (
+                  <div className="row g-3">
+                    <div className="col-lg-4">
+                      <DocumentPreview
+                        categoryName={
+                          selectedDocument.categoryName ||
+                          categoryMap.get(String(selectedDocument.categoryId))?.name ||
+                          "Danh mục ẩn"
                         }
-                        aria-label="Tải tài liệu"
-                        onClick={() => handleDownloadDocument(selectedDocument)}
-                      >
-                        <DownloadIcon />
-                      </button>
+                        departmentName={
+                          departmentMap.get(selectedDocument.departmentId)?.name || "Theo danh mục"
+                        }
+                        document={selectedDocument}
+                      />
                     </div>
-                  </div>
-
-                  {editingDocumentId === String(selectedDocument.id) && (
-                    <div className="rounded border bg-body-tertiary p-3 mb-3">
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label">Tên tài liệu</label>
-                          <input
-                            className={`form-control ${documentEditErrors.title ? "is-invalid" : ""}`}
-                            value={documentEditForm.title}
-                            onChange={(e) =>
-                              setDocumentEditForm((prev) => ({ ...prev, title: e.target.value }))
-                            }
-                          />
-                          {documentEditErrors.title && (
-                            <div className="invalid-feedback">{documentEditErrors.title}</div>
+                    <div className="col-lg-8">
+                      <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
+                        <div>
+                          <h5 className="mb-1 text-body-emphasis">{selectedDocument.title}</h5>
+                          <div className="text-body-secondary" style={{ fontSize: "13px" }}>
+                            {selectedDocument.sourceName || "-"}
+                          </div>
+                        </div>
+                        <div className="d-flex gap-2 align-items-start">
+                          {!selectedDocument.isUploadPreview &&
+                            canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                                style={{ width: "32px", height: "32px", padding: 0 }}
+                                title="Sửa chi tiết tài liệu"
+                                aria-label="Sửa chi tiết tài liệu"
+                                onClick={() => handleEditDocument(selectedDocument)}
+                              >
+                                <EditIcon />
+                              </button>
+                            )}
+                          {!selectedDocument.isUploadPreview &&
+                            canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                                style={{ width: "32px", height: "32px", padding: 0 }}
+                                title="Xóa tài liệu"
+                                aria-label="Xóa tài liệu"
+                                onClick={() => openDeleteDocumentDialog(selectedDocument)}
+                              >
+                                <TrashIcon />
+                              </button>
+                            )}
+                          {selectedDocument.isUploadPreview && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-primary d-inline-flex align-items-center justify-content-center"
+                              style={{ width: "32px", height: "32px", padding: 0 }}
+                              disabled={uploadSubmitting}
+                              title={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                              aria-label={uploadSubmitting ? "Đang import" : "Xác nhận import"}
+                              onClick={confirmUploadImport}
+                            >
+                              <ImportIcon />
+                            </button>
                           )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label">Danh mục</label>
-                          <TailwindDropdown
-                            error={Boolean(documentEditErrors.categoryId)}
-                            onChange={(value) =>
-                              setDocumentEditForm((prev) => ({ ...prev, categoryId: value }))
-                            }
-                            options={[
-                              { label: "Chọn danh mục", value: "" },
-                              ...visibleCategories.map((category) => ({
-                                label: category.name,
-                                value: category.id,
-                              })),
-                            ]}
-                            placeholder="Chọn danh mục"
-                            value={documentEditForm.categoryId}
-                          />
-                          {documentEditErrors.categoryId && (
-                            <div className="invalid-feedback">{documentEditErrors.categoryId}</div>
+                          {getDocumentActionUrl(selectedDocument) ? (
+                            <a
+                              className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
+                              style={{ width: "32px", height: "32px", padding: 0 }}
+                              href={getDocumentActionUrl(selectedDocument)}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Mở preview/link"
+                              aria-label="Mở preview/link"
+                            >
+                              <ExternalLinkIcon />
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
+                              style={{ width: "32px", height: "32px", padding: 0 }}
+                              disabled
+                              title="Chưa có link"
+                              aria-label="Chưa có link"
+                            >
+                              <ExternalLinkIcon />
+                            </button>
                           )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label">Phòng ban nhận</label>
-                          <TailwindDropdown
-                            onChange={(value) =>
-                              setDocumentEditForm((prev) => ({
-                                ...prev,
-                                departmentId: value,
-                              }))
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center"
+                            style={{ width: "32px", height: "32px", padding: 0 }}
+                            disabled={Boolean(getDownloadDisabledReason(currentUser, selectedDocument))}
+                            title={
+                              getDownloadDisabledReason(currentUser, selectedDocument) ||
+                              "Tải tài liệu"
                             }
-                            options={[
-                              { label: "Không chọn", value: "" },
-                              ...initialDepartments.map((department) => ({
-                                label: department.name,
-                                value: department.id,
-                              })),
-                            ]}
-                            placeholder="Không chọn"
-                            value={documentEditForm.departmentId}
-                          />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label">Loại file</label>
-                          <input
-                            className="form-control"
-                            value={documentEditForm.fileType}
-                            onChange={(e) =>
-                              setDocumentEditForm((prev) => ({ ...prev, fileType: e.target.value }))
-                            }
-                            placeholder="pdf, docx, png..."
-                          />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label">Trạng thái</label>
-                          <TailwindDropdown
-                            onChange={(value) =>
-                              setDocumentEditForm((prev) => ({ ...prev, status: value }))
-                            }
-                            options={DOCUMENT_STATUS_OPTIONS.map((status) => ({
-                              label: status,
-                              value: status,
-                            }))}
-                            placeholder="Chọn trạng thái"
-                            value={documentEditForm.status}
-                          />
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label">Link file</label>
-                          <input
-                            className={`form-control ${documentEditErrors.fileUrl ? "is-invalid" : ""}`}
-                            value={documentEditForm.fileUrl}
-                            onChange={(e) =>
-                              setDocumentEditForm((prev) => ({ ...prev, fileUrl: e.target.value }))
-                            }
-                            placeholder="https://..."
-                          />
-                          {documentEditErrors.fileUrl && (
-                            <div className="invalid-feedback">{documentEditErrors.fileUrl}</div>
-                          )}
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label">Ghi chú</label>
-                          <textarea
-                            className="form-control"
-                            rows="2"
-                            value={documentEditForm.description}
-                            onChange={(e) =>
-                              setDocumentEditForm((prev) => ({
-                                ...prev,
-                                description: e.target.value,
-                              }))
-                            }
-                          />
+                            aria-label="Tải tài liệu"
+                            onClick={() => handleDownloadDocument(selectedDocument)}
+                          >
+                            <DownloadIcon />
+                          </button>
                         </div>
                       </div>
-                      <div className="d-flex justify-content-end gap-2 mt-3">
-                        <button
-                          type="button"
-                          className="btn btn-light border"
-                          onClick={() => {
-                            setEditingDocumentId("");
-                            setDocumentEditErrors({});
-                            setDocumentEditForm(createDocumentEditForm(selectedDocument));
-                          }}
-                        >
-                          Hủy
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-primary"
-                          disabled={documentEditSubmitting}
-                          onClick={saveDocumentDetail}
-                        >
-                          {documentEditSubmitting ? "Đang lưu..." : "Lưu chi tiết"}
-                        </button>
+
+                      {editingDocumentId === String(selectedDocument.id) && (
+                        <div className="rounded border bg-body-tertiary p-3 mb-3">
+                          <div className="row g-3">
+                            <div className="col-md-6">
+                              <label className="form-label">Tên tài liệu</label>
+                              <input
+                                className={`form-control ${documentEditErrors.title ? "is-invalid" : ""}`}
+                                value={documentEditForm.title}
+                                onChange={(e) =>
+                                  setDocumentEditForm((prev) => ({ ...prev, title: e.target.value }))
+                                }
+                              />
+                              {documentEditErrors.title && (
+                                <div className="invalid-feedback">{documentEditErrors.title}</div>
+                              )}
+                            </div>
+                            <div className="col-md-6">
+                              <label className="form-label">Danh mục</label>
+                              <TailwindDropdown
+                                error={Boolean(documentEditErrors.categoryId)}
+                                onChange={(value) =>
+                                  setDocumentEditForm((prev) => ({ ...prev, categoryId: value }))
+                                }
+                                options={[
+                                  { label: "Chọn danh mục", value: "" },
+                                  ...visibleCategories.map((category) => ({
+                                    label: category.name,
+                                    value: category.id,
+                                  })),
+                                ]}
+                                placeholder="Chọn danh mục"
+                                value={documentEditForm.categoryId}
+                              />
+                              {documentEditErrors.categoryId && (
+                                <div className="invalid-feedback">{documentEditErrors.categoryId}</div>
+                              )}
+                            </div>
+                            <div className="col-md-6">
+                              <label className="form-label">Phòng ban nhận</label>
+                              <TailwindDropdown
+                                onChange={(value) =>
+                                  setDocumentEditForm((prev) => ({
+                                    ...prev,
+                                    departmentId: value,
+                                  }))
+                                }
+                                options={[
+                                  { label: "Không chọn", value: "" },
+                                  ...initialDepartments.map((department) => ({
+                                    label: department.name,
+                                    value: department.id,
+                                  })),
+                                ]}
+                                placeholder="Không chọn"
+                                value={documentEditForm.departmentId}
+                              />
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label">Loại file</label>
+                              <input
+                                className="form-control"
+                                value={documentEditForm.fileType}
+                                onChange={(e) =>
+                                  setDocumentEditForm((prev) => ({ ...prev, fileType: e.target.value }))
+                                }
+                                placeholder="pdf, docx, png..."
+                              />
+                            </div>
+                            <div className="col-md-3">
+                              <label className="form-label">Trạng thái</label>
+                              <TailwindDropdown
+                                onChange={(value) =>
+                                  setDocumentEditForm((prev) => ({ ...prev, status: value }))
+                                }
+                                options={DOCUMENT_STATUS_OPTIONS.map((status) => ({
+                                  label: status,
+                                  value: status,
+                                }))}
+                                placeholder="Chọn trạng thái"
+                                value={documentEditForm.status}
+                              />
+                            </div>
+                            <div className="col-12">
+                              <label className="form-label">Link file</label>
+                              <input
+                                className={`form-control ${documentEditErrors.fileUrl ? "is-invalid" : ""}`}
+                                value={documentEditForm.fileUrl}
+                                onChange={(e) =>
+                                  setDocumentEditForm((prev) => ({ ...prev, fileUrl: e.target.value }))
+                                }
+                                placeholder="https://..."
+                              />
+                              {documentEditErrors.fileUrl && (
+                                <div className="invalid-feedback">{documentEditErrors.fileUrl}</div>
+                              )}
+                            </div>
+                            <div className="col-12">
+                              <label className="form-label">Ghi chú</label>
+                              <textarea
+                                className="form-control"
+                                rows="2"
+                                value={documentEditForm.description}
+                                onChange={(e) =>
+                                  setDocumentEditForm((prev) => ({
+                                    ...prev,
+                                    description: e.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+                          <div className="d-flex justify-content-end gap-2 mt-3">
+                            <button
+                              type="button"
+                              className="btn btn-light border"
+                              onClick={() => {
+                                setEditingDocumentId("");
+                                setDocumentEditErrors({});
+                                setDocumentEditForm(createDocumentEditForm(selectedDocument));
+                              }}
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              disabled={documentEditSubmitting}
+                              onClick={saveDocumentDetail}
+                            >
+                              {documentEditSubmitting ? "Đang lưu..." : "Lưu chi tiết"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="row g-2">
+                        <MetadataItem label="ID" value={selectedDocument.id} />
+                        <MetadataItem
+                          label="Danh mục"
+                          value={
+                            selectedDocument.categoryName ||
+                            categoryMap.get(String(selectedDocument.categoryId))?.name ||
+                            "-"
+                          }
+                        />
+                        <MetadataItem label="Loại file" value={selectedDocument.fileType || "-"} />
+                        <MetadataItem label="Trạng thái" value={selectedDocument.status} />
+                        <MetadataItem
+                          label="Quyền download"
+                          value={
+                            hasDownloadPermission(currentUser, selectedDocument)
+                              ? "Được tải"
+                              : "Không được tải"
+                          }
+                        />
+                        <MetadataItem
+                          label="Trạng thái link tải"
+                          value={
+                            getDocumentActionUrl(selectedDocument)
+                              ? "Có link tải"
+                              : hasDownloadPermission(currentUser, selectedDocument)
+                                ? "Được cấp quyền, chưa có link tải"
+                                : "Không có link tải"
+                          }
+                        />
+                        <MetadataItem
+                          label="Lý do chặn tải"
+                          value={getDownloadDisabledReason(currentUser, selectedDocument) || "Không bị chặn"}
+                        />
+                        <MetadataItem
+                          label="Nguồn AI"
+                          value={selectedDocument.metadata?.isAiTrainingSource ? "Có" : "Không"}
+                        />
+                        <MetadataItem
+                          label="Product ID"
+                          value={selectedDocument.metadata?.productId || "-"}
+                        />
+                        <MetadataItem
+                          label="School ID"
+                          value={selectedDocument.metadata?.schoolId || "-"}
+                        />
+                        <MetadataItem
+                          label="Người upload"
+                          value={selectedDocument.metadata?.uploadedById || "-"}
+                        />
+                        <MetadataItem
+                          label="Ngày tạo"
+                          value={formatDateTime(selectedDocument.metadata?.createdAt)}
+                        />
+                        <MetadataItem
+                          label="Cập nhật"
+                          value={formatDateTime(selectedDocument.metadata?.updatedAt)}
+                        />
+                        <MetadataItem
+                          label="File URL"
+                          value={getDocumentActionUrl(selectedDocument) || "-"}
+                          wide
+                        />
                       </div>
                     </div>
-                  )}
-
-                  <div className="row g-2">
-                    <MetadataItem label="ID" value={selectedDocument.id} />
-                    <MetadataItem
-                      label="Danh mục"
-                      value={
-                        selectedDocument.categoryName ||
-                        categoryMap.get(String(selectedDocument.categoryId))?.name ||
-                        "-"
-                      }
-                    />
-                    <MetadataItem label="Loại file" value={selectedDocument.fileType || "-"} />
-                    <MetadataItem label="Trạng thái" value={selectedDocument.status} />
-                    <MetadataItem
-                      label="Quyền download"
-                      value={
-                        hasDownloadPermission(currentUser, selectedDocument)
-                          ? "Được tải"
-                          : "Không được tải"
-                      }
-                    />
-                    <MetadataItem
-                      label="Trạng thái link tải"
-                      value={
-                        getDocumentActionUrl(selectedDocument)
-                          ? "Có link tải"
-                          : hasDownloadPermission(currentUser, selectedDocument)
-                            ? "Được cấp quyền, chưa có link tải"
-                            : "Không có link tải"
-                      }
-                    />
-                    <MetadataItem
-                      label="Lý do chặn tải"
-                      value={getDownloadDisabledReason(currentUser, selectedDocument) || "Không bị chặn"}
-                    />
-                    <MetadataItem
-                      label="Nguồn AI"
-                      value={selectedDocument.metadata?.isAiTrainingSource ? "Có" : "Không"}
-                    />
-                    <MetadataItem
-                      label="Product ID"
-                      value={selectedDocument.metadata?.productId || "-"}
-                    />
-                    <MetadataItem
-                      label="School ID"
-                      value={selectedDocument.metadata?.schoolId || "-"}
-                    />
-                    <MetadataItem
-                      label="Người upload"
-                      value={selectedDocument.metadata?.uploadedById || "-"}
-                    />
-                    <MetadataItem
-                      label="Ngày tạo"
-                      value={formatDateTime(selectedDocument.metadata?.createdAt)}
-                    />
-                    <MetadataItem
-                      label="Cập nhật"
-                      value={formatDateTime(selectedDocument.metadata?.updatedAt)}
-                    />
-                    <MetadataItem
-                      label="File URL"
-                      value={getDocumentActionUrl(selectedDocument) || "-"}
-                      wide
-                    />
                   </div>
-                </div>
-              </div>
-            )}
+                )}
               </div>
             </div>
           </div>
@@ -2674,7 +2688,7 @@ export const DocumentsPage = ({ currentUser }) => {
                 })),
               ]}
               placeholder="Tất cả danh mục"
-            value={activeCategory}
+              value={activeCategory}
             />
           </div>
         </div>
@@ -2693,7 +2707,7 @@ export const DocumentsPage = ({ currentUser }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDocuments.map((doc) => {
+                {paginatedDocuments.map((doc) => {
                   const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
                   const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
                   const canDownload = hasDownloadAccess && !downloadDisabledReason;
@@ -2761,7 +2775,7 @@ export const DocumentsPage = ({ currentUser }) => {
             </table>
           </div>
           <div className="d-lg-none d-flex flex-column gap-2">
-            {filteredDocuments.map((doc) => {
+            {paginatedDocuments.map((doc) => {
               const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
               const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
               const canDownload = hasDownloadAccess && !downloadDisabledReason;
@@ -2773,11 +2787,10 @@ export const DocumentsPage = ({ currentUser }) => {
               return (
                 <details
                   key={doc.id}
-                  className={`rounded border bg-body p-2 ${
-                    selectedDocument && String(selectedDocument.id) === String(doc.id)
+                  className={`rounded border bg-body p-2 ${selectedDocument && String(selectedDocument.id) === String(doc.id)
                       ? "border-primary"
                       : ""
-                  }`}
+                    }`}
                 >
                   <summary
                     className="d-flex align-items-start justify-content-between gap-2"
@@ -2842,6 +2855,48 @@ export const DocumentsPage = ({ currentUser }) => {
               </div>
             )}
           </div>
+          {filteredDocuments.length > DOCUMENT_PAGE_SIZE && (
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+              <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                Hiển thị {(safeDocumentPage - 1) * DOCUMENT_PAGE_SIZE + 1}-
+                {Math.min(safeDocumentPage * DOCUMENT_PAGE_SIZE, filteredDocuments.length)} trong{" "}
+                {filteredDocuments.length} tài liệu
+              </span>
+              <div className="btn-group gap-2" role="group" aria-label="Phân trang tài liệu">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setDocumentPage((page) => Math.max(1, page - 1))}
+                  disabled={safeDocumentPage === 1}
+                >
+                  Trước
+                </button>
+                {Array.from({ length: documentPageCount }, (_, index) => index + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`btn btn-sm ${page === safeDocumentPage ? "btn-primary" : "btn-outline-secondary"
+                        }`}
+                      onClick={() => setDocumentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() =>
+                    setDocumentPage((page) => Math.min(documentPageCount, page + 1))
+                  }
+                  disabled={safeDocumentPage === documentPageCount}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -2913,9 +2968,8 @@ function DocumentActionButtons({
 function DocumentDownloadBadge({ currentUser, document, hasDownloadAccess }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${
-        hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
-      }`}
+      className={`badge flex-shrink-0 ${hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+        }`}
       title={
         hasDownloadAccess
           ? getDocumentActionUrl(document)
@@ -3004,9 +3058,8 @@ function PermissionActionDropdown({ actionLabel, children, rule }) {
 function CategoryStatusBadge({ isHidden }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${
-        isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
-      }`}
+      className={`badge flex-shrink-0 ${isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
+        }`}
     >
       {isHidden ? "Đang ẩn" : "Hiển thị"}
     </span>
@@ -3055,17 +3108,15 @@ function CheckboxGroup({
 
   return (
     <div
-      className={`d-flex gap-2 rounded border bg-body-tertiary p-2 ${
-        isStacked ? "flex-column" : "flex-wrap"
-      }`}
+      className={`d-flex gap-2 rounded border bg-body-tertiary p-2 ${isStacked ? "flex-column" : "flex-wrap"
+        }`}
       style={{ minHeight: "46px", maxWidth: "100%" }}
     >
       {options.map((option) => (
         <label
           key={option.id}
-          className={`d-inline-flex align-items-center gap-2 rounded border bg-body px-2 py-1 ${
-            isStacked ? "w-100" : ""
-          }`}
+          className={`d-inline-flex align-items-center gap-2 rounded border bg-body px-2 py-1 ${isStacked ? "w-100" : ""
+            }`}
           style={{ fontSize: "12px", whiteSpace: "nowrap" }}
         >
           <input

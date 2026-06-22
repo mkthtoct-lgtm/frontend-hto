@@ -491,6 +491,8 @@ function App() {
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
         ) : currentPage === "nghiepvu" ? (
+          <JobDescriptionsPage currentUser={user} />
+        ) : currentPage === "doisoatdeal" ? (
           <AccountingPlaceholderPage />
         ) : currentPage === "dashboardStats" ? (
           <DashboardPage currentUser={user} />

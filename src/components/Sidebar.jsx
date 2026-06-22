@@ -267,12 +267,13 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
               onClick={(e) => {
                 e.preventDefault();
+                setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
                 onNavigate?.("nghiepvu");
               }}
             >
@@ -296,7 +297,16 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
               </span>
             </a>
             <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "nghiepvu" ? "block" : "none", paddingLeft: "52px" }}>
-              <li className="menu-item mb-1"><a className="menu-link d-block px-3 py-2 text-body-secondary" style={{ textDecoration: "none", fontSize: "13px" }} href="#">Quản lý chung</a></li>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "nghiepvu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("nghiepvu"); }}>
+                  JD công việc
+                </a>
+              </li>
+              <li className="menu-item mb-1">
+                <a className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "doisoatdeal" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`} style={{ textDecoration: "none", fontSize: "13px" }} href="#" onClick={(e) => { e.preventDefault(); onNavigate?.("doisoatdeal"); }}>
+                  Đối soát Deal
+                </a>
+              </li>
             </ul>
           </li>
 
@@ -575,27 +585,6 @@ export const Sidebar = ({ currentUser, onNavigate, currentPage, onToggleSidebar 
           )}
 
           {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
-          <li className="menu-item mb-2 border-top pt-3 mt-3">
-            <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "jobDescriptions" ? "text-primary fw-bold" : "text-body-secondary"}`}
-              href="#"
-              style={{ textDecoration: "none" }}
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigate?.("jobDescriptions");
-              }}
-            >
-              <div className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
-                  <polyline points="14 2 14 7 19 7"></polyline>
-                  <line x1="9" y1="13" x2="15" y2="13"></line>
-                  <line x1="9" y1="17" x2="13" y2="17"></line>
-                </svg>
-              </div>
-              <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>JD công việc</span>
-            </a>
-          </li>
 
           <li className="menu-item mb-2 border-top pt-3 mt-3">
             <a

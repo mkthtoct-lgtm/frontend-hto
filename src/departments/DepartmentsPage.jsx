@@ -13,6 +13,8 @@ import {
 } from "./departmentMockData.jsx";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
+const DEPARTMENT_PAGE_SIZE = 10;
+const MEMBER_PAGE_SIZE = 10;
 
 const isAdmin = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
 const isDepartmentHidden = (department) => Boolean(department?.isHidden || department?.hidden);
@@ -30,6 +32,8 @@ export const DepartmentsPage = ({ currentUser }) => {
   const [memberError, setMemberError] = useState("");
   const [modalMode, setModalMode] = useState(null);
   const [assignUserValue, setAssignUserValue] = useState("");
+  const [departmentPage, setDepartmentPage] = useState(1);
+  const [memberPage, setMemberPage] = useState(1);
 
   const {
     register,
@@ -63,14 +67,40 @@ export const DepartmentsPage = ({ currentUser }) => {
     );
   }, [departments, searchTerm]);
 
+  const departmentPageCount = Math.max(
+    1,
+    Math.ceil(filteredDepartments.length / DEPARTMENT_PAGE_SIZE),
+  );
+  const safeDepartmentPage = Math.min(departmentPage, departmentPageCount);
+  const paginatedDepartments = useMemo(() => {
+    return filteredDepartments.slice(
+      (safeDepartmentPage - 1) * DEPARTMENT_PAGE_SIZE,
+      safeDepartmentPage * DEPARTMENT_PAGE_SIZE,
+    );
+  }, [filteredDepartments, safeDepartmentPage]);
+
   const assignableUsers = useMemo(() => {
     const memberIds = new Set(members.map((member) => member.id));
 
     return users.filter((user) => !memberIds.has(user.id));
   }, [members, users]);
 
-  const loadDepartments = useCallback(async () => {
-    setLoading(true);
+  const memberPageCount = Math.max(
+    1,
+    Math.ceil(members.length / MEMBER_PAGE_SIZE),
+  );
+  const safeMemberPage = Math.min(memberPage, memberPageCount);
+  const paginatedMembers = useMemo(() => {
+    return members.slice(
+      (safeMemberPage - 1) * MEMBER_PAGE_SIZE,
+      safeMemberPage * MEMBER_PAGE_SIZE,
+    );
+  }, [members, safeMemberPage]);
+
+  const loadDepartments = useCallback(async (showSpinner = true) => {
+    if (showSpinner === true) {
+      setLoading(true);
+    }
     setApiError("");
 
     try {
@@ -89,17 +119,21 @@ export const DepartmentsPage = ({ currentUser }) => {
     } catch (error) {
       setApiError(error instanceof Error ? error.message : "Không thể tải danh sách phòng ban.");
     } finally {
-      setLoading(false);
+      if (showSpinner === true) {
+        setLoading(false);
+      }
     }
   }, []);
 
-  const loadMembers = useCallback(async (departmentId) => {
+  const loadMembers = useCallback(async (departmentId, showSpinner = true) => {
     if (!departmentId) {
       setMembers([]);
       return;
     }
 
-    setMembersLoading(true);
+    if (showSpinner === true) {
+      setMembersLoading(true);
+    }
     setMemberError("");
 
     try {
@@ -108,7 +142,9 @@ export const DepartmentsPage = ({ currentUser }) => {
     } catch (error) {
       setMemberError(error instanceof Error ? error.message : "Không thể tải nhân sự phòng ban.");
     } finally {
-      setMembersLoading(false);
+      if (showSpinner === true) {
+        setMembersLoading(false);
+      }
     }
   }, []);
 
@@ -121,6 +157,14 @@ export const DepartmentsPage = ({ currentUser }) => {
   useEffect(() => {
     void Promise.resolve().then(() => loadMembers(selectedDepartmentId));
   }, [loadMembers, selectedDepartmentId]);
+
+  useEffect(() => {
+    setDepartmentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setMemberPage(1);
+  }, [selectedDepartmentId]);
 
   const openCreateModal = () => {
     setApiError("");
@@ -235,7 +279,10 @@ export const DepartmentsPage = ({ currentUser }) => {
     try {
       await assignUserToDepartment(selectedDepartmentId, userId);
       setAssignUserValue("");
-      await Promise.all([loadMembers(selectedDepartmentId), loadDepartments()]);
+      await Promise.all([
+        loadMembers(selectedDepartmentId, false),
+        loadDepartments(false),
+      ]);
     } catch (error) {
       setMemberError(error instanceof Error ? error.message : "Không thể thêm nhân sự vào phòng ban.");
     } finally {
@@ -253,7 +300,10 @@ export const DepartmentsPage = ({ currentUser }) => {
       }
 
       await removeUserFromDepartment(selectedDepartmentId, userId);
-      await Promise.all([loadMembers(selectedDepartmentId), loadDepartments()]);
+      await Promise.all([
+        loadMembers(selectedDepartmentId, false),
+        loadDepartments(false),
+      ]);
     } catch (error) {
       setMemberError(error instanceof Error ? error.message : "Không thể gỡ nhân sự khỏi phòng ban.");
     } finally {
@@ -330,7 +380,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDepartments.map((department) => {
+                    {paginatedDepartments.map((department) => {
                       const departmentHidden = isDepartmentHidden(department);
 
                       return (
@@ -377,7 +427,7 @@ export const DepartmentsPage = ({ currentUser }) => {
               </div>
 
               <div className="block md:hidden">
-                {filteredDepartments.map((department) => {
+                {paginatedDepartments.map((department) => {
                   const departmentHidden = isDepartmentHidden(department);
 
                   return (
@@ -417,6 +467,47 @@ export const DepartmentsPage = ({ currentUser }) => {
                   );
                 })}
               </div>
+              {filteredDepartments.length > DEPARTMENT_PAGE_SIZE && (
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 p-3 border-top">
+                  <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                    Hiển thị {(safeDepartmentPage - 1) * DEPARTMENT_PAGE_SIZE + 1}-
+                    {Math.min(safeDepartmentPage * DEPARTMENT_PAGE_SIZE, filteredDepartments.length)} trong{" "}
+                    {filteredDepartments.length} phòng ban
+                  </span>
+                  <div className="btn-group gap-2" role="group" aria-label="Phân trang phòng ban">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() => setDepartmentPage((page) => Math.max(1, page - 1))}
+                      disabled={safeDepartmentPage === 1}
+                    >
+                      Trước
+                    </button>
+                    {Array.from({ length: departmentPageCount }, (_, index) => index + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          className={`btn btn-sm ${page === safeDepartmentPage ? "btn-primary" : "btn-outline-secondary"}`}
+                          onClick={() => setDepartmentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={() =>
+                        setDepartmentPage((page) => Math.min(departmentPageCount, page + 1))
+                      }
+                      disabled={safeDepartmentPage === departmentPageCount}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </section>
@@ -496,28 +587,71 @@ export const DepartmentsPage = ({ currentUser }) => {
             ) : members.length === 0 ? (
               <EmptyState label="Phòng ban này chưa có nhân sự." />
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {members.map((member) => (
-                  <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--bs-border-color-translucent)] p-2.5 max-md:items-start" key={member.id}>
-                    <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
-                      <span className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--bs-primary-bg-subtle)] font-bold text-[var(--bs-primary)]">{getInitials(member.fullName)}</span>
-                      <div style={{ minWidth: 0 }}>
-                        <div className="fw-bold text-body-emphasis text-truncate">{member.fullName}</div>
-                        <div className="text-body-secondary text-truncate" style={{ fontSize: "12px" }}>
-                          {member.email} · {member.role || "Nhân sự"}
+              <>
+                <div className="flex flex-col gap-2.5">
+                  {paginatedMembers.map((member) => (
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--bs-border-color-translucent)] p-2.5 max-md:items-start" key={member.id}>
+                      <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                        <span className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--bs-primary-bg-subtle)] font-bold text-[var(--bs-primary)]">{getInitials(member.fullName)}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="fw-bold text-body-emphasis text-truncate">{member.fullName}</div>
+                          <div className="text-body-secondary text-truncate" style={{ fontSize: "12px" }}>
+                            {member.email} · {member.role || "Nhân sự"}
+                          </div>
                         </div>
                       </div>
+                      <button
+                        className="btn btn-sm btn-outline-danger flex-shrink-0"
+                        onClick={() => handleRemoveUser(member.id)}
+                        disabled={actionLoading || selectedDepartmentHidden}
+                      >
+                        Gỡ
+                      </button>
                     </div>
-                    <button
-                      className="btn btn-sm btn-outline-danger flex-shrink-0"
-                      onClick={() => handleRemoveUser(member.id)}
-                      disabled={actionLoading || selectedDepartmentHidden}
-                    >
-                      Gỡ
-                    </button>
+                  ))}
+                </div>
+                {members.length > MEMBER_PAGE_SIZE && (
+                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 pt-3 border-top">
+                    <span className="text-body-secondary" style={{ fontSize: "13px" }}>
+                      Hiển thị {(safeMemberPage - 1) * MEMBER_PAGE_SIZE + 1}-
+                      {Math.min(safeMemberPage * MEMBER_PAGE_SIZE, members.length)} trong{" "}
+                      {members.length} nhân sự
+                    </span>
+                    <div className="btn-group gap-2" role="group" aria-label="Phân trang thành viên">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setMemberPage((page) => Math.max(1, page - 1))}
+                        disabled={safeMemberPage === 1}
+                      >
+                        Trước
+                      </button>
+                      {Array.from({ length: memberPageCount }, (_, index) => index + 1).map(
+                        (page) => (
+                          <button
+                            key={page}
+                            type="button"
+                            className={`btn btn-sm ${page === safeMemberPage ? "btn-primary" : "btn-outline-secondary"}`}
+                            onClick={() => setMemberPage(page)}
+                          >
+                            {page}
+                          </button>
+                        ),
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() =>
+                          setMemberPage((page) => Math.min(memberPageCount, page + 1))
+                        }
+                        disabled={safeMemberPage === memberPageCount}
+                      >
+                        Sau
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </section>
