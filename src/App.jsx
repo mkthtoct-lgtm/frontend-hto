@@ -501,7 +501,7 @@ function App() {
         ) : currentPage === "tintuc" ? (
           <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (
-          <HomePage theme={theme} />
+          <HomePage theme={theme} onNavigate={handleNavigate} />
         ) : currentPage === "productOverview" ? (
           <ProductOverviewPage currentUser={user} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (
