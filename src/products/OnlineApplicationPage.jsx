@@ -93,13 +93,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     notes: ""
   });
 
-  // Attached files simulate names
-  const [attachments, setAttachments] = useState({
-    passportFile: "",
-    transcriptFile: "",
-    languageFile: "",
-    otherFile: ""
-  });
+
 
   // Flow control states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,22 +115,10 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e, fileKey) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAttachments(prev => ({ ...prev, [fileKey]: file.name }));
-      setValidationError("");
-    }
-  };
+
 
   const handleNextStep = () => {
     if (step === 1 && !selectedProgId) return;
-    if (step === 2) {
-      if (!formData.fullName.trim() || !formData.phone.trim() || !formData.email.trim()) {
-        alert("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
-        return;
-      }
-    }
     setStep(prev => prev + 1);
   };
 
@@ -146,18 +128,18 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Check if required files are attached
-    if (!attachments.passportFile || !attachments.transcriptFile) {
-      setValidationError("Vui lòng tải lên các tài liệu bắt buộc (*): Hộ chiếu/CCCD và Bằng cấp/Bảng điểm.");
-      // Scroll up to show the validation message
+    
+    // Check if step 2 required fields are filled
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.email.trim()) {
+      setValidationError("Vui lòng điền đầy đủ các thông tin bắt buộc (*): Họ và tên, Số điện thoại và Email.");
+      // Scroll to top of the form body
       const formContainer = document.querySelector("form");
       if (formContainer) {
         formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       return;
     }
-
+    
     setValidationError("");
     setIsSubmitting(true);
 
@@ -180,12 +162,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       passport: "",
       address: "",
       notes: ""
-    });
-    setAttachments({
-      passportFile: "",
-      transcriptFile: "",
-      languageFile: "",
-      otherFile: ""
     });
     setValidationError("");
     setIsSuccess(false);
@@ -215,14 +191,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Chương trình:</span> <strong className={`break-words ${isDark ? "text-white" : "text-[#1e293b]"}`}>{activeProgram?.name}</strong></div>
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Họ và tên:</span> <strong className={isDark ? "text-white" : "text-[#1e293b]"}>{formData.fullName}</strong></div>
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Số điện thoại:</span> <strong className={isDark ? "text-white" : "text-[#1e293b]"}>{formData.phone}</strong></div>
-            <div className="flex flex-col"><span className="opacity-70">Giấy tờ đính kèm:</span>
-              <ul className="list-disc list-inside mt-1 font-semibold space-y-1">
-                {attachments.passportFile && <li>{attachments.passportFile}</li>}
-                {attachments.transcriptFile && <li>{attachments.transcriptFile}</li>}
-                {attachments.languageFile && <li>{attachments.languageFile}</li>}
-                {attachments.otherFile && <li>{attachments.otherFile}</li>}
-              </ul>
-            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center w-full">
@@ -241,42 +209,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
           </div>
         </div>
       ) : (
-        /* MULTI-STEP FORM BODY */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Progress sidebar */}
-          <div className={`lg:col-span-3 rounded-2xl border p-4 flex flex-row lg:flex-col justify-between lg:justify-start gap-4 ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
-            {[
-              { num: 1, label: "Chọn chương trình", desc: "Dịch vụ HTO" },
-              { num: 2, label: "Thông tin cá nhân", desc: "Hồ sơ học viên" },
-              { num: 3, label: "Tải lên tài liệu", desc: "Hồ sơ đính kèm" }
-            ].map(s => {
-              const isActive = step === s.num;
-              const isDone = step > s.num;
-              return (
-                <div key={s.num} className="flex items-center gap-3 flex-1 lg:flex-none">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 flex-shrink-0 ${isActive
-                    ? "bg-[#0D919C] text-white shadow-lg shadow-[#0D919C]/20 ring-4 ring-[#0D919C]/10"
-                    : (isDone ? "bg-[#10b981] text-white" : (isDark ? "bg-slate-800 text-slate-500" : "bg-slate-100 text-slate-400"))
-                    }`}>
-                    {isDone ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : s.num}
-                  </div>
-                  <div className="hidden md:block text-left">
-                    <div className={`text-xs font-bold ${isActive ? (isDark ? "text-white" : "text-slate-800") : "text-slate-400"}`}>
-                      {s.label}
-                    </div>
-                    <div className="text-[10px] opacity-60 font-semibold">{s.desc}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Form Content container */}
-          <div className={`lg:col-span-9 rounded-2xl border p-4 sm:p-5 md:p-6 flex flex-col justify-between shadow-sm relative ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
+        /* FORM BODY */
+        <div className={`rounded-2xl border p-4 sm:p-5 md:p-6 flex flex-col justify-between shadow-sm relative ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
             {isSubmitting && (
               <div className="absolute inset-0 bg-white/70 dark:bg-black/60 backdrop-blur-[2px] rounded-2xl z-20 flex flex-col items-center justify-center">
                 <div className="w-12 h-12 border-4 border-[#0D919C] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -373,6 +307,15 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                     </p>
                   </div>
 
+                  {validationError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-semibold flex items-center gap-2">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      {validationError}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className={`block text-xs font-bold ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Họ và tên *</label>
@@ -448,166 +391,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                       />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* STEP 3: TẢI LÊN TÀI LIỆU */}
-              {step === 3 && (
-                <div className="space-y-4 text-left animate-fade-in">
-                  <div>
-                    <h3 className={`text-lg font-bold mb-1 ${isDark ? "text-white" : "text-[#0f172a]"}`}>Bước 3: Tải tài liệu đính kèm</h3>
-                    <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                      Chọn tệp quét (PDF) hoặc ảnh chụp các hồ sơ cần thiết dưới đây (Dung lượng tối đa: 10MB/tệp).
-                    </p>
-                  </div>
-
-                  {validationError && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-xs font-semibold flex items-center gap-2">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      {validationError}
-                    </div>
-                  )}
-
-                  {/* Document upload grid selector */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* File 1: Passport */}
-                    <div className={`p-4 rounded-xl border flex flex-col justify-between ${isDark ? "bg-[#1f2937]/35 border-[#334155]" : "bg-[#f8fafc] border-[#e2e8f0]"}`}>
-                      <div>
-                        <div className="font-semibold text-xs mb-1">1. Hộ chiếu / Thẻ CCCD *</div>
-                        <p className="text-[10px] text-slate-400 mb-3">Chụp rõ nét mặt trước/sau CCCD hoặc trang thông tin Hộ chiếu.</p>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          id="passportFile"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => handleFileChange(e, "passportFile")}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="passportFile"
-                          className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-dashed rounded-lg text-xs font-semibold cursor-pointer border-[#0D919C] text-[#0D919C] bg-[#0D919C]/5 hover:bg-[#0D919C]/10 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          {attachments.passportFile ? "THAY ĐỔI TỆP" : "CHỌN TỆP TẢI LÊN"}
-                        </label>
-                        {attachments.passportFile && (
-                          <div className="text-[10px] font-semibold text-emerald-500 mt-1 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {attachments.passportFile}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* File 2: Academic Transcripts */}
-                    <div className={`p-4 rounded-xl border flex flex-col justify-between ${isDark ? "bg-[#1f2937]/35 border-[#334155]" : "bg-[#f8fafc] border-[#e2e8f0]"}`}>
-                      <div>
-                        <div className="font-semibold text-xs mb-1">2. Bằng cấp & Bảng điểm gần nhất *</div>
-                        <p className="text-[10px] text-slate-400 mb-3">Tải lên bằng tốt nghiệp THPT, Đại học hoặc bảng điểm đính kèm.</p>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          id="transcriptFile"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => handleFileChange(e, "transcriptFile")}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="transcriptFile"
-                          className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-dashed rounded-lg text-xs font-semibold cursor-pointer border-[#0D919C] text-[#0D919C] bg-[#0D919C]/5 hover:bg-[#0D919C]/10 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          {attachments.transcriptFile ? "THAY ĐỔI TỆP" : "CHỌN TỆP TẢI LÊN"}
-                        </label>
-                        {attachments.transcriptFile && (
-                          <div className="text-[10px] font-semibold text-emerald-500 mt-1 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {attachments.transcriptFile}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* File 3: Language certificate (if applicable) */}
-                    <div className={`p-4 rounded-xl border flex flex-col justify-between ${isDark ? "bg-[#1f2937]/35 border-[#334155]" : "bg-[#f8fafc] border-[#e2e8f0]"}`}>
-                      <div>
-                        <div className="font-semibold text-xs mb-1">3. Chứng chỉ ngoại ngữ (Nếu có)</div>
-                        <p className="text-[10px] text-slate-400 mb-3">Tải lên chứng chỉ tiếng Đức A2/B1/B2 hoặc chứng chỉ tiếng Anh.</p>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          id="languageFile"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => handleFileChange(e, "languageFile")}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="languageFile"
-                          className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-dashed rounded-lg text-xs font-semibold cursor-pointer border-[#0D919C] text-[#0D919C] bg-[#0D919C]/5 hover:bg-[#0D919C]/10 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          {attachments.languageFile ? "THAY ĐỔI TỆP" : "CHỌN TỆP TẢI LÊN"}
-                        </label>
-                        {attachments.languageFile && (
-                          <div className="text-[10px] font-semibold text-emerald-500 mt-1 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {attachments.languageFile}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* File 4: Other files */}
-                    <div className={`p-4 rounded-xl border flex flex-col justify-between ${isDark ? "bg-[#1f2937]/35 border-[#334155]" : "bg-[#f8fafc] border-[#e2e8f0]"}`}>
-                      <div>
-                        <div className="font-semibold text-xs mb-1">4. Tài liệu khác (CV, Thư động lực...)</div>
-                        <p className="text-[10px] text-slate-400 mb-3">Tải lên các tài liệu bổ trợ để hồ sơ được đánh giá tốt hơn.</p>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="file"
-                          id="otherFile"
-                          accept="image/*,application/pdf"
-                          onChange={(e) => handleFileChange(e, "otherFile")}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="otherFile"
-                          className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-dashed rounded-lg text-xs font-semibold cursor-pointer border-[#0D919C] text-[#0D919C] bg-[#0D919C]/5 hover:bg-[#0D919C]/10 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          {attachments.otherFile ? "THAY ĐỔI TỆP" : "CHỌN TỆP TẢI LÊN"}
-                        </label>
-                        {attachments.otherFile && (
-                          <div className="text-[10px] font-semibold text-emerald-500 mt-1 flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {attachments.otherFile}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
 
                   <div className="space-y-1">
                     <label className={`block text-xs font-bold ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Ghi chú từ học viên</label>
@@ -637,7 +420,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                   <div></div>
                 )}
 
-                {step < 3 ? (
+                {step < 2 ? (
                   <button
                     type="button"
                     onClick={handleNextStep}
@@ -656,7 +439,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
               </div>
 
             </form>
-          </div>
         </div>
       )}
     </div>
