@@ -226,7 +226,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                   <div>
                     <h3 className={`text-lg font-bold mb-1 ${isDark ? "text-white" : "text-[#0f172a]"}`}>Bước 1: Chọn Chương trình đăng ký</h3>
                     <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                      Chọn nhóm dịch vụ HTO và chương trình bạn quan tâm để xem danh mục hồ sơ cần chuẩn bị.
+                      Chọn nhóm dịch vụ HTO và chương trình bạn quan tâm để tiến hành đăng ký trực tuyến.
                     </p>
                   </div>
 
@@ -268,32 +268,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                     </select>
                   </div>
 
-                  {/* Checklist indicator */}
-                  {activeProgram && (
-                    <div className={`rounded-xl p-4 border text-xs space-y-2 mt-4 ${isDark ? "bg-[#1f2937]/50 border-[#334155]" : "bg-[#f8fafc] border-[#e2e8f0]"}`}>
-                      <div className="font-bold uppercase tracking-wider text-[10px] text-[#0D919C] mb-1 flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Danh mục hồ sơ yêu cầu
-                      </div>
-                      <p className="opacity-70 mb-2">Để hoàn tất nộp hồ sơ trực tuyến, bạn cần chuẩn bị ảnh chụp hoặc bản quét PDF của các loại giấy tờ:</p>
-                      <ul className="space-y-1 font-semibold pl-2">
-                        {activeProgram.docs.map((docName, idx) => (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D919C]"></span>
-                            <span>{docName}</span>
-                            <span className="text-[9px] font-normal px-1 rounded bg-[#0D919C]/10 text-[#0D919C]">Bắt buộc</span>
-                          </li>
-                        ))}
-                        <li className="flex items-center gap-2 opacity-65">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                          <span>Bản dịch thuật / Hợp đồng liên quan (Nếu có)</span>
-                          <span className="text-[9px] font-normal px-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-400">Tùy chọn</span>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
+
                 </div>
               )}
 
