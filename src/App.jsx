@@ -31,6 +31,7 @@ import { ProfilePage } from "./profile/ProfilePage";
 import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
 import { AUTH_EVENTS } from "./auth/session";
 import { SupportPage } from "./components/SupportPage";
+import { SystemSettingsPage } from "./systemSettings/SystemSettingsPage";
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -504,6 +505,8 @@ function App() {
           <HomePage theme={theme} onNavigate={handleNavigate} />
         ) : currentPage === "productOverview" ? (
           <ProductOverviewPage currentUser={user} />
+        ) : currentPage === "systemSettings" ? (
+          <SystemSettingsPage currentUser={user} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (
           <ProductsPage currentUser={user} currentPage={currentPage} onNavigate={setCurrentPage} />
         ) : (

@@ -1,4 +1,36 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE_URL } from "../config/api";
+import { getAuthHeaders } from "../auth/session";
+
+const LEAD_REQUEST_TIMEOUT_MS = 15000;
+
+const normalizePhone = (value) => value.trim().replace(/[\s.-]/g, "");
+
+const mapCountryInterest = (catId, progId) => {
+  if (catId === "duhocnghe" || catId === "dinhcu") return "Đức";
+  if (catId === "duhoche") {
+    return progId === "singapore" ? "Singapore" : "Úc";
+  }
+  if (catId === "visa") {
+    return progId === "visaduhoc" ? "Đức" : "Khác";
+  }
+};
+
+const getApiErrorMessage = (data, status) => {
+  if (status === 401) {
+    return data?.message || "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại để nộp hồ sơ.";
+  }
+
+  if (status === 403) {
+    return data?.message || "Tài khoản hiện tại chưa có quyền nộp hồ sơ. Vui lòng kiểm tra lại quyền truy cập.";
+  }
+
+  if (status === 400) {
+    return data?.message || "Thông tin hồ sơ chưa hợp lệ. Vui lòng kiểm tra lại họ tên, số điện thoại và email.";
+  }
+
+  return data?.message || "Không thể gửi hồ sơ lên hệ thống. Vui lòng thử lại sau.";
+};
 
 export function OnlineApplicationPage({ currentUser, onNavigate }) {
   // Brand color config
@@ -83,14 +115,32 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
   const [selectedProgId, setSelectedProgId] = useState("dieuduong");
 
   // Form Fields
-  const [formData, setFormData] = useState({
-    fullName: currentUser?.name || currentUser?.fullName || "",
-    phone: "",
-    email: currentUser?.email || "",
-    dob: "",
-    passport: "",
-    address: "",
-    notes: ""
+  const [formData, setFormData] = useState(() => {
+    try {
+      const lastLead = JSON.parse(window.localStorage.getItem("last_lead_info"));
+      if (lastLead && (lastLead.fullName || lastLead.phone || lastLead.email)) {
+        return {
+          fullName: lastLead.fullName || currentUser?.name || currentUser?.fullName || "",
+          phone: lastLead.phone || "",
+          email: lastLead.email || currentUser?.email || "",
+          dob: lastLead.dob || "",
+          passport: lastLead.passport || "",
+          address: lastLead.address || "",
+          notes: lastLead.notes || lastLead.note || ""
+        };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {
+      fullName: currentUser?.name || currentUser?.fullName || "",
+      phone: "",
+      email: currentUser?.email || "",
+      dob: "",
+      passport: "",
+      address: "",
+      notes: ""
+    };
   });
 
 
@@ -99,6 +149,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const [leadCode, setLeadCode] = useState("");
 
   // Sync program defaults when category changes
   const activeCategory = CATEGORIES.find(c => c.id === selectedCatId) || CATEGORIES[0];
@@ -112,7 +163,13 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const nextData = { ...prev, [name]: value };
+      try {
+        window.localStorage.setItem("last_lead_info", JSON.stringify(nextData));
+      } catch (err) {}
+      return nextData;
+    });
   };
 
 
@@ -126,7 +183,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     setStep(prev => prev - 1);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Check if step 2 required fields are filled
@@ -139,15 +196,87 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       }
       return;
     }
+
+    // Check authentication headers
+    const authHeaders = getAuthHeaders();
+    if (!authHeaders.Authorization) {
+      setValidationError("Bạn cần đăng nhập hoặc phiên đăng nhập đã hết hạn để nộp hồ sơ đăng ký.");
+      // Scroll to top of the form body
+      const formContainer = document.querySelector("form");
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
     
     setValidationError("");
     setIsSubmitting(true);
 
-    // Simulate database upload delay
-    setTimeout(() => {
-      setIsSubmitting(false);
+    // Build the consolidated notes
+    const noteParts = [];
+    if (formData.dob) noteParts.push(`Ngày sinh: ${formData.dob}`);
+    if (formData.passport) noteParts.push(`CCCD/Hộ chiếu: ${formData.passport}`);
+    if (formData.address) noteParts.push(`Địa chỉ: ${formData.address}`);
+    if (formData.notes) noteParts.push(`Ghi chú: ${formData.notes}`);
+    const combinedNote = noteParts.join(" | ");
+
+    // Prepare payload
+    const payload = {
+      customerName: formData.fullName.trim(),
+      phone: normalizePhone(formData.phone),
+      email: formData.email.trim(),
+      source: "Nộp hồ sơ online",
+      productInterest: activeProgram?.name || "Nộp hồ sơ online",
+      countryInterest: mapCountryInterest(selectedCatId, selectedProgId),
+      note: combinedNote
+    };
+
+    const abortController = new AbortController();
+    const requestTimeout = window.setTimeout(() => {
+      abortController.abort();
+    }, LEAD_REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/leads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders
+        },
+        signal: abortController.signal,
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(data, response.status));
+      }
+
+      const createdLead = data?.data || {};
+      
+      // Store returned lead ID or contact ID, fallback to client-side code if empty
+      const successLeadCode = createdLead.bizflyContactId || createdLead._id || `HTO-${Date.now().toString().slice(-6)}`;
+      setLeadCode(successLeadCode);
       setIsSuccess(true);
-    }, 2000);
+      window.localStorage.removeItem("last_lead_info");
+    } catch (err) {
+      const isTimeout = err.name === "AbortError";
+      const errorMsg = isTimeout
+        ? "Kết nối API quá lâu chưa phản hồi. Vui lòng thử lại sau ít phút."
+        : err.message || "Không thể nộp hồ sơ. Vui lòng thử lại sau.";
+      
+      setValidationError(errorMsg);
+      
+      // Scroll to error view
+      const formContainer = document.querySelector("form");
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } finally {
+      window.clearTimeout(requestTimeout);
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetForm = () => {
@@ -164,6 +293,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       notes: ""
     });
     setValidationError("");
+    setLeadCode("");
     setIsSuccess(false);
   };
 
@@ -183,7 +313,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             Nộp Hồ Sơ Thành Công!
           </h3>
           <p className={`text-sm mb-6 px-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>
-            Mã hồ sơ của bạn là <span className="font-bold text-[#0D919C]">HTO-{Date.now().toString().slice(-6)}</span>. Chuyên viên xử lý hồ sơ của HT Ocean sẽ tiến hành thẩm định và liên hệ lại với bạn qua số điện thoại <span className="font-semibold">{formData.phone}</span> trong vòng 24 giờ làm việc.
+            Mã hồ sơ của bạn là <span className="font-bold text-[#0D919C]">{leadCode}</span>. Chuyên viên xử lý hồ sơ của HT Ocean sẽ tiến hành thẩm định và liên hệ lại với bạn qua số điện thoại <span className="font-semibold">{formData.phone}</span> trong vòng 24 giờ làm việc.
           </p>
 
           <div className={`rounded-xl p-4 mb-6 text-left text-xs space-y-2 ${isDark ? "bg-[#1f2937]" : "bg-[#f8fafc]"}`}>

@@ -115,6 +115,43 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
   const pendingTimerRef = useRef(null);
   const isOpen = typeof controlledIsOpen === "boolean" ? controlledIsOpen : uncontrolledIsOpen;
 
+  // Trạng thái bật/tắt chatbot từ Cấu hình hệ thống
+  const [isEnabled, setIsEnabled] = useState(() => {
+    try {
+      const stored = localStorage.getItem("hto_chat_config");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed.enabled === "boolean") return parsed.enabled;
+      }
+    } catch (e) {}
+    return true;
+  });
+
+  useEffect(() => {
+    const checkEnabled = () => {
+      try {
+        const stored = localStorage.getItem("hto_chat_config");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (typeof parsed.enabled === "boolean") {
+            setIsEnabled(parsed.enabled);
+            return;
+          }
+        }
+      } catch (e) {}
+      setIsEnabled(true);
+    };
+
+    checkEnabled();
+    window.addEventListener("storage", checkEnabled);
+    window.addEventListener("hto:chat_config_updated", checkEnabled);
+
+    return () => {
+      window.removeEventListener("storage", checkEnabled);
+      window.removeEventListener("hto:chat_config_updated", checkEnabled);
+    };
+  }, []);
+
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) || sessions[0],
     [activeSessionId, sessions],
@@ -222,6 +259,8 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
       setActiveSessionId(safeSessions[0].id);
     }
   };
+
+  if (!isEnabled) return null;
 
   return (
     <div className="ai-chat-widget">

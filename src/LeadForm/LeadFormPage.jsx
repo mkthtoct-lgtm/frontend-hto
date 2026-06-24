@@ -83,7 +83,23 @@ const validateForm = (form) => {
 };
 
 export const LeadFormPage = () => {
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(() => {
+    try {
+      const lastLead = JSON.parse(window.localStorage.getItem("last_lead_info"));
+      if (lastLead && (lastLead.fullName || lastLead.phone || lastLead.email)) {
+        return {
+          ...INITIAL_FORM,
+          customerName: lastLead.fullName || lastLead.customerName || "",
+          phone: lastLead.phone || "",
+          email: lastLead.email || "",
+          note: lastLead.notes || lastLead.note || ""
+        };
+      }
+    } catch (e) {
+      // ignore
+    }
+    return INITIAL_FORM;
+  });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
@@ -106,10 +122,25 @@ export const LeadFormPage = () => {
   }, [form]);
 
   const handleChange = (fieldName, value) => {
-    setForm((current) => ({
-      ...current,
-      [fieldName]: value
-    }));
+    setForm((current) => {
+      const nextForm = {
+        ...current,
+        [fieldName]: value
+      };
+      
+      try {
+        const lastLead = JSON.parse(window.localStorage.getItem("last_lead_info") || "{}");
+        window.localStorage.setItem("last_lead_info", JSON.stringify({
+          ...lastLead,
+          fullName: fieldName === "customerName" ? value : nextForm.customerName,
+          phone: fieldName === "phone" ? value : nextForm.phone,
+          email: fieldName === "email" ? value : nextForm.email,
+          notes: fieldName === "note" ? value : nextForm.note
+        }));
+      } catch (e) {}
+
+      return nextForm;
+    });
 
     setErrors((current) => ({
       ...current,
@@ -181,6 +212,7 @@ export const LeadFormPage = () => {
       });
 
       setForm(INITIAL_FORM);
+      window.localStorage.removeItem("last_lead_info");
     } catch (err) {
       const isTimeout = err.name === "AbortError";
 
