@@ -26,6 +26,7 @@ const readPendingSidebarCategory = () => {
 // ==========================================
 // MOCK DATA - LUÔN CÓ SẴN ĐỂ FALLBACK
 // ==========================================
+// eslint-disable-next-line no-unused-vars
 const VISA_TYPES = [
   { id: "vtype-1", name: "Visa Du học", icon: "fa-graduation-cap", desc: "Hồ sơ xin visa du học các nước", color: "text-[#2563eb]", gradient: "bg-gradient-to-b from-[#e0f2fe] to-white", btnBg: "bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe]", docsCount: 12, filesCount: 18 },
   { id: "vtype-2", name: "Visa Du lịch", icon: "fa-plane", desc: "Hồ sơ xin visa du lịch, thăm thân", color: "text-[#059669]", gradient: "bg-gradient-to-b from-[#d1fae5] to-white", btnBg: "bg-[#ecfdf5] text-[#059669] hover:bg-[#d1fae5]", docsCount: 8, filesCount: 10 },
@@ -519,7 +520,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-[100] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 app-dark:!border-slate-700 bg-white app-dark:!bg-[#252525] shadow-xl p-1 animate-fade-in">
+        <div className="absolute left-0 right-0 z-[9999] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 app-dark:!border-slate-700 bg-white app-dark:!bg-[#252525] shadow-xl p-1 animate-fade-in">
           <div role="listbox" className="flex flex-col gap-0.5">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -923,7 +924,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 z-[200] bg-white rounded-2xl border border-slate-200 shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden w-[min(900px,calc(100vw-2rem))]">
+        <div className="absolute left-0 top-full mt-2 z-[9999] bg-white rounded-2xl border border-slate-200 shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden w-[min(900px,calc(100vw-2rem))]">
           <div className="flex flex-col md:flex-row max-h-[500px] overflow-x-auto">
             <div className="w-full md:w-[220px] lg:w-[260px] flex-shrink-0 border-r border-slate-100 overflow-y-auto">
               {renderCategoryList()}
@@ -974,8 +975,8 @@ function ProductOverviewPageInner({ currentUser }) {
     setConfirmModal({ isOpen: false });
   }, []);
 
-  const [categories, setCategories] = useState(MOCK_CATEGORIES); // LUÔN CÓ DỮ LIỆU MẶC ĐỊNH
-  const [loading] = useState(false); // KHÔNG LOADING VÌ CÓ MOCK DATA
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
+  const [loading] = useState(false);
   const [, setError] = useState("");
   const [apiMode, setApiMode] = useState("mock");
 
@@ -1004,9 +1005,9 @@ function ProductOverviewPageInner({ currentUser }) {
   const [selectedCountry, setSelectedCountry] = useState("Tất cả");
   const [selectedRegion, setSelectedRegion] = useState("Tất cả");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  // eslint-disable-next-line no-unused-vars
   const [selectedVisaType, setSelectedVisaType] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
-
 
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -1081,7 +1082,6 @@ function ProductOverviewPageInner({ currentUser }) {
     { label: "Đã ẩn", value: "hidden" }
   ], []);
 
-
   // Load dữ liệu từ API - VẪN GỌI NHƯNG KHÔNG ẢNH HƯỞNG NẾU LỖI
   useEffect(() => {
     const normalizeArray = (p) => {
@@ -1095,14 +1095,12 @@ function ProductOverviewPageInner({ currentUser }) {
     };
 
     const fetchData = async () => {
-      // setLoading(true); // KHÔNG SET LOADING ĐỂ KHÔNG BỊ TRỐNG
       setError("");
       try {
         const catsPayload = await apiRequest(`${API_BASE_URL}/product-categories`);
         const apiCats = normalizeArray(catsPayload);
 
         if (apiCats.length === 0) {
-          // Nếu API trả về rỗng, GIỮ NGUYÊN MOCK DATA
           console.warn("[API] Không có dữ liệu từ API, giữ mock data");
           setApiMode("mock");
           return;
@@ -1148,19 +1146,14 @@ function ProductOverviewPageInner({ currentUser }) {
 
         const result = categoryIds.map(id => catMap[id]).filter(Boolean);
 
-        // CHỈ CẬP NHẬT NẾU CÓ DỮ LIỆU
         if (result.length > 0) {
           setCategories(result);
           setApiMode("api");
         } else {
-          // Giữ mock data nếu API trả về rỗng
           console.warn("[API] Không có dữ liệu, giữ mock data");
         }
       } catch (err) {
         console.warn("[API] Lỗi kết nối, giữ mock data:", err.message);
-        // GIỮ NGUYÊN MOCK DATA
-      } finally {
-        // setLoading(false); // KHÔNG SET LOADING
       }
     };
 
@@ -1174,6 +1167,7 @@ function ProductOverviewPageInner({ currentUser }) {
       setViewMode("overview");
       setSelectedProduct(null);
       setSelectedCategoryName(detail.name || "Tất cả");
+      // eslint-disable-next-line no-unused-vars
       setSelectedVisaType(null);
       if (detail.id) {
         setExpandedCategories(prev => ({ ...prev, [detail.id]: true }));
@@ -1189,7 +1183,6 @@ function ProductOverviewPageInner({ currentUser }) {
     const handleSidebarProductSelect = (event) => {
       const detail = event?.detail || {};
       if (detail.product) {
-        // Tìm thông tin đầy đủ/đã được map từ categories state
         let foundProduct = null;
         for (const cat of categories) {
           const progs = cat.programs || cat.products || [];
@@ -1242,10 +1235,10 @@ function ProductOverviewPageInner({ currentUser }) {
     setSelectedCountry("Tất cả");
     setSelectedRegion("Tất cả");
     setSelectedStatus("all");
+    // eslint-disable-next-line no-unused-vars
     setSelectedVisaType(null);
     setCategoryPage(0);
   };
-
 
   const CATEGORIES_PER_PAGE = 6;
   const [categoryPage, setCategoryPage] = useState(0);
@@ -1420,68 +1413,69 @@ function ProductOverviewPageInner({ currentUser }) {
       setIsSubmittingInterest(false);
     }
   };
-const handleImageUpload = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
 
-  if (file.size > 500 * 1024) {
-    toast.warning("Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 500KB", "File quá lớn");
-    e.target.value = '';
-    return;
-  }
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'];
-  if (!allowedTypes.includes(file.type)) {
-    toast.warning("Vui lòng chọn file ảnh (JPG, PNG, WEBP, GIF)", "Định dạng không hỗ trợ");
-    e.target.value = '';
-    return;
-  }
+    if (file.size > 500 * 1024) {
+      toast.warning("Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 500KB", "File quá lớn");
+      e.target.value = '';
+      return;
+    }
 
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const base64String = event.target.result;
-    setFormCategory(prev => ({ ...prev, coverImageUrl: base64String }));
-    toast.success("Đã chọn ảnh thành công!", "Upload ảnh");
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.warning("Vui lòng chọn file ảnh (JPG, PNG, WEBP, GIF)", "Định dạng không hỗ trợ");
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target.result;
+      setFormCategory(prev => ({ ...prev, coverImageUrl: base64String }));
+      toast.success("Đã chọn ảnh thành công!", "Upload ảnh");
+    };
+    reader.onerror = () => {
+      toast.error("Không thể đọc file", "Lỗi");
+    };
+    reader.readAsDataURL(file);
   };
-  reader.onerror = () => {
-    toast.error("Không thể đọc file", "Lỗi");
+
+  const handleRemoveImage = () => {
+    setFormCategory(prev => ({ ...prev, coverImageUrl: '' }));
+    toast.info("Đã xóa ảnh", "Xóa ảnh");
   };
-  reader.readAsDataURL(file);
-};
 
-const handleRemoveImage = () => {
-  setFormCategory(prev => ({ ...prev, coverImageUrl: '' }));
-  toast.info("Đã xóa ảnh", "Xóa ảnh");
-};
-// SỬA THÀNH:
-const handleOpenNewCategory = () => {
-  if (!canManageProducts) return;
-  setFormCategory({
-    id: "new",
-    name: "",
-    description: "",
-    status: "active",
-    coverImageUrl: "",
-    programs: []
-  });
-  setActiveCategoryTab("info");
-  setEditingCategory("new");
-};
+  const handleOpenNewCategory = () => {
+    if (!canManageProducts) return;
+    setFormCategory({
+      id: "new",
+      name: "",
+      description: "",
+      status: "active",
+      coverImageUrl: "",
+      programs: []
+    });
+    setActiveCategoryTab("info");
+    setEditingCategory("new");
+  };
 
-// SỬA THÀNH:
-const handleEditCategory = (cat) => {
-  if (!canManageProducts) return;
-  setFormCategory({
-    id: cat.id,
-    name: cat.name,
-    description: cat.description || "",
-    status: cat.status || "active",
-    coverImageUrl: cat.coverImageUrl || "",
-    programs: cat.programs || []
-  });
-  setActiveCategoryTab("info");
-  setEditingCategory(cat.id);
-};
+  const handleEditCategory = (cat) => {
+    if (!canManageProducts) return;
+    setFormCategory({
+      id: cat.id,
+      name: cat.name,
+      description: cat.description || "",
+      status: cat.status || "active",
+      coverImageUrl: cat.coverImageUrl || "",
+      programs: cat.programs || []
+    });
+    setActiveCategoryTab("info");
+    setEditingCategory(cat.id);
+  };
+
   const handleToggleCategoryStatus = async (catId, currentStatus) => {
     if (!canManageProducts) return;
 
@@ -1570,7 +1564,6 @@ const handleEditCategory = (cat) => {
       return;
     }
     try {
-      // Gửi JSON — coverImageUrl có thể là base64 (data:image/...) hoặc URL http
       const payload = {
         name: formCategory.name,
         description: formCategory.description || '',
@@ -1587,10 +1580,7 @@ const handleEditCategory = (cat) => {
         body: JSON.stringify(payload),
       });
 
-      // apiRequest đã parsed JSON và throw nếu lỗi
       const savedCategory = response?.data || response;
-
-      // Ưu tiên coverImageUrl local (base64) nếu API không trả về đủ
       const localCoverUrl = formCategory.coverImageUrl || '';
       const mapped = mapApiCategoryToUiCategory({
         ...savedCategory,
@@ -1608,7 +1598,7 @@ const handleEditCategory = (cat) => {
       }
 
       setApiMode("api");
-          setEditingCategory(null);
+      setEditingCategory(null);
       toast.success(editingCategory === "new" ? "Danh mục mới đã được thêm thành công" : "Danh mục đã được cập nhật", "Lưu thành công");
     } catch (err) {
       toast.error(err.message, "Lỗi khi lưu danh mục");
@@ -1818,7 +1808,6 @@ const handleEditCategory = (cat) => {
     const finalDescription = buildDescription(formProduct.description, extendedData);
 
     try {
-      // Luôn gửi JSON — ảnh được gửi dưới dạng base64 string trong field "image"
       const apiPayload = {
         name: formProduct.name,
         categoryId: editingProductParentCatId,
@@ -1830,7 +1819,7 @@ const handleEditCategory = (cat) => {
         steps,
         serviceFee: formProduct.serviceFee || 0,
         currency: formProduct.currency || "VND",
-        image: formProduct.image || "", // base64 string hoặc URL
+        image: formProduct.image || "",
       };
 
       let response;
@@ -2203,7 +2192,7 @@ const handleEditCategory = (cat) => {
           </div>
         )}
 
-        {/* STATS SECTION — chỉ hiện với admin khi xem tất cả danh mục */}
+        {/* STATS SECTION */}
         {viewMode === "overview" && canManageProducts && selectedCategoryName === "Tất cả" && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
@@ -2267,7 +2256,7 @@ const handleEditCategory = (cat) => {
           const hasActiveFilter = activeFilters.length > 0;
 
           return (
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5">
+            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5 overflow-visible">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
                 {/* Search */}
                 <div className="md:col-span-12 xl:col-span-5">
@@ -2299,7 +2288,7 @@ const handleEditCategory = (cat) => {
                   </div>
                 </div>
 
-                {/* Mega menu: Danh mục + Khu vực + Quốc gia */}
+                {/* Mega menu */}
                 <div className="md:col-span-8 xl:col-span-5">
                   <MegaMenuFilter
                     categories={categories}
@@ -2325,7 +2314,7 @@ const handleEditCategory = (cat) => {
                 </div>
               </div>
 
-              {/* Active filter badges + result count */}
+              {/* Active filter badges */}
               {hasActiveFilter && (
                 <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:!border-white/8">
                   <span className="text-xs text-slate-400 app-dark:!text-slate-500 font-medium flex-shrink-0">
@@ -2368,7 +2357,7 @@ const handleEditCategory = (cat) => {
         {/* CATEGORIES GRID VIEW */}
         {viewMode === "overview" && (
           <>
-            <div className="space-y-8">
+            <div className="space-y-8 relative z-0">
               {filteredCategories.length > 0 ? (
                 (() => {
                   const totalCatPages = Math.ceil(filteredCategories.length / CATEGORIES_PER_PAGE);
@@ -2379,7 +2368,7 @@ const handleEditCategory = (cat) => {
                   );
                   return pagedCategories.map((cat) => {
                     const displayPrograms = cat.filteredPrograms || cat.programs || [];
-                    if (displayPrograms.length === 0) return null;
+                    if (displayPrograms.length === 0 && !canManageProducts) return null;
 
                     const ITEMS_PER_ROW = 3;
                     const isExpanded = !!expandedCategories[cat.id];
@@ -2400,7 +2389,6 @@ const handleEditCategory = (cat) => {
                                 setViewMode("detail");
                               }}
                             >
-                              {/* Left: Illustration image */}
                               <div className="flex-shrink-0 w-20 sm:w-24 bg-slate-200 app-dark:!bg-slate-700 relative overflow-hidden m-2 rounded-lg border-2 border-slate-200 app-dark:!border-slate-600">
                                 {prog.image ? (
                                   <img
@@ -2415,7 +2403,6 @@ const handleEditCategory = (cat) => {
                                 )}
                               </div>
 
-                              {/* Right: Title top, description bottom */}
                               <div className="flex flex-col justify-between flex-1 min-w-0 p-3">
                                 <div>
                                   <div className="font-bold text-slate-800 app-dark:!text-slate-100 text-[13px] mb-1 line-clamp-2 leading-snug" title={prog.name}>
@@ -2469,127 +2456,156 @@ const handleEditCategory = (cat) => {
                       );
                     };
 
+                    // ============ CATEGORY "VISA" - GIỮ NGUYÊN HIỂN THỊ VISA_TYPES ============
                     if (cat.name === "Visa") {
                       return (
-                        <div key={cat.id} className="mb-8">
-                          {/* Header like image */}
-                          <div className="relative bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] rounded-t-[24px] rounded-b-[16px] overflow-hidden border border-blue-100 p-8 flex flex-col md:flex-row justify-between mb-6 shadow-sm">
-                            {/* Right side background decorative (passport) */}
-                            <div className="absolute top-0 right-0 bottom-0 w-1/2 bg-gradient-to-l from-blue-100/40 to-transparent pointer-events-none">
-                              <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80" alt="passport background" className="absolute right-0 w-[400px] h-[150%] object-cover mix-blend-overlay opacity-30 -rotate-12 translate-x-10 -translate-y-10" />
+                        <div key={cat.id} className="mb-6 relative z-0">
+                          {/* Header */}
+                          <div className="bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] rounded-t-[20px] rounded-b-[12px] border border-blue-100 p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
+                            <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-gradient-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
+                              <img 
+                                src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80" 
+                                alt="passport background" 
+                                className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10" 
+                              />
                             </div>
 
                             <div className="relative z-10 w-full">
-                              <div className="flex justify-between items-start mb-6 w-full">
-                                <div className="flex items-start gap-4">
-                                  <div className="w-[64px] h-[64px] rounded-[20px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
-                                    <i className="fa fa-earth-americas text-white text-3xl"></i>
+                              <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
+                                    <i className="fa fa-earth-americas text-white text-xl"></i>
                                   </div>
-                                  <div>
-                                    <div className="flex items-center gap-3 mb-1">
-                                      <h3 className="text-[32px] font-extrabold text-slate-800 m-0 leading-none tracking-tight">Visa</h3>
-                                      <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">4 Sản phẩm</span>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                      <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 m-0 leading-none tracking-tight">Visa</h3>
+                                      <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold">4 SP</span>
                                     </div>
-                                    <p className="text-slate-500 text-[14px]">Quản lý các danh mục visa và hồ sơ liên quan</p>
+                                    <p className="text-slate-500 text-xs md:text-sm m-0 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
                                   {canManageProducts && (
                                     <>
-                                      <button onClick={() => handleEditCategory(cat)} className="bg-white border border-slate-200 text-[#ea580c] hover:bg-orange-50 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
-                                        <i className="fa fa-pen"></i> Sửa danh mục
+                                      <button 
+                                        onClick={() => handleEditCategory(cat)} 
+                                        className="bg-white border border-slate-200 text-[#ea580c] hover:bg-orange-50 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                      >
+                                        <i className="fa fa-pen text-[10px]"></i> Sửa
                                       </button>
-                                      <button onClick={() => handleToggleCategoryStatus(cat.id, cat.status)} className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
-                                        {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye"></i> Hiện</> : <><i className="fa fa-eye-slash"></i> Ẩn</>}
+                                      <button 
+                                        onClick={() => handleToggleCategoryStatus(cat.id, cat.status)} 
+                                        className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                      >
+                                        {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[10px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>}
                                       </button>
                                     </>
                                   )}
                                 </div>
                               </div>
 
-                              <div className="flex gap-4">
-                                <div className="bg-white rounded-2xl p-4 flex items-center gap-4 min-w-[220px] shadow-sm border border-slate-100/50">
-                                  <div className="w-12 h-12 rounded-xl bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center text-xl"><i className="fa fa-folder-open"></i></div>
+                              {/* Stats */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <div className="bg-white rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50">
+                                  <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center text-sm flex-shrink-0">
+                                    <i className="fa fa-folder-open"></i>
+                                  </div>
                                   <div>
-                                    <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tổng danh mục</div>
-                                    <div className="text-[26px] font-bold text-slate-800 leading-none mb-0.5">4</div>
-                                    <div className="text-[12px] text-slate-500">Danh mục</div>
+                                    <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Danh mục</div>
+                                    <div className="text-lg font-bold text-slate-800 leading-none">4</div>
                                   </div>
                                 </div>
-                                <div className="bg-white rounded-2xl p-4 flex items-center gap-4 min-w-[220px] shadow-sm border border-slate-100/50">
-                                  <div className="w-12 h-12 rounded-xl bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center text-xl"><i className="fa fa-file-lines"></i></div>
+                                <div className="bg-white rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50">
+                                  <div className="w-8 h-8 rounded-lg bg-[#eff6ff] text-[#2563eb] flex items-center justify-center text-sm flex-shrink-0">
+                                    <i className="fa fa-file-lines"></i>
+                                  </div>
                                   <div>
-                                    <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tổng hồ sơ</div>
-                                    <div className="text-[26px] font-bold text-slate-800 leading-none mb-0.5">32</div>
-                                    <div className="text-[12px] text-slate-500">Hồ sơ</div>
+                                    <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Hồ sơ</div>
+                                    <div className="text-lg font-bold text-slate-800 leading-none">32</div>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          <div className="bg-white rounded-[24px] border border-slate-100 p-6 shadow-sm">
-                            {/* Title Danh sách sản phẩm */}
-                            <div className="flex items-center justify-between mb-6">
-                              <h4 className="font-bold text-slate-800 text-[17px]">Danh sách sản phẩm</h4>
-                              <div className="flex bg-slate-50 border border-slate-200 rounded-lg p-1">
-                                <button className="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm"><i className="fa fa-grid-2"></i></button>
-                                <button className="w-8 h-8 rounded-md text-slate-400 hover:text-slate-600 flex items-center justify-center"><i className="fa fa-list"></i></button>
+                          {/* Content - HIỂN THỊ VISA_TYPES */}
+                          <div className="bg-white rounded-[20px] border border-slate-100 p-4 shadow-sm relative z-0">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="font-bold text-slate-800 text-sm">Danh sách sản phẩm</h4>
+                              <div className="flex bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+                                <button className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm text-xs">
+                                  <i className="fa fa-grid-2"></i>
+                                </button>
+                                <button className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs">
+                                  <i className="fa fa-list"></i>
+                                </button>
                               </div>
                             </div>
 
-                            {/* Content Section */}
                             {!selectedVisaType ? (
                               <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                   {VISA_TYPES.map(type => (
-                                    <div key={type.id} onClick={() => setSelectedVisaType(type.id)} className={`relative flex flex-col border border-slate-100/50 rounded-[20px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient}`}>
-                                      <div className="px-6 pt-8 pb-5 flex flex-col items-center text-center flex-1">
-                                        <div className={`w-[72px] h-[72px] rounded-full bg-white flex items-center justify-center shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] mb-5 ${type.color}`}>
-                                          <i className={`fa ${type.icon} text-[32px]`}></i>
+                                    <div 
+                                      key={type.id} 
+                                      onClick={() => setSelectedVisaType(type.id)} 
+                                      className={`relative flex flex-col border border-slate-100/50 rounded-[16px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient}`}
+                                    >
+                                      <div className="px-3 pt-4 pb-3 flex flex-col items-center text-center flex-1">
+                                        <div className={`w-[48px] h-[48px] rounded-full bg-white flex items-center justify-center shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] mb-3 ${type.color}`}>
+                                          <i className={`fa ${type.icon} text-xl`}></i>
                                         </div>
-                                        <h5 className={`text-[19px] font-bold mb-2 ${type.color}`}>{type.name}</h5>
-                                        <p className="text-slate-500 text-[13px] leading-relaxed mb-4">{type.desc}</p>
+                                        <h5 className={`text-sm font-bold mb-1 ${type.color}`}>{type.name}</h5>
+                                        <p className="text-slate-500 text-[11px] leading-relaxed mb-2 line-clamp-2">{type.desc}</p>
 
-                                        <div className="w-full border-t border-dashed border-slate-200/80 my-3"></div>
+                                        <div className="w-full border-t border-dashed border-slate-200/80 my-1.5"></div>
 
-                                        <div className="w-full flex justify-between px-1">
-                                          <div className="flex items-center gap-2.5">
-                                            <div className={`w-[26px] h-[26px] rounded-full bg-white flex items-center justify-center shadow-sm ${type.color}`}><i className="fa fa-user text-[11px]"></i></div>
+                                        <div className="w-full flex justify-between px-0.5">
+                                          <div className="flex items-center gap-1.5">
+                                            <div className={`w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center shadow-sm ${type.color}`}>
+                                              <i className="fa fa-user text-[8px]"></i>
+                                            </div>
                                             <div className="text-left">
-                                              <div className="text-[15px] font-extrabold text-slate-800 leading-none mb-0.5">{type.docsCount}</div>
-                                              <div className="text-[11px] text-slate-400">Hồ sơ</div>
+                                              <div className="text-xs font-extrabold text-slate-800 leading-none mb-0.5">{type.docsCount}</div>
+                                              <div className="text-[8px] text-slate-400">Hồ sơ</div>
                                             </div>
                                           </div>
-                                          <div className="flex items-center gap-2.5">
-                                            <div className={`w-[26px] h-[26px] rounded-full bg-white flex items-center justify-center shadow-sm ${type.color}`}><i className="fa fa-file-lines text-[11px]"></i></div>
+                                          <div className="flex items-center gap-1.5">
+                                            <div className={`w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center shadow-sm ${type.color}`}>
+                                              <i className="fa fa-file-lines text-[8px]"></i>
+                                            </div>
                                             <div className="text-left">
-                                              <div className="text-[15px] font-extrabold text-slate-800 leading-none mb-0.5">{type.filesCount}</div>
-                                              <div className="text-[11px] text-slate-400">Tài liệu</div>
+                                              <div className="text-xs font-extrabold text-slate-800 leading-none mb-0.5">{type.filesCount}</div>
+                                              <div className="text-[8px] text-slate-400">Tài liệu</div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
-                                      <div className="px-4 pb-4">
-                                        <button className={`w-full py-2.5 rounded-[12px] flex items-center justify-center transition-colors shadow-sm ${type.btnBg}`}>
+                                      <div className="px-2.5 pb-2.5">
+                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg}`}>
                                           <i className="fa fa-arrow-right"></i>
                                         </button>
                                       </div>
                                     </div>
                                   ))}
                                 </div>
-                                <div className="mt-6 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl px-4 py-3 flex items-center gap-3">
-                                  <i className="fa fa-circle-info text-blue-500 text-base"></i>
-                                  <span className="text-[13px] text-slate-500 font-medium">Click vào danh mục để xem chi tiết và quản lý hồ sơ, tài liệu.</span>
+                                <div className="mt-3 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl px-3 py-2 flex items-center gap-2">
+                                  <i className="fa fa-circle-info text-blue-500 text-sm"></i>
+                                  <span className="text-[11px] text-slate-500 font-medium">Click vào danh mục để xem chi tiết và quản lý hồ sơ, tài liệu.</span>
                                 </div>
                               </>
                             ) : (
-                              <div className="flex flex-col gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                                <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                                  <button onClick={() => setSelectedVisaType(null)} className="text-slate-600 hover:text-cyan-700 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center gap-2">
-                                    <i className="fa fa-arrow-left"></i> Trở lại
+                              <div className="flex flex-col gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                                <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                                  <button 
+                                    onClick={() => setSelectedVisaType(null)} 
+                                    className="text-slate-600 hover:text-cyan-700 bg-white border border-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-semibold shadow-sm transition-colors flex items-center gap-1"
+                                  >
+                                    <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
                                   </button>
-                                  <span className="font-bold text-slate-800 text-sm">Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}</span>
+                                  <span className="font-bold text-slate-800 text-xs">
+                                    Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
+                                  </span>
                                 </div>
                                 {renderProductGrid(visiblePrograms)}
                                 {renderShowMoreBtn(hasMore, hiddenCount)}
@@ -2600,95 +2616,90 @@ const handleEditCategory = (cat) => {
                       );
                     }
 
-                    // STANDARD CATEGORY RENDERING
+                    // ============ STANDARD CATEGORY ============
                     const totalCatDocs = displayPrograms.reduce((sum, prog) => sum + (prog.brochure ? 1 : 0) + (prog.documents?.length || 0), 0);
                     const defaultCoverImage = "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80";
+
                     return (
-                      <div key={cat.id} className="mb-8">
-                        {/* Category Header — unified design */}
-                        <div className="relative bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] rounded-t-[24px] rounded-b-[16px] overflow-hidden border border-blue-100 p-8 flex flex-col md:flex-row justify-between mb-6 shadow-sm">
-                          {/* Right side: cover image with overlay */}
-                          <div className="absolute top-0 right-0 bottom-0 w-1/2 bg-gradient-to-l from-blue-100/40 to-transparent pointer-events-none">
+                      <div key={cat.id} className="mb-6 relative z-0">
+                        <div className="bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] rounded-t-[20px] rounded-b-[12px] border border-blue-100 p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
+                          <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-gradient-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
                             <img
                               src={cat.coverImageUrl || defaultCoverImage}
                               alt={cat.name}
-                              className="absolute right-0 w-[400px] h-[150%] object-cover mix-blend-overlay opacity-30 -rotate-12 translate-x-10 -translate-y-10"
+                              className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10"
                             />
                           </div>
 
                           <div className="relative z-10 w-full">
-                            <div className="flex justify-between items-start mb-6 w-full">
-                              {/* Left: Icon + name + description */}
-                              <div className="flex items-start gap-4">
-                                <div className="w-[64px] h-[64px] rounded-[20px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
-                                  <i className="fa fa-layer-group text-white text-3xl"></i>
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
+                              <div className="flex items-start gap-3">
+                                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
+                                  <i className="fa fa-layer-group text-white text-xl"></i>
                                 </div>
-                                <div>
-                                  <div className="flex items-center gap-3 mb-1">
-                                    <h3 className="text-[32px] font-extrabold text-slate-800 m-0 leading-none tracking-tight">{cat.name}</h3>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 m-0 leading-none tracking-tight">{cat.name}</h3>
                                   </div>
                                   {cat.description && (
-                                    <p className="text-slate-500 text-[14px] m-0 max-w-xl leading-relaxed">{cat.description}</p>
+                                    <p className="text-slate-500 text-xs md:text-sm m-0 max-w-xl leading-relaxed line-clamp-2">{cat.description}</p>
                                   )}
                                 </div>
                               </div>
 
-                              {/* Right: action buttons */}
                               {canManageProducts && (
-                                <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
                                   <button
                                     type="button"
                                     onClick={() => handleEditCategory(cat)}
-                                    className="bg-white border border-slate-200 text-[#ea580c] hover:bg-orange-50 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                                    className="bg-white border border-slate-200 text-[#ea580c] hover:bg-orange-50 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                   >
-                                    <i className="fa fa-pen"></i> Sửa danh mục
+                                    <i className="fa fa-pen text-[10px]"></i> Sửa
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                                    className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors"
+                                    className="bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                   >
                                     {cat.status === "inactive" || cat.status === "hidden" ? (
-                                      <><i className="fa fa-eye"></i> Hiện</>
+                                      <><i className="fa fa-eye text-[10px]"></i> Hiện</>
                                     ) : (
-                                      <><i className="fa fa-eye-slash"></i> Ẩn</>
+                                      <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>
                                     )}
                                   </button>
                                 </div>
                               )}
                             </div>
 
-                            {/* Stat boxes */}
-                            <div className="flex gap-4 flex-wrap">
-                              <div className="bg-white rounded-2xl p-4 flex items-center gap-4 min-w-[200px] shadow-sm border border-slate-100/50">
-                                <div className="w-12 h-12 rounded-xl bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center text-xl">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="bg-white rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50">
+                                <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] text-[#16a34a] flex items-center justify-center text-sm flex-shrink-0">
                                   <i className="fa fa-box-open"></i>
                                 </div>
                                 <div>
-                                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tổng sản phẩm</div>
-                                  <div className="text-[26px] font-bold text-slate-800 leading-none mb-0.5">{displayPrograms.length}</div>
-                                  <div className="text-[12px] text-slate-500">Sản phẩm</div>
+                                  <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Sản phẩm</div>
+                                  <div className="text-lg font-bold text-slate-800 leading-none">{displayPrograms.length}</div>
                                 </div>
                               </div>
-                              <div className="bg-white rounded-2xl p-4 flex items-center gap-4 min-w-[200px] shadow-sm border border-slate-100/50">
-                                <div className="w-12 h-12 rounded-xl bg-[#eff6ff] text-[#2563eb] flex items-center justify-center text-xl">
+                              <div className="bg-white rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50">
+                                <div className="w-8 h-8 rounded-lg bg-[#eff6ff] text-[#2563eb] flex items-center justify-center text-sm flex-shrink-0">
                                   <i className="fa fa-file-lines"></i>
                                 </div>
                                 <div>
-                                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tổng tài liệu</div>
-                                  <div className="text-[26px] font-bold text-slate-800 leading-none mb-0.5">{totalCatDocs}</div>
-                                  <div className="text-[12px] text-slate-500">Tài liệu</div>
+                                  <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Tài liệu</div>
+                                  <div className="text-lg font-bold text-slate-800 leading-none">{totalCatDocs}</div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Product cards section below the header */}
-                        <div className="bg-white rounded-[24px] border border-slate-100 p-5 shadow-sm">
-                          {renderProductGrid(visiblePrograms)}
-                          {renderShowMoreBtn(hasMore, hiddenCount)}
-                        </div>
+                        {displayPrograms.length > 0 && (
+                          <div className="bg-white rounded-[20px] border border-slate-100 p-4 shadow-sm relative z-0">
+                            {renderProductGrid(visiblePrograms)}
+                            {renderShowMoreBtn(hasMore, hiddenCount)}
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -2763,7 +2774,6 @@ const handleEditCategory = (cat) => {
         {/* PRODUCT DETAIL VIEW */}
         {viewMode === "detail" && selectedProduct && (
           <div className="bg-white app-dark:!bg-[#252525] rounded-2xl shadow-sm border border-slate-100 app-dark:!border-white/8">
-
             {/* HERO BANNER */}
             <div className="relative overflow-hidden rounded-t-2xl" style={{ minHeight: "220px", background: `linear-gradient(135deg, ${selectedProduct.gradientFrom || "#0d2040"} 0%, ${selectedProduct.gradientTo || "#1a3a6b"} 100%)`, transform: "translateZ(0)" }}>
               {selectedProduct.image ? (
@@ -2839,10 +2849,8 @@ const handleEditCategory = (cat) => {
             {/* CONTENT */}
             <div className="p-6 md:p-8">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
                 {/* LEFT: Main content */}
                 <div className="lg:col-span-2 space-y-7">
-
                   {selectedProduct.detailDescription && (
                     <div>
                       <p className="text-slate-600 app-dark:!text-slate-300 text-sm leading-relaxed whitespace-pre-line">
@@ -2908,16 +2916,12 @@ const handleEditCategory = (cat) => {
 
                 {/* RIGHT: Sidebar */}
                 <div className="space-y-4">
-
-
-
                   <div className="border border-slate-100 app-dark:!border-white/8 rounded-2xl overflow-hidden">
                     <div className="bg-slate-50 app-dark:!bg-white/5 px-4 py-3 border-b border-slate-100 app-dark:!border-white/8 flex items-center gap-2">
                       <i className="fa fa-folder-open text-cyan-900 app-dark:!text-cyan-400"></i>
                       <span className="font-bold text-slate-700 app-dark:!text-slate-200 text-sm">Tài liệu & Brochure</span>
                     </div>
                     <div className="p-4 space-y-4">
-
                       <div>
                         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Brochure chính thức</p>
                         {selectedProduct.brochure ? (
@@ -2990,7 +2994,6 @@ const handleEditCategory = (cat) => {
                     <i className="fa fa-paper-plane"></i> Quan tâm sản phẩm
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -3063,117 +3066,110 @@ const handleEditCategory = (cat) => {
                         </select>
                       </div>
 
-<div>
-  <label className="block font-semibold text-xs text-slate-500 mb-1.5">
-    Ảnh bìa danh mục
-  </label>
+                      <div>
+                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Ảnh bìa danh mục</label>
+                        {formCategory.coverImageUrl && (
+                          <div className="mb-3 relative group">
+                            <img
+                              src={formCategory.coverImageUrl}
+                              alt="Cover"
+                              className="w-full h-40 object-cover rounded-xl border border-slate-200"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm transition-colors shadow-lg opacity-0 group-hover:opacity-100"
+                              onClick={handleRemoveImage}
+                            >
+                              <i className="fa fa-times"></i>
+                            </button>
+                          </div>
+                        )}
 
-  {/* Preview ảnh */}
-  {formCategory.coverImageUrl && (
-    <div className="mb-3 relative group">
-      <img
-        src={formCategory.coverImageUrl}
-        alt="Cover"
-        className="w-full h-40 object-cover rounded-xl border border-slate-200"
-        onError={(e) => {
-          e.target.style.display = 'none';
-        }}
-      />
-      <button
-        type="button"
-        className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm transition-colors shadow-lg opacity-0 group-hover:opacity-100"
-        onClick={handleRemoveImage}
-      >
-        <i className="fa fa-times"></i>
-      </button>
-    </div>
-  )}
+                        {!formCategory.coverImageUrl && (
+                          <div className="mb-3 border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-400 transition-colors">
+                            <i className="fa fa-image text-3xl text-slate-300 mb-2"></i>
+                            <p className="text-sm text-slate-500">Chưa có ảnh</p>
+                            <p className="text-xs text-slate-400 mt-1">Upload từ máy hoặc nhập link</p>
+                          </div>
+                        )}
 
-  {!formCategory.coverImageUrl && (
-    <div className="mb-3 border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-400 transition-colors">
-      <i className="fa fa-image text-3xl text-slate-300 mb-2"></i>
-      <p className="text-sm text-slate-500">Chưa có ảnh</p>
-      <p className="text-xs text-slate-400 mt-1">Upload từ máy hoặc nhập link</p>
-    </div>
-  )}
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <label className="flex-1 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-cyan-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer text-center">
+                              <i className="fa fa-upload mr-2"></i>
+                              Chọn ảnh từ máy
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                              />
+                            </label>
+                            <span className="text-xs text-slate-400">(Tối đa 500KB)</span>
+                          </div>
 
-  {/* Upload từ máy + Input URL */}
-  <div className="flex flex-col gap-3">
-    {/* Upload từ máy */}
-    <div className="flex items-center gap-3">
-      <label className="flex-1 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 text-cyan-700 text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors cursor-pointer text-center">
-        <i className="fa fa-upload mr-2"></i>
-        Chọn ảnh từ máy
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-      </label>
-      <span className="text-xs text-slate-400">(Tối đa 500KB)</span>
-    </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <hr className="flex-1 border-slate-200" />
+                              <span className="text-xs text-slate-400 font-medium">HOẶC</span>
+                              <hr className="flex-1 border-slate-200" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Dán link ảnh từ Internet (Unsplash, Google...)"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                              value={formCategory.coverImageUrl?.startsWith('data:') ? '' : (formCategory.coverImageUrl || '')}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                let finalValue = value;
+                                if (value && !/^https?:\/\//i.test(value) && !value.startsWith('data:')) {
+                                  if (value.includes('.') && value.length > 3) {
+                                    finalValue = 'https://' + value;
+                                  }
+                                }
+                                setFormCategory(prev => ({ ...prev, coverImageUrl: finalValue }));
+                              }}
+                            />
+                          </div>
+                        </div>
 
-    {/* Hoặc nhập URL */}
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <hr className="flex-1 border-slate-200" />
-        <span className="text-xs text-slate-400 font-medium">HOẶC</span>
-        <hr className="flex-1 border-slate-200" />
-      </div>
-      <input
-        type="text"
-        placeholder="Dán link ảnh từ Internet (Unsplash, Google...)"
-        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
-        value={formCategory.coverImageUrl?.startsWith('data:') ? '' : (formCategory.coverImageUrl || '')}
-        onChange={(e) => {
-          const value = e.target.value;
-          let finalValue = value;
-          if (value && !/^https?:\/\//i.test(value) && !value.startsWith('data:')) {
-            if (value.includes('.') && value.length > 3) {
-              finalValue = 'https://' + value;
-            }
-          }
-          setFormCategory(prev => ({ ...prev, coverImageUrl: finalValue }));
-        }}
-      />
-    </div>
-  </div>
+                        <div className="mt-4">
+                          <p className="text-[10px] text-slate-400 mb-2">Chọn ảnh gợi ý nhanh:</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=800&q=80',
+                              'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
+                            ].map((url, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                                  formCategory.coverImageUrl === url
+                                    ? 'border-cyan-500 ring-2 ring-cyan-500/20'
+                                    : 'border-slate-200 hover:border-cyan-300'
+                                }`}
+                                onClick={() => {
+                                  setFormCategory(prev => ({ ...prev, coverImageUrl: url }));
+                                }}
+                              >
+                                <img src={url} alt="suggestion" className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-  {/* Ảnh gợi ý nhanh */}
-  <div className="mt-4">
-    <p className="text-[10px] text-slate-400 mb-2">Chọn ảnh gợi ý nhanh:</p>
-    <div className="flex gap-2 flex-wrap">
-      {[
-        'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
-      ].map((url, index) => (
-        <button
-          key={index}
-          type="button"
-          className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-            formCategory.coverImageUrl === url
-              ? 'border-cyan-500 ring-2 ring-cyan-500/20'
-              : 'border-slate-200 hover:border-cyan-300'
-          }`}
-          onClick={() => {
-            setFormCategory(prev => ({ ...prev, coverImageUrl: url }));
-          }}
-        >
-          <img src={url} alt="suggestion" className="w-full h-full object-cover" />
-        </button>
-      ))}
-    </div>
-  </div>
+                        <p className="text-[10px] text-slate-400 mt-3">
+                          <i className="fa fa-info-circle mr-1"></i>
+                          Ảnh được lưu dưới dạng Base64 hoặc URL. Nên dùng ảnh nhỏ hơn 500KB cho Base64.
+                        </p>
+                      </div>
 
-  <p className="text-[10px] text-slate-400 mt-3">
-    <i className="fa fa-info-circle mr-1"></i>
-    Ảnh được lưu dưới dạng Base64 hoặc URL. Nên dùng ảnh nhỏ hơn 500KB cho Base64.
-  </p>
-</div>
                       <div>
                         <label className="block font-semibold text-xs text-slate-500 mb-1.5">Mô tả tóm tắt</label>
                         <textarea
