@@ -150,17 +150,11 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
   const [validationError, setValidationError] = useState("");
   const [leadCode, setLeadCode] = useState("");
 
-  // CCCD Photo upload states
+  // CCCD Photo states
   const [cccdFrontFile, setCccdFrontFile] = useState(null);
   const [cccdBackFile, setCccdBackFile] = useState(null);
   const [cccdFrontPreview, setCccdFrontPreview] = useState("");
   const [cccdBackPreview, setCccdBackPreview] = useState("");
-  const [cccdFrontUrl, setCccdFrontUrl] = useState("");
-  const [cccdBackUrl, setCccdBackUrl] = useState("");
-  const [isUploadingFront, setIsUploadingFront] = useState(false);
-  const [isUploadingBack, setIsUploadingBack] = useState(false);
-  const [uploadErrorFront, setUploadErrorFront] = useState("");
-  const [uploadErrorBack, setUploadErrorBack] = useState("");
 
   const [submittedInvalidFields, setSubmittedInvalidFields] = useState([]);
 
@@ -180,44 +174,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     return isDark
       ? "border-slate-700 hover:border-cyan-500"
       : "border-slate-200 hover:border-cyan-500";
-  };
-
-  // Upload image helper function
-  const uploadImage = async (file, setUrl, setIsUploading, setError) => {
-    setError("");
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/documents/upload`, {
-        method: "POST",
-        headers: {
-          ...getAuthHeaders(),
-        },
-        body: formData,
-      });
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.message || "Không thể tải file lên.");
-      }
-
-      const data = payload?.data ?? payload ?? {};
-      const fileUrl = data.fileUrl || data.url || data.webViewLink || "";
-
-      if (!fileUrl) {
-        throw new Error("Không nhận được đường link phản hồi từ server.");
-      }
-
-      setUrl(fileUrl);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Lỗi tải ảnh lên.");
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   // Sync program defaults when category changes
@@ -266,8 +222,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     if (!formData.email.trim()) invalidFields.push("email");
     if (!formData.dob) invalidFields.push("dob");
     if (!formData.passport.trim()) invalidFields.push("passport");
-    if (!cccdFrontUrl) invalidFields.push("cccdFront");
-    if (!cccdBackUrl) invalidFields.push("cccdBack");
+    if (!cccdFrontFile) invalidFields.push("cccdFront");
+    if (!cccdBackFile) invalidFields.push("cccdBack");
     if (!formData.address.trim()) invalidFields.push("address");
 
     setSubmittedInvalidFields(invalidFields);
@@ -297,15 +253,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       return;
     }
 
-    if (isUploadingFront || isUploadingBack) {
-      setValidationError("Vui lòng đợi tải ảnh CCCD lên hoàn tất.");
-      const formContainer = document.querySelector("form");
-      if (formContainer) {
-        formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      return;
-    }
-
     setValidationError("");
     setIsSubmitting(true);
 
@@ -313,22 +260,21 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     const noteParts = [];
     if (formData.dob) noteParts.push(`Ngày sinh: ${formData.dob}`);
     if (formData.passport) noteParts.push(`CCCD/Hộ chiếu: ${formData.passport}`);
-    if (cccdFrontUrl) noteParts.push(`CCCD Mặt trước: ${cccdFrontUrl}`);
-    if (cccdBackUrl) noteParts.push(`CCCD Mặt sau: ${cccdBackUrl}`);
     if (formData.address) noteParts.push(`Địa chỉ: ${formData.address}`);
     if (formData.notes) noteParts.push(`Ghi chú: ${formData.notes}`);
     const combinedNote = noteParts.join(" | ");
 
-    // Prepare payload
-    const payload = {
-      customerName: formData.fullName.trim(),
-      phone: normalizePhone(formData.phone),
-      email: formData.email.trim(),
-      source: "Nộp hồ sơ online",
-      productInterest: activeProgram?.name || "Nộp hồ sơ online",
-      countryInterest: mapCountryInterest(selectedCatId, selectedProgId),
-      note: combinedNote
-    };
+    // Prepare multipart/form-data payload
+    const payload = new FormData();
+    payload.append("customerName", formData.fullName.trim());
+    payload.append("phone", normalizePhone(formData.phone));
+    payload.append("email", formData.email.trim());
+    payload.append("source", "Nộp hồ sơ online");
+    payload.append("productInterest", activeProgram?.name || "Nộp hồ sơ online");
+    payload.append("countryInterest", mapCountryInterest(selectedCatId, selectedProgId));
+    payload.append("note", combinedNote);
+    payload.append("cccdFront", cccdFrontFile);
+    payload.append("cccdBack", cccdBackFile);
 
     const abortController = new AbortController();
     const requestTimeout = window.setTimeout(() => {
@@ -339,11 +285,10 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       const response = await fetch(`${API_BASE_URL}/leads`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           ...authHeaders
         },
         signal: abortController.signal,
-        body: JSON.stringify(payload)
+        body: payload
       });
 
       const data = await response.json().catch(() => ({}));
@@ -402,10 +347,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     setCccdBackFile(null);
     setCccdFrontPreview("");
     setCccdBackPreview("");
-    setCccdFrontUrl("");
-    setCccdBackUrl("");
-    setUploadErrorFront("");
-    setUploadErrorBack("");
     setSubmittedInvalidFields([]);
   };
 
@@ -606,12 +547,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                         onClick={() => document.getElementById("cccd-front-input").click()}
                         id="cccd-front-input-box"
                       >
-                        {isUploadingFront ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <i className="fa fa-spinner animate-spin text-[#0D919C] text-lg"></i>
-                            <span className="text-[10px] text-slate-400">Đang tải mặt trước...</span>
-                          </div>
-                        ) : cccdFrontPreview ? (
+                        {cccdFrontPreview ? (
                           <>
                             <img src={cccdFrontPreview} alt="Mặt trước" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/45 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center z-10">
@@ -622,7 +558,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                                   if (cccdFrontPreview) URL.revokeObjectURL(cccdFrontPreview);
                                   setCccdFrontFile(null);
                                   setCccdFrontPreview("");
-                                  setCccdFrontUrl("");
                                 }}
                                 className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 text-xs transition-colors shadow-md border-0 cursor-pointer"
                               >
@@ -630,7 +565,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                               </button>
                             </div>
                             <span className="absolute bottom-2 left-2 bg-emerald-500/90 text-white px-2 py-0.5 rounded-md text-[8px] font-bold shadow-sm">
-                              ✓ Đã tải lên
+                              ✓ Đã chọn
                             </span>
                           </>
                         ) : (
@@ -655,13 +590,9 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                             setCccdFrontFile(file);
                             setCccdFrontPreview(URL.createObjectURL(file));
                             setSubmittedInvalidFields(prev => prev.filter(f => f !== "cccdFront"));
-                            uploadImage(file, setCccdFrontUrl, setIsUploadingFront, setUploadErrorFront);
                           }
                         }}
                       />
-                      {uploadErrorFront && (
-                        <span className="text-[10px] text-red-500 font-semibold">{uploadErrorFront}</span>
-                      )}
                     </div>
 
                     {/* Mặt sau */}
@@ -672,12 +603,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                         onClick={() => document.getElementById("cccd-back-input").click()}
                         id="cccd-back-input-box"
                       >
-                        {isUploadingBack ? (
-                          <div className="flex flex-col items-center gap-1">
-                            <i className="fa fa-spinner animate-spin text-[#0D919C] text-lg"></i>
-                            <span className="text-[10px] text-slate-400">Đang tải mặt sau...</span>
-                          </div>
-                        ) : cccdBackPreview ? (
+                        {cccdBackPreview ? (
                           <>
                             <img src={cccdBackPreview} alt="Mặt sau" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/45 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center z-10">
@@ -688,7 +614,6 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                                   if (cccdBackPreview) URL.revokeObjectURL(cccdBackPreview);
                                   setCccdBackFile(null);
                                   setCccdBackPreview("");
-                                  setCccdBackUrl("");
                                 }}
                                 className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 text-xs transition-colors shadow-md border-0 cursor-pointer"
                               >
@@ -696,7 +621,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                               </button>
                             </div>
                             <span className="absolute bottom-2 left-2 bg-emerald-500/90 text-white px-2 py-0.5 rounded-md text-[8px] font-bold shadow-sm">
-                              ✓ Đã tải lên
+                              ✓ Đã chọn
                             </span>
                           </>
                         ) : (
@@ -721,13 +646,9 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                             setCccdBackFile(file);
                             setCccdBackPreview(URL.createObjectURL(file));
                             setSubmittedInvalidFields(prev => prev.filter(f => f !== "cccdBack"));
-                            uploadImage(file, setCccdBackUrl, setIsUploadingBack, setUploadErrorBack);
                           }
                         }}
                       />
-                      {uploadErrorBack && (
-                        <span className="text-[10px] text-red-500 font-semibold">{uploadErrorBack}</span>
-                      )}
                     </div>
                   </div>
                 </div>
