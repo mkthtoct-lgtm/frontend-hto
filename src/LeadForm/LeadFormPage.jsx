@@ -241,7 +241,7 @@ export const LeadFormPage = () => {
           </p>
         </div>
 
-        <div className="lead-completion-card">
+        <div id="lead-form-completion-card" className="lead-completion-card">
           <span>Mức độ hoàn thiện</span>
           <strong>{completionPercent}%</strong>
           <div className="progress lead-progress">
@@ -263,7 +263,7 @@ export const LeadFormPage = () => {
 
       <div className="row g-3 align-items-start">
         <div className="col-12 col-xl-8">
-          <form className="lead-form-card" onSubmit={handleSubmit}>
+          <form id="lead-form-main-card" className="lead-form-card" onSubmit={handleSubmit}>
             <div className="lead-form-section">
               <h6>Thông tin khách hàng</h6>
 
@@ -370,7 +370,7 @@ export const LeadFormPage = () => {
                 Làm mới
               </button>
 
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
+              <button id="lead-form-submit-btn" type="submit" className="btn btn-primary" disabled={submitting}>
                 {submitting ? "Đang gửi..." : "Gửi lead"}
               </button>
             </div>
@@ -378,7 +378,7 @@ export const LeadFormPage = () => {
         </div>
 
         <div className="col-12 col-xl-4">
-          <div className="lead-guide-panel">
+          <div id="lead-form-guide-panel" className="lead-guide-panel">
             <span className="lead-form-eyebrow">CRM temporary fields</span>
             <h5 className="fw-bold text-body-emphasis mb-3">Field CRM tạm đang gửi</h5>
 

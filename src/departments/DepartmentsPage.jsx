@@ -327,7 +327,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý phòng ban</h4>
        
         </div>
-        <button className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
+        <button id="departments-create-btn" className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
           <PlusIcon />
           Thêm phòng ban
         </button>
@@ -357,7 +357,7 @@ export const DepartmentsPage = ({ currentUser }) => {
       )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="departments-list-card" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách phòng ban</span>
             <span className="badge text-bg-light">{filteredDepartments.length} phòng ban</span>
@@ -512,7 +512,7 @@ export const DepartmentsPage = ({ currentUser }) => {
           )}
         </section>
 
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="departments-members-card" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom">
             <div className="d-flex justify-content-between align-items-start gap-2">
               <div>

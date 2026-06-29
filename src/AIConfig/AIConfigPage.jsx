@@ -228,7 +228,7 @@ export const AIConfigPage = ({ currentUser }) => {
               </div>
             </div>
 
-            <div className="ai-group-grid">
+            <div id="aiconfig-group-grid" className="ai-group-grid">
               {loading ? (
                 <div className="text-center py-5">
                   <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
@@ -262,7 +262,7 @@ export const AIConfigPage = ({ currentUser }) => {
         </div>
 
         <div className="col-12 col-xl-4">
-          <div className="ai-config-side-panel">
+          <div id="aiconfig-side-panel" className="ai-config-side-panel">
             <span className="ai-config-eyebrow">Runtime setting</span>
             <h5 className="fw-bold text-body-emphasis mb-3">Thiết lập AI</h5>
 
@@ -319,7 +319,7 @@ export const AIConfigPage = ({ currentUser }) => {
               <div><span>Tài liệu khả dụng</span><strong>{totalSelectedDocuments}</strong></div>
             </div>
 
-            <button className="btn btn-primary w-100" onClick={handleSave} disabled={saving}>
+            <button id="aiconfig-save-btn" className="btn btn-primary w-100" onClick={handleSave} disabled={saving}>
               {saving ? "Đang lưu..." : "Lưu cấu hình AI"}
             </button>
           </div>

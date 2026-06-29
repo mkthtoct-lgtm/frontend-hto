@@ -1664,7 +1664,7 @@ export const DocumentsPage = ({ currentUser }) => {
         )}
 
         <div className={canManageCategories ? "col-xxl-8" : "col-12"}>
-          <div className="card">
+          <div id="documents-categories-card" className="card">
             <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
               <h6 className="card-title mb-0">Danh mục tài liệu</h6>
               <span className="badge bg-primary-subtle text-primary">
@@ -1809,7 +1809,7 @@ export const DocumentsPage = ({ currentUser }) => {
       </div>
 
       {canUpload && (
-        <div className="card mt-3">
+        <div id="documents-upload-card" className="card mt-3">
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Upload tài liệu</h6>
@@ -2056,7 +2056,7 @@ export const DocumentsPage = ({ currentUser }) => {
       )}
 
       {canConfigurePermissions && (
-        <div className="card mt-3" ref={permissionConfigRef}>
+        <div id="documents-permission-card" className="card mt-3" ref={permissionConfigRef}>
           <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <h6 className="card-title mb-1">Cấu hình quyền tài liệu</h6>
@@ -2667,7 +2667,7 @@ export const DocumentsPage = ({ currentUser }) => {
         </div>
       )}
 
-      <div className="card mt-3">
+      <div id="documents-list-card" className="card mt-3">
         <div className="card-header border-0 pb-0 d-flex justify-content-between align-items-center">
           <div>
             <h6 className="card-title mb-0">Danh sách tài liệu</h6>
@@ -2677,7 +2677,7 @@ export const DocumentsPage = ({ currentUser }) => {
               </div>
             )}
           </div>
-          <div className="min-w-[220px]">
+          <div id="documents-category-filter" className="min-w-[220px]">
             <TailwindDropdown
               onChange={setActiveCategory}
               options={[

@@ -110,6 +110,8 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         roleId: responseData.user.roleId,
         departmentId: responseData.user.departmentId,
         role: normalizeRole(responseData.user.roleId),
+        hasSeenAdminTutorial: responseData.user.hasSeenAdminTutorial,
+        seenTours: responseData.user.seenTours || [],
       };
 
       onLogin(user);

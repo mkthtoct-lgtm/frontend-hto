@@ -192,7 +192,7 @@ export function AccountingPlaceholderPage() {
         </div>
 
         <div className="d-flex flex-wrap gap-2">
-          <button className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={() => alert("Đang đồng bộ dữ liệu với hệ thống CRM...")}>
+          <button id="nghiepvu-sync-crm-btn" className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={() => alert("Đang đồng bộ dữ liệu với hệ thống CRM...")}>
             <RefreshCwIcon />
             Đồng bộ CRM
           </button>
@@ -204,7 +204,7 @@ export function AccountingPlaceholderPage() {
       </div>
 
       {/* Metrics Row */}
-      <div className="row g-2 g-xl-3 mb-3">
+      <div id="nghiepvu-metrics-grid" className="row g-2 g-xl-3 mb-3">
         {metrics.map((metric) => (
           <div className="col-12 col-sm-6 col-xl-3" key={metric.label}>
             <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", backgroundColor: `${metric.accent}15` }}>
@@ -235,7 +235,7 @@ export function AccountingPlaceholderPage() {
       <div className="row g-2 g-xl-3 align-items-stretch">
         {/* Deal List Column */}
         <div className="col-12 col-xl-8">
-          <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <section id="nghiepvu-empty-state" className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
             <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
               <h6 className="fw-bold text-body-emphasis mb-0">Danh sách Deal cần đối soát (Dữ liệu mẫu)</h6>
               <span className="badge bg-primary-subtle text-primary px-2 py-1">{MOCK_DEALS.length} Deal</span>
@@ -349,7 +349,7 @@ export function AccountingPlaceholderPage() {
 
         {/* Right Info Column */}
         <div className="col-12 col-xl-4">
-          <section className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <section id="nghiepvu-conditions-card" className="card border-0 h-100" style={{ borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
             <div className="card-header bg-transparent border-0 p-3 pb-0">
               <h6 className="fw-bold text-body-emphasis mb-0">Điều kiện hiển thị & ghi nhận</h6>
             </div>

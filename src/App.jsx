@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { Footer } from "./components/Footer";
@@ -29,9 +29,480 @@ import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
 import { ProfilePage } from "./profile/ProfilePage";
 import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage";
-import { AUTH_EVENTS } from "./auth/session";
+import { AUTH_EVENTS, authFetch, getAuthHeaders } from "./auth/session";
 import { SupportPage } from "./components/SupportPage";
 import { SystemSettingsPage } from "./systemSettings/SystemSettingsPage";
+import { API_BASE_URL } from "./config/api";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+
+// ─── Cấu hình tour hướng dẫn riêng biệt cho từng trang ────────────────────────
+// Mỗi entry: { anchorId, steps[] } - anchorId là id phần tử đầu tiên dùng để kiểm tra DOM đã sẵn sàng
+const PAGE_TOURS = {
+  // Trang Sản Phẩm
+  products: {
+    anchorId: "products-filter-section",
+    steps: [
+      {
+        element: "#products-stats-grid",
+        popover: {
+          title: "Tổng Quan Sản Phẩm",
+          description: "Bảng thống kê nhanh: tổng số sản phẩm, số danh mục đang hoạt động và số chương trình đang mở.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#products-filter-section",
+        popover: {
+          title: "Tìm Kiếm & Lọc",
+          description: "Dùng ô tìm kiếm và các bộ lọc để nhanh chóng tìm đúng sản phẩm cần quản lý.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#products-add-category-btn",
+        popover: {
+          title: "Thêm Danh Mục Mới",
+          description: "Bấm đây để tạo danh mục sản phẩm mới (du học, ngôn ngữ, visa, định cư...).",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#tour-first-program-card",
+        popover: {
+          title: "Thẻ Sản Phẩm / Chương Trình",
+          description: "Mỗi thẻ đại diện cho một chương trình/gói dịch vụ. Bấm vào thẻ để xem chi tiết, chỉnh sửa thông tin, brochure và tài liệu tư vấn nội bộ.",
+          side: "right", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Quy Trình Nghiệp Vụ
+  nghiepvu: {
+    anchorId: "nghiepvu-sync-crm-btn",
+    steps: [
+      {
+        element: "#nghiepvu-sync-crm-btn",
+        popover: {
+          title: "Đồng Bộ Dữ Liệu CRM",
+          description: "Khi có dữ liệu từ CRM, bấm đây để đồng bộ hồ sơ khách hàng, người phụ trách và trạng thái ký hợp đồng.",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#nghiepvu-metrics-grid",
+        popover: {
+          title: "Chỉ Số Nghiệp Vụ",
+          description: "Hoa hồng dự kiến, doanh thu đã ghi nhận, hồ sơ đủ điều kiện và trạng thái đối soát kế toán sẽ hiển thị ở đây khi có dữ liệu thực.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#nghiepvu-empty-state",
+        popover: {
+          title: "Chờ Dữ Liệu Kế Toán",
+          description: "Bảng hoa hồng chưa có số liệu. Hệ thống cần hồ sơ CRM hợp lệ và khoản thu đã được kế toán xác nhận thì mới tính được.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#nghiepvu-conditions-card",
+        popover: {
+          title: "Điều Kiện Ghi Nhận Hoa Hồng",
+          description: "3 bước cần đủ: dữ liệu CRM → kế toán xác nhận khoản thu → đối soát hoàn tất. Khi đủ điều kiện, hệ thống tự động hiển thị hoa hồng của bạn.",
+          side: "left", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Hỗ Trợ / Gửi Lead
+  hotro: {
+    anchorId: "lead-form-completion-card",
+    steps: [
+      {
+        element: "#lead-form-completion-card",
+        popover: {
+          title: "Tiến Độ Hoàn Thiện Form",
+          description: "Chỉ số % hiển thị mức độ bạn đã điền đầy đủ thông tin khách hàng. Hãy đảm bảo đạt tối thiểu 80% trước khi gửi.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#lead-form-main-card",
+        popover: {
+          title: "Form Nhập Thông Tin Lead",
+          description: "Điền đầy đủ thông tin khách hàng: tên, số điện thoại, sản phẩm quan tâm, kênh nguồn và ghi chú để CRM xử lý chính xác.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#lead-form-guide-panel",
+        popover: {
+          title: "Preview API Payload",
+          description: "Khung bên phải cho bạn xem trước dữ liệu JSON sẽ được gửi lên hệ thống CRM, giúp kiểm tra thông tin trước khi gửi.",
+          side: "left", align: "center",
+        },
+      },
+      {
+        element: "#lead-form-submit-btn",
+        popover: {
+          title: "Gửi Lead Cho Khách Hàng",
+          description: "Sau khi điền đủ thông tin, bấm đây để gửi lead sang CRM. Hệ thống sẽ thông báo kết quả ngay lập tức.",
+          side: "top", align: "end",
+        },
+      },
+    ],
+  },
+
+  // Trang Tin Tức & Sự Kiện
+  news: {
+    anchorId: "news-search-input",
+    steps: [
+      {
+        element: "#news-search-input",
+        popover: {
+          title: "Tìm Kiếm Tin Tức",
+          description: "Nhập từ khóa để tìm nhanh bài viết theo tiêu đề, nội dung hoặc thẻ tag.",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#news-type-filter-group",
+        popover: {
+          title: "Lọc Theo Loại Bài Viết",
+          description: "Chọn xem tất cả, chỉ Tin tức, hoặc chỉ Sự kiện để thu hẹp danh sách bài viết phù hợp.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#news-articles-list",
+        popover: {
+          title: "Danh Sách Bài Viết",
+          description: "Tất cả bài viết được hiển thị ở đây. Bấm vào một bài để đọc chi tiết hoặc chia sẻ link cho đồng nghiệp.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#news-sidebar",
+        popover: {
+          title: "Tin Nổi Bật & Lịch Sự Kiện",
+          description: "Thanh bên hiển thị tin mới nhất, bài đọc nhiều nhất và lịch các sự kiện sắp diễn ra của HTO.",
+          side: "left", align: "start",
+        },
+      },
+    ],
+  },
+
+  // Trang Thông Báo Nội Bộ
+  notifications: {
+    anchorId: "notifications-unread-badge",
+    steps: [
+      {
+        element: "#notifications-unread-badge",
+        popover: {
+          title: "Thông Báo Chưa Đọc",
+          description: "Badge này hiển thị số lượng thông báo bạn chưa đọc. Bấm \"Làm mới\" để cập nhật danh sách.",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#notifications-create-panel",
+        popover: {
+          title: "Tạo Thông Báo Mới",
+          description: "(Dành cho Admin/Quản lý) Soạn thảo và gửi thông báo nội bộ đến toàn bộ hoặc một nhóm thành viên cụ thể.",
+          side: "right", align: "start",
+        },
+      },
+      {
+        element: "#notifications-filter-group",
+        popover: {
+          title: "Lọc Thông Báo",
+          description: "Chọn xem tất cả, chỉ thông báo chưa đọc, hoặc chỉ thông báo đã đọc để quản lý hiệu quả hơn.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#notifications-list-card",
+        popover: {
+          title: "Danh Sách Thông Báo",
+          description: "Bấm vào thông báo để đọc nội dung đầy đủ. Bấm \"Đánh dấu đã đọc\" để cập nhật trạng thái.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Tài Liệu & Biểu Mẫu
+  documents: {
+    anchorId: "documents-list-card",
+    steps: [
+      {
+        element: "#documents-categories-card",
+        popover: {
+          title: "Quản Lý Danh Mục",
+          description: "Tạo và quản lý các danh mục tài liệu (hợp đồng, quy trình, biểu mẫu...). Admin có thể thêm, sửa, xóa danh mục.",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#documents-list-card",
+        popover: {
+          title: "Danh Sách Tài Liệu",
+          description: "Toàn bộ tài liệu được hiển thị ở đây. Bấm vào tài liệu để xem, tải xuống hoặc chia sẻ link.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#documents-category-filter",
+        popover: {
+          title: "Lọc Theo Danh Mục",
+          description: "Dùng dropdown để lọc chỉ hiển thị tài liệu thuộc danh mục bạn đang cần.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#documents-upload-card",
+        popover: {
+          title: "Tải Lên Tài Liệu Mới",
+          description: "Tải file từ máy tính lên hoặc dán link tài liệu ngoài (Google Drive, OneDrive...) để thêm vào kho tài nguyên.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#documents-permission-card",
+        popover: {
+          title: "Phân Quyền Tài Liệu",
+          description: "Thiết lập ai được Xem, Tải xuống và Chỉnh sửa từng tài liệu theo vai trò trong hệ thống.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Trợ Lý AI
+  aiConfig: {
+    anchorId: "aiconfig-group-grid",
+    steps: [
+      {
+        element: "#aiconfig-group-grid",
+        popover: {
+          title: "Nguồn Tri Thức AI",
+          description: "Chọn các nhóm tài liệu mà AI sẽ sử dụng để trả lời câu hỏi. Tích chọn nhóm phù hợp với phạm vi hoạt động của chatbot.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#aiconfig-side-panel",
+        popover: {
+          title: "Thiết Lập Tham Số AI",
+          description: "Điều chỉnh chế độ trả lời (chính xác/sáng tạo), ngưỡng khớp tài liệu, thông điệp fallback khi AI không tìm thấy câu trả lời.",
+          side: "left", align: "start",
+        },
+      },
+      {
+        element: "#aiconfig-save-btn",
+        popover: {
+          title: "Lưu Cấu Hình AI",
+          description: "Sau khi chọn nguồn tri thức và điều chỉnh tham số, bấm \"Lưu cấu hình AI\" để áp dụng thay đổi ngay lập tức.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang JD Công Việc
+  jobDescriptions: {
+    anchorId: "jd-search-input",
+    steps: [
+      {
+        element: "#jd-search-input",
+        popover: {
+          title: "Tìm Kiếm JD",
+          description: "Nhập tên vị trí, phòng ban hoặc từ khóa để tìm nhanh bản mô tả công việc cần xem hoặc chỉnh sửa.",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#jd-create-btn",
+        popover: {
+          title: "Tạo JD Mới",
+          description: "Bấm đây để mở form tạo mô tả công việc mới cho một vị trí tuyển dụng, bao gồm yêu cầu, trách nhiệm và quyền lợi.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#jd-list-card",
+        popover: {
+          title: "Danh Sách JD",
+          description: "Tất cả bản mô tả công việc hiện có. Bấm vào một JD để xem chi tiết, chỉnh sửa hoặc chia sẻ với ứng viên.",
+          side: "right", align: "start",
+        },
+      },
+      {
+        element: "#jd-detail-card",
+        popover: {
+          title: "Chi Tiết Mô Tả Công Việc",
+          description: "Xem đầy đủ mô tả, yêu cầu kỹ năng, quyền lợi và thông tin liên hệ tuyển dụng. Từ đây bạn có thể sửa, xóa hoặc tải file JD.",
+          side: "left", align: "start",
+        },
+      },
+    ],
+  },
+
+  // Trang Quản Lý Tài Khoản
+  users: {
+    anchorId: "users-filter-bar",
+    steps: [
+      {
+        element: "#users-add-btn",
+        popover: {
+          title: "➕ Thêm Tài Khoản Mới",
+          description: "Bấm đây để mở form tạo tài khoản nhân viên mới. Bạn sẽ nhập: họ tên, email, mật khẩu ban đầu, số điện thoại, vai trò (Admin / Nhân sự / CTV...) và phân phòng ban.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#users-filter-bar",
+        popover: {
+          title: "🔍 Tìm Kiếm & Lọc Nhân Viên",
+          description: "Nhập tên hoặc email để tìm nhanh tài khoản. Sử dụng dropdown để lọc theo <strong>Vai trò</strong> (Admin, Nhân sự, CTV...) hoặc <strong>Phòng ban</strong> cụ thể.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#users-table-card",
+        popover: {
+          title: "📜 Danh Sách Tài Khoản",
+          description: "Mỗi dòng hiển thị họ tên, email, vai trò, phòng ban và trạng thái. Bấm vào một dòng bất kỳ để xem cả profile chi tiết của tài khoản đó.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#users-permission-col",
+        popover: {
+          title: "🔑 Cột Quyền Chức Năng",
+          description: "Hiển thị số quyền chức năng được phân cho tài khoản. Bấm nút số quyền để mở bảng phân quyền chi tiết theo từng tính năng (xem thông kê, tạo tin tức, quản lý sản phẩm...). Khác với vai trò, đây là quyền từng tính năng riêng lẻ.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#users-action-col",
+        popover: {
+          title: "⚙️ Các Nút Thao Tác",
+          description: "Mỗi dòng có 3 nút thác: <strong>👁 Xem</strong> (mở hộp thoại chi tiết), <strong>✏️ Sửa</strong> (chỉnh sửa thông tin nhân viên), <strong>🔒 Khóa/Mở khóa</strong> (vô hiệu hóa hoặc kích hoạt tài khoản đó). Tài khoản bị khóa sẽ không thể đăng nhập vào hệ thống.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Lịch Sử Thao Tác (Audit Log)
+  auditLogs: {
+    anchorId: "audit-filter-section",
+    steps: [
+      {
+        element: "#audit-refresh-btn",
+        popover: {
+          title: "🔄 Nút Làm Mới",
+          description: "Bấm để tải lại danh sách audit log mới nhất từ hệ thống. Nếu có thê bộ lọc, dữ liệu sẽ được lọc theo các điều kiện hiện tại.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#audit-filter-section",
+        popover: {
+          title: "🏷️ Bộ Lọc Audit Log",
+          description: "Lọc bản ghi theo 4 tiêu chí: <strong>Người thực hiện</strong> (ai?), <strong>Loại hành động</strong> (tạo/sửa/xóa), <strong>Từ thời điểm</strong> và <strong>Đến thời điểm</strong>. Kết hợp nhiều bộ lọc để tìm chính xác thao tác cần kiểm tra.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#audit-clear-filter-btn",
+        popover: {
+          title: "❌ Xóa Bộ Lọc",
+          description: "Bấm để xóa tất cả các tiêu chí đang áp dụng và quay lại xem toàn bộ lịch sử thao tác gần đây nhất (không giới hạn).",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#audit-log-table",
+        popover: {
+          title: "📝 Danh Sách Audit Log",
+          description: "Mỗi dòng là một bản ghi lưu: <strong>Thời gian</strong>, <strong>Người thực hiện (Actor)</strong>, <strong>Loại hành động</strong> (tạo/sửa/xóa), <strong>Đối tượng bị tác động (Target)</strong>. Bấm vào dòng bất kỳ để xem chi tiết ở cột bên phải.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#audit-log-detail",
+        popover: {
+          title: "🔍 Chi Tiết Thao Tác",
+          description: "Hiển thị đầy đủ thông tin của bản ghi được chọn: Actor, hành động cụ thể, đối tượng bị tác động và thời điểm xảy ra. Dùng để kiểm tra ai đã thay đổi dữ liệu gì khi cần điều tra bảo mật.",
+          side: "left", align: "start",
+        },
+      },
+    ],
+  },
+
+  // Trang Quản Lý Phòng Ban
+  departments: {
+    anchorId: "departments-list-card",
+    steps: [
+      {
+        element: "#departments-create-btn",
+        popover: {
+          title: "Thêm Phòng Ban Mới",
+          description: "Bấm đây để tạo phòng ban mới: đặt tên, mô tả nhiệm vụ và chỉ định trưởng phòng ban.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#departments-list-card",
+        popover: {
+          title: "Danh Sách Phòng Ban",
+          description: "Hiển thị toàn bộ phòng ban trong tổ chức. Bấm vào phòng ban để xem thành viên và quản lý nhân sự thuộc phòng đó.",
+          side: "right", align: "start",
+        },
+      },
+      {
+        element: "#departments-members-card",
+        popover: {
+          title: "Quản Lý Nhân Sự Phòng Ban",
+          description: "Gán nhân viên vào phòng ban hoặc gỡ thành viên khỏi phòng ban. Thay đổi sẽ được cập nhật ngay lập tức trên toàn hệ thống.",
+          side: "left", align: "start",
+        },
+      },
+    ],
+  },
+};
+
+// Map currentPage sang key trong PAGE_TOURS
+const getPageTourKey = (page) => {
+  const MAP = {
+    products: "products",
+    productOverview: "products",
+    nghiepvu: "nghiepvu",
+    checklist: "nghiepvu",
+    sop: "nghiepvu",
+    hotro: "hotro",
+    leadForm: "hotro",
+    news: "news",
+    newsManagement: "news",
+    notifications: "notifications",
+    documents: "documents",
+    documentSearch: "documents",
+    aiConfig: "aiConfig",
+    aiPending: "aiConfig",
+    aiHistory: "aiConfig",
+    jobDescriptions: "jobDescriptions",
+    users: "users",
+    auditLogs: "auditLogs",
+    departments: "departments",
+  };
+  return MAP[page] || null;
+};
+
 
 const ROLE_IDS = {
   ADMIN: "69fc5af582ef85451120772a",
@@ -95,6 +566,8 @@ const normalizeUser = (userData) => {
     grantedPermissions: Array.isArray(userData.grantedPermissions)
       ? userData.grantedPermissions
       : [],
+    hasSeenAdminTutorial: userData.hasSeenAdminTutorial,
+    seenTours: userData.seenTours || [],
   };
 };
 
@@ -198,8 +671,22 @@ function App() {
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [supportInitialTab, setSupportInitialTab] = useState("faq");
   const [user, setUser] = useState(() => getStoredUser());
+  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
   const [registerLayoutMode, setRegisterLayoutMode] = useState("account");
+
+  const handleUserUpdate = useCallback((nextUserData) => {
+    setUser((currentUser) => {
+      const nextUser = {
+        ...currentUser,
+        ...nextUserData,
+        name: nextUserData.name || nextUserData.fullName || currentUser?.name || "",
+        fullName: nextUserData.fullName || nextUserData.name || currentUser?.fullName || "",
+      };
+      window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(nextUser));
+      return nextUser;
+    });
+  }, []);
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 
@@ -234,6 +721,306 @@ function App() {
 
     window.localStorage.setItem(CURRENT_PAGE_STORAGE_KEY, currentPage);
   }, [currentPage, user]);
+
+  useEffect(() => {
+    const hasSeenLocally = window.localStorage.getItem(`hto_tour_seen_admin_${user?.id}`) === "true";
+    if (!user || user.role !== "admin" || user.hasSeenAdminTutorial || hasSeenLocally) {
+      return undefined;
+    }
+
+    if (currentPage !== "dashboard") {
+      return undefined;
+    }
+
+    // Không bắt đầu giới thiệu khi thông báo đang bật
+    if (isNotificationMenuOpen) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      // Đợi DOM render xong, kiểm tra phần tử chính tương ứng
+      if (!document.getElementById("sidebar-nav-home")) {
+        return;
+      }
+
+      const steps = [
+        {
+          element: "#menubar",
+          popover: {
+            title: "Thanh Menu Quản Trị",
+            description: "Đây là thanh điều hướng chính của hệ thống HTO.",
+            side: "right",
+            align: "start",
+          },
+        },
+        {
+          element: "#sidebar-nav-home",
+          popover: {
+            title: "Trang Chủ",
+            description: "Quay về màn hình chính, xem tổng quan và thông báo sự kiện.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-stats",
+          popover: {
+            title: "Dashboard Thống Kê",
+            description: "Xem các biểu đồ báo cáo hiệu suất, số liệu tài chính và khách hàng.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-products",
+          popover: {
+            title: "Quản Lý Sản Phẩm",
+            description: "Quản lý danh sách sản phẩm du học, đào tạo ngôn ngữ, dịch vụ visa và định cư.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-tasks",
+          popover: {
+            title: "Quy Trình Nghiệp Vụ",
+            description: "Quản lý và giám sát các checklist, quy trình nghiệp vụ chi tiết của nhân sự.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-support",
+          popover: {
+            title: "Trung Tâm Hỗ Trợ",
+            description: "Gửi thông tin lead khách hàng mới và quản lý các yêu cầu hỗ trợ khác.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-news",
+          popover: {
+            title: "Tin Tức & Sự Kiện",
+            description: "Đăng tải và quản lý các bài viết tin tức, sự kiện nội bộ của HTO.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-notifications",
+          popover: {
+            title: "Thông Báo Nội Bộ",
+            description: "Xem và quản lý các thông báo nội bộ gửi tới các thành viên.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-documents",
+          popover: {
+            title: "Tài Liệu & Biểu Mẫu",
+            description: "Kho tài liệu hướng dẫn, biểu mẫu hợp đồng và các file tài nguyên dùng chung.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-ai",
+          popover: {
+            title: "Trợ Lý AI Nội Bộ",
+            description: "Cấu hình chatbot AI, quản lý câu hỏi pending và lịch sử truy vấn của AI trợ lý.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-jd",
+          popover: {
+            title: "JD Công Việc",
+            description: "Quản lý bảng mô tả công việc (Job Descriptions) cho các vị trí tuyển dụng.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-users",
+          popover: {
+            title: "Quản Lý Tài Khoản",
+            description: "Quản lý thông tin tài khoản, nhân viên, phân quyền và trạng thái hoạt động.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-departments",
+          popover: {
+            title: "Quản Lý Phòng Ban",
+            description: "Tạo mới, chỉnh sửa thông tin phòng ban và phân bổ nhân sự.",
+            side: "right",
+            align: "center",
+          },
+        },
+        {
+          element: "#sidebar-nav-auditlogs",
+          popover: {
+            title: "Lịch Sử Thao Tác",
+            description: "Giám sát lịch sử cập nhật và hành vi của toàn bộ hệ thống để đảm bảo bảo mật.",
+            side: "right",
+            align: "center",
+          },
+        },
+      ];
+
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        doneBtnText: "Hoàn thành",
+        nextBtnText: "Tiếp theo",
+        prevBtnText: "Trước đó",
+        allowClose: true,
+        steps: steps,
+        onDestroyed: async () => {
+          // Lưu vào localStorage và state trước
+          window.localStorage.setItem(`hto_tour_seen_admin_${user.id}`, "true");
+          handleUserUpdate({ hasSeenAdminTutorial: true });
+          window.localStorage.removeItem("hto_admin_tour_step");
+          try {
+            await authFetch(`${API_BASE_URL}/users/${user.id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders(),
+              },
+              body: JSON.stringify({ hasSeenAdminTutorial: true }),
+            });
+          } catch (error) {
+            console.error("Lỗi khi lưu trạng thái xem tutorial lên server:", error);
+          }
+        },
+      });
+
+      driverObj.drive();
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [user, currentPage, isNotificationMenuOpen, handleUserUpdate]);
+
+  // ─── Tour hướng dẫn riêng biệt cho từng trang con ────────────────────────────
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+
+    const tourKey = getPageTourKey(currentPage);
+    if (!tourKey) {
+      return undefined;
+    }
+
+    const tourConfig = PAGE_TOURS[tourKey];
+
+    // Đã xem rồi thì không hiển thị lại (lưu trên server qua user.seenTours hoặc localStorage)
+    const hasSeenLocally = window.localStorage.getItem(`hto_tour_seen_${user.id}_${tourKey}`) === "true";
+    if ((user.seenTours && user.seenTours.includes(tourKey)) || hasSeenLocally) {
+      return undefined;
+    }
+
+    // Không bắt đầu giới thiệu khi thông báo đang bật
+    if (isNotificationMenuOpen) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      // Kiểm tra DOM đã render phần tử anchor chưa
+      if (!document.getElementById(tourConfig.anchorId)) {
+        return;
+      }
+
+      // Lọc bỏ các bước mà phần tử không tồn tại trên DOM (tránh crash)
+      const availableSteps = tourConfig.steps.filter((step) => {
+        const selector = step.element;
+        return selector ? document.querySelector(selector) !== null : true;
+      });
+
+      if (availableSteps.length === 0) {
+        return;
+      }
+
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        doneBtnText: "Đã hiểu!",
+        nextBtnText: "Tiếp theo",
+        prevBtnText: "Trước đó",
+        allowClose: true,
+        steps: availableSteps,
+        onDestroyed: async () => {
+          const nextSeenTours = Array.from(new Set([...(user.seenTours || []), tourKey]));
+          
+          // Lưu vào localStorage và state trước
+          window.localStorage.setItem(`hto_tour_seen_${user.id}_${tourKey}`, "true");
+          handleUserUpdate({ seenTours: nextSeenTours });
+
+          try {
+            // Cập nhật trạng thái đã xem lên server
+            await authFetch(`${API_BASE_URL}/users/${user.id}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders(),
+              },
+              body: JSON.stringify({ seenTours: nextSeenTours }),
+            });
+          } catch (error) {
+            console.error("Lỗi khi lưu trạng thái xem tour lên server:", error);
+          }
+        },
+      });
+
+      driverObj.drive();
+    }, 900);
+
+    return () => clearTimeout(timer);
+  }, [user, currentPage, isNotificationMenuOpen, handleUserUpdate]);
+
+  useEffect(() => {
+    window.resetTours = async () => {
+      if (!user) {
+        console.warn("Chưa đăng nhập user để reset tour");
+        return;
+      }
+      try {
+        // Xóa trong localStorage
+        window.localStorage.removeItem(`hto_tour_seen_admin_${user.id}`);
+        Object.keys(PAGE_TOURS).forEach((key) => {
+          window.localStorage.removeItem(`hto_tour_seen_${user.id}_${key}`);
+        });
+
+        await authFetch(`${API_BASE_URL}/users/${user.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({
+            seenTours: [],
+            hasSeenAdminTutorial: false,
+          }),
+        });
+        handleUserUpdate({
+          seenTours: [],
+          hasSeenAdminTutorial: false,
+        });
+        window.localStorage.removeItem("hto_admin_tour_step");
+        console.log("✅ Đã reset toàn bộ trạng thái hướng dẫn (tours). Vui lòng chuyển trang hoặc F5 để xem lại!");
+      } catch (error) {
+        console.error("❌ Lỗi khi reset tour:", error);
+      }
+    };
+    return () => {
+      delete window.resetTours;
+    };
+  }, [user, handleUserUpdate]);
 
   useEffect(() => {
     if (user) {
@@ -372,17 +1159,6 @@ function App() {
     setAuthMode("login");
   };
 
-  const handleUserUpdate = (nextUserData) => {
-    const nextUser = {
-      ...user,
-      ...nextUserData,
-      name: nextUserData.name || nextUserData.fullName || user?.name || "",
-      fullName: nextUserData.fullName || nextUserData.name || user?.fullName || "",
-    };
-
-    setUser(nextUser);
-    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(nextUser));
-  };
 
   if (!user) {
     let authContent;

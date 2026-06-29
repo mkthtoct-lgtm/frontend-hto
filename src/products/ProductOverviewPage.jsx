@@ -2171,6 +2171,7 @@ function ProductOverviewPageInner({ currentUser }) {
             </div>
             {canManageProducts && (
               <button
+                id="products-add-category-btn"
                 className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
                 onClick={handleOpenNewCategory}
               >
@@ -2194,7 +2195,7 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* STATS SECTION */}
         {viewMode === "overview" && canManageProducts && selectedCategoryName === "Tất cả" && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div id="products-stats-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:!bg-cyan-955/40 text-cyan-900 app-dark:!text-cyan-300 flex-shrink-0 mr-4">
                 <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2256,7 +2257,7 @@ function ProductOverviewPageInner({ currentUser }) {
           const hasActiveFilter = activeFilters.length > 0;
 
           return (
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5 overflow-visible">
+            <div id="products-filter-section" className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-slate-800 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5 overflow-visible">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
                 {/* Search */}
                 <div className="md:col-span-12 xl:col-span-5">
@@ -2378,11 +2379,13 @@ function ProductOverviewPageInner({ currentUser }) {
 
                     const renderProductGrid = (programsToRender) => (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {programsToRender.map((prog) => {
+                        {programsToRender.map((prog, progIdx) => {
                           const totalDocs = (prog.brochure ? 1 : 0) + (prog.documents?.length || 0);
+                          const isFirstCard = progIdx === 0;
                           return (
                             <div
                               key={prog.id}
+                              id={isFirstCard ? "tour-first-program-card" : undefined}
                               className="bg-slate-50 app-dark:!bg-[#1e1e1e] border-2 border-slate-200 app-dark:!border-slate-700 rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/30 app-dark:hover:!bg-cyan-955/20 hover:border-cyan-300 app-dark:hover:!border-cyan-900/60 hover:shadow-sm cursor-pointer flex flex-row items-stretch"
                               onClick={() => {
                                 setSelectedProduct(prog);

@@ -426,7 +426,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
+          <span id="notifications-unread-badge" className="badge bg-primary-subtle text-primary">{unreadCount} chưa đọc</span>
           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={loadNotifications} disabled={loading}>
             Làm mới
           </button>
@@ -444,7 +444,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
 
       <div className="notifications-page-workspace grid min-h-0 flex-1 grid-cols-1 items-start gap-4 xl:grid-cols-12 xl:overflow-hidden">
         {canCreate && (
-          <div className="notifications-page-panel min-w-0 min-h-0 xl:col-span-4 xl:h-full">
+          <div id="notifications-create-panel" className="notifications-page-panel min-w-0 min-h-0 xl:col-span-4 xl:h-full">
             <div className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
               <div className="card-header border-0 pb-0">
                 <h6 className="card-title mb-1">Tạo thông báo</h6>
@@ -527,10 +527,10 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
         )}
 
         <div className={`notifications-page-panel ${canCreate ? "min-w-0 min-h-0 xl:col-span-8 xl:h-full" : "min-w-0 min-h-0 xl:col-span-12 xl:h-full"}`}>
-          <div className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
+          <div id="notifications-list-card" className="card !flex min-h-0 w-full !flex-col overflow-hidden xl:h-full">
             <div className="card-header border-0 pb-0 flex flex-wrap items-center justify-between gap-2">
               <h6 className="card-title mb-0">Danh sách thông báo</h6>
-              <div className="btn-group flex-shrink-0 gap-2" role="group" aria-label="Lọc thông báo">
+              <div id="notifications-filter-group" className="btn-group flex-shrink-0 gap-2" role="group" aria-label="Lọc thông báo">
                 {[
                   ["all", "Tất cả"],
                   ["unread", "Chưa đọc"],

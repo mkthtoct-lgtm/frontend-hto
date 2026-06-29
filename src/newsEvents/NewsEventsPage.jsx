@@ -88,6 +88,7 @@ export const NewsEventsPage = () => {
             <div className="position-relative" style={{ width: "min(100%, 360px)" }}>
               <span className="position-absolute top-50 translate-middle-y text-body-secondary" style={{ left: "15px" }}><SearchIcon /></span>
               <input
+                id="news-search-input"
                 className="form-control border shadow-sm bg-body text-body"
                 placeholder="Tìm kiếm tin tức..."
                 style={{ height: "52px", borderRadius: "10px", paddingLeft: "42px" }}
@@ -95,7 +96,7 @@ export const NewsEventsPage = () => {
                 onChange={(event) => setQuery(event.target.value)}
               />
             </div>
-            <div className="d-flex flex-wrap gap-2">
+            <div id="news-type-filter-group" className="d-flex flex-wrap gap-2">
               {[
                 { id: "all", label: "Tất cả" },
                 { id: "news", label: "Tin tức" },
@@ -119,7 +120,7 @@ export const NewsEventsPage = () => {
       {viewMode === "list" && (
         <div className="row mb-4 gx-3 gx-xl-4 align-items-start px-3 px-xl-4">
           <div className="col-12 col-xl-8 mb-3 mb-xl-0">
-            <div className="d-flex flex-column gap-3">
+            <div id="news-articles-list" className="d-flex flex-column gap-3">
               {filteredArticles.length > 0 ? (
                 filteredArticles.map((article) => (
                   <ArticleCard
@@ -136,7 +137,7 @@ export const NewsEventsPage = () => {
             </div>
           </div>
 
-          <div className="col-12 col-xl-4">
+          <div id="news-sidebar" className="col-12 col-xl-4">
             <NewsSidebar
               events={eventArticles}
               latestArticles={latestArticles}

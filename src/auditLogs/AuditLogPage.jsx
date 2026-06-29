@@ -99,12 +99,12 @@ export const AuditLogPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Lịch sử thao tác</h4>
           
         </div>
-        <button className="btn btn-outline-secondary" type="button" onClick={() => loadAuditLogs(currentPage)} disabled={loading}>
+        <button id="audit-refresh-btn" className="btn btn-outline-secondary" type="button" onClick={() => loadAuditLogs(currentPage)} disabled={loading}>
           Làm mới
         </button>
       </div>
 
-      <section className="card mb-3 overflow-hidden rounded-xl border-0 shadow-sm">
+      <section id="audit-filter-section" className="card mb-3 overflow-hidden rounded-xl border-0 shadow-sm">
         <div className="card-body">
           <div className="grid grid-cols-1 items-end gap-3 xl:grid-cols-[minmax(180px,1fr)_minmax(170px,0.8fr)_minmax(170px,0.8fr)_minmax(170px,0.8fr)_auto]">
             <div>
@@ -159,7 +159,7 @@ export const AuditLogPage = ({ currentUser }) => {
               />
             </div>
 
-            <button className="btn btn-light border" type="button" onClick={clearFilters}>
+            <button id="audit-clear-filter-btn" className="btn btn-light border" type="button" onClick={clearFilters}>
               Xóa lọc
             </button>
           </div>
@@ -174,7 +174,7 @@ export const AuditLogPage = ({ currentUser }) => {
       )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="audit-log-table" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách audit log</span>
             <span className="badge text-bg-light">{pagination.totalLogs} log</span>
@@ -290,7 +290,7 @@ export const AuditLogPage = ({ currentUser }) => {
           )}
         </section>
 
-        <section className="card overflow-hidden rounded-xl border-0 shadow-sm">
+        <section id="audit-log-detail" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom">
             <span className="fw-bold text-body-emphasis">Chi tiết log</span>
           </div>

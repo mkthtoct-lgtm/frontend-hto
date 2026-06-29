@@ -609,6 +609,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
               Import JD
             </button>
             <button
+              id="jd-create-btn"
               className="btn btn-primary d-flex align-items-center gap-2"
               disabled={actionLoading || departments.length === 0}
               onClick={openCreateForm}
@@ -641,6 +642,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
           <div className="position-relative">
             <SearchIcon />
             <input
+              id="jd-search-input"
               type="text"
               className="form-control bg-body ps-5"
               placeholder="Tìm theo vị trí, phòng ban, địa điểm hoặc nội dung JD..."
@@ -695,7 +697,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
       <div className="row g-4">
         <div className="col-12 col-xl-5">
-          <section className="card border-0 shadow-sm h-100">
+          <section id="jd-list-card" className="card border-0 shadow-sm h-100">
             <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
               <span className="fw-bold text-body-emphasis">Danh sách JD</span>
               <span className="badge bg-body-secondary text-body">
@@ -776,7 +778,7 @@ export const JobDescriptionsPage = ({ currentUser }) => {
 
         <div className="col-12 col-xl-7">
           {selectedJd ? (
-            <section className="card border-0 shadow-sm h-100">
+            <section id="jd-detail-card" className="card border-0 shadow-sm h-100">
               <div className="card-header bg-transparent border-bottom">
                 <div className="d-flex justify-content-between align-items-start gap-3">
                   <div style={{ minWidth: 0 }}>
