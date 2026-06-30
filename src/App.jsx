@@ -25,6 +25,7 @@ import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { ProductsPage } from "./products/ProductsPage";
 import { ProductOverviewPage } from "./products/ProductOverviewPage";
+import { ProductManagementPage } from "./products/ProductManagementPage";
 import { HomePage } from "./home/HomePage";
 import { DashboardPage } from "./dashboard/DashboardPage";
 import { NewsEventsPage } from "./newsEvents/NewsEventsPage";
@@ -1329,6 +1330,8 @@ function App() {
           <HomePage theme={theme} onNavigate={handleNavigate} currentUser={user} />
         ) : currentPage === "productOverview" ? (
           <ProductOverviewPage currentUser={user} />
+        ) : currentPage === "productManagement" ? (
+          <ProductManagementPage currentUser={user} />
         ) : currentPage === "systemSettings" ? (
           <SystemSettingsPage currentUser={user} />
         ) : ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "nophosoonline"].includes(currentPage) || currentPage.startsWith("product:") ? (

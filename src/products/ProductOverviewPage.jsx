@@ -372,7 +372,10 @@ const mapApiProductToUiProduct = (apiProduct, categoryId, categoryName) => {
     documents: extendedData.documents || [],
     gradientFrom: extendedData.gradientFrom || "#0d2040",
     gradientTo: extendedData.gradientTo || "#1a3a6b",
-    updatedAt: apiProduct.updatedAt || extendedData.updatedAt || ""
+    updatedAt: apiProduct.updatedAt || extendedData.updatedAt || "",
+    visaCode: apiProduct.visaCode || "",
+    shortCode: apiProduct.shortCode || "",
+    purpose: apiProduct.purpose || ""
   };
 };
 
@@ -741,7 +744,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
           }`}
       >
-        📂 Tất cả danh mục
+        Tất cả danh mục
       </button>
 
       {filteredCategories.map(cat => {
@@ -794,7 +797,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedRegionItem === "Tất cả khu vực" ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
             }`}
         >
-          🌏 Tất cả khu vực
+          Tất cả khu vực
         </button>
         {regionsForCat.map(region => (
           <button
@@ -835,7 +838,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCountryItem === "Tất cả quốc gia" ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
             }`}
         >
-          🌍 Tất cả quốc gia
+          Tất cả quốc gia
         </button>
         {countriesForSelection.map(country => (
           <button
@@ -924,7 +927,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 z-[9999] bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-200 app-dark:!border-slate-700 shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden" style={{width: "min(860px, calc(100vw - 280px))"}}>
+        <div className="absolute left-0 top-full mt-2 z-[9999] bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-200 app-dark:!border-slate-700 shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden" style={{ width: "min(860px, calc(100vw - 280px))" }}>
           <div className="flex flex-row max-h-[500px]">
             <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:!border-slate-700 overflow-y-auto">
               {renderCategoryList()}
@@ -1056,7 +1059,10 @@ function ProductOverviewPageInner({ currentUser }) {
     documents: [],
     updatedAt: "",
     gradientFrom: "#0d2040",
-    gradientTo: "#1a3a6b"
+    gradientTo: "#1a3a6b",
+    visaCode: "",
+    shortCode: "",
+    purpose: ""
   });
 
   const [interestForm, setInterestForm] = useState({
@@ -1642,7 +1648,10 @@ function ProductOverviewPageInner({ currentUser }) {
       currency: "VND",
       image: "",
       brochure: null,
-      documents: []
+      documents: [],
+      visaCode: "",
+      shortCode: "",
+      purpose: ""
     });
     setBrochureLinkInput("");
     setDocLinkNameInput("");
@@ -1677,7 +1686,10 @@ function ProductOverviewPageInner({ currentUser }) {
       brochure: prod.brochure || null,
       documents: prod.documents || [],
       gradientFrom: prod.gradientFrom || "#0d2040",
-      gradientTo: prod.gradientTo || "#1a3a6b"
+      gradientTo: prod.gradientTo || "#1a3a6b",
+      visaCode: prod.visaCode || "",
+      shortCode: prod.shortCode || "",
+      purpose: prod.purpose || ""
     });
     setBrochureLinkInput("");
     setDocLinkNameInput("");
@@ -1833,6 +1845,9 @@ function ProductOverviewPageInner({ currentUser }) {
         serviceFee: formProduct.serviceFee || 0,
         currency: formProduct.currency || "VND",
         image: formProduct.image || "",
+        visaCode: formProduct.visaCode || "",
+        shortCode: formProduct.shortCode || "",
+        purpose: formProduct.purpose || "",
       };
 
       let response;
@@ -2431,10 +2446,17 @@ function ProductOverviewPageInner({ currentUser }) {
                                   )}
                                 </div>
                                 <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/40 app-dark:!border-white/8">
-                                  <span className="bg-white app-dark:!bg-[#252525] text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/8 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
-                                    <i className="fa fa-earth-asia text-cyan-750 app-dark:!text-cyan-400"></i>
-                                    {resolveCountryName(prog.country)}
-                                  </span>
+                                  <div className="flex gap-1.5 flex-wrap items-center">
+                                    <span className="bg-white app-dark:!bg-[#252525] text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/8 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
+                                      <i className="fa fa-earth-asia text-cyan-750 app-dark:!text-cyan-400"></i>
+                                      {resolveCountryName(prog.country)}
+                                    </span>
+                                    {prog.shortCode && (
+                                      <span className="bg-cyan-50 app-dark:bg-cyan-900/30 text-cyan-700 app-dark:text-cyan-300 border border-cyan-100 app-dark:border-cyan-900/40 px-2 py-0.5 rounded-lg text-[10px] font-semibold">
+                                        {prog.shortCode}
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="text-[10px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-1">
                                     <i className="fa fa-folder-open text-slate-400 app-dark:!text-slate-500"></i>
                                     {totalDocs} Tài liệu
@@ -2503,10 +2525,10 @@ function ProductOverviewPageInner({ currentUser }) {
                           {/* Header */}
                           <div className="bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:!bg-none app-dark:!bg-[#111827] rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:!border-[#334155] p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
                             <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-gradient-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
-                              <img 
-                                src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80" 
-                                alt="passport background" 
-                                className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10" 
+                              <img
+                                src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80"
+                                alt="passport background"
+                                className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10"
                               />
                             </div>
 
@@ -2527,14 +2549,14 @@ function ProductOverviewPageInner({ currentUser }) {
                                 <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
                                   {canManageProducts && (
                                     <>
-                                      <button 
-                                        onClick={() => handleEditCategory(cat)} 
+                                      <button
+                                        onClick={() => handleEditCategory(cat)}
                                         className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                       >
                                         <i className="fa fa-pen text-[10px]"></i> Sửa
                                       </button>
-                                      <button 
-                                        onClick={() => handleToggleCategoryStatus(cat.id, cat.status)} 
+                                      <button
+                                        onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
                                         className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                       >
                                         {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[10px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>}
@@ -2586,9 +2608,9 @@ function ProductOverviewPageInner({ currentUser }) {
                               <>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                   {VISA_TYPES.map(type => (
-                                    <div 
-                                      key={type.id} 
-                                      onClick={() => setSelectedVisaType(type.id)} 
+                                    <div
+                                      key={type.id}
+                                      onClick={() => setSelectedVisaType(type.id)}
                                       className={`relative flex flex-col border border-slate-100/50 app-dark:!border-[#334155] rounded-[16px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient} app-dark:!bg-none app-dark:!bg-[#1e293b]/50`}
                                     >
                                       <div className="px-3 pt-4 pb-3 flex flex-col items-center text-center flex-1">
@@ -2637,8 +2659,8 @@ function ProductOverviewPageInner({ currentUser }) {
                             ) : (
                               <div className="flex flex-col gap-3 bg-white app-dark:!bg-[#111827] p-3 rounded-2xl border border-slate-100 app-dark:!border-[#334155] shadow-sm">
                                 <div className="flex items-center gap-2 bg-slate-50 app-dark:!bg-slate-900 p-2 rounded-lg border border-slate-200 app-dark:!border-slate-800">
-                                  <button 
-                                    onClick={() => setSelectedVisaType(null)} 
+                                  <button
+                                    onClick={() => setSelectedVisaType(null)}
                                     className="text-slate-600 app-dark:!text-slate-300 hover:text-cyan-700 app-dark:hover:!text-cyan-400 bg-white app-dark:!bg-slate-850 border border-slate-200 app-dark:!border-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-semibold shadow-sm transition-colors flex items-center gap-1"
                                   >
                                     <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
@@ -2846,9 +2868,26 @@ function ProductOverviewPageInner({ currentUser }) {
                   {/* Nội dung chính */}
                   <div className="flex-1">
                     {/* Badge danh mục */}
-                    <span className="inline-block bg-slate-100 app-dark:!bg-white/10 text-slate-600 app-dark:!text-slate-300 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3 border border-slate-200 app-dark:!border-white/15">
-                      {selectedProduct.categoryName || "Chương trình"}
-                    </span>
+                    <div className="flex gap-2 mb-3 flex-wrap items-center">
+                      <span className="inline-block bg-slate-100 app-dark:!bg-white/10 text-slate-600 app-dark:!text-slate-300 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-slate-200 app-dark:!border-white/15">
+                        {selectedProduct.categoryName || "Chương trình"}
+                      </span>
+                      {selectedProduct.shortCode && (
+                        <span className="inline-block bg-cyan-50 app-dark:bg-cyan-900/30 text-cyan-700 app-dark:text-cyan-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-cyan-100 app-dark:border-cyan-900/40">
+                          Mã: {selectedProduct.shortCode}
+                        </span>
+                      )}
+                      {selectedProduct.visaCode && (
+                        <span className="inline-block bg-indigo-50 app-dark:bg-indigo-900/30 text-indigo-700 app-dark:text-indigo-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-indigo-100 app-dark:border-indigo-900/40">
+                          Visa Code: {selectedProduct.visaCode}
+                        </span>
+                      )}
+                      {selectedProduct.purpose && (
+                        <span className="inline-block bg-amber-50 app-dark:bg-amber-900/30 text-amber-700 app-dark:text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-100 app-dark:border-amber-900/40">
+                          Mục đích: {selectedProduct.purpose}
+                        </span>
+                      )}
+                    </div>
                     <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 app-dark:!text-white m-0 leading-tight">
                       {selectedProduct.name}
                     </h2>
@@ -2887,15 +2926,15 @@ function ProductOverviewPageInner({ currentUser }) {
                 {/* Cột phải: ảnh nghiêng + hover về thẳng */}
                 <div className="hidden lg:flex items-center justify-end pr-8 overflow-hidden">
 
-              {/* Nút Chỉnh sửa — góc phải trên banner (theo mẫu) */}
-              {canManageProducts && (
-                <button
-                  className="absolute top-4 right-5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all shadow-md z-10"
-                  onClick={() => handleEditProduct(selectedProduct)}
-                >
-                  <i className="fa fa-pen text-[11px]"></i> Chỉnh sửa
-                </button>
-              )}
+                  {/* Nút Chỉnh sửa — góc phải trên banner (theo mẫu) */}
+                  {canManageProducts && (
+                    <button
+                      className="absolute top-4 right-5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all shadow-md z-10"
+                      onClick={() => handleEditProduct(selectedProduct)}
+                    >
+                      <i className="fa fa-pen text-[11px]"></i> Chỉnh sửa
+                    </button>
+                  )}
                   {selectedProduct.image ? (
                     <div
                       className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 app-dark:!border-white/10 transition-transform duration-500"
@@ -3285,11 +3324,10 @@ function ProductOverviewPageInner({ currentUser }) {
                               <button
                                 key={index}
                                 type="button"
-                                className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                                  formCategory.coverImageUrl === url
+                                className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${formCategory.coverImageUrl === url
                                     ? 'border-cyan-500 ring-2 ring-cyan-500/20'
                                     : 'border-slate-200 hover:border-cyan-300'
-                                }`}
+                                  }`}
                                 onClick={() => {
                                   setFormCategory(prev => ({ ...prev, coverImageUrl: url }));
                                 }}
@@ -3524,6 +3562,37 @@ function ProductOverviewPageInner({ currentUser }) {
                           <option value="active">Đang hoạt động</option>
                           <option value="inactive">Tạm ngưng</option>
                         </select>
+                      </div>
+
+                      <div className="col-span-1 md:col-span-4">
+                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Mã Visa hệ thống (visaCode)</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                          value={formProduct.visaCode || ""}
+                          onChange={(e) => setFormProduct({ ...formProduct, visaCode: e.target.value })}
+                          placeholder="Ví dụ: DE-STUDY-LANG-D41"
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-4">
+                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Mã ngắn nội bộ (shortCode)</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                          value={formProduct.shortCode || ""}
+                          onChange={(e) => setFormProduct({ ...formProduct, shortCode: e.target.value })}
+                          placeholder="Ví dụ: VIS-DE-01"
+                        />
+                      </div>
+                      <div className="col-span-1 md:col-span-4">
+                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Mục đích phân loại (purpose)</label>
+                        <input
+                          type="text"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
+                          value={formProduct.purpose || ""}
+                          onChange={(e) => setFormProduct({ ...formProduct, purpose: e.target.value })}
+                          placeholder="Ví dụ: Du học nghề Đức"
+                        />
                       </div>
 
                       <div className="md:col-span-12">
