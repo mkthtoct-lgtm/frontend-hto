@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import "./SOPPage.css";
 
-const API_BASE_URL = "http://localhost:3000/api/v1";
+import { API_BASE_URL } from "../config/api";
 const USE_MOCK_WHEN_API_FAIL = true;
 
 const MOCK_SOPS = [
