@@ -1000,11 +1000,11 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
           {stepsData.map((step, idx) => (
             <div className="col-12 col-md-4" key={step.num} style={{ zIndex: 1 }}>
               <div
-                className={`card p-3 shadow-sm h-100 position-relative interactive-card ${step.highlight ? "highlight-glow-card" : ""} ${activeStep === idx ? "border-primary" : ""}`}
+                className={`card p-3 shadow-sm h-100 position-relative interactive-card ${activeStep === idx ? "border-primary" : ""}`}
                 onClick={() => setActiveStep(activeStep === idx ? null : idx)}
                 style={{
                   backgroundColor: cardBg,
-                  border: activeStep === idx ? `2px solid ${brandColor}` : (step.highlight ? `2px solid ${brandColor}` : `1px solid ${borderColor}`),
+                  border: activeStep === idx ? `2px solid ${brandColor}` : `1px solid ${borderColor}`,
                   borderRadius: "12px",
                   minHeight: "120px"
                 }}
@@ -1082,207 +1082,209 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       </div>
 
       {/* POPUP MODAL (CONSULT & REGISTER EVENT) */}
-      {showModal && createPortal(
-        <div
-          className="fixed inset-0 w-screen h-screen bg-black/55 backdrop-blur-[4px] z-[1080] flex items-center justify-center overflow-y-auto p-5"
-          onClick={() => setShowModal(false)}
-        >
+      {
+        showModal && createPortal(
           <div
-            className="relative w-full max-w-[500px] m-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 w-screen h-screen bg-black/55 backdrop-blur-[4px] z-[1080] flex items-center justify-center overflow-y-auto p-5"
+            onClick={() => setShowModal(false)}
           >
-            <div className={`relative flex flex-col w-full rounded-2xl border-0 shadow-2xl p-5 text-[#1e293b] ${isDark ? "bg-[#111827] text-[#f8fafc]" : "bg-white text-[#1e293b]"}`}>
-              <div className="flex items-center justify-between pb-2 border-b border-transparent">
-                <h5 className="text-lg font-bold">
-                  {modalType === "consult" ? "ĐĂNG KÝ TƯ VẤN LỘ TRÌNH" : "ĐĂNG KÝ THAM GIA SỰ KIỆN"}
-                </h5>
-                <button
-                  type="button"
-                  className={`text-2xl font-bold bg-transparent border-0 hover:opacity-75 cursor-pointer leading-none ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}
-                  onClick={() => setShowModal(false)}
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-              </div>
+            <div
+              className="relative w-full max-w-[500px] m-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={`relative flex flex-col w-full rounded-2xl border-0 shadow-2xl p-5 text-[#1e293b] ${isDark ? "bg-[#111827] text-[#f8fafc]" : "bg-white text-[#1e293b]"}`}>
+                <div className="flex items-center justify-between pb-2 border-b border-transparent">
+                  <h5 className="text-lg font-bold">
+                    {modalType === "consult" ? "ĐĂNG KÝ TƯ VẤN LỘ TRÌNH" : "ĐĂNG KÝ THAM GIA SỰ KIỆN"}
+                  </h5>
+                  <button
+                    type="button"
+                    className={`text-2xl font-bold bg-transparent border-0 hover:opacity-75 cursor-pointer leading-none ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}
+                    onClick={() => setShowModal(false)}
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                </div>
 
-              <form onSubmit={handleFormSubmit}>
-                <div className="py-3">
-                  {modalType === "event" && (
-                    <div className={`p-3 mb-3 rounded-lg text-left border-l-4 border-[#0D919C] ${isDark ? "bg-[#1e293b]" : "bg-[#f1f5f9]"}`}>
-                      <div className="font-bold mb-1 uppercase text-[11px] text-[#0D919C]">Bạn đang chọn sự kiện</div>
-                      <div className="font-semibold text-sm">{selectedEvent}</div>
+                <form onSubmit={handleFormSubmit}>
+                  <div className="py-3">
+                    {modalType === "event" && (
+                      <div className={`p-3 mb-3 rounded-lg text-left border-l-4 border-[#0D919C] ${isDark ? "bg-[#1e293b]" : "bg-[#f1f5f9]"}`}>
+                        <div className="font-bold mb-1 uppercase text-[11px] text-[#0D919C]">Bạn đang chọn sự kiện</div>
+                        <div className="font-semibold text-sm">{selectedEvent}</div>
+                      </div>
+                    )}
+
+                    <div className="mb-3 text-left">
+                      <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Họ và tên *</label>
+                      <input
+                        type="text"
+                        name="name"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        required
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        placeholder="Nguyễn Văn A"
+                      />
                     </div>
-                  )}
 
-                  <div className="mb-3 text-left">
-                    <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Họ và tên *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Nguyễn Văn A"
-                    />
-                  </div>
+                    <div className="mb-3 text-left">
+                      <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Số điện thoại *</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        required
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="0987654321"
+                      />
+                    </div>
 
-                  <div className="mb-3 text-left">
-                    <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Số điện thoại *</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                      required
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder="0987654321"
-                    />
-                  </div>
+                    <div className="mb-3 text-left">
+                      <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Địa chỉ Email *</label>
+                      <input
+                        type="email"
+                        name="email"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        required
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="nguyenvana@gmail.com"
+                      />
+                    </div>
 
-                  <div className="mb-3 text-left">
-                    <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Địa chỉ Email *</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                      required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder="nguyenvana@gmail.com"
-                    />
-                  </div>
-
-                  {modalType === "consult" && (
-                    <>
-                      <div className="mb-3 text-left">
-                        <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn dịch vụ *</label>
-                        <select
-                          name="serviceId"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                          value={formData.serviceId}
-                          onChange={handleCategoryChange}
-                          required
-                        >
-                          {activeCategories.map(cat => (
-                            <option key={cat.id} value={cat.id} className={isDark ? "bg-[#1f2937]" : "bg-white"}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="mb-3 text-left">
-                        <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn sản phẩm *</label>
-                        <select
-                          name="productId"
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                          value={formData.productId}
-                          onChange={handleInputChange}
-                          required
-                        >
-                          {activeProducts.filter(p => String(p.categoryId) === String(formData.serviceId)).map(prod => (
-                            <option key={prod.id} value={prod.id} className={isDark ? "bg-[#1f2937]" : "bg-white"}>
-                              {prod.name}
-                            </option>
-                          ))}
-                          {activeProducts.filter(p => String(p.categoryId) === String(formData.serviceId)).length === 0 && (
-                            <option value="" className={isDark ? "bg-[#1f2937]" : "bg-white"}>
-                              Chưa có sản phẩm cho dịch vụ này
-                            </option>
-                          )}
-                        </select>
-                      </div>
-                      <div className="mb-3 text-left">
-                        <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>
-                          Tải ảnh CCCD khách hàng (Đã chọn: {cccdImages.length}/5)
-                        </label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                          onChange={handleCccdUpload}
-                        />
-                        <div className="text-[10px] mt-1" style={{ color: mutedTextColor }}>
-                          * Nếu có tải CCCD, vui lòng tải từ 2 đến 5 ảnh (ví dụ: mặt trước, mặt sau)
-                        </div>
-                        {cccdImages.length > 0 && (
-                          <div className="mt-2 d-flex flex-wrap gap-2">
-                            {cccdImages.map((imgBase64, idx) => (
-                              <div key={idx} className="position-relative d-inline-block" style={{ width: "65px", height: "65px" }}>
-                                <img src={imgBase64} alt={`CCCD ${idx + 1}`} className="img-thumbnail w-100 h-100 object-fit-cover" style={{ padding: "1px" }} />
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-danger position-absolute top-0 end-0 m-0.5"
-                                  onClick={() => handleRemoveCccd(idx)}
-                                  style={{ padding: "0px 4px", fontSize: "9px", lineHeight: "1" }}
-                                >
-                                  &times;
-                                </button>
-                              </div>
+                    {modalType === "consult" && (
+                      <>
+                        <div className="mb-3 text-left">
+                          <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn dịch vụ *</label>
+                          <select
+                            name="serviceId"
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            value={formData.serviceId}
+                            onChange={handleCategoryChange}
+                            required
+                          >
+                            {activeCategories.map(cat => (
+                              <option key={cat.id} value={cat.id} className={isDark ? "bg-[#1f2937]" : "bg-white"}>
+                                {cat.name}
+                              </option>
                             ))}
+                          </select>
+                        </div>
+
+                        <div className="mb-3 text-left">
+                          <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn sản phẩm *</label>
+                          <select
+                            name="productId"
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            value={formData.productId}
+                            onChange={handleInputChange}
+                            required
+                          >
+                            {activeProducts.filter(p => String(p.categoryId) === String(formData.serviceId)).map(prod => (
+                              <option key={prod.id} value={prod.id} className={isDark ? "bg-[#1f2937]" : "bg-white"}>
+                                {prod.name}
+                              </option>
+                            ))}
+                            {activeProducts.filter(p => String(p.categoryId) === String(formData.serviceId)).length === 0 && (
+                              <option value="" className={isDark ? "bg-[#1f2937]" : "bg-white"}>
+                                Chưa có sản phẩm cho dịch vụ này
+                              </option>
+                            )}
+                          </select>
+                        </div>
+                        <div className="mb-3 text-left">
+                          <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>
+                            Tải ảnh CCCD khách hàng (Đã chọn: {cccdImages.length}/5)
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            onChange={handleCccdUpload}
+                          />
+                          <div className="text-[10px] mt-1" style={{ color: mutedTextColor }}>
+                            * Nếu có tải CCCD, vui lòng tải từ 2 đến 5 ảnh (ví dụ: mặt trước, mặt sau)
                           </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                          {cccdImages.length > 0 && (
+                            <div className="mt-2 d-flex flex-wrap gap-2">
+                              {cccdImages.map((imgBase64, idx) => (
+                                <div key={idx} className="position-relative d-inline-block" style={{ width: "65px", height: "65px" }}>
+                                  <img src={imgBase64} alt={`CCCD ${idx + 1}`} className="img-thumbnail w-100 h-100 object-fit-cover" style={{ padding: "1px" }} />
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-danger position-absolute top-0 end-0 m-0.5"
+                                    onClick={() => handleRemoveCccd(idx)}
+                                    style={{ padding: "0px 4px", fontSize: "9px", lineHeight: "1" }}
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
 
-                  <div className="mb-2 text-left">
-                    <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Ghi chú thêm</label>
-                    <textarea
-                      name="notes"
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
-                      rows="3"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      placeholder="Ví dụ: Mong muốn tư vấn thời gian xuất cảnh, thủ tục tài chính..."
-                    />
+                    <div className="mb-2 text-left">
+                      <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Ghi chú thêm</label>
+                      <textarea
+                        name="notes"
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        rows="3"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        placeholder="Ví dụ: Mong muốn tư vấn thời gian xuất cảnh, thủ tục tài chính..."
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between pt-2 pb-1">
-                  {modalType === "consult" && (
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        setShowModal(false);
-                        handleNavigatePage(e, "leadForm");
-                      }}
-                      className="text-xs font-semibold no-underline text-[#0D919C] hover:text-[#0a757e] transition-colors"
-                    >
-                      Gửi qua Form Lead CRM &rarr;
-                    </a>
-                  )}
-                  {modalType === "event" && (
-                    <span className={`text-xs ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>* Vui lòng kiểm tra kỹ email</span>
-                  )}
+                  <div className="flex items-center justify-between pt-2 pb-1">
+                    {modalType === "consult" && (
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          setShowModal(false);
+                          handleNavigatePage(e, "leadForm");
+                        }}
+                        className="text-xs font-semibold no-underline text-[#0D919C] hover:text-[#0a757e] transition-colors"
+                      >
+                        Gửi qua Form Lead CRM &rarr;
+                      </a>
+                    )}
+                    {modalType === "event" && (
+                      <span className={`text-xs ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>* Vui lòng kiểm tra kỹ email</span>
+                    )}
 
-                  <div className="flex gap-2 ml-auto">
-                    <button
-                      type="button"
-                      className="text-white text-xs font-semibold px-4 py-2 bg-[#FD6B4C] hover:bg-[#e05638] rounded-lg transition-colors border-0 cursor-pointer"
-                      onClick={() => setShowModal(false)}
-                      disabled={isSubmitting}
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="text-white text-xs font-bold px-4 py-2 bg-[#0D919C] hover:bg-[#0a757e] rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-50"
-                    >
-                      {isSubmitting ? "ĐANG GỬI..." : "XÁC NHẬN GỬI"}
-                    </button>
+                    <div className="flex gap-2 ml-auto">
+                      <button
+                        type="button"
+                        className="text-white text-xs font-semibold px-4 py-2 bg-[#FD6B4C] hover:bg-[#e05638] rounded-lg transition-colors border-0 cursor-pointer"
+                        onClick={() => setShowModal(false)}
+                        disabled={isSubmitting}
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="text-white text-xs font-bold px-4 py-2 bg-[#0D919C] hover:bg-[#0a757e] rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting ? "ĐANG GỬI..." : "XÁC NHẬN GỬI"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
+          </div>,
+          document.body
+        )
+      }
+    </div >
   );
 };

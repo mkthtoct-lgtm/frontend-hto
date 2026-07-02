@@ -227,7 +227,7 @@ export const Sidebar = ({
               const resProducts = await authFetch(`${API_BASE_URL}/products?categoryId=${cat.id}`, { headers });
               if (!resProducts.ok) return { ...cat, countries: [], products: [] };
               const prodPayload = await resProducts.json().catch(() => null);
-              
+
               const productsRaw = Array.isArray(prodPayload)
                 ? prodPayload
                 : Array.isArray(prodPayload?.data)
@@ -471,7 +471,7 @@ export const Sidebar = ({
             throw new Error(`HTTP ${response.status}`);
           }
         }
-        
+
         // --- BỔ SUNG PHÒNG BAN ẨN MÀ USER THUỘC VỀ ---
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
@@ -482,7 +482,7 @@ export const Sidebar = ({
           "67cfe26df1ba48e42f9a0d74": "laptop asus",
           "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
         };
-        
+
         userDeptIds.forEach(id => {
           if (id && !normalized.some(d => String(d.id) === String(id))) {
             const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `Phòng ban ẩn (${id.substring(id.length - 4)})`;
@@ -493,7 +493,7 @@ export const Sidebar = ({
         if (isMounted) setDepartments(normalized);
       } catch (err) {
         console.warn("[Sidebar] Không tải được danh mục phòng ban:", err.message);
-        
+
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
           "67cfe24df1ba48e42f9a0d54": "laptop m4",
@@ -2125,6 +2125,48 @@ export const Sidebar = ({
               </span>
             </a>
           </li>
+
+          {/* --- 7B. QUẢN LÝ SẢN PHẨM --- */}
+          {["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser)) && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "productManagement" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                href="#"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("productManagement");
+                }}
+              >
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="3" width="7" height="9"></rect>
+                    <rect x="14" y="3" width="7" height="5"></rect>
+                    <rect x="14" y="12" width="7" height="9"></rect>
+                    <rect x="3" y="16" width="7" height="5"></rect>
+                  </svg>
+                </div>
+                <span
+                  className="menu-label"
+                  style={{ flex: 1, fontSize: "14px" }}
+                >
+                  Quản lý sản phẩm
+                </span>
+              </a>
+            </li>
+          )}
 
           {isAdmin(currentUser) && (
             <>

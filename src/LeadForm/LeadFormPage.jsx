@@ -123,6 +123,16 @@ const compressImage = (base64Str, maxWidth = 500, maxHeight = 500, quality = 0.3
   });
 };
 
+const base64ToBlob = (base64) => {
+  const parts = base64.split(",");
+  const mime = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+  const byteString = atob(parts[1]);
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+  return new Blob([ab], { type: mime });
+};
+
 export const LeadFormPage = () => {
   const [form, setForm] = useState(() => {
     try {
@@ -226,9 +236,9 @@ export const LeadFormPage = () => {
       return;
     }
 
-    // Kiểm tra số lượng ảnh CCCD (yêu cầu từ 2 đến 5 ảnh nếu có tải)
-    if (cccdImages.length > 0 && cccdImages.length < 2) {
-      triggerToast("Vui lòng tải lên từ 2 đến 5 ảnh CCCD (ví dụ: mặt trước và mặt sau)!", "danger");
+    // CCCD là bắt buộc (mặt trước và mặt sau) như yêu cầu của Backend
+    if (cccdImages.length < 2) {
+      triggerToast("Vui lòng tải lên ảnh mặt trước và mặt sau của CCCD khách hàng (tối thiểu 2 ảnh)!", "danger");
       return;
     }
 
@@ -250,7 +260,27 @@ export const LeadFormPage = () => {
       return;
     }
 
-    const payload = buildLeadPayload(form, cccdImages);
+    // Tạo FormData để hỗ trợ upload cccdFront + cccdBack
+    const fd = new FormData();
+    fd.append("customerName", form.customerName.trim());
+    fd.append("phone", normalizePhone(form.phone));
+    fd.append("email", form.email.trim());
+    fd.append("source", form.source || "Website");
+    fd.append("productInterest", form.productInterest || "Du học Đức");
+    fd.append("countryInterest", form.countryInterest || "Đức");
+    fd.append("budgetRange", form.budgetRange.trim());
+    fd.append("urgency", form.urgency || "Trong 1-3 tháng");
+    fd.append("preferredContact", form.preferredContact || "Zalo/Điện thoại");
+    fd.append("note", form.note.trim());
+    
+    // Đính kèm cccdFront và cccdBack bắt buộc
+    fd.append("cccdFront", base64ToBlob(cccdImages[0]), "cccd_front.jpg");
+    fd.append("cccdBack", base64ToBlob(cccdImages[1]), "cccd_back.jpg");
+    
+    // Các ảnh CCCD bổ sung từ ảnh thứ 3 đến thứ 5 (nếu có)
+    for (let i = 2; i < cccdImages.length; i++) {
+      fd.append("cccdExtra", base64ToBlob(cccdImages[i]), `cccd_extra_${i}.jpg`);
+    }
 
     const abortController = new AbortController();
     const requestTimeout = window.setTimeout(() => {
@@ -258,14 +288,14 @@ export const LeadFormPage = () => {
     }, LEAD_REQUEST_TIMEOUT_MS);
 
     try {
+      // Gửi dạng multipart/form-data (không định nghĩa Header Content-Type để trình duyệt tự điền boundary)
       const response = await fetch(`${API_BASE_URL}/leads`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           ...authHeaders
         },
         signal: abortController.signal,
-        body: JSON.stringify(payload)
+        body: fd
       });
 
       const data = await response.json().catch(() => ({}));
