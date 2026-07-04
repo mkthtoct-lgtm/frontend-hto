@@ -39,8 +39,8 @@
 
 .api-mode-real {
   color: #0f766e;
-  background: rgba(20, 184, 166, 0.12);
-  border-color: rgba(20, 184, 166, 0.22);
+  background: rgba(11, 111, 179, 0.12);
+  border-color: rgba(11, 111, 179, 0.22);
 }
 
 .api-mode-mock {
@@ -74,7 +74,7 @@
 }
 
 .sop-stat-card.success strong {
-  color: #10b981;
+  color: #0b6fb3;
 }
 
 .sop-stat-card.warning strong {
@@ -209,7 +209,7 @@
 
 .sop-status-published {
   color: #047857;
-  background: rgba(16, 185, 129, 0.14);
+  background: rgba(11, 111, 179, 0.14);
 }
 
 .sop-status-reviewing {
@@ -304,7 +304,7 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  background: #10b981;
+  background: #0b6fb3;
   font-size: 11px;
   font-weight: 900;
 }

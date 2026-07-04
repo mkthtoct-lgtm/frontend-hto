@@ -2731,7 +2731,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                         </div>
                                       </div>
                                       <div className="px-2.5 pb-2.5">
-                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg} app-dark:!bg-[#0D919C]/25 app-dark:!text-[#0D919C]`}>
+                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg} app-dark:!bg-[#0b6fb3]/25 app-dark:!text-[#0b6fb3]`}>
                                           <i className="fa fa-arrow-right"></i>
                                         </button>
                                       </div>

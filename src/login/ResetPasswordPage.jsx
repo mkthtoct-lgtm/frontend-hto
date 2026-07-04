@@ -79,7 +79,7 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
       <div className="text-left">
         <div className="mb-4 flex justify-start">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ecfdf5] app-dark:bg-[#163328]">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0b6fb3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>

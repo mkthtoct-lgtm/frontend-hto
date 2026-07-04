@@ -210,7 +210,7 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
   const [faqPage, setFaqPage] = useState(1);
   const [ticketPage, setTicketPage] = useState(1);
 
-  const FAQ_PAGE_SIZE = 20;
+  const FAQ_PAGE_SIZE = 8;
   const TICKET_PAGE_SIZE = 20;
 
   // State for new ticket form
@@ -325,9 +325,6 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
       safeTicketPage * TICKET_PAGE_SIZE,
     );
   }, [tickets, safeTicketPage]);
-
-  // DEBUG
-  console.log("faqCategory:", faqCategory, "filteredFaqs count:", filteredFaqs.length, "FAQ_ITEMS:", FAQ_ITEMS);
 
   return (
     <div className="container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>

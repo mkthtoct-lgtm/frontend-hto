@@ -39,8 +39,8 @@
 
 .ai-config-api-badge.real {
   color: #0f766e;
-  background: rgba(20, 184, 166, 0.12);
-  border-color: rgba(20, 184, 166, 0.22);
+  background: rgba(11, 111, 179, 0.12);
+  border-color: rgba(11, 111, 179, 0.22);
 }
 
 .ai-config-api-badge.mock {
