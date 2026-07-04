@@ -167,8 +167,8 @@
 
 .lead-result-alert.success {
   color: #047857;
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.22);
+  background: rgba(11, 111, 179, 0.12);
+  border-color: rgba(11, 111, 179, 0.22);
 }
 
 .lead-result-alert.danger {

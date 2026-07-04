@@ -2044,7 +2044,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
                   <div className="col-lg-3">
                     <label className="form-label">Nguồn tài liệu</label>
-                    <div className="btn-group w-100" role="group" aria-label="Chọn nguồn tài liệu">
+                    <div className="d-flex gap-2 w-100" role="group" aria-label="Chọn nguồn tài liệu">
                       <input
                         type="radio"
                         className="btn-check"
@@ -2055,7 +2055,12 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                           setUploadForm((prev) => ({ ...prev, sourceType: "file", link: "" }))
                         }
                       />
-                      <label className="btn btn-outline-primary" htmlFor="document-source-file">
+                      <label
+                        className={`btn flex-fill fw-semibold ${
+                          uploadForm.sourceType === "file" ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                        htmlFor="document-source-file"
+                      >
                         File
                       </label>
                       <input
@@ -2068,7 +2073,12 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                           setUploadForm((prev) => ({ ...prev, sourceType: "link", file: null }))
                         }
                       />
-                      <label className="btn btn-outline-primary" htmlFor="document-source-link">
+                      <label
+                        className={`btn flex-fill fw-semibold ${
+                          uploadForm.sourceType === "link" ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                        htmlFor="document-source-link"
+                      >
                         Link
                       </label>
                     </div>

@@ -25,8 +25,8 @@ const fallbackProducts = [
 
 export const HomePage = ({ theme, onNavigate, currentUser }) => {
   // Brand colors
-  const brandColor = "#0D919C";
-  const hoverBrandColor = "#0a757e";
+  const brandColor = "#0b6fb3";
+  const hoverBrandColor = "#074b80";
 
   // Theme state
   const isDark = theme === "dark";
@@ -571,20 +571,20 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         
         @keyframes pulseGlow {
           0%, 100% {
-            box-shadow: 0 4px 15px rgba(13, 145, 156, 0.12);
+            box-shadow: 0 4px 15px rgba(11, 111, 179, 0.12);
           }
           50% {
-            box-shadow: 0 4px 25px rgba(13, 145, 156, 0.3);
+            box-shadow: 0 4px 25px rgba(11, 111, 179, 0.3);
             border-color: ${brandColor} !important;
           }
         }
 
         @keyframes breatheBacklight {
           0%, 100% {
-            box-shadow: 0 10px 30px rgba(13, 145, 156, 0.08);
+            box-shadow: 0 10px 30px rgba(11, 111, 179, 0.08);
           }
           50% {
-            box-shadow: 0 10px 45px rgba(13, 145, 156, 0.25);
+            box-shadow: 0 10px 45px rgba(11, 111, 179, 0.25);
           }
         }
 
@@ -639,9 +639,9 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         <div
           className="position-fixed top-0 start-50 translate-middle-x mt-4 p-3 rounded-3 shadow-lg d-flex align-items-center gap-2 text-white border-0"
           style={{
-            backgroundColor: toastType === "success" ? "#10b981" : "#ef4444",
+            backgroundColor: toastType === "success" ? "#0b6fb3" : "#ef4444",
             zIndex: 1090,
-            boxShadow: toastType === "success" ? "0 10px 30px rgba(16, 185, 129, 0.25)" : "0 10px 30px rgba(239, 68, 68, 0.25)",
+            boxShadow: toastType === "success" ? "0 10px 30px rgba(11, 111, 179, 0.25)" : "0 10px 30px rgba(239, 68, 68, 0.25)",
             fontSize: "14px",
             fontWeight: "600",
             animation: "fadeInUp 0.3s ease-out"
@@ -859,7 +859,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                 onClick={(e) => handleNavigatePage(e, srv.page)}
               >
                 <div>
-                  <div className="flex items-center justify-center text-white mb-3 w-10 h-10 bg-[#0D919C] rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+                  <div className="flex items-center justify-center text-white mb-3 w-10 h-10 bg-[#0b6fb3] rounded-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
                     {srv.icon}
                   </div>
 
@@ -874,7 +874,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
 
                 <div>
                   <div className="mb-2">
-                    <span className={`inline-block px-2 py-1 font-bold text-center text-[10px] tracking-wide rounded-md border ${isDark ? "border-[#334155] text-[#0D919C]" : "border-[#e2e8f0] text-[#0D919C]"}`}>
+                    <span className={`inline-block px-2 py-1 font-bold text-center text-[10px] tracking-wide rounded-md border ${isDark ? "border-[#334155] text-[#0b6fb3]" : "border-[#e2e8f0] text-[#0b6fb3]"}`}>
                       {srv.badge}
                     </span>
                   </div>
@@ -1043,7 +1043,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
           <div
             className="mt-4 p-3 rounded-3 border text-start d-flex align-items-start gap-3 shadow-sm animate-entrance"
             style={{
-              backgroundColor: isDark ? "rgba(13, 145, 156, 0.04)" : "rgba(13, 145, 156, 0.02)",
+              backgroundColor: isDark ? "rgba(11, 111, 179, 0.04)" : "rgba(11, 111, 179, 0.02)",
               borderColor: brandColor,
               borderRadius: "12px",
               animation: "fadeInUp 0.3s ease-out"
@@ -1110,8 +1110,8 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                 <form onSubmit={handleFormSubmit}>
                   <div className="py-3">
                     {modalType === "event" && (
-                      <div className={`p-3 mb-3 rounded-lg text-left border-l-4 border-[#0D919C] ${isDark ? "bg-[#1e293b]" : "bg-[#f1f5f9]"}`}>
-                        <div className="font-bold mb-1 uppercase text-[11px] text-[#0D919C]">Bạn đang chọn sự kiện</div>
+                      <div className={`p-3 mb-3 rounded-lg text-left border-l-4 border-[#0b6fb3] ${isDark ? "bg-[#1e293b]" : "bg-[#f1f5f9]"}`}>
+                        <div className="font-bold mb-1 uppercase text-[11px] text-[#0b6fb3]">Bạn đang chọn sự kiện</div>
                         <div className="font-semibold text-sm">{selectedEvent}</div>
                       </div>
                     )}
@@ -1121,7 +1121,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                       <input
                         type="text"
                         name="name"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                         required
                         value={formData.name}
                         onChange={handleInputChange}
@@ -1134,7 +1134,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                       <input
                         type="tel"
                         name="phone"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                         required
                         value={formData.phone}
                         onChange={handleInputChange}
@@ -1147,7 +1147,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                       <input
                         type="email"
                         name="email"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                         required
                         value={formData.email}
                         onChange={handleInputChange}
@@ -1161,7 +1161,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                           <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn dịch vụ *</label>
                           <select
                             name="serviceId"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                             value={formData.serviceId}
                             onChange={handleCategoryChange}
                             required
@@ -1178,7 +1178,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                           <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Chọn sản phẩm *</label>
                           <select
                             name="productId"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                             value={formData.productId}
                             onChange={handleInputChange}
                             required
@@ -1203,7 +1203,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                             type="file"
                             accept="image/*"
                             multiple
-                            className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                            className={`w-full px-3 py-1.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                             onChange={handleCccdUpload}
                           />
                           <div className="text-[10px] mt-1" style={{ color: mutedTextColor }}>
@@ -1234,7 +1234,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                       <label className={`block text-xs font-bold mb-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>Ghi chú thêm</label>
                       <textarea
                         name="notes"
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-[#f8fafc]" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                         rows="3"
                         value={formData.notes}
                         onChange={handleInputChange}
@@ -1251,7 +1251,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                           setShowModal(false);
                           handleNavigatePage(e, "leadForm");
                         }}
-                        className="text-xs font-semibold no-underline text-[#0D919C] hover:text-[#0a757e] transition-colors"
+                        className="text-xs font-semibold no-underline text-[#0b6fb3] hover:text-[#074b80] transition-colors"
                       >
                         Gửi qua Form Lead CRM &rarr;
                       </a>
@@ -1272,7 +1272,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="text-white text-xs font-bold px-4 py-2 bg-[#0D919C] hover:bg-[#0a757e] rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-50"
+                        className="text-white text-xs font-bold px-4 py-2 bg-[#0b6fb3] hover:bg-[#074b80] rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-50"
                       >
                         {isSubmitting ? "ĐANG GỬI..." : "XÁC NHẬN GỬI"}
                       </button>

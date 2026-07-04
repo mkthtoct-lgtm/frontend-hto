@@ -346,9 +346,9 @@ export const LeadFormPage = () => {
         <div
           className="position-fixed top-0 start-50 translate-middle-x mt-4 p-3 rounded-3 shadow-lg d-flex align-items-center gap-2 text-white border-0"
           style={{
-            backgroundColor: toastType === "success" ? "#10b981" : "#ef4444",
+            backgroundColor: toastType === "success" ? "#0b6fb3" : "#ef4444",
             zIndex: 1090,
-            boxShadow: toastType === "success" ? "0 10px 30px rgba(16, 185, 129, 0.25)" : "0 10px 30px rgba(239, 68, 68, 0.25)",
+            boxShadow: toastType === "success" ? "0 10px 30px rgba(11, 111, 179, 0.25)" : "0 10px 30px rgba(239, 68, 68, 0.25)",
             fontSize: "14px",
             fontWeight: "600",
             animation: "fadeInUp 0.3s ease-out"

@@ -1433,7 +1433,7 @@ function App() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" /></svg>
                         <span className="text-truncate">Tờ tiền CM</span>
                       </div>
-                      <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#10b981", fontSize: "11.5px" }}>
+                      <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#0b6fb3", fontSize: "11.5px" }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z" /></svg>
                         <span className="text-truncate">Số tiền CM</span>
                       </div>
@@ -1441,7 +1441,7 @@ function App() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M12 1L3 6v2h18V6l-9-5zm0 2.18l5.36 2.82H6.64L12 3.18zM5 10h2v7H5v-7zm6 0h2v7h-2v-7zm6 0h2v7h-2v-7zM3 19h18v2H3v-2z" /></svg>
                         <span className="text-truncate">TK phong tỏa</span>
                       </div>
-                      <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#10b981", fontSize: "11.5px", opacity: 0.9 }}>
+                      <div className="flex-fill text-white rounded p-1 px-xl-2 py-xl-2 d-flex justify-content-center align-items-center text-nowrap overflow-hidden" style={{ backgroundColor: "#0b6fb3", fontSize: "11.5px", opacity: 0.9 }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-xl-block"><path d="M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z" /><circle cx="16" cy="12" r="1.5" /></svg>
                         <span className="text-truncate">Sổ tiết kiệm</span>
                       </div>

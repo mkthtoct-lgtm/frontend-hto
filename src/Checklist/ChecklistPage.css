@@ -39,8 +39,8 @@
 
 .api-mode-real {
   color: #0f766e;
-  background: rgba(20, 184, 166, 0.12);
-  border-color: rgba(20, 184, 166, 0.22);
+  background: rgba(11, 111, 179, 0.12);
+  border-color: rgba(11, 111, 179, 0.22);
 }
 
 .api-mode-mock {
@@ -74,7 +74,7 @@
 }
 
 .checklist-stat-card.success strong {
-  color: #10b981;
+  color: #0b6fb3;
 }
 
 .checklist-stat-card.warning strong {
@@ -211,7 +211,7 @@
 
 .priority-low {
   color: #047857;
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(11, 111, 179, 0.12);
 }
 
 .checklist-status-todo {
@@ -226,7 +226,7 @@
 
 .checklist-status-done {
   color: #047857;
-  background: rgba(16, 185, 129, 0.14);
+  background: rgba(11, 111, 179, 0.14);
 }
 
 .checklist-status-overdue {
@@ -302,8 +302,8 @@
 }
 
 .task-dot.done {
-  border-color: #10b981;
-  background: #10b981;
+  border-color: #0b6fb3;
+  background: #0b6fb3;
   box-shadow: inset 0 0 0 3px var(--bs-body-bg);
 }
 

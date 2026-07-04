@@ -34,7 +34,7 @@ const getApiErrorMessage = (data, status) => {
 
 export function OnlineApplicationPage({ currentUser, onNavigate }) {
   // Brand color config
-  const brandColor = "#0D919C";
+  const brandColor = "#0b6fb3";
 
   // Dynamic Theme observer
   const [isDark, setIsDark] = useState(() => {
@@ -163,8 +163,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       return "border-red-500 focus:ring-red-500 focus:border-red-500 focus:ring-1";
     }
     return isDark
-      ? "border-[#334155] focus:ring-[#0D919C] focus:border-[#0D919C]"
-      : "border-[#e2e8f0] focus:ring-[#0D919C] focus:border-[#0D919C]";
+      ? "border-[#334155] focus:ring-[#0b6fb3] focus:border-[#0b6fb3]"
+      : "border-[#e2e8f0] focus:ring-[#0b6fb3] focus:border-[#0b6fb3]";
   };
 
   const getCccdBorderClass = (fieldName) => {
@@ -357,8 +357,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       {isSuccess ? (
         /* SUCCESS CONFIRMATION CARD */
         <div className={`rounded-2xl border p-4 sm:p-8 text-center max-w-[650px] mx-auto shadow-2xl transition-all duration-300 ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
-          <div className="w-16 h-16 bg-[#10b981]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#10b981]/20">
-            <svg className="w-8 h-8 text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-[#0b6fb3]/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#0b6fb3]/20">
+            <svg className="w-8 h-8 text-[#0b6fb3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -366,11 +366,11 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             Nộp Hồ Sơ Thành Công!
           </h3>
           <p className={`text-sm mb-6 px-1 ${isDark ? "text-[#94a3b8]" : "text-[#64748b]"}`}>
-            Mã hồ sơ của bạn là <span className="font-bold text-[#0D919C]">{leadCode}</span>. Chuyên viên xử lý hồ sơ của HT Ocean sẽ tiến hành thẩm định và liên hệ lại với bạn qua số điện thoại <span className="font-semibold">{formData.phone}</span> trong vòng 24 giờ làm việc.
+            Mã hồ sơ của bạn là <span className="font-bold text-[#0b6fb3]">{leadCode}</span>. Chuyên viên xử lý hồ sơ của HT Ocean sẽ tiến hành thẩm định và liên hệ lại với bạn qua số điện thoại <span className="font-semibold">{formData.phone}</span> trong vòng 24 giờ làm việc.
           </p>
 
           <div className={`rounded-xl p-4 mb-6 text-left text-xs space-y-2 ${isDark ? "bg-[#1f2937]" : "bg-[#f8fafc]"}`}>
-            <div className="font-bold uppercase tracking-wider text-[10px] text-[#0D919C] mb-2 border-b pb-1">Tóm tắt thông tin nộp</div>
+            <div className="font-bold uppercase tracking-wider text-[10px] text-[#0b6fb3] mb-2 border-b pb-1">Tóm tắt thông tin nộp</div>
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Chương trình:</span> <strong className={`break-words ${isDark ? "text-white" : "text-[#1e293b]"}`}>{activeProgram?.name}</strong></div>
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Họ và tên:</span> <strong className={isDark ? "text-white" : "text-[#1e293b]"}>{formData.fullName}</strong></div>
             <div className="flex flex-col sm:flex-row sm:gap-1"><span className="opacity-70 flex-shrink-0">Số điện thoại:</span> <strong className={isDark ? "text-white" : "text-[#1e293b]"}>{formData.phone}</strong></div>
@@ -385,7 +385,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             </button>
             <button
               onClick={handleResetForm}
-              className="w-full sm:w-auto px-6 py-3 text-xs font-bold text-white bg-[#0D919C] hover:bg-[#0a757e] rounded-lg transition-colors border-0 cursor-pointer text-center"
+              className="w-full sm:w-auto px-6 py-3 text-xs font-bold text-white bg-[#0b6fb3] hover:bg-[#074b80] rounded-lg transition-colors border-0 cursor-pointer text-center"
             >
               NỘP HỒ SƠ KHÁC
             </button>
@@ -396,8 +396,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
         <div className={`rounded-2xl border p-4 sm:p-5 md:p-6 flex flex-col justify-between shadow-sm relative ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
           {isSubmitting && (
             <div className="absolute inset-0 bg-white/70 dark:bg-black/60 backdrop-blur-[2px] rounded-2xl z-20 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 border-4 border-[#0D919C] border-t-transparent rounded-full animate-spin mb-3"></div>
-              <div className="font-bold text-sm tracking-wide text-[#0D919C]">Đang kiểm tra và tải hồ sơ lên hệ thống...</div>
+              <div className="w-12 h-12 border-4 border-[#0b6fb3] border-t-transparent rounded-full animate-spin mb-3"></div>
+              <div className="font-bold text-sm tracking-wide text-[#0b6fb3]">Đang kiểm tra và tải hồ sơ lên hệ thống...</div>
             </div>
           )}
 
@@ -430,11 +430,11 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                       key={cat.id}
                       onClick={() => setSelectedCatId(cat.id)}
                       className={`p-3 border rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center text-center gap-2 ${isSelected
-                        ? "border-[#0D919C] bg-[#0D919C]/5 shadow-md shadow-[#0D919C]/5 text-[#0D919C] font-semibold scale-[1.02]"
+                        ? "border-[#0b6fb3] bg-[#0b6fb3]/5 shadow-md shadow-[#0b6fb3]/5 text-[#0b6fb3] font-semibold scale-[1.02]"
                         : (isDark ? "border-[#334155] hover:border-slate-600 bg-slate-800/20" : "border-[#e2e8f0] hover:border-slate-300 bg-slate-50/50")
                         }`}
                     >
-                      <div className={`p-2 rounded-lg transition-colors ${isSelected ? "bg-[#0D919C] text-white" : (isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500")}`}>
+                      <div className={`p-2 rounded-lg transition-colors ${isSelected ? "bg-[#0b6fb3] text-white" : (isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500")}`}>
                         {cat.icon}
                       </div>
                       <span className="text-xs truncate w-full">{cat.name}</span>
@@ -449,7 +449,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                 <select
                   value={selectedProgId}
                   onChange={(e) => setSelectedProgId(e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-white" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-white" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                 >
                   {activeCategory.programs.map(p => (
                     <option key={p.id} value={p.id} className={isDark ? "bg-[#1f2937]" : "bg-white"}>
@@ -675,7 +675,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
                   value={formData.notes}
                   onChange={handleInputChange}
                   placeholder="Lời nhắn đến chuyên viên xét duyệt..."
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0D919C] focus:border-[#0D919C] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-white" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0b6fb3] focus:border-[#0b6fb3] text-sm ${isDark ? "border-[#334155] bg-[#1f2937] text-white" : "border-[#e2e8f0] bg-white text-[#1e293b]"}`}
                 />
               </div>
             </div>
@@ -684,7 +684,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             <div className="flex justify-end border-t border-slate-100 dark:border-[#334155] pt-4 mt-6">
               <button
                 type="submit"
-                className="w-full sm:w-auto px-8 py-3 text-xs font-bold text-white bg-[#0D919C] hover:bg-[#0d9a6c] rounded-lg transition-colors border-0 cursor-pointer"
+                className="w-full sm:w-auto px-8 py-3 text-xs font-bold text-white bg-[#0b6fb3] hover:bg-[#074b80] rounded-lg transition-colors border-0 cursor-pointer"
               >
                 GỬI HỒ SƠ ĐĂNG KÝ
               </button>

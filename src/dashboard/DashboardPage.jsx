@@ -1111,7 +1111,7 @@ export const DashboardPage = () => {
   return (
     <ThemeCtx.Provider value={tokens}>
       <GlobalStyles/>
-      <div className="dash-root" style={{ padding:"24px 28px", maxWidth:"1600px", background:tokens.bg, minHeight:"100vh", fontFamily:"'Inter', system-ui, sans-serif" }}>
+      <div className="dash-root" style={{ padding:"24px 28px", maxWidth:"1600px",  minHeight:"100vh", fontFamily:"'Inter', system-ui, sans-serif" }}>
         {renderContent()}
       </div>
     </ThemeCtx.Provider>
