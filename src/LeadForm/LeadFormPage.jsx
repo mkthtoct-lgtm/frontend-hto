@@ -2,6 +2,7 @@ import { useMemo, useState, useRef } from "react";
 import { getAuthHeaders } from "../auth/session";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import { API_BASE_URL } from "../config/api";
+import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation } from "../utils/leadSubmission";
 import "./LeadFormPage.css";
 
 const LEAD_REQUEST_TIMEOUT_MS = 15000;
@@ -27,6 +28,22 @@ const CONTACT_OPTIONS = ["Zalo/Điện thoại", "Email", "Messenger", "Gặp tr
 
 const normalizePhone = (value) => value.trim().replace(/[\s.-]/g, "");
 
+const getReferralCode = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get("ref") || params.get("referral") || params.get("referralCode") || params.get("maGioiThieu");
+    if (urlCode) {
+      window.localStorage.setItem("hto_referral_code", urlCode);
+      return urlCode;
+    }
+
+    const storedUser = JSON.parse(window.localStorage.getItem("auth_user") || "null");
+    return storedUser?.referralCode || storedUser?.referral_code || window.localStorage.getItem("hto_referral_code") || "";
+  } catch {
+    return "";
+  }
+};
+
 const buildLeadPayload = (form, cccdImages) => {
   // Lưu ảnh CCCD vào localStorage (không gửi Base64 lên API để tránh payload quá lớn)
   let cccdRef = "";
@@ -49,6 +66,7 @@ const buildLeadPayload = (form, cccdImages) => {
     budgetRange: form.budgetRange.trim(),
     urgency: form.urgency || "Trong 1-3 tháng",
     preferredContact: form.preferredContact || "Zalo/Điện thoại",
+    referralCode: getReferralCode(),
     note: (form.note.trim() + (cccdRef ? `\n\n[Đã đính kèm ${cccdImages.length} ảnh CCCD - Mã tham chiếu: ${cccdRef}]` : "")).trim()
   };
 };
@@ -242,6 +260,12 @@ export const LeadFormPage = () => {
       return;
     }
 
+    const duplicateGuard = beginLeadSubmission(form.phone);
+    if (!duplicateGuard.allowed) {
+      triggerToast(duplicateGuard.message, "danger");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitResult(null);
 
@@ -257,6 +281,7 @@ export const LeadFormPage = () => {
       });
       triggerToast(errorMsg, "danger");
       setSubmitting(false);
+      finishLeadSubmission(form.phone, false);
       return;
     }
 
@@ -272,6 +297,10 @@ export const LeadFormPage = () => {
     fd.append("urgency", form.urgency || "Trong 1-3 tháng");
     fd.append("preferredContact", form.preferredContact || "Zalo/Điện thoại");
     fd.append("note", form.note.trim());
+    const referralCode = getReferralCode();
+    if (referralCode) {
+      fd.append("referralCode", referralCode);
+    }
     
     // Đính kèm cccdFront và cccdBack bắt buộc
     fd.append("cccdFront", base64ToBlob(cccdImages[0]), "cccd_front.jpg");
@@ -305,6 +334,8 @@ export const LeadFormPage = () => {
       }
 
       const createdLead = data?.data || {};
+      const leadId = createdLead._id || createdLead.id || data?.code;
+      const dealResult = await markLeadReadyForReconciliation(leadId);
       const successMsg = createdLead.bizflyContactId
         ? data?.message || "Lead đã được gửi thành công vào CRM."
         : "Lead đã lưu vào hệ thống, nhưng BizFly chưa trả mã contact.";
@@ -313,10 +344,11 @@ export const LeadFormPage = () => {
         type: "success",
         mode: "api",
         leadCode: createdLead.bizflyContactId || createdLead._id || `LEAD-${Date.now()}`,
-        message: successMsg
+        message: dealResult.ok ? `${successMsg} Deal đã được đưa vào đối soát.` : `${successMsg} ${dealResult.message}`
       });
 
-      triggerToast(successMsg, "success");
+      triggerToast(dealResult.ok ? `${successMsg} Deal đã được đưa vào đối soát.` : `${successMsg} ${dealResult.message}`, dealResult.ok ? "success" : "danger");
+      finishLeadSubmission(form.phone, true);
       setForm(INITIAL_FORM);
       setCccdImages([]);
       window.localStorage.removeItem("last_lead_info");
@@ -333,6 +365,7 @@ export const LeadFormPage = () => {
         message: errMsg
       });
       triggerToast(errMsg, "danger");
+      finishLeadSubmission(form.phone, false);
     } finally {
       window.clearTimeout(requestTimeout);
       setSubmitting(false);

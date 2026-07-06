@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "../config/api";
 import { getAuthHeaders } from "../auth/session";
+import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
 
 const LEAD_REQUEST_TIMEOUT_MS = 15000;
-
-const normalizePhone = (value) => value.trim().replace(/[\s.-]/g, "");
 
 const mapCountryInterest = (catId, progId) => {
   if (catId === "duhocnghe" || catId === "dinhcu") return "Đức";
@@ -253,6 +252,16 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       return;
     }
 
+    const duplicateGuard = beginLeadSubmission(formData.phone);
+    if (!duplicateGuard.allowed) {
+      setValidationError(duplicateGuard.message);
+      const formContainer = document.querySelector("form");
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
     setValidationError("");
     setIsSubmitting(true);
 
@@ -267,7 +276,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     // Prepare multipart/form-data payload
     const payload = new FormData();
     payload.append("customerName", formData.fullName.trim());
-    payload.append("phone", normalizePhone(formData.phone));
+    payload.append("phone", normalizeLeadPhone(formData.phone));
     payload.append("email", formData.email.trim());
     payload.append("source", "Nộp hồ sơ online");
     payload.append("productInterest", activeProgram?.name || "Nộp hồ sơ online");
@@ -298,11 +307,17 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       }
 
       const createdLead = data?.data || {};
+      const leadId = createdLead._id || createdLead.id || data?.code;
+      const dealResult = await markLeadReadyForReconciliation(leadId);
 
       // Store returned lead ID or contact ID, fallback to client-side code if empty
       const successLeadCode = createdLead.bizflyContactId || createdLead._id || `HTO-${Date.now().toString().slice(-6)}`;
       setLeadCode(successLeadCode);
       setIsSuccess(true);
+      if (!dealResult.ok) {
+        setValidationError(dealResult.message);
+      }
+      finishLeadSubmission(formData.phone, true);
       window.localStorage.removeItem("last_lead_info");
     } catch (err) {
       const isTimeout = err.name === "AbortError";
@@ -317,6 +332,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       if (formContainer) {
         formContainer.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+      finishLeadSubmission(formData.phone, false);
     } finally {
       window.clearTimeout(requestTimeout);
       setIsSubmitting(false);

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { ToastDispatchContext, useToast } from "./ToastContext";
+import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
 const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
 // Key dùng chung với Sidebar.jsx để truyền danh mục được chọn khi điều hướng
@@ -20,6 +21,22 @@ const readPendingSidebarCategory = () => {
     return parsed && typeof parsed === "object" ? parsed : null;
   } catch {
     return null;
+  }
+};
+
+const getReferralCode = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get("ref") || params.get("referral") || params.get("referralCode") || params.get("maGioiThieu");
+    if (urlCode) {
+      window.localStorage.setItem("hto_referral_code", urlCode);
+      return urlCode;
+    }
+
+    const storedUser = JSON.parse(window.localStorage.getItem("auth_user") || "null");
+    return storedUser?.referralCode || storedUser?.referral_code || window.localStorage.getItem("hto_referral_code") || "";
+  } catch {
+    return "";
   }
 };
 
@@ -1578,18 +1595,26 @@ function ProductOverviewPageInner({ currentUser }) {
       return;
     }
 
-    setIsSubmittingInterest(true);
+    const duplicateGuard = beginLeadSubmission(interestForm.phone);
+    if (!duplicateGuard.allowed) {
+      toast.error(duplicateGuard.message, "Thông tin đã gửi");
+      return;
+    }
 
-    const normalizePhone = (value) => value.trim().replace(/[\s.-]/g, "");
+    setIsSubmittingInterest(true);
 
     const payload = new FormData();
     payload.append("customerName", interestForm.customerName.trim());
-    payload.append("phone", normalizePhone(interestForm.phone));
+    payload.append("phone", normalizeLeadPhone(interestForm.phone));
     payload.append("email", interestForm.email ? interestForm.email.trim() : "");
     payload.append("source", interestForm.sourceChannel || "CTV/Đại lý");
     payload.append("productInterest", selectedProduct?.name || "Sản phẩm quan tâm");
     payload.append("countryInterest", resolveCountryName(selectedProduct?.country) || "Đức");
     payload.append("note", interestForm.note ? interestForm.note.trim() : "");
+    const referralCode = getReferralCode();
+    if (referralCode) {
+      payload.append("referralCode", referralCode);
+    }
     payload.append("cccdFront", interestCccdFrontFile);
     payload.append("cccdBack", interestCccdBackFile);
 
@@ -1599,14 +1624,20 @@ function ProductOverviewPageInner({ currentUser }) {
         body: payload
       });
 
+      const leadId = response?.data?._id || response?.data?.id || response?.code || response?._id || response?.id;
+      const dealResult = await markLeadReadyForReconciliation(leadId);
       const successCode = response?.data?.bizflyContactId || response?.bizflyContactId || response?.data?._id || response?._id || `HTO-${Date.now().toString().slice(-6)}`;
       toast.success(
-        `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. Mã liên hệ: ${successCode}`,
+        dealResult.ok
+          ? `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. Deal đã vào đối soát. Mã liên hệ: ${successCode}`
+          : `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. ${dealResult.message} Mã liên hệ: ${successCode}`,
         "Gửi liên hệ thành công"
       );
+      finishLeadSubmission(interestForm.phone, true);
       handleCloseInterestModal();
     } catch (err) {
       toast.error(err.message || "Gửi liên hệ tư vấn thất bại. Vui lòng thử lại sau.", "Lỗi gửi liên hệ");
+      finishLeadSubmission(interestForm.phone, false);
     } finally {
       setIsSubmittingInterest(false);
     }

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { fetchNewsPosts } from "../newsEvents/newsEventsApi";
 import { getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
+import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
 
 const fallbackCategories = [
   { id: "cat-du-hoc", name: "Du học nghề Đức" },
@@ -22,6 +23,22 @@ const fallbackProducts = [
   { id: "prod-ks", name: "Chương trình kỹ sư/nhân sự chất lượng cao tại Đức", categoryId: "cat-dinh-cu", country: "Đức" },
   { id: "prod-cd", name: "Chuyển đổi bằng cấp điều dưỡng viên nước ngoài", categoryId: "cat-dinh-cu", country: "Đức" }
 ];
+
+const getReferralCode = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = params.get("ref") || params.get("referral") || params.get("referralCode") || params.get("maGioiThieu");
+    if (urlCode) {
+      window.localStorage.setItem("hto_referral_code", urlCode);
+      return urlCode;
+    }
+
+    const storedUser = JSON.parse(window.localStorage.getItem("auth_user") || "null");
+    return storedUser?.referralCode || storedUser?.referral_code || window.localStorage.getItem("hto_referral_code") || "";
+  } catch {
+    return "";
+  }
+};
 
 export const HomePage = ({ theme, onNavigate, currentUser }) => {
   // Brand colors
@@ -355,6 +372,12 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       return;
     }
 
+    const duplicateGuard = beginLeadSubmission(formData.phone);
+    if (!duplicateGuard.allowed) {
+      triggerToast(duplicateGuard.message, "danger");
+      return;
+    }
+
     const selectedProduct = activeProducts.find(p => String(p.id) === String(formData.productId));
     const productName = selectedProduct ? selectedProduct.name : "Du học nghề Đức";
     const country = selectedProduct?.country || "Đức";
@@ -377,12 +400,16 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         // Gửi multipart/form-data với cccdFront và cccdBack (backend yêu cầu)
         const fd = new FormData();
         fd.append("customerName", formData.name.trim());
-        fd.append("phone", formData.phone.trim().replace(/[\s.-]/g, ""));
+        fd.append("phone", normalizeLeadPhone(formData.phone));
         fd.append("email", formData.email.trim());
         fd.append("source", "Website");
         fd.append("productInterest", productName);
         fd.append("countryInterest", country);
         fd.append("note", `[Đăng ký tư vấn lộ trình] ${formData.notes.trim()}`.trim());
+        const referralCode = getReferralCode();
+        if (referralCode) {
+          fd.append("referralCode", referralCode);
+        }
         fd.append("cccdFront", base64ToBlob(cccdImages[0]), "cccd_front.jpg");
         fd.append("cccdBack", base64ToBlob(cccdImages[1]), "cccd_back.jpg");
         // Nếu có thêm ảnh CCCD bổ sung (ảnh thứ 3-5)
@@ -402,11 +429,12 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         // Gửi JSON thuần (không có CCCD hoặc chỉ 1 ảnh)
         const payload = {
           customerName: formData.name.trim(),
-          phone: formData.phone.trim().replace(/[\s.-]/g, ""),
+          phone: normalizeLeadPhone(formData.phone),
           email: formData.email.trim(),
           source: "Website",
           productInterest: productName,
           countryInterest: country,
+          referralCode: getReferralCode(),
           note: `[Đăng ký tư vấn lộ trình] ${formData.notes.trim()}`.trim()
         };
 
@@ -422,17 +450,27 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       const data = await response.json().catch(() => ({}));
       console.log("[HomePage] Response status:", response.status, "Body:", data);
       if (response.ok) {
+        const leadId = data?.data?._id || data?.data?.id || data?.code;
+        const dealResult = await markLeadReadyForReconciliation(leadId);
         setShowModal(false);
         setCccdImages([]);
         const contactId = data?.data?.bizflyContactId || data?.data?._id || `LEAD-${Date.now().toString().slice(-6)}`;
-        triggerToast(`Đăng ký tư vấn thành công! Lead đã được gửi lên CRM (Mã: ${contactId}).`);
+        triggerToast(
+          dealResult.ok
+            ? `Đăng ký tư vấn thành công! Lead đã được gửi lên CRM và tạo deal đối soát (Mã: ${contactId}).`
+            : `Đăng ký tư vấn thành công! Lead đã được gửi lên CRM (Mã: ${contactId}). ${dealResult.message}`,
+          dealResult.ok ? "success" : "danger"
+        );
+        finishLeadSubmission(formData.phone, true);
       } else {
         const errorMsg = data?.message || `Lỗi máy chủ (HTTP ${response.status})`;
         triggerToast(`Gửi thông tin thất bại: ${errorMsg}`, "danger");
+        finishLeadSubmission(formData.phone, false);
       }
     } catch (err) {
       console.error("Lỗi khi gửi lead lên CRM:", err);
       triggerToast(`Không thể kết nối đến máy chủ: ${err.message}`, "danger");
+      finishLeadSubmission(formData.phone, false);
     } finally {
       setIsSubmitting(false);
     }
