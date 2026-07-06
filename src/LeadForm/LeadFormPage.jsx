@@ -5,7 +5,7 @@ import { API_BASE_URL } from "../config/api";
 import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation } from "../utils/leadSubmission";
 import "./LeadFormPage.css";
 
-const LEAD_REQUEST_TIMEOUT_MS = 15000;
+const LEAD_REQUEST_TIMEOUT_MS = 60000;
 
 const INITIAL_FORM = {
   customerName: "",
@@ -245,6 +245,8 @@ export const LeadFormPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (submitting) return;
 
     const nextErrors = validateForm(form);
 

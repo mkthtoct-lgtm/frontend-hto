@@ -3,7 +3,7 @@ import { API_BASE_URL } from "../config/api";
 import { getAuthHeaders } from "../auth/session";
 import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
 
-const LEAD_REQUEST_TIMEOUT_MS = 15000;
+const LEAD_REQUEST_TIMEOUT_MS = 60000;
 
 const mapCountryInterest = (catId, progId) => {
   if (catId === "duhocnghe" || catId === "dinhcu") return "Đức";
@@ -201,6 +201,8 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
 
     // Check authentication headers
     const authHeaders = getAuthHeaders();
@@ -700,9 +702,10 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             <div className="flex justify-end border-t border-slate-100 dark:border-[#334155] pt-4 mt-6">
               <button
                 type="submit"
-                className="w-full sm:w-auto px-8 py-3 text-xs font-bold text-white bg-[#0b6fb3] hover:bg-[#074b80] rounded-lg transition-colors border-0 cursor-pointer"
+                disabled={isSubmitting}
+                className="w-full sm:w-auto px-8 py-3 text-xs font-bold text-white bg-[#0b6fb3] hover:bg-[#074b80] rounded-lg transition-colors border-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                GỬI HỒ SƠ ĐĂNG KÝ
+                {isSubmitting ? "ĐANG GỬI HỒ SƠ..." : "GỬI HỒ SƠ ĐĂNG KÝ"}
               </button>
             </div>
 

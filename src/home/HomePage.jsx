@@ -354,6 +354,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (modalType === "event") {
       setShowModal(false);
       triggerToast(`Đăng ký sự kiện thành công! Vé tham dự đã gửi tới email: ${formData.email}`);

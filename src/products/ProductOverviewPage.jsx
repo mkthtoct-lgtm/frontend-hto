@@ -133,12 +133,11 @@ const numberToVietnameseWords = (num) => {
 // ==========================================
 // MOCK DATA - LUÔN CÓ SẴN ĐỂ FALLBACK
 // ==========================================
-// eslint-disable-next-line no-unused-vars
 const VISA_TYPES = [
-  { id: "vtype-1", name: "Visa Du học", icon: "fa-graduation-cap", desc: "Hồ sơ xin visa du học các nước", color: "text-[#2563eb]", gradient: "bg-gradient-to-b from-[#e0f2fe] to-white", btnBg: "bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe]", docsCount: 12, filesCount: 18 },
-  { id: "vtype-2", name: "Visa Du lịch", icon: "fa-plane", desc: "Hồ sơ xin visa du lịch, thăm thân", color: "text-[#059669]", gradient: "bg-gradient-to-b from-[#d1fae5] to-white", btnBg: "bg-[#ecfdf5] text-[#059669] hover:bg-[#d1fae5]", docsCount: 8, filesCount: 10 },
-  { id: "vtype-3", name: "Visa Định cư", icon: "fa-house", desc: "Hồ sơ xin định cư, bảo lãnh", color: "text-[#d97706]", gradient: "bg-gradient-to-b from-[#fef3c7] to-white", btnBg: "bg-[#fffbeb] text-[#d97706] hover:bg-[#fef3c7]", docsCount: 7, filesCount: 12 },
-  { id: "vtype-4", name: "Visa Công tác", icon: "fa-briefcase", desc: "Hồ sơ xin visa công tác, làm việc", color: "text-[#7c3aed]", gradient: "bg-gradient-to-b from-[#f3e8ff] to-white", btnBg: "bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff]", docsCount: 5, filesCount: 6 }
+  { id: "vtype-1", name: "Visa Du học", icon: "fa-graduation-cap", desc: "Hồ sơ xin visa du học các nước", color: "text-[#2563eb]", gradient: "bg-linear-to-b from-[#e0f2fe] to-white", btnBg: "bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe]", docsCount: 12, filesCount: 18 },
+  { id: "vtype-2", name: "Visa Du lịch", icon: "fa-plane", desc: "Hồ sơ xin visa du lịch, thăm thân", color: "text-[#059669]", gradient: "bg-linear-to-b from-[#d1fae5] to-white", btnBg: "bg-[#ecfdf5] text-[#059669] hover:bg-[#d1fae5]", docsCount: 8, filesCount: 10 },
+  { id: "vtype-3", name: "Visa Định cư", icon: "fa-house", desc: "Hồ sơ xin định cư, bảo lãnh", color: "text-[#d97706]", gradient: "bg-linear-to-b from-[#fef3c7] to-white", btnBg: "bg-[#fffbeb] text-[#d97706] hover:bg-[#fef3c7]", docsCount: 7, filesCount: 12 },
+  { id: "vtype-4", name: "Visa Công tác", icon: "fa-briefcase", desc: "Hồ sơ xin visa công tác, làm việc", color: "text-[#7c3aed]", gradient: "bg-linear-to-b from-[#f3e8ff] to-white", btnBg: "bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff]", docsCount: 5, filesCount: 6 }
 ];
 
 const MOCK_CATEGORIES = [
@@ -235,22 +234,22 @@ export function ToastProvider({ children }) {
 
   const ICONS = {
     success: (
-      <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     error: (
-      <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
     warning: (
-      <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
     ),
     info: (
-      <svg className="w-5 h-5 text-cyan-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-cyan-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -266,7 +265,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastDispatchContext.Provider value={dispatch}>
       {children}
-      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+      <div className="fixed top-4 right-4 z-9999 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
         {toasts.map(t => (
           <div
             key={t.id}
@@ -279,7 +278,7 @@ export function ToastProvider({ children }) {
             </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5"
+              className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 mt-0.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -313,10 +312,10 @@ function ConfirmModal({ isOpen, title, message, confirmLabel = "Xác nhận", ca
   const s = iconStyles[variant] || iconStyles.danger;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] flex items-center justify-center p-4 z-[9998] animate-[fadeIn_0.15s_ease-out]">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] flex items-center justify-center p-4 z-9998 animate-[fadeIn_0.15s_ease-out]">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-[slideUp_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         <div className="flex items-start gap-4">
-          <div className={`flex-shrink-0 w-10 h-10 rounded-full ${s.bg} flex items-center justify-center`}>
+          <div className={`shrink-0 w-10 h-10 rounded-full ${s.bg} flex items-center justify-center`}>
             <svg className={`w-5 h-5 ${s.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={s.path} />
             </svg>
@@ -612,15 +611,15 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200 app-dark:!border-slate-700"
-          } rounded-xl force-rounded-xl px-3 text-sm text-slate-700 app-dark:!text-slate-200 flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
+        className={`w-full h-10 bg-white app-dark:bg-[#1e1e1e]! border ${isOpen ? "border-cyan-400 ring-2 ring-cyan-500/20" : "border-slate-200 app-dark:border-slate-700!"
+          } force-rounded-xl px-3 text-sm text-slate-700 app-dark:text-slate-200! flex items-center justify-between shadow-sm transition-all duration-200 cursor-pointer focus:outline-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className={`truncate pr-2 ${isAll ? "text-slate-700 app-dark:!text-slate-400 font-medium" : "text-slate-800 app-dark:!text-slate-100 font-semibold"}`}>
+        <span className={`truncate pr-2 ${isAll ? "text-slate-700 app-dark:text-slate-400! font-medium" : "text-slate-800 app-dark:text-slate-100! font-semibold"}`}>
           {displayLabel}
         </span>
         <svg
-          className={`w-4 h-4 text-slate-400 app-dark:!text-slate-500 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
+          className={`w-4 h-4 text-slate-400 app-dark:text-slate-500! transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""
             }`}
           fill="none"
           stroke="currentColor"
@@ -632,7 +631,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-[9999] mt-1.5 max-h-[280px] overflow-y-auto rounded-xl force-rounded-xl border border-slate-200 app-dark:!border-slate-700 bg-white app-dark:!bg-[#252525] shadow-xl p-1 animate-fade-in">
+        <div className="absolute left-0 right-0 z-9999 mt-1.5 max-h-[280px] overflow-y-auto force-rounded-xl border border-slate-200 app-dark:border-slate-700! bg-white app-dark:bg-[#252525]! shadow-xl p-1 animate-fade-in">
           <div role="listbox" className="flex flex-col gap-0.5">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -642,9 +641,9 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  className={`w-full rounded-lg force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
-                    ? "bg-cyan-100 app-dark:!bg-cyan-900/40 text-cyan-800 app-dark:!text-cyan-100 font-semibold"
-                    : "text-slate-700 app-dark:!text-slate-200 hover:bg-cyan-50 app-dark:hover:!bg-cyan-900/30 hover:text-cyan-700 app-dark:hover:text-cyan-400"
+                  className={`w-full force-rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 flex items-center justify-between cursor-pointer ${isSelected
+                    ? "bg-cyan-100 app-dark:bg-cyan-900/40! text-cyan-800 app-dark:text-cyan-100! font-semibold"
+                    : "text-slate-700 app-dark:text-slate-200! hover:bg-cyan-50 app-dark:hover:bg-cyan-900/30! hover:text-cyan-700 app-dark:hover:text-cyan-400"
                     }`}
                   onClick={() => {
                     onChange(opt.value);
@@ -653,7 +652,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                 >
                   <span className="truncate pr-2">{opt.label}</span>
                   {isSelected && (
-                    <svg className="w-4 h-4 text-cyan-700 app-dark:!text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4 text-cyan-700 app-dark:text-cyan-400! shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
@@ -839,7 +838,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           placeholder="Tìm danh mục..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-9 pl-8 pr-3 bg-slate-50 app-dark:!bg-[#1e1e1e] border border-slate-200 app-dark:!border-slate-700 rounded-lg text-sm text-slate-700 app-dark:!text-slate-200 placeholder-slate-400 app-dark:!placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
+          className="w-full h-9 pl-8 pr-3 bg-slate-50 app-dark:bg-[#1e1e1e]! border border-slate-200 app-dark:border-slate-700! rounded-lg text-sm text-slate-700 app-dark:text-slate-200! placeholder-slate-400 app-dark:placeholder-slate-500! focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500"
         />
         <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -849,8 +848,8 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
       <button
         onClick={handleReset}
         className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCategoryName === "Tất cả" && selectedCountry === "Tất cả" && selectedRegion === "Tất cả"
-          ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold"
-          : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+          ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold"
+          : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
           }`}
       >
         Tất cả danh mục
@@ -863,13 +862,13 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           <button
             key={cat.id}
             onClick={() => handleSelectCategory(cat.name)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${isActive ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${isActive ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold" : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
               }`}
           >
             <span>{cat.name}</span>
             <div className="flex items-center gap-2">
               {count > 0 && (
-                <span className="text-[10px] text-slate-400 app-dark:!text-slate-500 bg-slate-100 app-dark:!bg-slate-800 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-slate-400 app-dark:text-slate-500! bg-slate-100 app-dark:bg-slate-800! px-1.5 py-0.5 rounded">
                   {count}
                 </span>
               )}
@@ -885,25 +884,25 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 
   const renderRegionList = () => {
     if (!selectedCat) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         ← Chọn danh mục để xem khu vực
       </div>
     );
 
     if (regionsForCat.length === 0) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         Chưa có khu vực
       </div>
     );
 
     return (
       <div className="p-2">
-        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider">
           Khu vực
         </div>
         <button
           onClick={() => handleSelectRegion("Tất cả khu vực")}
-          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedRegionItem === "Tất cả khu vực" ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedRegionItem === "Tất cả khu vực" ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold" : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
             }`}
         >
           Tất cả khu vực
@@ -912,7 +911,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           <button
             key={region}
             onClick={() => handleSelectRegion(region)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedRegionItem === region ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedRegionItem === region ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold" : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
               }`}
           >
             {region}
@@ -924,13 +923,13 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 
   const renderCountryList = () => {
     if (!selectedCat || !selectedRegionItem) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         {!selectedCat ? "← Chọn danh mục" : "← Chọn khu vực để xem quốc gia"}
       </div>
     );
 
     if (countriesForSelection.length === 0) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         {selectedRegionItem === "Tất cả khu vực"
           ? "Chọn khu vực cụ thể để xem quốc gia"
           : "Chưa có quốc gia"}
@@ -939,12 +938,12 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 
     return (
       <div className="p-2">
-        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider">
           Quốc gia
         </div>
         <button
           onClick={() => handleSelectCountry("Tất cả quốc gia")}
-          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCountryItem === "Tất cả quốc gia" ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCountryItem === "Tất cả quốc gia" ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold" : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
             }`}
         >
           Tất cả quốc gia
@@ -953,7 +952,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
           <button
             key={country}
             onClick={() => handleSelectCountry(country)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCountryItem === country ? "bg-cyan-50 app-dark:!bg-cyan-955/35 text-cyan-700 app-dark:!text-cyan-300 font-semibold" : "hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-600 app-dark:!text-slate-300"
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${selectedCountryItem === country ? "bg-cyan-50 app-dark:bg-cyan-955/35! text-cyan-700 app-dark:text-cyan-300! font-semibold" : "hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-600 app-dark:text-slate-300!"
               }`}
           >
             {resolveCountryName(country)}
@@ -965,7 +964,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 
   const renderProgramList = () => {
     if (!selectedCat || !selectedRegionItem || !selectedCountryItem) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         {!selectedCat ? "← Chọn danh mục" :
           !selectedRegionItem ? "← Chọn khu vực" :
             "← Chọn quốc gia để xem chương trình"}
@@ -973,7 +972,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
     );
 
     if (programsForSelection.length === 0) return (
-      <div className="p-4 text-center text-slate-400 app-dark:!text-slate-500 text-sm">
+      <div className="p-4 text-center text-slate-400 app-dark:text-slate-500! text-sm">
         {selectedCountryItem === "Tất cả quốc gia"
           ? "Chọn quốc gia cụ thể để xem chương trình"
           : "Chưa có chương trình"}
@@ -982,17 +981,17 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 
     return (
       <div className="p-2">
-        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider">
+        <div className="px-3 py-1.5 text-xs font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider">
           Chương trình
         </div>
         {programsForSelection.slice(0, 10).map(prog => (
           <button
             key={prog.id}
             onClick={() => handleApplyFilter(selectedCat, selectedRegionItem, selectedCountryItem)}
-            className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-cyan-50 app-dark:hover:!bg-cyan-955/20 transition-all border-b border-slate-50 app-dark:!border-slate-800 last:border-0"
+            className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-cyan-50 app-dark:hover:bg-cyan-955/20! transition-all border-b border-slate-50 app-dark:border-slate-800! last:border-0"
           >
-            <div className="font-medium text-slate-700 app-dark:!text-slate-300">{prog.name}</div>
-            <div className="text-[10px] text-slate-400 app-dark:!text-slate-500 mt-0.5">
+            <div className="font-medium text-slate-700 app-dark:text-slate-300!">{prog.name}</div>
+            <div className="text-[10px] text-slate-400 app-dark:text-slate-500! mt-0.5">
               {prog.region} · {resolveCountryName(prog.country)}
             </div>
           </button>
@@ -1000,7 +999,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
         {programsForSelection.length > 10 && (
           <button
             onClick={() => handleApplyFilter(selectedCat, selectedRegionItem, selectedCountryItem)}
-            className="w-full text-center px-3 py-2 text-sm text-cyan-700 app-dark:!text-cyan-400 font-semibold hover:bg-cyan-50 app-dark:hover:!bg-cyan-955/20 rounded-lg transition-all mt-1"
+            className="w-full text-center px-3 py-2 text-sm text-cyan-700 app-dark:text-cyan-400! font-semibold hover:bg-cyan-50 app-dark:hover:bg-cyan-955/20! rounded-lg transition-all mt-1"
           >
             Xem tất cả {programsForSelection.length} chương trình →
           </button>
@@ -1015,18 +1014,18 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-full h-11 px-4 rounded-2xl border bg-white app-dark:!bg-[#1e1e1e] shadow-sm transition-all
+          w-full h-11 px-4 rounded-2xl border bg-white app-dark:bg-[#1e1e1e]! shadow-sm transition-all
           flex items-center justify-between
           ${isOpen
             ? "border-cyan-400 ring-2 ring-cyan-500/20"
-            : "border-slate-200 app-dark:!border-slate-700 hover:border-cyan-300"}
+            : "border-slate-200 app-dark:border-slate-700! hover:border-cyan-300"}
         `}
       >
-        <span className={`truncate text-sm ${hasSelection ? "font-semibold text-slate-800 app-dark:!text-slate-100" : "text-slate-500"}`}>
+        <span className={`truncate text-sm ${hasSelection ? "font-semibold text-slate-800 app-dark:text-slate-100!" : "text-slate-500"}`}>
           {displayLabel}
         </span>
         <svg
-          className={`w-4 h-4 text-slate-400 app-dark:!text-slate-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-slate-400 app-dark:text-slate-500! transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -1036,24 +1035,24 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 z-[9999] bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-200 app-dark:!border-slate-700 shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden" style={{ width: "min(860px, calc(100vw - 280px))" }}>
+        <div className="absolute left-0 top-full mt-2 z-9999 bg-white app-dark:bg-[#252525]! rounded-2xl border border-slate-200 app-dark:border-slate-700! shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden" style={{ width: "min(860px, calc(100vw - 280px))" }}>
           <div className="flex flex-row max-h-[500px]">
-            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:!border-slate-700 overflow-y-auto">
+            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:border-slate-700! overflow-y-auto">
               {renderCategoryList()}
             </div>
-            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:!border-slate-700 bg-slate-50/30 app-dark:!bg-white/3 overflow-y-auto">
+            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:border-slate-700! bg-slate-50/30 app-dark:bg-white/3! overflow-y-auto">
               {renderRegionList()}
             </div>
-            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:!border-slate-700 bg-slate-50/20 app-dark:!bg-white/2 overflow-y-auto">
+            <div className="flex-1 min-w-0 border-r border-slate-100 app-dark:border-slate-700! bg-slate-50/20 app-dark:bg-white/2! overflow-y-auto">
               {renderCountryList()}
             </div>
-            <div className="flex-1 min-w-0 bg-white app-dark:!bg-transparent overflow-y-auto">
+            <div className="flex-1 min-w-0 bg-white app-dark:bg-transparent! overflow-y-auto">
               {renderProgramList()}
             </div>
           </div>
 
           {selectedCat && selectedRegionItem && selectedCountryItem && programsForSelection.length > 0 && (
-            <div className="border-t border-slate-100 app-dark:!border-slate-700 p-3 bg-slate-50 app-dark:!bg-slate-900">
+            <div className="border-t border-slate-100 app-dark:border-slate-700! p-3 bg-slate-50 app-dark:bg-slate-900!">
               <button
                 onClick={() => handleApplyFilter(selectedCat, selectedRegionItem, selectedCountryItem)}
                 className="w-full bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold py-2 rounded-xl transition-colors"
@@ -1117,30 +1116,13 @@ function ProductOverviewPageInner({ currentUser }) {
   const [selectedCountry, setSelectedCountry] = useState(() => pendingSidebarCategory?.country || "Tất cả");
   const [selectedRegion, setSelectedRegion] = useState(() => pendingSidebarCategory?.region || "Tất cả");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  // eslint-disable-next-line no-unused-vars
-  const [selectedVisaType, setSelectedVisaType] = useState(null);
+    const [selectedVisaType, setSelectedVisaType] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
 
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingProductParentCatId, setEditingProductParentCatId] = useState("");
   const [showInterestModal, setShowInterestModal] = useState(false);
-
-  // Dynamic Theme observer for custom modal styling
-  const [isDark, setIsDark] = useState(() => {
-    return document.documentElement.getAttribute("data-bs-theme") === "dark";
-  });
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.getAttribute("data-bs-theme") === "dark");
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-bs-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
 
   const [interestCccdFrontFile, setInterestCccdFrontFile] = useState(null);
   const [interestCccdBackFile, setInterestCccdBackFile] = useState(null);
@@ -1344,8 +1326,7 @@ function ProductOverviewPageInner({ currentUser }) {
       setSelectedCategoryName(detail.name || "Tất cả");
       setSelectedCountry(detail.country || "Tất cả");
       setSelectedRegion(detail.region || "Tất cả");
-      // eslint-disable-next-line no-unused-vars
-      setSelectedVisaType(null);
+            setSelectedVisaType(null);
       if (detail.id) {
         setExpandedCategories(prev => ({ ...prev, [detail.id]: true }));
       }
@@ -1425,8 +1406,7 @@ function ProductOverviewPageInner({ currentUser }) {
     setSelectedCountry("Tất cả");
     setSelectedRegion("Tất cả");
     setSelectedStatus("all");
-    // eslint-disable-next-line no-unused-vars
-    setSelectedVisaType(null);
+        setSelectedVisaType(null);
     setCategoryPage(0);
   };
 
@@ -2401,16 +2381,16 @@ function ProductOverviewPageInner({ currentUser }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold text-slate-900 app-dark:!text-slate-100 m-0">Danh mục sản phẩm</h1>
+                <h1 className="text-2xl font-bold text-slate-900 app-dark:text-slate-100! m-0">Danh mục sản phẩm</h1>
               </div>
-              <p className="text-slate-500 app-dark:!text-slate-400 text-sm m-0 mt-1">
+              <p className="text-slate-500 app-dark:text-slate-400! text-sm m-0 mt-1">
                 Kho danh mục chương trình và tài liệu tư vấn dành cho cộng tác viên, đại lý và nhân viên tư vấn.
               </p>
             </div>
             {canManageProducts && (
               <button
                 id="products-add-category-btn"
-                className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
+                className="bg-cyan-900 hover:bg-cyan-950 text-white text-sm font-semibold px-4 py-2 flex items-center gap-2 shadow-sm force-rounded-xl transition-all duration-200 cursor-pointer"
                 onClick={handleOpenNewCategory}
               >
                 <i className="fa fa-folder-plus text-base"></i> + Thêm danh mục
@@ -2420,7 +2400,7 @@ function ProductOverviewPageInner({ currentUser }) {
         ) : (
           <div className="mb-6">
             <button
-              className="border border-slate-300 app-dark:!border-white/15 hover:bg-slate-50 app-dark:hover:!bg-white/5 text-slate-700 app-dark:!text-slate-300 text-sm font-semibold rounded-xl force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
+              className="border border-slate-300 app-dark:border-white/15! hover:bg-slate-50 app-dark:hover:bg-white/5! text-slate-700 app-dark:text-slate-300! text-sm font-semibold force-rounded-xl px-4 py-2 flex items-center gap-2 transition-colors duration-200"
               onClick={handleGoBack}
             >
               <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -2434,48 +2414,48 @@ function ProductOverviewPageInner({ currentUser }) {
         {/* STATS SECTION */}
         {viewMode === "overview" && canManageProducts && selectedCategoryName === "Tất cả" && (
           <div id="products-stats-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:!bg-cyan-955/40 text-cyan-900 app-dark:!text-cyan-300 flex-shrink-0 mr-4">
+            <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:bg-cyan-955/40! text-cyan-900 app-dark:text-cyan-300! shrink-0 mr-4">
                 <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
               </div>
               <div>
-                <span className="text-slate-450 app-dark:!text-slate-400 text-xs block font-medium">Danh mục lớn</span>
-                <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
+                <span className="text-slate-450 app-dark:text-slate-400! text-xs block font-medium">Danh mục lớn</span>
+                <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalCategories}</span>
               </div>
             </div>
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 app-dark:!bg-emerald-955/40 text-emerald-650 app-dark:!text-emerald-350 flex-shrink-0 mr-4">
+            <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 app-dark:bg-emerald-955/40! text-emerald-650 app-dark:text-emerald-350! shrink-0 mr-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-7.244-2.244L12 20l7.244-2.244" />
                 </svg>
               </div>
               <div>
-                <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Sản phẩm/Chương trình con</span>
-                <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
+                <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Sản phẩm/Chương trình con</span>
+                <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalPrograms}</span>
               </div>
             </div>
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 app-dark:!bg-sky-955/40 text-sky-650 app-dark:!text-sky-300 flex-shrink-0 mr-4">
+            <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 app-dark:bg-sky-955/40! text-sky-650 app-dark:text-sky-300! shrink-0 mr-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Đang tuyển sinh</span>
-                <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
+                <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Đang tuyển sinh</span>
+                <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.activePrograms}</span>
               </div>
             </div>
-            <div className="bg-white app-dark:!bg-[#252525] rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:!border-white/8 flex items-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 app-dark:!bg-amber-955/40 text-amber-650 app-dark:!text-amber-300 flex-shrink-0 mr-4">
+            <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 app-dark:bg-amber-955/40! text-amber-650 app-dark:text-amber-300! shrink-0 mr-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <span className="text-slate-455 app-dark:!text-slate-400 text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
-                <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
+                <span className="text-slate-455 app-dark:text-slate-400! text-xs block font-medium">Brochures & Tài liệu tư vấn</span>
+                <span className="font-bold text-slate-800 app-dark:text-slate-100! text-lg md:text-xl leading-none block mt-1">{stats.totalDocuments}</span>
               </div>
             </div>
           </div>
@@ -2495,19 +2475,19 @@ function ProductOverviewPageInner({ currentUser }) {
           const hasActiveFilter = activeFilters.length > 0;
 
           return (
-            <div id="products-filter-section" className="bg-white app-dark:!bg-[#252525] rounded-2xl border border-slate-100 app-dark:!border-white/8 px-4 py-3 shadow-sm app-dark:!shadow-none mb-5 overflow-visible">
+            <div id="products-filter-section" className="bg-white app-dark:bg-[#252525]! rounded-2xl border border-slate-100 app-dark:border-white/8! px-4 py-3 shadow-sm app-dark:shadow-none! mb-5 overflow-visible">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center relative">
                 {/* Search */}
                 <div className="md:col-span-12 xl:col-span-5">
                   <div className="relative flex items-center">
-                    <span className="absolute left-3 text-slate-400 app-dark:!text-slate-500 flex items-center justify-center pointer-events-none">
+                    <span className="absolute left-3 text-slate-400 app-dark:text-slate-500! flex items-center justify-center pointer-events-none">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </span>
                     <input
                       type="text"
-                      className="w-full h-10 bg-white app-dark:!bg-[#1e1e1e] border border-slate-200 app-dark:!border-slate-700 rounded-xl pl-9 pr-8 text-sm text-slate-700 app-dark:!text-slate-100 placeholder-slate-400 app-dark:!placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
+                      className="w-full h-10 bg-white app-dark:bg-[#1e1e1e]! border border-slate-200 app-dark:border-slate-700! rounded-xl pl-9 pr-8 text-sm text-slate-700 app-dark:text-slate-100! placeholder-slate-400 app-dark:placeholder-slate-500! focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 focus:outline-none transition-all duration-200"
                       placeholder="Tìm kiếm theo tên, quốc gia, tag..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -2515,7 +2495,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     {searchQuery && (
                       <button
                         type="button"
-                        className="absolute right-2.5 text-slate-400 hover:text-slate-600 app-dark:hover:!text-slate-200 transition-colors"
+                        className="absolute right-2.5 text-slate-400 hover:text-slate-600 app-dark:hover:text-slate-200! transition-colors"
                         onClick={() => setSearchQuery("")}
                         aria-label="Xóa tìm kiếm"
                       >
@@ -2555,21 +2535,21 @@ function ProductOverviewPageInner({ currentUser }) {
 
               {/* Active filter badges */}
               {hasActiveFilter && (
-                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:!border-white/8">
-                  <span className="text-xs text-slate-400 app-dark:!text-slate-500 font-medium flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:border-white/8!">
+                  <span className="text-xs text-slate-400 app-dark:text-slate-500! font-medium shrink-0">
                     {filteredCategories.length > 0
-                      ? <><span className="text-cyan-800 app-dark:!text-cyan-400 font-bold">{totalResults}</span> chương trình trong <span className="text-cyan-800 app-dark:!text-cyan-400 font-bold">{filteredCategories.length}</span> danh mục</>
+                      ? <><span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{totalResults}</span> chương trình trong <span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{filteredCategories.length}</span> danh mục</>
                       : <span className="text-orange-500 font-semibold">Không tìm thấy kết quả</span>
                     }
                   </span>
-                  <span className="text-slate-200 app-dark:!text-slate-700 mx-1 hidden sm:inline">·</span>
+                  <span className="text-slate-200 app-dark:text-slate-700! mx-1 hidden sm:inline">·</span>
                   {activeFilters.map(f => (
-                    <span key={f.key} className="inline-flex items-center gap-1 bg-cyan-50 app-dark:!bg-cyan-955/30 border border-cyan-200 app-dark:!border-cyan-900/60 text-cyan-800 app-dark:!text-cyan-300 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    <span key={f.key} className="inline-flex items-center gap-1 bg-cyan-50 app-dark:bg-cyan-955/30! border border-cyan-200 app-dark:border-cyan-900/60! text-cyan-800 app-dark:text-cyan-300! text-[11px] font-semibold px-2.5 py-1 rounded-full">
                       {f.label}
                       <button
                         type="button"
                         onClick={f.onClear}
-                        className="ml-0.5 text-cyan-500 hover:text-cyan-800 app-dark:hover:!text-cyan-100 transition-colors"
+                        className="ml-0.5 text-cyan-500 hover:text-cyan-800 app-dark:hover:text-cyan-100! transition-colors"
                         aria-label={`Xóa lọc ${f.label}`}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2582,7 +2562,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     <button
                       type="button"
                       onClick={handleResetFilters}
-                      className="text-[11px] text-slate-400 hover:text-red-500 app-dark:hover:!text-red-400 font-semibold transition-colors underline underline-offset-2"
+                      className="text-[11px] text-slate-400 hover:text-red-500 app-dark:hover:text-red-400! font-semibold transition-colors underline underline-offset-2"
                     >
                       Xóa tất cả
                     </button>
@@ -2624,13 +2604,13 @@ function ProductOverviewPageInner({ currentUser }) {
                             <div
                               key={prog.id}
                               id={isFirstCard ? "tour-first-program-card" : undefined}
-                              className="bg-slate-50 app-dark:!bg-[#1e1e1e] border-2 border-slate-200 app-dark:!border-slate-700 rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/30 app-dark:hover:!bg-cyan-955/20 hover:border-cyan-300 app-dark:hover:!border-cyan-900/60 hover:shadow-sm cursor-pointer flex flex-row items-stretch relative group"
+                              className="bg-slate-50 app-dark:bg-[#1e1e1e]! border-2 border-slate-200 app-dark:border-slate-700! rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/30 app-dark:hover:bg-cyan-955/20! hover:border-cyan-300 app-dark:hover:border-cyan-900/60! hover:shadow-sm cursor-pointer flex flex-row items-stretch relative group"
                               onClick={() => {
                                 setSelectedProduct(prog);
                                 setViewMode("detail");
                               }}
                             >
-                              <div className="flex-shrink-0 w-20 sm:w-24 bg-slate-200 app-dark:!bg-slate-700 relative overflow-hidden m-2 rounded-lg border-2 border-slate-200 app-dark:!border-slate-600">
+                              <div className="shrink-0 w-20 sm:w-24 bg-slate-200 app-dark:bg-slate-700! relative overflow-hidden m-2 rounded-lg border-2 border-slate-200 app-dark:border-slate-600!">
                                 {prog.image ? (
                                   <img
                                     src={prog.image}
@@ -2638,27 +2618,27 @@ function ProductOverviewPageInner({ currentUser }) {
                                     className="w-full h-full object-cover absolute inset-0"
                                   />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
-                                    <i className="fa fa-image text-2xl text-slate-300 app-dark:!text-slate-600"></i>
+                                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
+                                    <i className="fa fa-image text-2xl text-slate-300 app-dark:text-slate-600!"></i>
                                   </div>
                                 )}
                               </div>
 
                               <div className="flex flex-col justify-between flex-1 min-w-0 p-3">
                                 <div>
-                                  <div className="font-bold text-slate-800 app-dark:!text-slate-100 text-[13px] mb-1 line-clamp-2 leading-snug pr-14" title={prog.name}>
+                                  <div className="font-bold text-slate-800 app-dark:text-slate-100! text-[13px] mb-1 line-clamp-2 leading-snug pr-14" title={prog.name}>
                                     {prog.name}
                                   </div>
                                   {prog.description && (
-                                    <p className="text-[11px] text-slate-450 app-dark:!text-slate-400 line-clamp-2 leading-relaxed m-0">
+                                    <p className="text-[11px] text-slate-450 app-dark:text-slate-400! line-clamp-2 leading-relaxed m-0">
                                       {prog.description}
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/40 app-dark:!border-white/8">
+                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/40 app-dark:border-white/8!">
                                   <div className="flex gap-1.5 flex-wrap items-center">
-                                    <span className="bg-white app-dark:!bg-[#252525] text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/8 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
-                                      <i className="fa fa-earth-asia text-cyan-750 app-dark:!text-cyan-400"></i>
+                                    <span className="bg-white app-dark:bg-[#252525]! text-slate-700 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/8! px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
+                                      <i className="fa fa-earth-asia text-cyan-750 app-dark:text-cyan-400!"></i>
                                       {resolveCountryName(prog.country)}
                                     </span>
                                     {prog.shortCode && (
@@ -2667,8 +2647,8 @@ function ProductOverviewPageInner({ currentUser }) {
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-[10px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-1">
-                                    <i className="fa fa-folder-open text-slate-400 app-dark:!text-slate-500"></i>
+                                  <span className="text-[10px] text-slate-400 app-dark:text-slate-500! font-medium flex items-center gap-1">
+                                    <i className="fa fa-folder-open text-slate-400 app-dark:text-slate-500!"></i>
                                     {totalDocs} Tài liệu
                                   </span>
                                 </div>
@@ -2710,7 +2690,7 @@ function ProductOverviewPageInner({ currentUser }) {
                           <button
                             type="button"
                             onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !isExpanded }))}
-                            className="flex items-center gap-2 text-xs font-semibold text-cyan-800 app-dark:!text-cyan-400 hover:text-cyan-950 app-dark:hover:!text-cyan-300 bg-cyan-50 app-dark:!bg-cyan-955/20 hover:bg-cyan-100 app-dark:hover:!bg-cyan-955/40 border border-cyan-200/70 app-dark:!border-cyan-900/50 px-4 py-1.5 rounded-full transition-all duration-200"
+                            className="flex items-center gap-2 text-xs font-semibold text-cyan-800 app-dark:text-cyan-400! hover:text-cyan-950 app-dark:hover:text-cyan-300! bg-cyan-50 app-dark:bg-cyan-955/20! hover:bg-cyan-100 app-dark:hover:bg-cyan-955/40! border border-cyan-200/70 app-dark:border-cyan-900/50! px-4 py-1.5 rounded-full transition-all duration-200"
                           >
                             {isExpanded ? (
                               <>
@@ -2733,8 +2713,8 @@ function ProductOverviewPageInner({ currentUser }) {
                       return (
                         <div key={cat.id} className="mb-6 relative z-0">
                           {/* Header */}
-                          <div className="bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:!bg-none app-dark:!bg-[#111827] rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:!border-[#334155] p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
-                            <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-gradient-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
+                          <div className="bg-linear-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:bg-none! app-dark:bg-[#111827]! rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:border-[#334155]! p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
+                            <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-linear-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
                               <img
                                 src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80"
                                 alt="passport background"
@@ -2745,29 +2725,29 @@ function ProductOverviewPageInner({ currentUser }) {
                             <div className="relative z-10 w-full">
                               <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
                                 <div className="flex items-start gap-3">
-                                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
+                                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md shrink-0">
                                     <i className="fa fa-earth-americas text-white text-xl"></i>
                                   </div>
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                      <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:!text-slate-100 m-0 leading-none tracking-tight">Visa</h3>
-                                      <span className="bg-blue-100 app-dark:!bg-blue-955/40 text-blue-600 app-dark:!text-blue-400 px-2 py-0.5 rounded-full text-[10px] font-bold">4 SP</span>
+                                      <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:text-slate-100! m-0 leading-none tracking-tight">Visa</h3>
+                                      <span className="bg-blue-100 app-dark:bg-blue-955/40! text-blue-600 app-dark:text-blue-400! px-2 py-0.5 rounded-full text-[10px] font-bold">4 SP</span>
                                     </div>
-                                    <p className="text-slate-500 app-dark:!text-slate-400 text-xs md:text-sm m-0 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
+                                    <p className="text-slate-500 app-dark:text-slate-400! text-xs md:text-sm m-0 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                                   {canManageProducts && (
                                     <>
                                       <button
                                         onClick={() => handleEditCategory(cat)}
-                                        className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                        className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                       >
                                         <i className="fa fa-pen text-[10px]"></i> Sửa
                                       </button>
                                       <button
                                         onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                                        className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                        className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                       >
                                         {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[10px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>}
                                       </button>
@@ -2778,22 +2758,22 @@ function ProductOverviewPageInner({ currentUser }) {
 
                               {/* Stats */}
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <div className="bg-white app-dark:!bg-slate-900 rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:!border-[#334155]">
-                                  <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:!bg-[#16a34a]/15 text-[#16a34a] app-dark:!text-[#16a34a] flex items-center justify-center text-sm flex-shrink-0">
+                                <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
+                                  <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:bg-[#16a34a]/15! text-[#16a34a] app-dark:text-[#16a34a]! flex items-center justify-center text-sm shrink-0">
                                     <i className="fa fa-folder-open"></i>
                                   </div>
                                   <div>
-                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider mb-0.5">Danh mục</div>
-                                    <div className="text-lg font-bold text-slate-800 app-dark:!text-slate-100 leading-none">4</div>
+                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Danh mục</div>
+                                    <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">4</div>
                                   </div>
                                 </div>
-                                <div className="bg-white app-dark:!bg-slate-900 rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:!border-[#334155]">
-                                  <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:!bg-[#2563eb]/15 text-[#2563eb] app-dark:!text-[#2563eb] flex items-center justify-center text-sm flex-shrink-0">
+                                <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
+                                  <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:bg-[#2563eb]/15! text-[#2563eb] app-dark:text-[#2563eb]! flex items-center justify-center text-sm shrink-0">
                                     <i className="fa fa-file-lines"></i>
                                   </div>
                                   <div>
-                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider mb-0.5">Hồ sơ</div>
-                                    <div className="text-lg font-bold text-slate-800 app-dark:!text-slate-100 leading-none">32</div>
+                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Hồ sơ</div>
+                                    <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">32</div>
                                   </div>
                                 </div>
                               </div>
@@ -2801,9 +2781,9 @@ function ProductOverviewPageInner({ currentUser }) {
                           </div>
 
                           {/* Content - HIỂN THỊ VISA_TYPES */}
-                          <div className="bg-white app-dark:!bg-[#111827] rounded-[20px] border border-slate-100 app-dark:!border-[#334155] p-4 shadow-sm relative z-0">
+                          <div className="bg-white app-dark:bg-[#111827]! rounded-[20px] border border-slate-100 app-dark:border-[#334155]! p-4 shadow-sm relative z-0">
                             <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-bold text-slate-800 app-dark:!text-slate-100 text-sm">Danh sách sản phẩm</h4>
+                              <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm">Danh sách sản phẩm</h4>
                               <div className="flex bg-slate-50 border border-slate-200 rounded-lg p-0.5">
                                 <button className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm text-xs">
                                   <i className="fa fa-grid-2"></i>
@@ -2821,61 +2801,61 @@ function ProductOverviewPageInner({ currentUser }) {
                                     <div
                                       key={type.id}
                                       onClick={() => setSelectedVisaType(type.id)}
-                                      className={`relative flex flex-col border border-slate-100/50 app-dark:!border-[#334155] rounded-[16px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient} app-dark:!bg-none app-dark:!bg-[#1e293b]/50`}
+                                      className={`relative flex flex-col border border-slate-100/50 app-dark:border-[#334155]! rounded-[16px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient} app-dark:bg-none! app-dark:bg-[#1e293b]/50!`}
                                     >
                                       <div className="px-3 pt-4 pb-3 flex flex-col items-center text-center flex-1">
-                                        <div className={`w-[48px] h-[48px] rounded-full bg-white app-dark:!bg-slate-800 flex items-center justify-center shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] mb-3 ${type.color}`}>
+                                        <div className={`w-[48px] h-[48px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] mb-3 ${type.color}`}>
                                           <i className={`fa ${type.icon} text-xl`}></i>
                                         </div>
                                         <h5 className={`text-sm font-bold mb-1 ${type.color}`}>{type.name}</h5>
-                                        <p className="text-slate-500 app-dark:!text-slate-400 text-[11px] leading-relaxed mb-2 line-clamp-2">{type.desc}</p>
+                                        <p className="text-slate-500 app-dark:text-slate-400! text-[11px] leading-relaxed mb-2 line-clamp-2">{type.desc}</p>
 
-                                        <div className="w-full border-t border-dashed border-slate-200/80 app-dark:!border-slate-700/80 my-1.5"></div>
+                                        <div className="w-full border-t border-dashed border-slate-200/80 app-dark:border-slate-700/80! my-1.5"></div>
 
                                         <div className="w-full flex justify-between px-0.5">
                                           <div className="flex items-center gap-1.5">
-                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:!bg-slate-800 flex items-center justify-center shadow-sm ${type.color}`}>
+                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-sm ${type.color}`}>
                                               <i className="fa fa-user text-[8px]"></i>
                                             </div>
                                             <div className="text-left">
-                                              <div className="text-xs font-extrabold text-slate-800 app-dark:!text-slate-150 leading-none mb-0.5">{type.docsCount}</div>
-                                              <div className="text-[8px] text-slate-400 app-dark:!text-slate-500">Hồ sơ</div>
+                                              <div className="text-xs font-extrabold text-slate-800 app-dark:text-slate-150! leading-none mb-0.5">{type.docsCount}</div>
+                                              <div className="text-[8px] text-slate-400 app-dark:text-slate-500!">Hồ sơ</div>
                                             </div>
                                           </div>
                                           <div className="flex items-center gap-1.5">
-                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:!bg-slate-800 flex items-center justify-center shadow-sm ${type.color}`}>
+                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-sm ${type.color}`}>
                                               <i className="fa fa-file-lines text-[8px]"></i>
                                             </div>
                                             <div className="text-left">
-                                              <div className="text-xs font-extrabold text-slate-800 app-dark:!text-slate-150 leading-none mb-0.5">{type.filesCount}</div>
-                                              <div className="text-[8px] text-slate-400 app-dark:!text-slate-500">Tài liệu</div>
+                                              <div className="text-xs font-extrabold text-slate-800 app-dark:text-slate-150! leading-none mb-0.5">{type.filesCount}</div>
+                                              <div className="text-[8px] text-slate-400 app-dark:text-slate-500!">Tài liệu</div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
                                       <div className="px-2.5 pb-2.5">
-                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg} app-dark:!bg-[#0b6fb3]/25 app-dark:!text-[#0b6fb3]`}>
+                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg} app-dark:bg-[#0b6fb3]/25! app-dark:text-[#0b6fb3]!`}>
                                           <i className="fa fa-arrow-right"></i>
                                         </button>
                                       </div>
                                     </div>
                                   ))}
                                 </div>
-                                <div className="mt-3 bg-[#f8fafc] app-dark:!bg-[#1e1e1e] border border-[#f1f5f9] app-dark:!border-slate-850 rounded-xl px-3 py-2 flex items-center gap-2">
+                                <div className="mt-3 bg-[#f8fafc] app-dark:bg-[#1e1e1e]! border border-[#f1f5f9] app-dark:border-slate-850! rounded-xl px-3 py-2 flex items-center gap-2">
                                   <i className="fa fa-circle-info text-blue-500 text-sm"></i>
-                                  <span className="text-[11px] text-slate-500 app-dark:!text-slate-400 font-medium">Click vào danh mục để xem chi tiết và quản lý hồ sơ, tài liệu.</span>
+                                  <span className="text-[11px] text-slate-500 app-dark:text-slate-400! font-medium">Click vào danh mục để xem chi tiết và quản lý hồ sơ, tài liệu.</span>
                                 </div>
                               </>
                             ) : (
-                              <div className="flex flex-col gap-3 bg-white app-dark:!bg-[#111827] p-3 rounded-2xl border border-slate-100 app-dark:!border-[#334155] shadow-sm">
-                                <div className="flex items-center gap-2 bg-slate-50 app-dark:!bg-slate-900 p-2 rounded-lg border border-slate-200 app-dark:!border-slate-800">
+                              <div className="flex flex-col gap-3 bg-white app-dark:bg-[#111827]! p-3 rounded-2xl border border-slate-100 app-dark:border-[#334155]! shadow-sm">
+                                <div className="flex items-center gap-2 bg-slate-50 app-dark:bg-slate-900! p-2 rounded-lg border border-slate-200 app-dark:border-slate-800!">
                                   <button
                                     onClick={() => setSelectedVisaType(null)}
-                                    className="text-slate-600 app-dark:!text-slate-300 hover:text-cyan-700 app-dark:hover:!text-cyan-400 bg-white app-dark:!bg-slate-850 border border-slate-200 app-dark:!border-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-semibold shadow-sm transition-colors flex items-center gap-1"
+                                    className="text-slate-600 app-dark:text-slate-300! hover:text-cyan-700 app-dark:hover:text-cyan-400! bg-white app-dark:bg-slate-850! border border-slate-200 app-dark:border-slate-700! px-2.5 py-1 rounded-lg text-[10px] font-semibold shadow-sm transition-colors flex items-center gap-1"
                                   >
                                     <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
                                   </button>
-                                  <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-xs">
+                                  <span className="font-bold text-slate-800 app-dark:text-slate-100! text-xs">
                                     Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
                                   </span>
                                 </div>
@@ -2894,8 +2874,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
                     return (
                       <div key={cat.id} className="mb-6 relative z-0">
-                        <div className="bg-gradient-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:!bg-none app-dark:!bg-[#111827] rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:!border-[#334155] p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
-                          <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-gradient-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
+                        <div className="bg-linear-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:bg-none! app-dark:bg-[#111827]! rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:border-[#334155]! p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
+                          <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-linear-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
                             <img
                               src={cat.coverImageUrl || defaultCoverImage}
                               alt={cat.name}
@@ -2906,32 +2886,32 @@ function ProductOverviewPageInner({ currentUser }) {
                           <div className="relative z-10 w-full">
                             <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
                               <div className="flex items-start gap-3">
-                                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md flex-shrink-0">
+                                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md shrink-0">
                                   <i className="fa fa-layer-group text-white text-xl"></i>
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                    <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:!text-slate-100 m-0 leading-none tracking-tight">{cat.name}</h3>
+                                    <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:text-slate-100! m-0 leading-none tracking-tight">{cat.name}</h3>
                                   </div>
                                   {cat.description && (
-                                    <p className="text-slate-500 app-dark:!text-slate-400 text-xs md:text-sm m-0 max-w-xl leading-relaxed line-clamp-2">{cat.description}</p>
+                                    <p className="text-slate-500 app-dark:text-slate-400! text-xs md:text-sm m-0 max-w-xl leading-relaxed line-clamp-2">{cat.description}</p>
                                   )}
                                 </div>
                               </div>
 
                               {canManageProducts && (
-                                <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                                   <button
                                     type="button"
                                     onClick={() => handleEditCategory(cat)}
-                                    className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                    className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                   >
                                     <i className="fa fa-pen text-[10px]"></i> Sửa
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                                    className="bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-50 app-dark:hover:!bg-slate-700 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                                    className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                                   >
                                     {cat.status === "inactive" || cat.status === "hidden" ? (
                                       <><i className="fa fa-eye text-[10px]"></i> Hiện</>
@@ -2944,22 +2924,22 @@ function ProductOverviewPageInner({ currentUser }) {
                             </div>
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="bg-white app-dark:!bg-slate-900 rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:!border-[#334155]">
-                                <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:!bg-[#16a34a]/15 text-[#16a34a] app-dark:!text-[#16a34a] flex items-center justify-center text-sm flex-shrink-0">
+                              <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
+                                <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:bg-[#16a34a]/15! text-[#16a34a] app-dark:text-[#16a34a]! flex items-center justify-center text-sm shrink-0">
                                   <i className="fa fa-box-open"></i>
                                 </div>
                                 <div>
-                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider mb-0.5">Sản phẩm</div>
-                                  <div className="text-lg font-bold text-slate-800 app-dark:!text-slate-100 leading-none">{displayPrograms.length}</div>
+                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Sản phẩm</div>
+                                  <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">{displayPrograms.length}</div>
                                 </div>
                               </div>
-                              <div className="bg-white app-dark:!bg-slate-900 rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:!border-[#334155]">
-                                <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:!bg-[#2563eb]/15 text-[#2563eb] app-dark:!text-[#2563eb] flex items-center justify-center text-sm flex-shrink-0">
+                              <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
+                                <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:bg-[#2563eb]/15! text-[#2563eb] app-dark:text-[#2563eb]! flex items-center justify-center text-sm shrink-0">
                                   <i className="fa fa-file-lines"></i>
                                 </div>
                                 <div>
-                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:!text-slate-500 uppercase tracking-wider mb-0.5">Tài liệu</div>
-                                  <div className="text-lg font-bold text-slate-800 app-dark:!text-slate-100 leading-none">{totalCatDocs}</div>
+                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Tài liệu</div>
+                                  <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">{totalCatDocs}</div>
                                 </div>
                               </div>
                             </div>
@@ -2967,7 +2947,7 @@ function ProductOverviewPageInner({ currentUser }) {
                         </div>
 
                         {displayPrograms.length > 0 && (
-                          <div className="bg-white app-dark:!bg-[#111827] rounded-[20px] border border-slate-100 app-dark:!border-[#334155] p-4 shadow-sm relative z-0">
+                          <div className="bg-white app-dark:bg-[#111827]! rounded-[20px] border border-slate-100 app-dark:border-[#334155]! p-4 shadow-sm relative z-0">
                             {renderProductGrid(visiblePrograms)}
                             {renderShowMoreBtn(hasMore, hiddenCount)}
                           </div>
@@ -2977,12 +2957,12 @@ function ProductOverviewPageInner({ currentUser }) {
                   })
                 })()
               ) : (
-                <div className="col-span-full text-center py-16 bg-white app-dark:!bg-[#252525] border border-slate-100 app-dark:!border-white/8 rounded-2xl shadow-sm app-dark:!shadow-none">
-                  <svg className="w-12 h-12 text-slate-300 app-dark:!text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="col-span-full text-center py-16 bg-white app-dark:bg-[#252525]! border border-slate-100 app-dark:border-white/8! rounded-2xl shadow-sm app-dark:shadow-none!">
+                  <svg className="w-12 h-12 text-slate-300 app-dark:text-slate-600! mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <h5 className="text-slate-500 app-dark:!text-slate-400 font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
-                  <p className="text-slate-400 app-dark:!text-slate-500 text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
+                  <h5 className="text-slate-500 app-dark:text-slate-400! font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
+                  <p className="text-slate-400 app-dark:text-slate-500! text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
                   <button className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold px-4 py-2 rounded-xl mt-1 transition-colors" onClick={handleResetFilters}>
                     Xóa bộ lọc
                   </button>
@@ -3001,7 +2981,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     type="button"
                     disabled={safeCatPage === 0}
                     onClick={() => setCategoryPage(p => Math.max(0, p - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:!bg-[#252525] transition-colors"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
                     aria-label="Trang trước"
                   >
                     <i className="fa fa-chevron-left text-xs"></i>
@@ -3015,7 +2995,7 @@ function ProductOverviewPageInner({ currentUser }) {
                         onClick={() => setCategoryPage(idx)}
                         className={`rounded-full transition-all duration-200 font-semibold text-xs ${idx === safeCatPage
                           ? "h-8 w-8 bg-cyan-900 text-white shadow-sm"
-                          : "h-8 w-8 bg-white app-dark:!bg-[#252525] border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-400 hover:bg-slate-50 app-dark:hover:!bg-[#2e2e2e]"
+                          : "h-8 w-8 bg-white app-dark:bg-[#252525]! border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-400! hover:bg-slate-50 app-dark:hover:bg-[#2e2e2e]!"
                           }`}
                         aria-label={`Trang ${idx + 1}`}
                       >
@@ -3028,13 +3008,13 @@ function ProductOverviewPageInner({ currentUser }) {
                     type="button"
                     disabled={safeCatPage === totalCatPages - 1}
                     onClick={() => setCategoryPage(p => Math.min(totalCatPages - 1, p + 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:!border-slate-700 text-slate-500 app-dark:!text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:!bg-[#252525] transition-colors"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
                     aria-label="Trang sau"
                   >
                     <i className="fa fa-chevron-right text-xs"></i>
                   </button>
 
-                  <span className="text-xs text-slate-400 app-dark:!text-slate-500 ml-2">
+                  <span className="text-xs text-slate-400 app-dark:text-slate-500! ml-2">
                     Trang {safeCatPage + 1} / {totalCatPages}
                   </span>
                 </div>
@@ -3045,16 +3025,16 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* PRODUCT DETAIL VIEW */}
         {viewMode === "detail" && selectedProduct && (
-          <div className="bg-white app-dark:!bg-[#252525] rounded-2xl shadow-sm border border-slate-100 app-dark:!border-white/8 overflow-hidden">
+          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl shadow-sm border border-slate-100 app-dark:border-white/8! overflow-hidden">
 
             {/* ── HERO BANNER — bố cục 2 cột trắng theo mẫu ── */}
-            <div className="relative overflow-hidden rounded-t-2xl border-b border-slate-100 app-dark:!border-white/8 bg-white app-dark:!bg-[#1e1e1e]" style={{ minHeight: "260px" }}>
+            <div className="relative overflow-hidden rounded-t-2xl border-b border-slate-100 app-dark:border-white/8! bg-white app-dark:bg-[#1e1e1e]!" style={{ minHeight: "260px" }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch" style={{ minHeight: "260px" }}>
 
                 {/* Cột trái: thông tin */}
                 <div className="flex flex-col justify-between p-6 md:p-8 gap-4">
                   {/* Breadcrumb text-only (không có nút quay lại) */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-400 app-dark:!text-slate-500">
+                  <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-400 app-dark:text-slate-500!">
                     <span
                       className="hover:text-[#005bbf] cursor-pointer transition-colors font-medium"
                       onClick={() => setViewMode("overview")}
@@ -3079,7 +3059,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   <div className="flex-1">
                     {/* Badge danh mục */}
                     <div className="flex gap-2 mb-3 flex-wrap items-center">
-                      <span className="inline-block bg-slate-100 app-dark:!bg-white/10 text-slate-600 app-dark:!text-slate-300 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-slate-200 app-dark:!border-white/15">
+                      <span className="inline-block bg-slate-100 app-dark:bg-white/10! text-slate-600 app-dark:text-slate-300! text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-slate-200 app-dark:border-white/15!">
                         {selectedProduct.categoryName || "Chương trình"}
                       </span>
                       {selectedProduct.shortCode && (
@@ -3098,17 +3078,17 @@ function ProductOverviewPageInner({ currentUser }) {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 app-dark:!text-white m-0 leading-tight">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 app-dark:text-white! m-0 leading-tight">
                       {selectedProduct.name}
                     </h2>
-                    <p className="text-slate-500 app-dark:!text-slate-400 text-sm leading-relaxed mt-2 mb-0 max-w-lg">
+                    <p className="text-slate-500 app-dark:text-slate-400! text-sm leading-relaxed mt-2 mb-0 max-w-lg">
                       {selectedProduct.description || selectedProduct.detailDescription || "Chương trình chất lượng cao, uy tín quốc tế."}
                     </p>
                   </div>
 
                   {/* Footer: ngày cập nhật + website */}
                   <div className="flex items-center gap-3 flex-wrap pt-2">
-                    <p className="text-slate-400 app-dark:!text-slate-500 text-[11px] flex items-center gap-1.5 m-0">
+                    <p className="text-slate-400 app-dark:text-slate-500! text-[11px] flex items-center gap-1.5 m-0">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -3124,7 +3104,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     </p>
                     {selectedProduct.websiteUrl && (
                       <button
-                        className="bg-slate-100 hover:bg-slate-200 app-dark:!bg-white/8 app-dark:hover:!bg-white/15 text-slate-700 app-dark:!text-slate-300 border border-slate-200 app-dark:!border-white/15 font-semibold text-xs rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all"
+                        className="bg-slate-100 hover:bg-slate-200 app-dark:bg-white/8! app-dark:hover:bg-white/15! text-slate-700 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/15! font-semibold text-xs rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all"
                         onClick={() => handleOpenWebsite(selectedProduct.websiteUrl)}
                       >
                         <i className="fa fa-globe text-[11px]"></i> Website
@@ -3147,7 +3127,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   )}
                   {selectedProduct.image ? (
                     <div
-                      className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 app-dark:!border-white/10 transition-transform duration-500"
+                      className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 app-dark:border-white/10! transition-transform duration-500"
                       style={{ width: "380px", height: "240px", transform: "rotate(3deg)", flexShrink: 0 }}
                       onMouseEnter={e => e.currentTarget.style.transform = "rotate(0deg)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "rotate(3deg)"}
@@ -3156,12 +3136,12 @@ function ProductOverviewPageInner({ currentUser }) {
                     </div>
                   ) : (
                     <div
-                      className="rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 app-dark:from-blue-900/20 app-dark:to-slate-800/30 border border-slate-200 app-dark:!border-white/10 flex items-center justify-center shadow-2xl transition-transform duration-500"
+                      className="rounded-2xl bg-linear-to-br from-blue-50 to-slate-100 app-dark:from-blue-900/20 app-dark:to-slate-800/30 border border-slate-200 app-dark:border-white/10! flex items-center justify-center shadow-2xl transition-transform duration-500"
                       style={{ width: "380px", height: "240px", transform: "rotate(3deg)", flexShrink: 0 }}
                       onMouseEnter={e => e.currentTarget.style.transform = "rotate(0deg)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "rotate(3deg)"}
                     >
-                      <i className="fa fa-image text-5xl text-slate-300 app-dark:!text-slate-600"></i>
+                      <i className="fa fa-image text-5xl text-slate-300 app-dark:text-slate-600!"></i>
                     </div>
                   )}
                 </div>
@@ -3178,11 +3158,11 @@ function ProductOverviewPageInner({ currentUser }) {
                   {/* Mô tả chi tiết */}
                   {selectedProduct.detailDescription && (
                     <div>
-                      <h4 className="font-bold text-slate-800 app-dark:!text-slate-100 text-sm mb-3 flex items-center gap-2">
+                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-3 flex items-center gap-2">
                         <i className="fa fa-align-left text-[#005bbf]"></i>
                         <span className="text-[#005bbf] uppercase tracking-wide text-xs">Giới thiệu chương trình</span>
                       </h4>
-                      <p className="text-slate-600 app-dark:!text-slate-300 text-sm leading-relaxed whitespace-pre-line m-0">
+                      <p className="text-slate-600 app-dark:text-slate-300! text-sm leading-relaxed whitespace-pre-line m-0">
                         {selectedProduct.detailDescription}
                       </p>
                     </div>
@@ -3190,13 +3170,13 @@ function ProductOverviewPageInner({ currentUser }) {
 
                   {/* Đối tượng phù hợp */}
                   {selectedProduct.targetAudience && (
-                    <div className="flex gap-3 p-4 rounded-2xl bg-blue-50 app-dark:!bg-white/5 border border-blue-100 app-dark:!border-white/8">
-                      <div className="w-9 h-9 rounded-xl bg-[#005bbf] text-white flex items-center justify-center flex-shrink-0 text-sm shadow-sm">
+                    <div className="flex gap-3 p-4 rounded-2xl bg-blue-50 app-dark:bg-white/5! border border-blue-100 app-dark:border-white/8!">
+                      <div className="w-9 h-9 rounded-xl bg-[#005bbf] text-white flex items-center justify-center shrink-0 text-sm shadow-sm">
                         <i className="fa fa-users text-xs"></i>
                       </div>
                       <div>
-                        <p className="font-bold text-[#005bbf] app-dark:!text-blue-300 text-[10px] uppercase tracking-widest mb-1">Đối tượng phù hợp</p>
-                        <p className="text-slate-600 app-dark:!text-slate-300 text-sm leading-relaxed m-0">{selectedProduct.targetAudience}</p>
+                        <p className="font-bold text-[#005bbf] app-dark:text-blue-300! text-[10px] uppercase tracking-widest mb-1">Đối tượng phù hợp</p>
+                        <p className="text-slate-600 app-dark:text-slate-300! text-sm leading-relaxed m-0">{selectedProduct.targetAudience}</p>
                       </div>
                     </div>
                   )}
@@ -3207,12 +3187,12 @@ function ProductOverviewPageInner({ currentUser }) {
                 <div className="lg:col-span-3 space-y-4">
 
                   {/* Card tài liệu & brochure */}
-                  <div className="bg-slate-50 app-dark:!bg-white/5 rounded-2xl border border-slate-200 app-dark:!border-white/8 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-200 app-dark:!border-white/8 flex items-center gap-2">
+                  <div className="bg-slate-50 app-dark:bg-white/5! rounded-2xl border border-slate-200 app-dark:border-white/8! overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200 app-dark:border-white/8! flex items-center gap-2">
                       <div className="w-7 h-7 bg-[#005bbf]/10 rounded-lg flex items-center justify-center">
                         <i className="fa fa-folder-open text-[#005bbf] text-sm"></i>
                       </div>
-                      <span className="font-bold text-slate-700 app-dark:!text-slate-200 text-sm">Tài liệu & Brochure</span>
+                      <span className="font-bold text-slate-700 app-dark:text-slate-200! text-sm">Tài liệu & Brochure</span>
                     </div>
 
                     <div className="p-4 space-y-4">
@@ -3220,40 +3200,40 @@ function ProductOverviewPageInner({ currentUser }) {
                       <div>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Brochure chính thức</p>
                         {selectedProduct.brochure ? (
-                          <div className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center gap-2">
+                          <div className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               {selectedProduct.brochure.sourceType === "link" ? (
-                                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
                                   <i className="fa fa-link text-[#005bbf] text-xs"></i>
                                 </div>
                               ) : selectedProduct.brochure.fileType === "IMAGE" ? (
                                 selectedProduct.brochure.url ? (
-                                  <img src={selectedProduct.brochure.url} alt="preview" className="rounded-lg w-7 h-7 object-cover flex-shrink-0 border border-slate-200" />
+                                  <img src={selectedProduct.brochure.url} alt="preview" className="rounded-lg w-7 h-7 object-cover shrink-0 border border-slate-200" />
                                 ) : (
-                                  <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                  <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
                                     <i className="fa fa-file-image text-emerald-500 text-xs"></i>
                                   </div>
                                 )
                               ) : (
-                                <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
                                   <i className="fa fa-file-pdf text-red-500 text-xs"></i>
                                 </div>
                               )}
                               <div className="min-w-0">
-                                <p className="font-semibold text-xs text-slate-800 app-dark:!text-slate-200 truncate m-0" title={selectedProduct.brochure.name}>{selectedProduct.brochure.name}</p>
+                                <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={selectedProduct.brochure.name}>{selectedProduct.brochure.name}</p>
                                 <p className="text-slate-400 text-[10px] m-0">{selectedProduct.brochure.size || "Link"}</p>
                               </div>
                             </div>
                             {selectedProduct.brochure.sourceType === "link" ? (
-                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg flex-shrink-0 transition-colors" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>Mở</button>
+                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>Mở</button>
                             ) : selectedProduct.brochure.fileType === "IMAGE" && selectedProduct.brochure.url ? (
-                              <a href={selectedProduct.brochure.url} target="_blank" rel="noreferrer" className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg flex-shrink-0 transition-colors">Xem</a>
+                              <a href={selectedProduct.brochure.url} target="_blank" rel="noreferrer" className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors">Xem</a>
                             ) : (
-                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg flex-shrink-0 transition-colors" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>Tải</button>
+                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>Tải</button>
                             )}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:!bg-white/3 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl">
+                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
                             <i className="fa fa-description text-slate-300 text-sm"></i>
                             <p className="text-slate-400 text-xs italic m-0">Chưa có brochure</p>
                           </div>
@@ -3266,32 +3246,32 @@ function ProductOverviewPageInner({ currentUser }) {
                         {selectedProduct.documents && selectedProduct.documents.length > 0 ? (
                           <div className="flex flex-col gap-2">
                             {selectedProduct.documents.map((doc) => (
-                              <div key={doc.id} className="bg-white app-dark:!bg-white/5 border border-slate-200/80 app-dark:!border-white/10 rounded-xl p-3 flex justify-between items-center gap-2">
+                              <div key={doc.id} className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2 min-w-0">
                                   {doc.sourceType === "link" ? (
-                                    <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
                                       <i className="fa fa-link text-[#005bbf] text-[10px]"></i>
                                     </div>
                                   ) : (
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${doc.type === "PDF" ? "bg-red-50" : doc.type === "XLSX" ? "bg-emerald-50" : "bg-sky-50"}`}>
+                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${doc.type === "PDF" ? "bg-red-50" : doc.type === "XLSX" ? "bg-emerald-50" : "bg-sky-50"}`}>
                                       <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : doc.type === "XLSX" ? "fa-file-excel text-emerald-500" : "fa-file-lines text-sky-500"} text-[10px]`}></i>
                                     </div>
                                   )}
                                   <div className="min-w-0">
-                                    <p className="font-semibold text-xs text-slate-800 app-dark:!text-slate-200 truncate m-0" title={doc.name}>{doc.name}</p>
+                                    <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={doc.name}>{doc.name}</p>
                                     <p className="text-slate-400 text-[10px] m-0">{doc.size || "Link"} · {doc.updatedAt || "2026-06-01"}</p>
                                   </div>
                                 </div>
                                 {doc.sourceType === "link" ? (
-                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg flex-shrink-0 transition-colors" onClick={() => handleOpenWebsite(doc.url)}>Mở</button>
+                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(doc.url)}>Mở</button>
                                 ) : (
-                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg flex-shrink-0 transition-colors" onClick={() => handleDownloadDoc(doc.name)}>Tải</button>
+                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(doc.name)}>Tải</button>
                                 )}
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:!bg-white/3 border border-dashed border-slate-200 app-dark:!border-white/10 rounded-xl">
+                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
                             <i className="fa fa-menu-book text-slate-300 text-sm"></i>
                             <p className="text-slate-400 text-xs italic m-0">Chưa có tài liệu</p>
                           </div>
@@ -3312,25 +3292,25 @@ function ProductOverviewPageInner({ currentUser }) {
 
               {/* ── ROW: Điểm nổi bật (7) + Quy trình (3) ── */}
               {(selectedProduct.highlights?.length > 0 || selectedProduct.processSteps?.length > 0) && (
-                <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mt-6 pt-6 border-t border-slate-100 app-dark:!border-white/8">
+                <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mt-6 pt-6 border-t border-slate-100 app-dark:border-white/8!">
 
                   {/* Điểm nổi bật — 7/10 */}
                   {selectedProduct.highlights && selectedProduct.highlights.length > 0 && (
                     <div className="lg:col-span-7">
-                      <h4 className="font-bold text-slate-800 app-dark:!text-slate-100 text-sm mb-4 flex items-center gap-2">
+                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
                         <i className="fa fa-star text-amber-400"></i>
-                        <span className="text-slate-700 app-dark:!text-slate-200">Điểm nổi bật</span>
+                        <span className="text-slate-700 app-dark:text-slate-200!">Điểm nổi bật</span>
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {selectedProduct.highlights.map((hl, i) => (
                           <div
                             key={i}
-                            className="flex items-start gap-3 p-3.5 rounded-xl bg-white app-dark:!bg-white/5 border border-slate-200 app-dark:!border-white/8 shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-200"
+                            className="flex items-start gap-3 p-3.5 rounded-xl bg-white app-dark:bg-white/5! border border-slate-200 app-dark:border-white/8! shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-200"
                           >
-                            <div className="w-8 h-8 bg-blue-50 app-dark:!bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <i className="fa fa-circle-check text-[#005bbf] app-dark:!text-blue-400 text-sm"></i>
+                            <div className="w-8 h-8 bg-blue-50 app-dark:bg-blue-900/30! rounded-lg flex items-center justify-center shrink-0">
+                              <i className="fa fa-circle-check text-[#005bbf] app-dark:text-blue-400! text-sm"></i>
                             </div>
-                            <span className="text-slate-700 app-dark:!text-slate-300 text-sm leading-relaxed">{hl}</span>
+                            <span className="text-slate-700 app-dark:text-slate-300! text-sm leading-relaxed">{hl}</span>
                           </div>
                         ))}
                       </div>
@@ -3340,25 +3320,25 @@ function ProductOverviewPageInner({ currentUser }) {
                   {/* Quy trình xử lý — 3/10, stepper dọc */}
                   {selectedProduct.processSteps && selectedProduct.processSteps.length > 0 && (
                     <div className="lg:col-span-3">
-                      <h4 className="font-bold text-slate-800 app-dark:!text-slate-100 text-sm mb-4 flex items-center gap-2">
+                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
                         <i className="fa fa-list-check text-[#005bbf]"></i>
-                        <span className="text-slate-700 app-dark:!text-slate-200">Quy trình xử lý</span>
-                        <span className="ml-auto text-[10px] font-semibold text-slate-400 bg-slate-100 app-dark:!bg-white/10 px-2 py-0.5 rounded-full">
+                        <span className="text-slate-700 app-dark:text-slate-200!">Quy trình xử lý</span>
+                        <span className="ml-auto text-[10px] font-semibold text-slate-400 bg-slate-100 app-dark:bg-white/10! px-2 py-0.5 rounded-full">
                           {selectedProduct.processSteps.length} bước
                         </span>
                       </h4>
                       <div className="flex flex-col">
                         {selectedProduct.processSteps.map((step, i) => (
                           <div key={i} className="flex items-start gap-3">
-                            <div className="flex flex-col items-center flex-shrink-0">
+                            <div className="flex flex-col items-center shrink-0">
                               <div className="w-7 h-7 bg-[#005bbf] text-white font-bold rounded-full flex items-center justify-center text-[11px] shadow-sm z-10">
                                 {i + 1}
                               </div>
                               {i < selectedProduct.processSteps.length - 1 && (
-                                <div className="w-0.5 h-5 bg-blue-200 app-dark:!bg-blue-900/50 my-1" />
+                                <div className="w-0.5 h-5 bg-blue-200 app-dark:bg-blue-900/50! my-1" />
                               )}
                             </div>
-                            <p className="text-slate-600 app-dark:!text-slate-300 text-xs leading-relaxed pt-1.5 pb-3 m-0">{step}</p>
+                            <p className="text-slate-600 app-dark:text-slate-300! text-xs leading-relaxed pt-1.5 pb-3 m-0">{step}</p>
                           </div>
                         ))}
                       </div>
@@ -3369,11 +3349,11 @@ function ProductOverviewPageInner({ currentUser }) {
 
               {/* Tags */}
               {selectedProduct.tags && selectedProduct.tags.length > 0 && (
-                <div className="flex items-center flex-wrap gap-2 mt-5 pt-5 border-t border-slate-100 app-dark:!border-white/8">
+                <div className="flex items-center flex-wrap gap-2 mt-5 pt-5 border-t border-slate-100 app-dark:border-white/8!">
                   {selectedProduct.tags.map((tag, i) => (
                     <span
                       key={i}
-                      className="bg-blue-50 app-dark:!bg-blue-900/20 text-[#005bbf] app-dark:!text-blue-300 border border-blue-100 app-dark:!border-blue-900/40 px-3 py-1 rounded-full text-xs font-semibold"
+                      className="bg-blue-50 app-dark:bg-blue-900/20! text-[#005bbf] app-dark:text-blue-300! border border-blue-100 app-dark:border-blue-900/40! px-3 py-1 rounded-full text-xs font-semibold"
                     >
                       #{tag}
                     </span>
@@ -3386,8 +3366,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* MODAL: THÊM / SỬA DANH MỤC LỚN */}
         {editingCategory && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1050] animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[650px] max-h-[90vh] flex flex-col overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1050 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[650px] max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
               <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
                 <h5 className="font-bold text-slate-800 text-base m-0">
                   {editingCategory === "new" ? "Thêm danh mục lớn mới" : "Sửa danh mục lớn"}
@@ -3397,7 +3377,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveCategory} className="flex flex-col flex-grow overflow-hidden">
+              <form onSubmit={handleSaveCategory} className="flex flex-col grow overflow-hidden">
                 <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                   <button
                     type="button"
@@ -3422,7 +3402,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto text-[13.5px] flex-grow">
+                <div className="p-6 overflow-y-auto text-[13.5px] grow">
                   {activeCategoryTab === "info" ? (
                     <div className="space-y-4">
                       <div>
@@ -3582,26 +3562,26 @@ function ProductOverviewPageInner({ currentUser }) {
                         <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
                           {formCategory.programs.map((prod) => (
                             <div key={prod.id} className="p-3 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center">
-                              <div className="text-truncate pr-4 flex-grow" style={{ minWidth: 0 }}>
+                              <div className="text-truncate pr-4 grow" style={{ minWidth: 0 }}>
                                 <div className="flex items-center gap-2 mb-0.5">
                                   <span className="font-bold text-slate-800 text-[13px] block text-truncate" title={prod.name}>
                                     {prod.name}
                                   </span>
                                   {(prod.status === "hidden" || prod.isActive === false) && (
-                                    <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-500">Đã ẩn</span>
+                                    <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-500">Đã ẩn</span>
                                   )}
                                   {prod.status === "inactive" && (
-                                    <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600">Tạm ngưng</span>
+                                    <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-600">Tạm ngưng</span>
                                   )}
                                   {prod.status === "coming_soon" && (
-                                    <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700">Sắp mở</span>
+                                    <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-yellow-100 text-yellow-700">Sắp mở</span>
                                   )}
                                 </div>
                                 <span className="text-slate-450 block text-[11px]">
                                   {prod.region} · {prod.country}
                                 </span>
                               </div>
-                              <div className="flex gap-2 flex-shrink-0">
+                              <div className="flex gap-2 shrink-0">
                                 <button
                                   type="button"
                                   title={(prod.status === "hidden" || prod.isActive === false) ? "Hiện sản phẩm" : "Ẩn sản phẩm"}
@@ -3661,8 +3641,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* MODAL: THÊM / SỬA SẢN PHẨM CON */}
         {editingProduct && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1060] animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1060 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[1000px] max-h-[90vh] flex flex-col overflow-hidden animate-slide-up">
               <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
                 <h5 className="font-bold text-slate-800 text-base m-0">
                   {editingProduct === "new" ? "Thêm sản phẩm con mới" : "Sửa thông tin sản phẩm con"}
@@ -3672,7 +3652,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProduct} className="flex flex-col flex-grow overflow-hidden">
+              <form onSubmit={handleSaveProduct} className="flex flex-col grow overflow-hidden">
                 <div className="bg-slate-50/50 border-b border-slate-150 px-5 flex gap-4">
                   <button
                     type="button"
@@ -3706,7 +3686,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto text-[13.5px] flex-grow">
+                <div className="p-6 overflow-y-auto text-[13.5px] grow">
                   {/* TAB 1: BASIC INFORMATION */}
                   {activeProductTab === "basic" && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -3816,7 +3796,7 @@ function ProductOverviewPageInner({ currentUser }) {
                             placeholder="https://example.com/image.jpg"
                             disabled={formProduct.image?.startsWith("data:")}
                           />
-                          <label className="flex-shrink-0 flex items-center gap-1.5 cursor-pointer bg-slate-100 hover:bg-slate-200 border-l border-slate-200 text-slate-600 text-xs font-semibold px-4 py-2.5 transition-colors whitespace-nowrap">
+                          <label className="shrink-0 flex items-center gap-1.5 cursor-pointer bg-slate-100 hover:bg-slate-200 border-l border-slate-200 text-slate-600 text-xs font-semibold px-4 py-2.5 transition-colors whitespace-nowrap">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                             Chọn file
                             <input
@@ -3888,7 +3868,7 @@ function ProductOverviewPageInner({ currentUser }) {
                             />
                           </div>
 
-                          <svg className="w-4 h-4 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                           </svg>
 
@@ -4051,9 +4031,9 @@ function ProductOverviewPageInner({ currentUser }) {
                             </div>
 
                             <div className="flex items-center my-4">
-                              <hr className="flex-grow border-slate-200 my-0" />
+                              <hr className="grow border-slate-200 my-0" />
                               <span className="mx-3 text-slate-400 text-xs font-semibold uppercase tracking-wider">hoặc</span>
-                              <hr className="flex-grow border-slate-200 my-0" />
+                              <hr className="grow border-slate-200 my-0" />
                             </div>
 
                             <div>
@@ -4083,19 +4063,19 @@ function ProductOverviewPageInner({ currentUser }) {
                               <div className="flex items-center justify-between p-2.5 border border-slate-100 rounded-xl bg-white shadow-sm">
                                 <div className="text-truncate pr-3 flex items-center" style={{ minWidth: 0 }}>
                                   {formProduct.brochure.sourceType === "link" ? (
-                                    <i className="fa fa-link text-cyan-900 mr-2 text-base flex-shrink-0"></i>
+                                    <i className="fa fa-link text-cyan-900 mr-2 text-base shrink-0"></i>
                                   ) : formProduct.brochure.fileType === "IMAGE" ? (
                                     formProduct.brochure.url ? (
                                       <img
                                         src={formProduct.brochure.url}
                                         alt="preview"
-                                        className="rounded border mr-2 w-8 h-8 object-cover flex-shrink-0"
+                                        className="rounded border mr-2 w-8 h-8 object-cover shrink-0"
                                       />
                                     ) : (
-                                      <i className="fa fa-file-image text-emerald-600 mr-2 text-base flex-shrink-0"></i>
+                                      <i className="fa fa-file-image text-emerald-600 mr-2 text-base shrink-0"></i>
                                     )
                                   ) : (
-                                    <i className="fa fa-file-pdf text-red-500 mr-2 text-base flex-shrink-0"></i>
+                                    <i className="fa fa-file-pdf text-red-500 mr-2 text-base shrink-0"></i>
                                   )}
                                   <div className="text-truncate" style={{ minWidth: 0 }}>
                                     <span
@@ -4116,7 +4096,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="flex gap-1.5 items-center flex-shrink-0">
+                                <div className="flex gap-1.5 items-center shrink-0">
                                   {formProduct.brochure.sourceType === "link" && (
                                     <button
                                       type="button"
@@ -4186,9 +4166,9 @@ function ProductOverviewPageInner({ currentUser }) {
                             </div>
 
                             <div className="flex items-center my-4">
-                              <hr className="flex-grow border-slate-200 my-0" />
+                              <hr className="grow border-slate-200 my-0" />
                               <span className="mx-3 text-slate-400 text-xs font-semibold uppercase tracking-wider">hoặc</span>
-                              <hr className="flex-grow border-slate-200 my-0" />
+                              <hr className="grow border-slate-200 my-0" />
                             </div>
 
                             <div className="p-3 border border-slate-150 rounded-xl bg-white shadow-sm mb-3 space-y-2">
@@ -4223,7 +4203,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                   </select>
                                   <button
                                     type="button"
-                                    className="bg-sky-800 hover:bg-sky-900 text-white text-xs font-semibold px-4 rounded-lg transition-colors flex-shrink-0"
+                                    className="bg-sky-800 hover:bg-sky-900 text-white text-xs font-semibold px-4 rounded-lg transition-colors shrink-0"
                                     onClick={handleAddDocLink}
                                   >
                                     Thêm link
@@ -4241,9 +4221,9 @@ function ProductOverviewPageInner({ currentUser }) {
                                   <div key={doc.id} className="flex items-center justify-between p-2.5 border border-slate-100 rounded-xl bg-white shadow-sm">
                                     <div className="text-truncate pr-3 flex items-center" style={{ minWidth: 0 }}>
                                       {doc.sourceType === "link" ? (
-                                        <i className="fa fa-link text-sky-850 mr-2 text-base flex-shrink-0"></i>
+                                        <i className="fa fa-link text-sky-850 mr-2 text-base shrink-0"></i>
                                       ) : (
-                                        <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-word text-primary")} mr-2 text-base flex-shrink-0`}></i>
+                                        <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : (doc.type === "XLSX" ? "fa-file-excel text-emerald-650" : "fa-file-word text-primary")} mr-2 text-base shrink-0`}></i>
                                       )}
                                       <div className="text-truncate" style={{ minWidth: 0 }}>
                                         <span className="font-bold text-slate-800 text-xs block text-truncate" title={doc.name}>
@@ -4260,7 +4240,7 @@ function ProductOverviewPageInner({ currentUser }) {
                                     </div>
                                     <button
                                       type="button"
-                                      className="bg-transparent hover:bg-red-50 text-red-600 border border-red-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors flex-shrink-0"
+                                      className="bg-transparent hover:bg-red-50 text-red-600 border border-red-200 text-xs font-semibold py-1 px-3 rounded-lg transition-colors shrink-0"
                                       onClick={() => deleteProductDoc(doc.id)}
                                     >
                                       Xóa
@@ -4293,8 +4273,8 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* MODAL: FORM QUAN TÂM SẢN PHẨM */}
         {showInterestModal && selectedProduct && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[4px] flex items-center justify-center p-6 z-[1050] animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[550px] flex flex-col animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]" style={{ maxHeight: "90vh", overflow: "hidden" }}>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-6 z-1050 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[550px] flex flex-col animate-slide-up" style={{ maxHeight: "90vh", overflow: "hidden" }}>
               <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex justify-between items-center">
                 <h5 className="font-bold text-slate-800 text-base m-0 flex items-center gap-2">
                   <i className="fa fa-envelope-open-text text-red-500"></i> Đăng ký khách hàng quan tâm
@@ -4529,7 +4509,7 @@ function ProductOverviewPageInner({ currentUser }) {
                 </div>
               </form>
 
-              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end flex-shrink-0">
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end shrink-0">
                 <button
                   type="button"
                   className="mr-auto bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-4 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
@@ -4551,9 +4531,9 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* MODAL: XEM TRƯỚC HỢP ĐỒNG MẪU */}
         {showContractPreview && selectedProduct && (
-          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-[6px] flex items-center justify-center p-4 md:p-6 z-[1100] animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[850px] flex flex-col animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)] overflow-hidden" style={{ maxHeight: "95vh" }}>
-              <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-shrink-0">
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-[6px] flex items-center justify-center p-4 md:p-6 z-1100 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[850px] flex flex-col animate-slide-up overflow-hidden" style={{ maxHeight: "95vh" }}>
+              <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
                 <div>
                   <h5 className="font-bold text-slate-800 text-base m-0 flex items-center gap-2">
                     <i className="fa fa-file-contract text-blue-600"></i> Xem trước Hợp đồng & Phụ lục
@@ -4606,7 +4586,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   <div id="contract-print-area" className="bg-white shadow-lg mx-auto max-w-[794px] p-[30px] sm:p-[50px] border border-slate-200 text-slate-800 font-sans leading-relaxed text-[13px] relative rounded-lg">
                     {/* Header Block like Image 2 */}
                     <div className="flex items-center gap-4 border-b-2 border-sky-400 pb-3 mb-6">
-                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain flex-shrink-0" />
+                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain shrink-0" />
                       <div className="flex-1 text-slate-800 text-[11px] leading-tight text-left">
                         <div className="font-extrabold text-[#0066b2] text-[13px] uppercase">
                           CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC & ĐỊNH CƯ HT ĐẠI DƯƠNG
@@ -4746,7 +4726,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   <div id="contract-print-area" className="bg-white shadow-lg mx-auto max-w-[794px] p-[30px] sm:p-[50px] border border-slate-200 text-slate-800 font-sans leading-relaxed text-[13px] relative rounded-lg">
                     {/* Header Block like Image 2 */}
                     <div className="flex items-center gap-4 border-b-2 border-sky-400 pb-3 mb-6">
-                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain flex-shrink-0" />
+                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain shrink-0" />
                       <div className="flex-1 text-slate-800 text-[11px] leading-tight text-left">
                         <div className="font-extrabold text-[#0066b2] text-[13px] uppercase">
                           CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC & ĐỊNH CƯ HT ĐẠI DƯƠNG
@@ -4929,7 +4909,7 @@ function ProductOverviewPageInner({ currentUser }) {
               </div>
 
               {/* Action Buttons */}
-              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end flex-shrink-0">
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end shrink-0">
                 <button
                   type="button"
                   className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors"
