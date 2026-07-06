@@ -23,6 +23,96 @@ const readPendingSidebarCategory = () => {
   }
 };
 
+const cleanVietnameseText = (str) => {
+  if (!str) return "";
+  let res = str.normalize("NFC");
+  const replacements = {
+    "a`": "à", "A`": "À",
+    "â`": "ầ", "Â`": "Ầ",
+    "ă`": "ằ", "Ă`": "Ằ",
+    "e`": "è", "E`": "È",
+    "ê`": "ề", "Ê`": "Ề",
+    "i`": "ì", "I`": "Ì",
+    "o`": "ò", "O`": "Ò",
+    "ô`": "ồ", "Ô`": "Ồ",
+    "ơ`": "ờ", "Ơ`": "Ờ",
+    "u`": "ù", "U`": "Ù",
+    "ư`": "ừ", "Ư`": "Ừ",
+    "y`": "ỳ", "Y`": "Ỳ",
+    "a´": "á", "A´": "Á",
+    "â´": "ấ", "Â´": "Ấ",
+    "ă´": "ắ", "Ă´": "Ắ",
+    "e´": "é", "E´": "É",
+    "ê´": "ế", "Ê´": "Ế",
+    "i´": "í", "I´": "Í",
+    "o´": "ó", "O´": "Ó",
+    "ô´": "ố", "Ô´": "Ố",
+    "ơ´": "ớ", "Ơ´": "Ớ",
+    "u´": "ú", "U´": "Ú",
+    "ư´": "ứ", "Ư´": "Ứ",
+    "y´": "ý", "Y´": "Ý"
+  };
+  for (const [key, val] of Object.entries(replacements)) {
+    res = res.replace(new RegExp(key, "g"), val);
+  }
+  return res.replace(/[`´]/g, "");
+};
+
+const numberToVietnameseWords = (num) => {
+  if (!num || isNaN(num)) return "Không đồng";
+  const units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+  const unitsTen = ["", "mười", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"];
+  
+  const readThreeDigits = (threeDigits, showZeroHundred) => {
+    let hundred = Math.floor(threeDigits / 100);
+    let ten = Math.floor((threeDigits % 100) / 10);
+    let unit = threeDigits % 10;
+    let res = "";
+    
+    if (hundred > 0 || showZeroHundred) {
+      res += units[hundred] + " trăm ";
+    }
+    
+    if (ten > 0) {
+      res += unitsTen[ten] + " ";
+    } else if (hundred > 0 && unit > 0) {
+      res += "lẻ ";
+    }
+    
+    if (unit > 0) {
+      if (unit === 1 && ten > 1) {
+        res += "mốt";
+      } else if (unit === 5 && ten > 0) {
+        res += "lăm";
+      } else {
+        res += units[unit];
+      }
+    }
+    return res.trim();
+  };
+
+  let strNum = Math.floor(num).toString();
+  let groups = [];
+  while (strNum.length > 0) {
+    groups.push(parseInt(strNum.slice(-3)));
+    strNum = strNum.slice(0, -3);
+  }
+
+  const levels = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+  let words = "";
+  for (let i = groups.length - 1; i >= 0; i--) {
+    let g = groups[i];
+    if (g > 0) {
+      let gWords = readThreeDigits(g, i < groups.length - 1);
+      words += gWords + " " + levels[i] + " ";
+    }
+  }
+
+  words = words.trim();
+  if (!words) return "Không đồng";
+  return words.charAt(0).toUpperCase() + words.slice(1) + " đồng chẵn";
+};
+
 // ==========================================
 // MOCK DATA - LUÔN CÓ SẴN ĐỂ FALLBACK
 // ==========================================
@@ -1098,6 +1188,8 @@ function ProductOverviewPageInner({ currentUser }) {
   });
 
   const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
+  const [showContractPreview, setShowContractPreview] = useState(false);
+  const [contractType, setContractType] = useState("main");
 
   const currentUserName = useMemo(() => {
     return currentUser?.name || currentUser?.username || "CTV/Đại lý HTO";
@@ -4407,11 +4499,419 @@ function ProductOverviewPageInner({ currentUser }) {
               </form>
 
               <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end flex-shrink-0">
+                <button
+                  type="button"
+                  className="mr-auto bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-4 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                  onClick={() => setShowContractPreview(true)}
+                >
+                  <i className="fa fa-file-signature text-blue-600 text-sm"></i>
+                  Xem hợp đồng mẫu
+                </button>
                 <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors disabled:opacity-50" onClick={handleCloseInterestModal} disabled={isSubmittingInterest}>
                   Hủy bỏ
                 </button>
                 <button type="submit" form="interestForm" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors disabled:opacity-50" disabled={isSubmittingInterest}>
                   {isSubmittingInterest ? "Đang gửi..." : "Gửi liên hệ tư vấn"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: XEM TRƯỚC HỢP ĐỒNG MẪU */}
+        {showContractPreview && selectedProduct && (
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-[6px] flex items-center justify-center p-4 md:p-6 z-[1100] animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[850px] flex flex-col animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)] overflow-hidden" style={{ maxHeight: "95vh" }}>
+              <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 flex-shrink-0">
+                <div>
+                  <h5 className="font-bold text-slate-800 text-base m-0 flex items-center gap-2">
+                    <i className="fa fa-file-contract text-blue-600"></i> Xem trước Hợp đồng & Phụ lục
+                  </h5>
+                  <p className="text-[11px] text-slate-405 m-0 mt-0.5">Dữ liệu được điền tự động từ form đăng ký quan tâm</p>
+                </div>
+                
+                <div className="flex items-center bg-slate-200/65 rounded-lg p-0.5 self-start md:self-auto">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${contractType === "main" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    onClick={() => setContractType("main")}
+                  >
+                    Hợp đồng chính
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${contractType === "appendix" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    onClick={() => setContractType("appendix")}
+                  >
+                    Phụ lục hợp đồng
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable A4 Container */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-150/40 select-text">
+                <style>{`
+                  @media print {
+                    body * {
+                      visibility: hidden;
+                    }
+                    #contract-print-area, #contract-print-area * {
+                      visibility: visible;
+                    }
+                    #contract-print-area {
+                      position: absolute;
+                      left: 0;
+                      top: 0;
+                      width: 100%;
+                      padding: 0;
+                      margin: 0;
+                      box-shadow: none !important;
+                      border: none !important;
+                    }
+                  }
+                `}</style>
+
+                {contractType === "main" ? (
+                  <div id="contract-print-area" className="bg-white shadow-lg mx-auto max-w-[794px] p-[30px] sm:p-[50px] border border-slate-200 text-slate-800 font-sans leading-relaxed text-[13px] relative rounded-lg">
+                    {/* Header Block like Image 2 */}
+                    <div className="flex items-center gap-4 border-b-2 border-sky-400 pb-3 mb-6">
+                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain flex-shrink-0" />
+                      <div className="flex-1 text-slate-800 text-[11px] leading-tight text-left">
+                        <div className="font-extrabold text-[#0066b2] text-[13px] uppercase">
+                          CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC & ĐỊNH CƯ HT ĐẠI DƯƠNG
+                        </div>
+                        <div className="font-bold text-slate-600 text-[9.5px] uppercase mt-0.5">
+                          HT OCEAN EDUCATION & IMMIGRATION CONSULTANCY JOINT STOCK COMPANY
+                        </div>
+                        <div className="mt-1 text-slate-500">
+                          Tầng 1, Toà nhà số 284/41/2 Lý Thường Kiệt, Phường Diên Hồng, TP. HCM
+                        </div>
+                        <div className="text-slate-500">
+                          0334.585.198 - 0866.934.579 <span className="text-sky-400 mx-1">|</span> administrator@htogroup.com.vn <span className="text-sky-400 mx-1">|</span> www.htogroup.com.vn
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* National Motto and Company Reference */}
+                    <div className="grid grid-cols-2 gap-4 text-center text-[12px] mb-6">
+                      <div className="flex flex-col items-center">
+                        <div className="font-bold uppercase text-slate-900 leading-tight">
+                          CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC &<br />ĐỊNH CƯ HT ĐẠI DƯƠNG
+                        </div>
+                        <div className="text-slate-400 text-[10px] my-0.5">---</div>
+                        <div className="font-bold text-slate-800">
+                          Số: {Date.now().toString().slice(-6)}/DHDE
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="font-bold uppercase text-slate-900 leading-tight">
+                          CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+                        </div>
+                        <div className="font-bold text-slate-800 mt-1">
+                          Độc lập - Tự do - Hạnh phúc
+                        </div>
+                        <div className="text-slate-400 text-[10px] my-0.5">---</div>
+                      </div>
+                    </div>
+
+                    <div className="text-center font-bold text-[16px] mt-8 mb-4 text-slate-900">
+                      HỢP ĐỒNG TƯ VẤN DU HỌC
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="italic text-slate-600">- Căn cứ Bộ luật Dân sự số 91/2015/QH13 ban hành ngày 24/11/2015;</p>
+                      <p className="italic text-slate-600">- Căn cứ nhu cầu và năng lực thực tế của hai Bên.</p>
+
+                      <p className="mt-4">Hôm nay, ngày {new Date().getDate()} tháng {new Date().getMonth() + 1} năm {new Date().getFullYear()}, tại văn phòng Công ty, chúng tôi gồm:</p>
+
+                      {/* BÊN A */}
+                      <div className="mt-4">
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 text-slate-900">
+                          BÊN A: ĐƠN VỊ TƯ VẤN (HT OCEAN GROUP)
+                        </div>
+                        <table className="w-full text-left table-fixed text-[13px]">
+                          <tbody>
+                            <tr>
+                              <td className="w-1/3 py-1 font-bold">Tên đơn vị:</td>
+                              <td className="w-2/3 py-1 font-semibold">CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC & ĐỊNH CƯ HT ĐẠI DƯƠNG</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Địa chỉ:</td>
+                              <td className="py-1">Tầng 1, Toà nhà số 284/41/2 Lý Thường Kiệt, Phường Diên Hồng, TP. HCM</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Người đại diện:</td>
+                              <td className="py-1 font-bold text-cyan-950 bg-slate-50 px-2 rounded">VŨ ĐỨC HÙNG</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Chức vụ:</td>
+                              <td className="py-1">Giám đốc điều hành</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* BÊN B */}
+                      <div className="mt-4">
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 text-slate-900">
+                          BÊN B: BÊN ĐƯỢC TƯ VẤN (KHÁCH HÀNG / HỌC VIÊN)
+                        </div>
+                        <table className="w-full text-left table-fixed text-[13px]">
+                          <tbody>
+                            <tr>
+                              <td className="w-1/3 py-1 font-bold">Họ và tên:</td>
+                              <td className="w-2/3 py-1 text-cyan-950 font-bold bg-yellow-100/50 px-2 rounded">{cleanVietnameseText(interestForm.customerName) || "...................................................."}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Số điện thoại:</td>
+                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(interestForm.phone) || "...................................................."}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Email:</td>
+                              <td className="py-1 text-cyan-950 bg-slate-50 px-2 rounded">{cleanVietnameseText(interestForm.email) || "...................................................."}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 1: NỘI DUNG DỊCH VỤ & PHẠM VI CÔNG VIỆC</div>
+                      <p>1. Bên B tự nguyện đăng ký và Bên A nhận cung cấp dịch vụ tư vấn, làm thủ tục du học cho Bên B đối với:</p>
+                      <ul className="list-disc pl-5 space-y-1 mt-2">
+                        <li><strong>Chương trình du học:</strong> <span className="text-cyan-950 font-bold bg-yellow-100/50 px-1 rounded">{cleanVietnameseText(selectedProduct.name)}</span></li>
+                        <li><strong>Quốc gia học tập:</strong> <span className="text-cyan-950 font-bold bg-slate-50 px-1 rounded">{cleanVietnameseText(resolveCountryName(selectedProduct.country))}</span></li>
+                        {selectedProduct.visaCode && <li><strong>Mã Visa hệ thống (visaCode):</strong> <span className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11.5px]">{selectedProduct.visaCode}</span></li>}
+                      </ul>
+                      <p className="mt-2">2. Bên A chịu trách nhiệm hướng dẫn Bên B chuẩn bị hồ sơ cá nhân đầy đủ và hợp lệ, liên hệ các trường đối tác nước ngoài để xin thư mời học, hướng dẫn thủ tục xin Visa, tổ chức đào tạo định hướng hành trang trước khi xuất cảnh.</p>
+
+                      <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 2: PHÍ DỊCH VỤ VÀ PHƯƠNG THỨC THANH TOÁN</div>
+                      <p>1. Phí dịch vụ tư vấn du học trọn gói đối với chương trình này là: <strong>{selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}</strong></p>
+                      <p>2. Bằng chữ: <em className="text-cyan-950 font-bold bg-yellow-100/50 px-2 py-0.5 rounded block mt-1">{cleanVietnameseText(numberToVietnameseWords(selectedProduct.serviceFee))}</em></p>
+                      <p>3. Chi phí trên chưa bao gồm các khoản lệ phí đóng trực tiếp cho Đại sứ quán, vé máy bay, bảo hiểm hoặc học phí đóng trực tiếp cho nhà trường tại nước sở tại (nếu có).</p>
+
+                      <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 3: CAM KẾT VÀ HIỆU LỰC</div>
+                      <p>1. Bên B cam kết cung cấp toàn bộ thông tin cá nhân, bằng cấp, học bạ và hình ảnh thẻ CCCD/Hộ chiếu trung thực và chính xác. Mọi sai sót dẫn đến việc từ chối hồ sơ Bên B hoàn toàn chịu trách nhiệm.</p>
+                      <p>2. Bên A cam kết thực hiện đúng tiến độ xử lý hồ sơ theo quy định của chương trình. Hợp đồng có hiệu lực kể từ ngày ký và tự động thanh lý khi Bên B hoàn thành thủ tục nhập học.</p>
+
+                      {/* SIGNATURE SECTION */}
+                      <div className="grid grid-cols-2 gap-8 text-center mt-12 pt-6 border-t border-dashed border-slate-200">
+                        <div>
+                          <div className="font-bold text-slate-900 uppercase">BÊN B</div>
+                          <div className="font-bold text-slate-900">Khách hàng</div>
+                          <div className="text-slate-400 italic text-[11px] mt-0.5">(Ký và ghi rõ họ tên)</div>
+                          <div className="h-20"></div>
+                          <div className="font-bold text-cyan-950">{cleanVietnameseText(interestForm.customerName) || "...................................................."}</div>
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 uppercase">BÊN A</div>
+                          <div className="font-bold text-slate-900">Giám đốc điều hành</div>
+                          <div className="text-slate-400 italic text-[11px] mt-0.5">(Ký và ghi rõ họ tên)</div>
+                          <div className="h-20"></div>
+                          <div className="font-bold text-cyan-950">VŨ ĐỨC HÙNG</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div id="contract-print-area" className="bg-white shadow-lg mx-auto max-w-[794px] p-[30px] sm:p-[50px] border border-slate-200 text-slate-800 font-sans leading-relaxed text-[13px] relative rounded-lg">
+                    {/* Header Block like Image 2 */}
+                    <div className="flex items-center gap-4 border-b-2 border-sky-400 pb-3 mb-6">
+                      <img src="/assets/images/logo-HTO.png" alt="HT Ocean Group" className="h-16 w-auto object-contain flex-shrink-0" />
+                      <div className="flex-1 text-slate-800 text-[11px] leading-tight text-left">
+                        <div className="font-extrabold text-[#0066b2] text-[13px] uppercase">
+                          CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC & ĐỊNH CƯ HT ĐẠI DƯƠNG
+                        </div>
+                        <div className="font-bold text-slate-600 text-[9.5px] uppercase mt-0.5">
+                          HT OCEAN EDUCATION & IMMIGRATION CONSULTANCY JOINT STOCK COMPANY
+                        </div>
+                        <div className="mt-1 text-slate-500">
+                          Tầng 1, Toà nhà số 284/41/2 Lý Thường Kiệt, Phường Diên Hồng, TP. HCM
+                        </div>
+                        <div className="text-slate-500">
+                          0334.585.198 - 0866.934.579 <span className="text-sky-400 mx-1">|</span> administrator@htogroup.com.vn <span className="text-sky-400 mx-1">|</span> www.htogroup.com.vn
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* National Motto and Company Reference */}
+                    <div className="grid grid-cols-2 gap-4 text-center text-[12px] mb-6">
+                      <div className="flex flex-col items-center">
+                        <div className="font-bold uppercase text-slate-900 leading-tight">
+                          CÔNG TY CỔ PHẦN TƯ VẤN GIÁO DỤC &<br />ĐỊNH CƯ HT ĐẠI DƯƠNG
+                        </div>
+                        <div className="text-slate-400 text-[10px] my-0.5">---</div>
+                        <div className="font-bold text-slate-800">
+                          Số: {Date.now().toString().slice(-6)}/DHDE
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="font-bold uppercase text-slate-900 leading-tight">
+                          CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+                        </div>
+                        <div className="font-bold text-slate-800 mt-1">
+                          Độc lập - Tự do - Hạnh phúc
+                        </div>
+                        <div className="text-slate-400 text-[10px] my-0.5">---</div>
+                      </div>
+                    </div>
+
+                    <div className="text-center font-bold text-[16px] mt-8 mb-4 text-slate-900">
+                      PHỤ LỤC HỢP ĐỒNG TƯ VẤN DU HỌC
+                    </div>
+                    <div className="text-center font-bold text-[12px] italic -mt-2 mb-6 text-slate-500">
+                      (Kèm theo Hợp đồng tư vấn du học ký ngày {new Date().getDate()}/{new Date().getMonth() + 1}/{new Date().getFullYear()})
+                    </div>
+
+                    <div className="space-y-3">
+                      <p>Căn cứ Hợp đồng dịch vụ tư vấn du học số {Date.now().toString().slice(-6)}/HĐTVDH-HTO giữa các Bên, hai Bên thống nhất ký kết Phụ lục này với các nội dung chi tiết sau:</p>
+
+                      {/* PHẦN I */}
+                      <div className="mt-4">
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 text-slate-900">
+                          I. THÔNG TIN CHI TIẾT CHƯƠNG TRÌNH & HỌC VIÊN
+                        </div>
+                        <table className="w-full text-left table-fixed text-[13px]">
+                          <tbody>
+                            <tr>
+                              <td className="w-1/3 py-1 font-bold">Họ tên học viên (Bên B):</td>
+                              <td className="w-2/3 py-1 text-cyan-950 font-bold bg-yellow-100/50 px-2 rounded">{cleanVietnameseText(interestForm.customerName) || "...................................................."}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Chương trình tuyển sinh:</td>
+                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(selectedProduct.name)}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Quốc gia đích đến:</td>
+                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(resolveCountryName(selectedProduct.country))}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Mã ngắn nội bộ (shortCode):</td>
+                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{selectedProduct.shortCode || "Chưa thiết lập"}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Mã Visa diện tuyển sinh:</td>
+                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{selectedProduct.visaCode || "Chưa thiết lập"}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1 font-bold">Mục đích phân loại (purpose):</td>
+                              <td className="py-1 bg-slate-50 px-2 rounded">{selectedProduct.purpose || "Chưa thiết lập"}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        {/* Referral Information Table matching the user's screenshot */}
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 mt-4 text-slate-900">
+                          THÔNG TIN NGƯỜI GIỚI THIỆU
+                        </div>
+                        <table className="w-full border border-collapse border-slate-300 text-center my-2 text-[12px] table-fixed">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-700">
+                              <th className="border border-slate-300 p-2 font-bold w-5/12">Option 1: Tên nhân viên giới thiệu</th>
+                              <th className="border border-slate-300 p-2 font-bold w-5/12">Option 2: Tên khách giới thiệu</th>
+                              <th className="border border-slate-300 p-2 font-bold w-2/12">Số điện thoại</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
+                                {["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(userRole) 
+                                  ? cleanVietnameseText(currentUserName) 
+                                  : "—"}
+                              </td>
+                              <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
+                                {!["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(userRole) 
+                                  ? cleanVietnameseText(currentUserName) 
+                                  : "—"}
+                              </td>
+                              <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
+                                {currentUser?.phone || "—"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* PHẦN II */}
+                      <div className="mt-4">
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 text-slate-900">
+                          II. BIỂU PHÍ & LỘ TRÌNH THANH TOÁN
+                        </div>
+                        <table className="w-full border border-collapse border-slate-350 text-center my-3 text-[13px]">
+                          <thead>
+                            <tr className="bg-slate-50">
+                              <th className="border border-slate-300 p-2 font-bold w-1/12">STT</th>
+                              <th className="border border-slate-300 p-2 font-bold w-6/12">Khoản mục chi phí</th>
+                              <th className="border border-slate-300 p-2 font-bold w-5/12">Số tiền</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td className="border border-slate-300 p-2">1</td>
+                              <td className="border border-slate-300 p-2 text-left">Phí dịch vụ tư vấn (HT Ocean Group)</td>
+                              <td className="border border-slate-300 p-2 text-right font-bold text-cyan-950">
+                                {selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}
+                              </td>
+                            </tr>
+                            <tr className="bg-slate-50 font-bold">
+                              <td className="border border-slate-300 p-2" colSpan="2">Tổng chi phí dịch vụ:</td>
+                              <td className="border border-slate-300 p-2 text-right text-cyan-950">
+                                {selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <p className="italic">Bằng chữ: <strong className="text-cyan-950 bg-yellow-100/50 px-2 py-0.5 rounded">{cleanVietnameseText(numberToVietnameseWords(selectedProduct.serviceFee))}</strong></p>
+                      </div>
+
+                      {/* PHẦN III */}
+                      <div className="mt-4">
+                        <div className="font-bold text-[12.5px] border-b border-slate-200 pb-1 mb-2 text-slate-900">
+                          III. LỘ TRÌNH XỬ LÝ HỒ SƠ & THỦ TỤC
+                        </div>
+                        <ol className="list-decimal pl-5 space-y-2 mt-2">
+                          <li><strong>Giai đoạn 1:</strong> Tiếp nhận thông tin học viên, đối soát thông tin cá nhân và thẩm định học bạ/CCCD. Tổ chức ký Hợp đồng tư vấn du học.</li>
+                          <li><strong>Giai đoạn 2:</strong> Dịch thuật hồ sơ công chứng, nộp hồ sơ xin Thư mời học (Admission Letter) từ trường đối tác thuộc diện tuyển dụng.</li>
+                          <li><strong>Giai đoạn 3:</strong> Hoàn tất hồ sơ chứng minh tài chính, nộp xin lịch hẹn phỏng vấn Visa tại cơ quan Ngoại giao theo diện <strong>{selectedProduct.visaCode || "tương ứng"}</strong>.</li>
+                          <li><strong>Giai đoạn 4:</strong> Nhận kết quả Visa, đào tạo định hướng kỹ năng hội nhập, hướng dẫn xuất cảnh và nhập học chính thức.</li>
+                        </ol>
+                      </div>
+
+                      {/* SIGNATURE SECTION */}
+                      <div className="grid grid-cols-2 gap-8 text-center mt-12 pt-6 border-t border-dashed border-slate-200">
+                        <div>
+                          <div className="font-bold text-slate-900 uppercase">BÊN B</div>
+                          <div className="font-bold text-slate-900">Khách hàng</div>
+                          <div className="text-slate-400 italic text-[11px] mt-0.5">(Ký và ghi rõ họ tên)</div>
+                          <div className="h-20"></div>
+                          <div className="font-bold text-cyan-950">{cleanVietnameseText(interestForm.customerName) || "...................................................."}</div>
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 uppercase">BÊN A</div>
+                          <div className="font-bold text-slate-900">Giám đốc điều hành</div>
+                          <div className="text-slate-400 italic text-[11px] mt-0.5">(Ký và ghi rõ họ tên)</div>
+                          <div className="h-20"></div>
+                          <div className="font-bold text-cyan-950">VŨ ĐỨC HÙNG</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end flex-shrink-0">
+                <button
+                  type="button"
+                  className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors"
+                  onClick={() => setShowContractPreview(false)}
+                >
+                  Quay lại
+                </button>
+                <button
+                  type="button"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                  onClick={() => window.print()}
+                >
+                  <i className="fa fa-print"></i> In / Xuất PDF
                 </button>
               </div>
             </div>

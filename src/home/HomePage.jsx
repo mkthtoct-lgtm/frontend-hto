@@ -594,10 +594,11 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         }
 
         .section-hero { animation-delay: 0.05s; }
-        .section-stats { animation-delay: 0.15s; }
-        .section-services { animation-delay: 0.25s; }
-        .section-events { animation-delay: 0.35s; }
-        .section-process { animation-delay: 0.45s; }
+        .section-stats { animation-delay: 0.1s; }
+        .section-about { animation-delay: 0.15s; }
+        .section-services { animation-delay: 0.2s; }
+        .section-events { animation-delay: 0.25s; }
+        .section-process { animation-delay: 0.3s; }
 
         .interactive-card {
           transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -671,9 +672,33 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
             </h1>
 
             <div className="d-flex align-items-stretch mb-4 ps-3" style={{ borderLeft: `4px solid ${brandColor}` }}>
-              <p className="mb-0 fs-6 lh-base text-body-secondary" style={{ fontWeight: "400" }}>
-                Đồng hành cùng học viên, phụ huynh và đối tác trong các chương trình du học, đào tạo ngôn ngữ, visa, định cư và hồ sơ quốc tế.
-              </p>
+              <div className="text-body-secondary">
+                <p className="mb-2 fs-6 lh-base" style={{ fontWeight: "400" }}>
+                  <strong>HTO Group</strong> là công ty tư vấn giáo dục và định cư uy tín hàng đầu tại Việt Nam. Chúng tôi tự hào là đối tác tuyển sinh trực tiếp của hàng chục trường đại học, tập đoàn lớn tại Đức, Canada, Úc. Với tôn chỉ <em>"Uy tín - Tử tế - Trách nhiệm"</em>, HTO Group cam kết mang đến giải pháp di trú và phát triển nguồn nhân lực toàn diện cho người Việt.
+                </p>
+                <p className="mb-0 text-sm leading-relaxed" style={{ opacity: 0.9 }}>
+                  Chúng tôi đồng hành xuyên suốt cùng học viên từ khâu đào tạo ngoại ngữ chuẩn đầu ra tại Hallo Sài Gòn, xử lý hồ sơ Visa nhanh chóng, thẩm định học bạ/CCCD, cho tới hỗ trợ tìm nhà ở, đăng ký tạm trú sau khi cất cánh sang nước sở tại.
+                </p>
+              </div>
+            </div>
+
+            {/* Các thế mạnh nổi bật điền khoảng trống */}
+            <div className="row g-3 mb-4 mt-2">
+              {[
+                { icon: "fa-certificate", title: "50+ Đối tác toàn cầu", desc: "Liên kết trực tiếp với các trường & tập đoàn lớn tại Đức, Úc, Canada." },
+                { icon: "fa-shield-halved", title: "Đồng hành trọn gói", desc: "Hỗ trợ từ đào tạo, làm hồ sơ đến định cư sau xuất cảnh." },
+                { icon: "fa-circle-check", title: "Tỷ lệ Visa vượt trội", desc: "Quy trình thẩm định hồ sơ 2 lớp nghiêm ngặt, tỷ lệ đỗ cao." }
+              ].map((item, idx) => (
+                <div className="col-12 col-sm-4" key={idx}>
+                  <div className="d-flex align-items-start gap-2">
+                    <span className="text-primary mt-0.5" style={{ color: brandColor }}><i className={`fa ${item.icon} text-sm`}></i></span>
+                    <div>
+                      <h6 className="m-0 text-xs font-bold" style={{ color: headingTextColor }}>{item.title}</h6>
+                      <p className="m-0 text-[10.5px] text-body-secondary mt-0.5 leading-snug">{item.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="d-flex gap-3 flex-wrap">
@@ -724,12 +749,11 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
               style={{
                 border: `1px solid ${borderColor}`,
                 backgroundColor: isDark ? "#0f172a" : "#f8fafc",
-                padding: "3px",
                 transition: "all 0.3s ease"
               }}
             >
               <img
-                src="assets/images/dashboard_monitor_mockup.png"
+                src="assets/images/Artboard1.png"
                 alt="HTO Portal Dashboard"
                 className="img-fluid rounded"
                 style={{ width: "100%", height: "auto", display: "block" }}
@@ -782,6 +806,96 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* 2B. GIỚI THIỆU HTO GROUP */}
+      <div className="row mb-5 g-4 text-start section-about animate-entrance">
+        <div className="col-12 col-lg-6">
+          <div className="h-100 d-flex flex-column justify-content-between gap-4">
+            <div>
+              <span className="text-uppercase fw-bold text-xs tracking-wider" style={{ color: brandColor }}>
+                Về HTO Group
+              </span>
+              <h3 className="fw-bold mt-1 mb-3 text-uppercase" style={{ fontSize: "1.45rem", letterSpacing: "0.5px", color: headingTextColor }}>
+                Người bạn đồng hành đáng tin cậy trong lĩnh vực giáo dục và định cư
+              </h3>
+              <p className="text-body-secondary text-sm leading-relaxed mb-4">
+                HTO Group là công ty tư vấn giáo dục và định cư uy tín hàng đầu tại Việt Nam. Công ty được thành lập với sứ mệnh trở thành người bạn đồng hành đáng tin cậy, giúp người Việt tiếp cận gần hơn với thế giới, mở ra nhiều con đường về học tập và lao động phù hợp nhất với nhu cầu và năng lực của mỗi người.
+              </p>
+
+              <div className="d-flex flex-column gap-2 mb-2">
+                {[
+                  "Đào tạo kiến thức và kỹ năng",
+                  "Định hướng du học và việc làm",
+                  "Di trú và định cư nước ngoài"
+                ].map((item, idx) => (
+                  <div className="d-flex align-items-center gap-2.5" key={idx}>
+                    <span className="d-inline-flex align-items-center justify-content-center rounded-circle flex-shrink-0 text-blue-600 dark:text-blue-400" style={{ width: "24px", height: "24px", backgroundColor: isDark ? "rgba(11, 111, 179, 0.15)" : "rgba(11, 111, 179, 0.08)" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </span>
+                    <span className="font-semibold text-sm" style={{ color: headingTextColor }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 bg-gradient-to-r from-blue-50/50 to-cyan-50/20 dark:from-blue-950/20 dark:to-cyan-950/10" style={{ borderColor: borderColor }}>
+              <div className="text-uppercase fw-bold text-[10px] mb-1" style={{ color: brandColor }}>Giá trị cốt lõi</div>
+              <div className="font-extrabold text-[15px] mb-1.5" style={{ color: headingTextColor }}>“Uy tín – Tử tế – Trách nhiệm”</div>
+              <p className="text-body-secondary text-xs leading-relaxed m-0">
+                Đây là “kim chỉ nam” định hướng về thái độ hành xử của người lao động, là những giá trị mang tính phổ quát, bền vững và được áp dụng tại HTO.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-lg-6">
+          <div className="d-flex flex-column gap-3 h-100">
+            <div className="row g-3">
+              <div className="col-12 col-sm-6">
+                <div className="card p-3 border rounded-xl h-100" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <span className="text-blue-600 dark:text-blue-400 text-base">
+                      <i className="fa fa-eye"></i>
+                    </span>
+                    <h6 className="font-bold m-0 text-xs text-uppercase" style={{ color: headingTextColor }}>Tầm Nhìn</h6>
+                  </div>
+                  <p className="text-body-secondary text-xs leading-relaxed m-0" style={{ fontSize: "11.5px" }}>
+                    Trở thành tổ chức tư vấn du học và phát triển con người hàng đầu khu vực, được công nhận bởi sự chuyên nghiệp, uy tín và những đóng góp vượt trội vào chất lượng giáo dục quốc tế của người Việt.
+                  </p>
+                </div>
+              </div>
+
+              <div className="col-12 col-sm-6">
+                <div className="card p-3 border rounded-xl h-100" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <span className="text-blue-600 dark:text-blue-400 text-base">
+                      <i className="fa fa-rocket"></i>
+                    </span>
+                    <h6 className="font-bold m-0 text-xs text-uppercase" style={{ color: headingTextColor }}>Sứ Mệnh</h6>
+                  </div>
+                  <p className="text-body-secondary text-xs leading-relaxed m-0" style={{ fontSize: "11.5px" }}>
+                    Kiến tạo những công dân toàn cầu ưu tú thông qua hành trình du học trọn vẹn và chuyên nghiệp, giúp họ mở khóa tiềm năng và thành công bền vững trên trường quốc tế.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-4 border rounded-xl flex-grow-1" style={{ backgroundColor: cardBg, borderColor: borderColor }}>
+              <div className="d-flex align-items-center gap-2.5 mb-2.5 border-b pb-2" style={{ borderColor: borderColor }}>
+                <span className="text-blue-600 dark:text-blue-400">
+                  <i className="fa fa-clock-rotate-left"></i>
+                </span>
+                <h6 className="font-bold m-0 text-xs text-uppercase" style={{ color: headingTextColor }}>Lịch Sử Hình Thành & Phát Triển</h6>
+              </div>
+              <p className="text-body-secondary text-xs leading-relaxed m-0" style={{ fontSize: "12px", lineHeight: "1.6" }}>
+                HTO Group được thành lập vào năm 2021 với sứ mệnh đồng hành cùng người Việt trở thành công dân toàn cầu. Từ một công ty tư vấn giáo dục và định tại TP. HCM, chúng tôi đã mở rộng mạng lưới với các văn phòng đại diện trong nước và quốc tế. Với đội ngũ chuyên gia giàu kinh nghiệm, HTO Group đã hỗ trợ hàng chục ngàn cơ hội học tập và việc làm cho thanh niên Việt Nam. Chúng tôi cam kết xây dựng hệ sinh thái giáo dục toàn diện, từ đào tạo ngoại ngữ tại Hallo Sài Gòn đến tư vấn du học và định cư tại các quốc gia hàng đầu như Đức, Canada, Úc. Hành trình của chúng tôi tiếp tục phát triển, góp phần kiến tạo tương lai bền vững cho thế hệ trẻ.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 3. DỊCH VỤ & CHƯƠNG TRÌNH */}

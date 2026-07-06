@@ -74,7 +74,7 @@ const getStatusProps = (status) => {
   }
 };
 
-export function AccountingPlaceholderPage({ currentUser }) {
+export function AccountingManagementPage({ currentUser }) {
   const toast = useToast();
   
   const [commissions, setCommissions] = useState([]);
@@ -473,10 +473,10 @@ export function AccountingPlaceholderPage({ currentUser }) {
                     {Array.from({ length: dealPageCount }, (_, index) => index + 1).map(
                       (page) => (
                         <button
-                          key={page}
-                          type="button"
-                          className={`btn btn-sm ${page === dealPage ? "btn-primary" : "btn-outline-secondary"}`}
-                          onClick={() => setDealPage(page)}
+                           key={page}
+                           type="button"
+                           className={`btn btn-sm ${page === dealPage ? "btn-primary" : "btn-outline-secondary"}`}
+                           onClick={() => setDealPage(page)}
                         >
                           {page}
                         </button>
