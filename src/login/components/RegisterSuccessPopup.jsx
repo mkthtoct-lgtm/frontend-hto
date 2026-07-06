@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
+const SUCCESS_BACKGROUND_IMAGE = "/assets/images/BIA%20%C4%90S/BIA_HTO-02.png";
+
 export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -198,13 +200,25 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
         /* Carousel side styling (Exhibition area) */
         .success-popup-carousel-column {
           padding: 0; 
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+          background-image: url("${SUCCESS_BACKGROUND_IMAGE}");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
           display: flex;
           align-items: center;
           justify-content: center;
           border-left: 1px solid #e2e8f0;
           overflow: hidden;
           position: relative;
+        }
+
+        .success-popup-carousel-column::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: rgba(3, 37, 76, 0.12);
+          z-index: 1;
+          pointer-events: none;
         }
 
         @media (max-width: 767px) {
@@ -227,6 +241,7 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 2;
         }
 
         @media (max-width: 767px) {
@@ -477,7 +492,11 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
         <div 
           className="fullscreen-transition-overlay animate-zoom-fill"
           style={{
-            background: images[activeIndex].color
+            backgroundColor: "#0b6fb3",
+            backgroundImage: `linear-gradient(rgba(3, 37, 76, 0.22), rgba(3, 37, 76, 0.22)), url("${SUCCESS_BACKGROUND_IMAGE}")`,
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover",
           }}
         >
           <div className="fullscreen-transition-content text-center text-white p-6">

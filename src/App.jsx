@@ -38,6 +38,13 @@ import { API_BASE_URL } from "./config/api";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
+const AUTH_BANNER_IMAGES = {
+  login: "/assets/images/BIA%20%C4%90S/BIA_HTO-03-card.png",
+  register: "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
+  forgot: "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
+  "reset-password": "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
+};
+
 // ─── Cấu hình tour hướng dẫn riêng biệt cho từng trang ────────────────────────
 // Mỗi entry: { anchorId, steps[] } - anchorId là id phần tử đầu tiên dùng để kiểm tra DOM đã sẵn sàng
 const PAGE_TOURS = {
@@ -1229,7 +1236,11 @@ function App() {
     }
 
     return (
-      <AuthLayout authMode={authMode} imageSrc="/assets/images/z7832613943587_bf4b220919f48d434d108e0de31e00e9.jpg" registerLayoutMode={registerLayoutMode}>
+      <AuthLayout
+        authMode={authMode}
+        imageSrc={AUTH_BANNER_IMAGES[authMode] || AUTH_BANNER_IMAGES.login}
+        registerLayoutMode={registerLayoutMode}
+      >
         {authContent}
       </AuthLayout>
     );
