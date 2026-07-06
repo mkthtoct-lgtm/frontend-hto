@@ -284,6 +284,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
     payload.append("productInterest", activeProgram?.name || "Nộp hồ sơ online");
     payload.append("countryInterest", mapCountryInterest(selectedCatId, selectedProgId));
     payload.append("note", combinedNote);
+    payload.append("status", "xu_ly_ho_so");
     payload.append("cccdFront", cccdFrontFile);
     payload.append("cccdBack", cccdBackFile);
 
@@ -309,16 +310,11 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
       }
 
       const createdLead = data?.data || {};
-      const leadId = createdLead._id || createdLead.id || data?.code;
-      const dealResult = await markLeadReadyForReconciliation(leadId);
 
       // Store returned lead ID or contact ID, fallback to client-side code if empty
       const successLeadCode = createdLead.bizflyContactId || createdLead._id || `HTO-${Date.now().toString().slice(-6)}`;
       setLeadCode(successLeadCode);
       setIsSuccess(true);
-      if (!dealResult.ok) {
-        setValidationError(dealResult.message);
-      }
       finishLeadSubmission(formData.phone, true);
       window.localStorage.removeItem("last_lead_info");
     } catch (err) {

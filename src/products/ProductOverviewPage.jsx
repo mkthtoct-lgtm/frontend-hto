@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { ToastDispatchContext, useToast } from "./ToastContext";
-import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
+import { beginLeadSubmission, finishLeadSubmission, normalizeLeadPhone } from "../utils/leadSubmission";
 const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
 // Key dùng chung với Sidebar.jsx để truyền danh mục được chọn khi điều hướng
@@ -1591,6 +1591,7 @@ function ProductOverviewPageInner({ currentUser }) {
     payload.append("productInterest", selectedProduct?.name || "Sản phẩm quan tâm");
     payload.append("countryInterest", resolveCountryName(selectedProduct?.country) || "Đức");
     payload.append("note", interestForm.note ? interestForm.note.trim() : "");
+    payload.append("status", "xu_ly_ho_so");
     const referralCode = getReferralCode();
     if (referralCode) {
       payload.append("referralCode", referralCode);
@@ -1604,13 +1605,9 @@ function ProductOverviewPageInner({ currentUser }) {
         body: payload
       });
 
-      const leadId = response?.data?._id || response?.data?.id || response?.code || response?._id || response?.id;
-      const dealResult = await markLeadReadyForReconciliation(leadId);
       const successCode = response?.data?.bizflyContactId || response?.bizflyContactId || response?.data?._id || response?._id || `HTO-${Date.now().toString().slice(-6)}`;
       toast.success(
-        dealResult.ok
-          ? `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. Deal đã vào đối soát. Mã liên hệ: ${successCode}`
-          : `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. ${dealResult.message} Mã liên hệ: ${successCode}`,
+        `Đã đăng ký thành công cho khách hàng ${interestForm.customerName}. Deal đã vào đối soát. Mã liên hệ: ${successCode}`,
         "Gửi liên hệ thành công"
       );
       finishLeadSubmission(interestForm.phone, true);

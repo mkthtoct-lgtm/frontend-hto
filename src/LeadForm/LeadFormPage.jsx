@@ -299,6 +299,7 @@ export const LeadFormPage = () => {
     fd.append("urgency", form.urgency || "Trong 1-3 tháng");
     fd.append("preferredContact", form.preferredContact || "Zalo/Điện thoại");
     fd.append("note", form.note.trim());
+    fd.append("status", "xu_ly_ho_so");
     const referralCode = getReferralCode();
     if (referralCode) {
       fd.append("referralCode", referralCode);
@@ -336,8 +337,6 @@ export const LeadFormPage = () => {
       }
 
       const createdLead = data?.data || {};
-      const leadId = createdLead._id || createdLead.id || data?.code;
-      const dealResult = await markLeadReadyForReconciliation(leadId);
       const successMsg = createdLead.bizflyContactId
         ? data?.message || "Lead đã được gửi thành công vào CRM."
         : "Lead đã lưu vào hệ thống, nhưng BizFly chưa trả mã contact.";
@@ -346,10 +345,10 @@ export const LeadFormPage = () => {
         type: "success",
         mode: "api",
         leadCode: createdLead.bizflyContactId || createdLead._id || `LEAD-${Date.now()}`,
-        message: dealResult.ok ? `${successMsg} Deal đã được đưa vào đối soát.` : `${successMsg} ${dealResult.message}`
+        message: `${successMsg} Deal đã được đưa vào đối soát.`
       });
 
-      triggerToast(dealResult.ok ? `${successMsg} Deal đã được đưa vào đối soát.` : `${successMsg} ${dealResult.message}`, dealResult.ok ? "success" : "danger");
+      triggerToast(`${successMsg} Deal đã được đưa vào đối soát.`, "success");
       finishLeadSubmission(form.phone, true);
       setForm(INITIAL_FORM);
       setCccdImages([]);

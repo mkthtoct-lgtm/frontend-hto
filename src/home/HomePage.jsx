@@ -407,6 +407,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         fd.append("productInterest", productName);
         fd.append("countryInterest", country);
         fd.append("note", `[Đăng ký tư vấn lộ trình] ${formData.notes.trim()}`.trim());
+        fd.append("status", "xu_ly_ho_so");
         const referralCode = getReferralCode();
         if (referralCode) {
           fd.append("referralCode", referralCode);
@@ -436,7 +437,8 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
           productInterest: productName,
           countryInterest: country,
           referralCode: getReferralCode(),
-          note: `[Đăng ký tư vấn lộ trình] ${formData.notes.trim()}`.trim()
+          note: `[Đăng ký tư vấn lộ trình] ${formData.notes.trim()}`.trim(),
+          status: "xu_ly_ho_so"
         };
 
         const headers = { "Content-Type": "application/json", ...getAuthHeaders() };
@@ -451,16 +453,12 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       const data = await response.json().catch(() => ({}));
       console.log("[HomePage] Response status:", response.status, "Body:", data);
       if (response.ok) {
-        const leadId = data?.data?._id || data?.data?.id || data?.code;
-        const dealResult = await markLeadReadyForReconciliation(leadId);
         setShowModal(false);
         setCccdImages([]);
         const contactId = data?.data?.bizflyContactId || data?.data?._id || `LEAD-${Date.now().toString().slice(-6)}`;
         triggerToast(
-          dealResult.ok
-            ? `Đăng ký tư vấn thành công! Lead đã được gửi lên CRM và tạo deal đối soát (Mã: ${contactId}).`
-            : `Đăng ký tư vấn thành công! Lead đã được gửi lên CRM (Mã: ${contactId}). ${dealResult.message}`,
-          dealResult.ok ? "success" : "danger"
+          `Đăng ký tư vấn thành công! Lead đã được gửi lên CRM và tạo deal đối soát (Mã: ${contactId}).`,
+          "success"
         );
         finishLeadSubmission(formData.phone, true);
       } else {
