@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { Footer } from "./components/Footer";
-import { AccountingPlaceholderPage } from "./components/AccountingPlaceholderPage";
+import { AccountingManagementPage } from "./components/AccountingManagementPage";
 import { AiChatPage } from "./components/AiChatPage";
 import { DocumentsPage } from "./components/DocumentsPage";
 import { LoginPage } from "./login/LoginPage";
@@ -1319,7 +1319,7 @@ function App() {
         ) : currentPage === "nghiepvu" ? (
           <JobDescriptionsPage currentUser={user} />
         ) : currentPage === "doisoatdeal" ? (
-          <AccountingPlaceholderPage currentUser={user} />
+          <AccountingManagementPage currentUser={user} />
         ) : currentPage === "dashboardStats" ? (
           <DashboardPage currentUser={user} />
         ) : currentPage === "newsEventsManage" ? (

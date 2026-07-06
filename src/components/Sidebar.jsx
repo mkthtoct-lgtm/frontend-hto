@@ -117,7 +117,7 @@ export const Sidebar = ({
   const [openMenu, setOpenMenu] = useState(() =>
     ["tintuc", "newsEventsManage"].includes(currentPage)
       ? "newsEvents"
-      : "sanpham",
+      : "",
   );
 
   // ==========================================
@@ -141,8 +141,9 @@ export const Sidebar = ({
       "daotaongonngu",
       "nophosoonline",
       "sanpham",
+      "productOverview",
+      "productManagement",
     ].includes(currentPage) ||
-    (currentPage === "productOverview" && (selectedCategoryId !== null || selectedRegionName !== null)) ||
     currentPage.startsWith("product:");
   const isNewsPage = ["tintuc", "newsEventsManage"].includes(currentPage);
   const canManageNews = canManageNewsEvents(currentUser);
@@ -309,7 +310,7 @@ export const Sidebar = ({
           "[Sidebar] Không tải được danh mục sản phẩm, sử dụng Mock Data dự phòng:",
           err.message,
         );
-        
+
         // Mock fallback to keep development functional
         const mockCategoriesNormalized = [
           {
@@ -415,7 +416,7 @@ export const Sidebar = ({
 
     productCategories.forEach(cat => {
       const nameLower = cat.name.toLowerCase();
-      
+
       // Bỏ qua danh mục Dịch vụ rỗng (vì sản phẩm của nó đã được chuyển sang Visa)
       if (nameLower === "dịch vụ" || nameLower === "dich vu") {
         return;
@@ -694,7 +695,7 @@ export const Sidebar = ({
           {/* --- 1. DASHBOARD --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "active text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
               onClick={(e) => {
@@ -766,52 +767,12 @@ export const Sidebar = ({
             </a>
           </li>
 
-          {/* --- 1C. TỔNG SẢN PHẨM --- */}
-          {hasProductDetailPermission && (
-            <li className="menu-item mb-2">
-              <a
-                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "productOverview" && !selectedCategoryId ? "text-primary fw-bold" : "text-body-secondary"}`}
-                href="#"
-                style={{ textDecoration: "none" }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleGoToProductOverview();
-                }}
-              >
-                <div
-                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
-                  style={{ width: "36px", height: "36px" }}
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="3" width="7" height="9"></rect>
-                    <rect x="14" y="3" width="7" height="5"></rect>
-                    <rect x="14" y="12" width="7" height="9"></rect>
-                    <rect x="3" y="16" width="7" height="5"></rect>
-                  </svg>
-                </div>
-                <span
-                  className="menu-label"
-                  style={{ flex: 1, fontSize: "14px" }}
-                >
-                  Tổng sản phẩm
-                </span>
-              </a>
-            </li>
-          )}
+          {/* --- 1C. TỔNG SẢN PHẨM (Đã di chuyển vào trong dropdown) --- */}
 
           {/* --- 2. SẢN PHẨM --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isProductPage ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isProductPage ? "active text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -893,13 +854,30 @@ export const Sidebar = ({
                 </li>
               ) : (
                 <>
+                  {/* --- 0. TỔNG SẢN PHẨM --- */}
+                  {hasProductDetailPermission && (
+                    <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
+                      <a
+                        className={`menu-link d-block px-3 py-1.5 rounded-2 ${currentPage === "productOverview" && !selectedCategoryId && !selectedRegionName && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                          }`}
+                        style={{ textDecoration: "none", fontSize: "13px" }}
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleGoToProductOverview();
+                        }}
+                      >
+                        Tổng sản phẩm
+                      </a>
+                    </li>
+                  )}
+
                   {/* --- A. TUYỂN SINH DU HỌC (Dropdown Group) --- */}
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
-                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
-                          isTuyensinhExpanded ? "text-primary" : "text-body-secondary"
-                        }`}
+                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isTuyensinhExpanded ? "text-primary" : "text-body-secondary"
+                          }`}
                         style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                         href="#"
                         onClick={(e) => {
@@ -955,9 +933,8 @@ export const Sidebar = ({
                             <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
-                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                  }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                    }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1032,9 +1009,8 @@ export const Sidebar = ({
                             <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
-                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                  }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                    }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1108,9 +1084,8 @@ export const Sidebar = ({
                             <li key={cat.id} className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
-                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                  }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                    }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1188,9 +1163,8 @@ export const Sidebar = ({
                       <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                         <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                           <a
-                            className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
-                              isCatSelected && !selectedCountryName ? "text-primary" : "text-body-secondary"
-                            }`}
+                            className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isCatSelected && !selectedCountryName ? "text-primary" : "text-body-secondary"
+                              }`}
                             style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                             href="#"
                             onClick={(e) => {
@@ -1266,9 +1240,8 @@ export const Sidebar = ({
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
-                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
-                          isServicesExpanded ? "text-primary" : "text-body-secondary"
-                        }`}
+                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isServicesExpanded ? "text-primary" : "text-body-secondary"
+                          }`}
                         style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                         href="#"
                         onClick={(e) => {
@@ -1323,9 +1296,8 @@ export const Sidebar = ({
                             <li key={cat.id} className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
-                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                  }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                    }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1392,9 +1364,8 @@ export const Sidebar = ({
                         {/* 2. Nộp hồ sơ online */}
                         <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                           <a
-                            className={`menu-link d-block px-3 py-1.5 rounded-2 ${
-                              currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                            }`}
+                            className={`menu-link d-block px-3 py-1.5 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                              }`}
                             style={{ textDecoration: "none", fontSize: "13px" }}
                             href="#"
                             onClick={(e) => {
@@ -1416,7 +1387,7 @@ export const Sidebar = ({
           {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal"].includes(currentPage) || (typeof currentPage === "string" && currentPage.startsWith("dept-")) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal", "jobDescriptions"].includes(currentPage) || (typeof currentPage === "string" && currentPage.startsWith("dept-")) ? "active text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -1626,7 +1597,7 @@ export const Sidebar = ({
           {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "active text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -1726,7 +1697,7 @@ export const Sidebar = ({
           {/* --- 5. TIN TỨC & SỰ KIỆN --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "active text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
               role="button"
@@ -1972,7 +1943,7 @@ export const Sidebar = ({
           {/* --- 8A. AI NỘI BỘ --- */}
           {canViewAIManagement(currentUser) && (
             <li className="menu-item mb-2">
-              <a
+              {/* <a
                 className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["aiConfig", "aiPending", "aiHistory"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
                 href="#"
                 role="button"
@@ -2033,7 +2004,7 @@ export const Sidebar = ({
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </span>
-              </a>
+              </a> */}
 
               {/* <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "ai" ? "block" : "none", paddingLeft: "52px", marginTop: "4px" }}>
                 {isAdmin(currentUser) && (
