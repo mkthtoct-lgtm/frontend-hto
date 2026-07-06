@@ -144,7 +144,7 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
       <style>{`
         /* Modal card layout */
         .success-popup-modal-card {
-          background-color: #ffffff;
+          background-color: transparent;
           border-radius: 24px;
           width: 100%;
           max-width: 1024px;
@@ -187,8 +187,27 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          background-color: #ffffff;
+          background: rgba(255, 255, 255, 0.82);
+          backdrop-filter: blur(4px);
+          border-radius: 24px 0 0 24px;
+          box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.10), 0 8px 10px -6px rgba(15, 23, 42, 0.10);
           z-index: 5;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .success-popup-content-column::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: transparent;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .success-popup-content-column > * {
+          position: relative;
+          z-index: 1;
         }
 
         @media (max-width: 576px) {
@@ -216,7 +235,8 @@ export const RegisterSuccessPopup = ({ customerName, onBackToLogin }) => {
           content: "";
           position: absolute;
           inset: 0;
-          background: rgba(3, 37, 76, 0.12);
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(3px);
           z-index: 1;
           pointer-events: none;
         }

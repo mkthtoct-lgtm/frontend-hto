@@ -39,10 +39,10 @@ import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
 const AUTH_BANNER_IMAGES = {
-  login: "/assets/images/BIA%20%C4%90S/BIA_HTO-03-card.png",
-  register: "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
-  forgot: "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
-  "reset-password": "/assets/images/BIA%20%C4%90S/BIA_HTO-01-card.png",
+  login: "/assets/images/BIA%20%C4%90S/BIA_HTO-03.png",
+  register: "/assets/images/BIA%20%C4%90S/BIA_HTO-01.png",
+  forgot: "/assets/images/BIA%20%C4%90S/BIA_HTO-01.png",
+  "reset-password": "/assets/images/BIA%20%C4%90S/BIA_HTO-01.png",
 };
 
 // ─── Cấu hình tour hướng dẫn riêng biệt cho từng trang ────────────────────────
@@ -367,7 +367,7 @@ const PAGE_TOURS = {
       {
         element: "#users-add-btn",
         popover: {
-          title: "➕ Thêm Tài Khoản Mới",
+          title: " Thêm Tài Khoản Mới",
           description: "Bấm đây để mở form tạo tài khoản nhân viên mới. Bạn sẽ nhập: họ tên, email, mật khẩu ban đầu, số điện thoại, vai trò (Admin / Nhân sự / CTV...) và phân phòng ban.",
           side: "bottom", align: "end",
         },
@@ -375,7 +375,7 @@ const PAGE_TOURS = {
       {
         element: "#users-filter-bar",
         popover: {
-          title: "🔍 Tìm Kiếm & Lọc Nhân Viên",
+          title: "Tìm Kiếm & Lọc Nhân Viên",
           description: "Nhập tên hoặc email để tìm nhanh tài khoản. Sử dụng dropdown để lọc theo <strong>Vai trò</strong> (Admin, Nhân sự, CTV...) hoặc <strong>Phòng ban</strong> cụ thể.",
           side: "bottom", align: "center",
         },
@@ -383,7 +383,7 @@ const PAGE_TOURS = {
       {
         element: "#users-table-card",
         popover: {
-          title: "📜 Danh Sách Tài Khoản",
+          title: "Danh Sách Tài Khoản",
           description: "Mỗi dòng hiển thị họ tên, email, vai trò, phòng ban và trạng thái. Bấm vào một dòng bất kỳ để xem cả profile chi tiết của tài khoản đó.",
           side: "top", align: "center",
         },
@@ -391,7 +391,7 @@ const PAGE_TOURS = {
       {
         element: "#users-permission-col",
         popover: {
-          title: "🔑 Cột Quyền Chức Năng",
+          title: "Cột Quyền Chức Năng",
           description: "Hiển thị số quyền chức năng được phân cho tài khoản. Bấm nút số quyền để mở bảng phân quyền chi tiết theo từng tính năng (xem thông kê, tạo tin tức, quản lý sản phẩm...). Khác với vai trò, đây là quyền từng tính năng riêng lẻ.",
           side: "top", align: "center",
         },
@@ -399,7 +399,7 @@ const PAGE_TOURS = {
       {
         element: "#users-action-col",
         popover: {
-          title: "⚙️ Các Nút Thao Tác",
+          title: " Các Nút Thao Tác",
           description: "Mỗi dòng có 3 nút thác: <strong>👁 Xem</strong> (mở hộp thoại chi tiết), <strong>✏️ Sửa</strong> (chỉnh sửa thông tin nhân viên), <strong>🔒 Khóa/Mở khóa</strong> (vô hiệu hóa hoặc kích hoạt tài khoản đó). Tài khoản bị khóa sẽ không thể đăng nhập vào hệ thống.",
           side: "top", align: "center",
         },
@@ -414,7 +414,7 @@ const PAGE_TOURS = {
       {
         element: "#audit-refresh-btn",
         popover: {
-          title: "🔄 Nút Làm Mới",
+          title: " Nút Làm Mới",
           description: "Bấm để tải lại danh sách audit log mới nhất từ hệ thống. Nếu có thê bộ lọc, dữ liệu sẽ được lọc theo các điều kiện hiện tại.",
           side: "bottom", align: "end",
         },
@@ -422,7 +422,7 @@ const PAGE_TOURS = {
       {
         element: "#audit-filter-section",
         popover: {
-          title: "🏷️ Bộ Lọc Audit Log",
+          title: " Bộ Lọc Audit Log",
           description: "Lọc bản ghi theo 4 tiêu chí: <strong>Người thực hiện</strong> (ai?), <strong>Loại hành động</strong> (tạo/sửa/xóa), <strong>Từ thời điểm</strong> và <strong>Đến thời điểm</strong>. Kết hợp nhiều bộ lọc để tìm chính xác thao tác cần kiểm tra.",
           side: "bottom", align: "center",
         },
@@ -430,7 +430,7 @@ const PAGE_TOURS = {
       {
         element: "#audit-clear-filter-btn",
         popover: {
-          title: "❌ Xóa Bộ Lọc",
+          title: " Xóa Bộ Lọc",
           description: "Bấm để xóa tất cả các tiêu chí đang áp dụng và quay lại xem toàn bộ lịch sử thao tác gần đây nhất (không giới hạn).",
           side: "bottom", align: "end",
         },
@@ -446,7 +446,7 @@ const PAGE_TOURS = {
       {
         element: "#audit-log-detail",
         popover: {
-          title: "🔍 Chi Tiết Thao Tác",
+          title: " Chi Tiết Thao Tác",
           description: "Hiển thị đầy đủ thông tin của bản ghi được chọn: Actor, hành động cụ thể, đối tượng bị tác động và thời điểm xảy ra. Dùng để kiểm tra ai đã thay đổi dữ liệu gì khi cần điều tra bảo mật.",
           side: "left", align: "start",
         },
