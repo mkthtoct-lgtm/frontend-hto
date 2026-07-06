@@ -171,6 +171,11 @@ export function AccountingManagementPage({ currentUser }) {
     fetchMetricsData();
   }, [fetchMetricsData]);
 
+  const refreshAccountingData = useCallback(async () => {
+    toast.info("Đang tải lại dữ liệu deal và hoa hồng...", "Đồng bộ dữ liệu");
+    await Promise.all([fetchCommissions(), fetchMetricsData()]);
+  }, [fetchCommissions, fetchMetricsData, toast]);
+
   // Calculate Metrics from allCommissionsForMetrics
   const { totalExpectedCommission, totalRecordedRevenue, eligibleDealsCount, reconciledCount } = useMemo(() => {
     const list = allCommissionsForMetrics || [];
@@ -288,7 +293,7 @@ export function AccountingManagementPage({ currentUser }) {
         </div>
 
         <div className="d-flex flex-wrap gap-2">
-          <button id="nghiepvu-sync-crm-btn" className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={() => toast.info("Đang đồng bộ dữ liệu với hệ thống CRM...", "Đồng bộ CRM")}>
+          <button id="nghiepvu-sync-crm-btn" className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={refreshAccountingData}>
             <RefreshCwIcon />
             Đồng bộ CRM
           </button>
