@@ -1563,12 +1563,15 @@ function ProductOverviewPageInner({ currentUser }) {
     setSelectedCountry("Tất cả");
     setSelectedRegion("Tất cả");
     setSelectedStatus("all");
-        setSelectedVisaType(null);
+    setSelectedVisaType(null);
     setCategoryPage(0);
+    setLeftCategoryPage(0);
   };
 
   const CATEGORIES_PER_PAGE = 6;
   const [categoryPage, setCategoryPage] = useState(0);
+  const LEFT_CATEGORIES_PER_PAGE = 2;
+  const [leftCategoryPage, setLeftCategoryPage] = useState(0);
 
   const handleGoBack = () => {
     setSelectedProduct(null);
@@ -1577,6 +1580,7 @@ function ProductOverviewPageInner({ currentUser }) {
 
   useEffect(() => {
     setCategoryPage(0);
+    setLeftCategoryPage(0);
   }, [searchQuery, selectedCategoryName, selectedCountry, selectedRegion, selectedStatus]);
 
   const filteredCategories = useMemo(() => {
@@ -2506,6 +2510,277 @@ function ProductOverviewPageInner({ currentUser }) {
     });
   };
 
+  const renderCategorySection = (cat) => {
+    const displayPrograms = cat.filteredPrograms || cat.programs || [];
+    if (displayPrograms.length === 0 && !canManageProducts) return null;
+
+    const ITEMS_PER_ROW = 3;
+    const isExpanded = !!expandedCategories[cat.id];
+    const visiblePrograms = isExpanded ? displayPrograms : displayPrograms.slice(0, ITEMS_PER_ROW);
+    const hasMore = displayPrograms.length > ITEMS_PER_ROW;
+    const hiddenCount = displayPrograms.length - ITEMS_PER_ROW;
+
+    const renderProductGrid = (programsToRender) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {programsToRender.map((prog, progIdx) => {
+          const totalDocs = (prog.brochure ? 1 : 0) + (prog.documents?.length || 0);
+          const isFirstCard = progIdx === 0;
+          return (
+            <div
+              key={prog.id}
+              id={isFirstCard ? "tour-first-program-card" : undefined}
+              className="bg-slate-50/50 app-dark:!bg-[#1e1e1e]/60 border border-slate-200/60 app-dark:!border-slate-700/80 rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/20 app-dark:hover:!bg-cyan-955/10 hover:border-cyan-300/80 app-dark:hover:!border-cyan-900/50 hover:shadow-sm cursor-pointer flex flex-row items-center relative group"
+              onClick={() => {
+                setSelectedProduct(prog);
+                setViewMode("detail");
+              }}
+            >
+              <div className="flex-shrink-0 w-14 h-14 bg-slate-200 app-dark:!bg-slate-700 relative overflow-hidden m-2 rounded-lg border border-slate-200/80 app-dark:!border-slate-650">
+                {prog.image ? (
+                  <img
+                    src={prog.image}
+                    alt={prog.name}
+                    className="w-full h-full object-cover absolute inset-0"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
+                    <i className="fa fa-image text-base text-slate-300 app-dark:!text-slate-600"></i>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col justify-center flex-1 min-w-0 py-2 pr-2 pl-0.5">
+                <div className="font-bold text-slate-800 app-dark:!text-slate-100 text-[12px] mb-0.5 line-clamp-1 leading-tight pr-6" title={prog.name}>
+                  {prog.name}
+                </div>
+                {prog.description ? (
+                  <p className="text-[9.5px] text-slate-450 app-dark:!text-slate-400 line-clamp-1 leading-normal m-0">
+                    {prog.description}
+                  </p>
+                ) : (
+                  <div className="h-3.5"></div>
+                )}
+                <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100 app-dark:!border-slate-800/80">
+                  <span className="bg-slate-100 app-dark:!bg-slate-800/80 text-slate-600 app-dark:!text-slate-300 px-1.5 py-0.5 rounded text-[8px] font-medium flex items-center gap-0.5 max-w-[80px] truncate">
+                    <i className="fa fa-earth-asia text-[7.5px] text-cyan-600"></i>
+                    {resolveCountryName(prog.country)}
+                  </span>
+                  <span className="text-[8px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-0.5">
+                    <i className="fa fa-folder-open text-[8px]"></i>
+                    {totalDocs} TL
+                  </span>
+                </div>
+              </div>
+
+              {canManageProducts && (
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleEditProduct(prog)}
+                    className="w-5.5 h-5.5 rounded bg-white border border-slate-200 text-slate-500 hover:text-cyan-700 hover:border-cyan-300 flex items-center justify-center shadow-xs transition-colors"
+                    title="Sửa sản phẩm"
+                  >
+                    <i className="fa fa-pen text-[8.5px]"></i>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProduct(prog.id)}
+                    className="w-5.5 h-5.5 rounded bg-white border border-slate-200 text-slate-500 hover:text-red-650 hover:border-red-300 flex items-center justify-center shadow-xs transition-colors"
+                    title="Xóa sản phẩm"
+                  >
+                    <i className="fa fa-trash text-[8.5px]"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    const renderShowMoreBtn = (hasMoreItems, hiddenItemsCount) => {
+      if (!hasMoreItems) return null;
+      return (
+        <div className="mt-2.5 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !isExpanded }))}
+            className="flex items-center gap-1 text-[9.5px] font-semibold text-cyan-800 app-dark:!text-cyan-400 hover:text-cyan-950 bg-cyan-50/50 app-dark:!bg-cyan-955/20 hover:bg-cyan-100 app-dark:hover:!bg-cyan-955/40 border border-cyan-100 app-dark:!border-cyan-900/40 px-2.5 py-0.5 rounded-full transition-all duration-200"
+          >
+            {isExpanded ? (
+              <><i className="fa fa-chevron-up text-[7.5px]"></i> Thu gọn</>
+            ) : (
+              <><i className="fa fa-chevron-down text-[7.5px]"></i> Xem thêm {hiddenItemsCount} sản phẩm</>
+            )}
+          </button>
+        </div>
+      );
+    };
+
+    if (cat.name === "Visa") {
+      return (
+        <div key={cat.id} className="bg-white app-dark:!bg-[#111827] rounded-2xl border border-slate-150 app-dark:!border-slate-800 p-4 md:p-5 mb-6 shadow-sm relative z-0">
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:!border-slate-800/80">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:!bg-cyan-955/20 text-[#0d919c] app-dark:!text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-100/60 app-dark:!border-cyan-900/40">
+                <i className="fa fa-earth-americas text-base"></i>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-none">Visa</h3>
+                  <span className="bg-blue-50 app-dark:!bg-blue-950/30 text-blue-700 app-dark:!text-blue-400 border border-blue-100/60 app-dark:!border-blue-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold">
+                    4 SP
+                  </span>
+                </div>
+                <p className="text-slate-500 app-dark:!text-slate-400 text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
+              </div>
+            </div>
+            {canManageProducts && (
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap ml-auto sm:ml-0">
+                <button
+                  type="button"
+                  onClick={() => handleEditCategory(cat)}
+                  className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50/50 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                >
+                  <i className="fa fa-pen text-[9px]"></i> Sửa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
+                  className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-100 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                >
+                  {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[9px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[9px]"></i> Ẩn</>}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Content - HIỂN THỊ VISA_TYPES */}
+          <div className="relative z-0">
+            {!selectedVisaType ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {VISA_TYPES.map(type => (
+                    <div
+                      key={type.id}
+                      onClick={() => setSelectedVisaType(type.id)}
+                      className={`relative flex flex-col border border-slate-100 app-dark:!border-slate-800/80 rounded-xl overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${type.gradient} app-dark:!bg-[#1e293b]/40`}
+                    >
+                      <div className="p-3 flex flex-col items-center text-center flex-1">
+                        <div className={`w-9 h-9 rounded-full bg-white app-dark:!bg-slate-800 flex items-center justify-center shadow-sm mb-2 ${type.color}`}>
+                          <i className={`fa ${type.icon} text-sm`}></i>
+                        </div>
+                        <h5 className={`text-[12px] font-bold mb-0.5 ${type.color}`}>{type.name}</h5>
+                        <p className="text-slate-500 app-dark:!text-slate-400 text-[10px] leading-snug line-clamp-2">{type.desc}</p>
+                        <div className="w-full border-t border-dashed border-slate-200/50 app-dark:!border-slate-700/50 my-2"></div>
+                        <div className="w-full flex justify-around text-[10px]">
+                          <div>
+                            <div className="font-extrabold text-slate-700 app-dark:!text-slate-300">{type.docsCount}</div>
+                            <div className="text-[8px] text-slate-400">Hồ sơ</div>
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-slate-700 app-dark:!text-slate-300">{type.filesCount}</div>
+                            <div className="text-[8px] text-slate-400">Tài liệu</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-[#f8fafc] app-dark:!bg-slate-900/50 border border-[#f1f5f9] app-dark:!border-slate-800/60 rounded-xl px-3 py-2 flex items-center gap-1.5">
+                  <i className="fa fa-info-circle text-cyan-650 text-xs"></i>
+                  <span className="text-[10px] text-slate-500 app-dark:!text-slate-400 font-medium">Click chọn loại Visa để xem hồ sơ và tài liệu cụ thể.</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-3 bg-white app-dark:!bg-[#111827] p-2.5 rounded-xl border border-slate-100 app-dark:!border-slate-800/80 shadow-xs">
+                <div className="flex items-center gap-2 bg-slate-50 app-dark:!bg-slate-900/50 p-2 rounded-lg border border-slate-150 app-dark:!border-slate-800/60">
+                  <button
+                    onClick={() => setSelectedVisaType(null)}
+                    className="text-slate-600 app-dark:!text-slate-300 hover:text-cyan-700 app-dark:hover:text-cyan-400 bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 px-2 py-1 rounded-md text-[10px] font-semibold shadow-xs transition-colors flex items-center gap-1"
+                  >
+                    <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
+                  </button>
+                  <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-xs">
+                    Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
+                  </span>
+                </div>
+                {renderProductGrid(visiblePrograms)}
+                {renderShowMoreBtn(hasMore, hiddenCount)}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const totalCatDocs = displayPrograms.reduce((sum, prog) => sum + (prog.brochure ? 1 : 0) + (prog.documents?.length || 0), 0);
+    return (
+      <div key={cat.id} className="bg-white app-dark:!bg-[#111827] rounded-2xl border border-slate-150 app-dark:!border-slate-800 p-4 md:p-5 mb-6 shadow-sm relative z-0">
+        {/* Header Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:!border-slate-800/80">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:!bg-cyan-950/30 text-[#0d919c] app-dark:!text-cyan-400 flex items-center justify-center flex-shrink-0 border border-cyan-100/60 app-dark:!border-cyan-900/40">
+              <i className="fa fa-layer-group text-base"></i>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-none">{cat.name}</h3>
+                <div className="flex gap-1 items-center">
+                  <span className="bg-emerald-50 app-dark:!bg-emerald-950/30 text-emerald-700 app-dark:!text-emerald-400 border border-emerald-100/60 app-dark:!border-emerald-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
+                    <i className="fa fa-box-open text-[8.5px]"></i>
+                    {displayPrograms.length} SP
+                  </span>
+                  <span className="bg-blue-50 app-dark:!bg-blue-950/30 text-blue-700 app-dark:!text-blue-400 border border-blue-100/60 app-dark:!border-blue-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
+                    <i className="fa fa-file-lines text-[8.5px]"></i>
+                    {totalCatDocs} TL
+                  </span>
+                </div>
+              </div>
+              {cat.description && (
+                <p className="text-slate-500 app-dark:!text-slate-400 text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1" title={cat.description}>{cat.description}</p>
+              )}
+            </div>
+          </div>
+          {canManageProducts && (
+            <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap ml-auto sm:ml-0">
+              <button
+                type="button"
+                onClick={() => handleEditCategory(cat)}
+                className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50/50 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+              >
+                <i className="fa fa-pen text-[9px]"></i> Sửa
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
+                className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-100 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+              >
+                {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[9px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[9px]"></i> Ẩn</>}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Product list */}
+        {displayPrograms.length > 0 ? (
+          <div className="relative z-0">
+            {renderProductGrid(visiblePrograms)}
+            {renderShowMoreBtn(hasMore, hiddenCount)}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-slate-400 app-dark:!text-slate-500 text-xs">
+            Danh mục này chưa có sản phẩm nào.
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="w-full py-20 text-center flex flex-col items-center justify-center">
@@ -2690,7 +2965,7 @@ function ProductOverviewPageInner({ currentUser }) {
               {/* Active filter badges */}
               {hasActiveFilter && (
                 <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100 app-dark:border-white/8!">
-                  <span className="text-xs text-slate-400 app-dark:text-slate-500! font-medium shrink-0">
+                  <span className="text-xs text-slate-400 app-dark:text-slate-505! font-medium shrink-0">
                     {filteredCategories.length > 0
                       ? <><span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{totalResults}</span> chương trình trong <span className="text-cyan-800 app-dark:text-cyan-400! font-bold">{filteredCategories.length}</span> danh mục</>
                       : <span className="text-orange-500 font-semibold">Không tìm thấy kết quả</span>
@@ -2730,450 +3005,98 @@ function ProductOverviewPageInner({ currentUser }) {
         {/* CATEGORIES GRID VIEW */}
         {viewMode === "overview" && (
           <>
-            <div className="space-y-8 relative z-0">
-              {filteredCategories.length > 0 ? (
-                (() => {
-                  const totalCatPages = Math.ceil(filteredCategories.length / CATEGORIES_PER_PAGE);
-                  const safeCatPage = Math.min(categoryPage, totalCatPages - 1);
-                  const pagedCategories = filteredCategories.slice(
-                    safeCatPage * CATEGORIES_PER_PAGE,
-                    safeCatPage * CATEGORIES_PER_PAGE + CATEGORIES_PER_PAGE
-                  );
-                  return pagedCategories.map((cat) => {
-                    const displayPrograms = cat.filteredPrograms || cat.programs || [];
-                    if (displayPrograms.length === 0 && !canManageProducts) return null;
+            {filteredCategories.length > 0 ? (
+              (() => {
+                const visaCat = filteredCategories.find(cat => cat.name === "Visa");
+                const leftCategories = filteredCategories.filter(cat => cat.name !== "Visa");
 
-                    const ITEMS_PER_ROW = 3;
-                    const isExpanded = !!expandedCategories[cat.id];
-                    const visiblePrograms = isExpanded ? displayPrograms : displayPrograms.slice(0, ITEMS_PER_ROW);
-                    const hasMore = displayPrograms.length > ITEMS_PER_ROW;
-                    const hiddenCount = displayPrograms.length - ITEMS_PER_ROW;
+                const isVisaVisible = !!visaCat && (selectedCategoryName === "Tất cả" || selectedCategoryName === "Visa");
+                const isLeftVisible = leftCategories.length > 0 && selectedCategoryName !== "Visa";
 
-                    const renderProductGrid = (programsToRender) => (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {programsToRender.map((prog, progIdx) => {
-                          const totalDocs = (prog.brochure ? 1 : 0) + (prog.documents?.length || 0);
-                          const isFirstCard = progIdx === 0;
-                          return (
-                            <div
-                              key={prog.id}
-                              id={isFirstCard ? "tour-first-program-card" : undefined}
-                              className="bg-slate-50 app-dark:bg-[#1e1e1e]! border-2 border-slate-200 app-dark:border-slate-700! rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/30 app-dark:hover:bg-cyan-955/20! hover:border-cyan-300 app-dark:hover:border-cyan-900/60! hover:shadow-sm cursor-pointer flex flex-row items-stretch relative group"
-                              onClick={() => {
-                                setSelectedProduct(prog);
-                                setViewMode("detail");
-                              }}
+                const isTwoColumn = isVisaVisible && isLeftVisible;
+
+                // local pagination for left categories (non-Visa) when viewing all
+                const totalLeftPages = Math.ceil(leftCategories.length / LEFT_CATEGORIES_PER_PAGE);
+                const safeLeftPage = Math.min(leftCategoryPage, Math.max(0, totalLeftPages - 1));
+                const pagedLeftCategories = leftCategories.slice(
+                  safeLeftPage * LEFT_CATEGORIES_PER_PAGE,
+                  safeLeftPage * LEFT_CATEGORIES_PER_PAGE + LEFT_CATEGORIES_PER_PAGE
+                );
+
+                return (
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 relative z-0">
+                    {/* LEFT COLUMN: other categories */}
+                    {isLeftVisible && (
+                      <div className={isTwoColumn ? "xl:col-span-6 space-y-6" : "xl:col-span-12 space-y-6"}>
+                        {/* Render other categories */}
+                        {(isTwoColumn ? pagedLeftCategories : leftCategories).map(cat => renderCategorySection(cat))}
+
+                        {/* Local Pagination controls for Left Column */}
+                        {isTwoColumn && totalLeftPages > 1 && (
+                          <div className="flex items-center justify-center gap-3 mt-4">
+                            <button
+                              type="button"
+                              disabled={safeLeftPage === 0}
+                              onClick={() => setLeftCategoryPage(p => Math.max(0, p - 1))}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
+                              aria-label="Trang trước"
                             >
-                              <div className="shrink-0 w-20 sm:w-24 bg-slate-200 app-dark:bg-slate-700! relative overflow-hidden m-2 rounded-lg border-2 border-slate-200 app-dark:border-slate-600!">
-                                {prog.image ? (
-                                  <img
-                                    src={prog.image}
-                                    alt={prog.name}
-                                    className="w-full h-full object-cover absolute inset-0"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
-                                    <i className="fa fa-image text-2xl text-slate-300 app-dark:text-slate-600!"></i>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col justify-between flex-1 min-w-0 p-3">
-                                <div>
-                                  <div className="font-bold text-slate-800 app-dark:text-slate-100! text-[13px] mb-1 line-clamp-2 leading-snug pr-14" title={prog.name}>
-                                    {prog.name}
-                                  </div>
-                                  {prog.description && (
-                                    <p className="text-[11px] text-slate-450 app-dark:text-slate-400! line-clamp-2 leading-relaxed m-0">
-                                      {prog.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-200/40 app-dark:border-white/8!">
-                                  <div className="flex gap-1.5 flex-wrap items-center">
-                                    <span className="bg-white app-dark:bg-[#252525]! text-slate-700 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/8! px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1">
-                                      <i className="fa fa-earth-asia text-cyan-750 app-dark:text-cyan-400!"></i>
-                                      {resolveCountryName(prog.country)}
-                                    </span>
-                                    {prog.shortCode && (
-                                      <span className="bg-cyan-50 app-dark:bg-cyan-900/30 text-cyan-700 app-dark:text-cyan-300 border border-cyan-100 app-dark:border-cyan-900/40 px-2 py-0.5 rounded-lg text-[10px] font-semibold">
-                                        {prog.shortCode}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-[10px] text-slate-400 app-dark:text-slate-500! font-medium flex items-center gap-1">
-                                    <i className="fa fa-folder-open text-slate-400 app-dark:text-slate-500!"></i>
-                                    {totalDocs} Tài liệu
-                                  </span>
-                                </div>
-                              </div>
-
-                              {canManageProducts && (
-                                <div
-                                  className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                                  onClick={(e) => e.stopPropagation()}
+                              <i className="fa fa-chevron-left text-[10px]"></i>
+                            </button>
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalLeftPages }).map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setLeftCategoryPage(idx)}
+                                  className={`rounded-full transition-all duration-200 font-semibold text-[10px] ${idx === safeLeftPage
+                                    ? "h-7 w-7 bg-cyan-900 text-white shadow-sm"
+                                    : "h-7 w-7 bg-white app-dark:bg-[#252525]! border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-400! hover:bg-slate-50 app-dark:hover:bg-[#2e2e2e]!"
+                                    }`}
+                                  aria-label={`Trang ${idx + 1}`}
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEditProduct(prog)}
-                                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-cyan-700 hover:border-cyan-300 flex items-center justify-center shadow-sm transition-colors"
-                                    title="Sửa sản phẩm"
-                                  >
-                                    <i className="fa fa-pen text-[10px]"></i>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteProduct(prog.id)}
-                                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-300 flex items-center justify-center shadow-sm transition-colors"
-                                    title="Xóa sản phẩm"
-                                  >
-                                    <i className="fa fa-trash text-[10px]"></i>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-
-                    const renderShowMoreBtn = (hasMoreItems, hiddenItemsCount) => {
-                      if (!hasMoreItems) return null;
-                      return (
-                        <div className="mt-3 flex justify-center">
-                          <button
-                            type="button"
-                            onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !isExpanded }))}
-                            className="flex items-center gap-2 text-xs font-semibold text-cyan-800 app-dark:text-cyan-400! hover:text-cyan-950 app-dark:hover:text-cyan-300! bg-cyan-50 app-dark:bg-cyan-955/20! hover:bg-cyan-100 app-dark:hover:bg-cyan-955/40! border border-cyan-200/70 app-dark:border-cyan-900/50! px-4 py-1.5 rounded-full transition-all duration-200"
-                          >
-                            {isExpanded ? (
-                              <>
-                                <i className="fa fa-chevron-up text-[10px]"></i>
-                                Thu gọn
-                              </>
-                            ) : (
-                              <>
-                                <i className="fa fa-chevron-down text-[10px]"></i>
-                                Xem thêm {hiddenItemsCount} sản phẩm
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    };
-
-                    // ============ CATEGORY "VISA" - GIỮ NGUYÊN HIỂN THỊ VISA_TYPES ============
-                    if (cat.name === "Visa") {
-                      return (
-                        <div key={cat.id} className="mb-6 relative z-0">
-                          {/* Header */}
-                          <div className="bg-linear-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:bg-none! app-dark:bg-[#111827]! rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:border-[#334155]! p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
-                            <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-linear-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
-                              <img
-                                src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80"
-                                alt="passport background"
-                                className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10"
-                              />
-                            </div>
-
-                            <div className="relative z-10 w-full">
-                              <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
-                                <div className="flex items-start gap-3">
-                                  <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md shrink-0">
-                                    <i className="fa fa-earth-americas text-white text-xl"></i>
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                      <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:text-slate-100! m-0 leading-none tracking-tight">Visa</h3>
-                                      <span className="bg-blue-100 app-dark:bg-blue-955/40! text-blue-600 app-dark:text-blue-400! px-2 py-0.5 rounded-full text-[10px] font-bold">4 SP</span>
-                                    </div>
-                                    <p className="text-slate-500 app-dark:text-slate-400! text-xs md:text-sm m-0 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                                  {canManageProducts && (
-                                    <>
-                                      <button
-                                        onClick={() => handleEditCategory(cat)}
-                                        className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                                      >
-                                        <i className="fa fa-pen text-[10px]"></i> Sửa
-                                      </button>
-                                      <button
-                                        onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                                        className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                                      >
-                                        {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[10px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>}
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Stats */}
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
-                                  <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:bg-[#16a34a]/15! text-[#16a34a] app-dark:text-[#16a34a]! flex items-center justify-center text-sm shrink-0">
-                                    <i className="fa fa-folder-open"></i>
-                                  </div>
-                                  <div>
-                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Danh mục</div>
-                                    <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">4</div>
-                                  </div>
-                                </div>
-                                <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
-                                  <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:bg-[#2563eb]/15! text-[#2563eb] app-dark:text-[#2563eb]! flex items-center justify-center text-sm shrink-0">
-                                    <i className="fa fa-file-lines"></i>
-                                  </div>
-                                  <div>
-                                    <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Hồ sơ</div>
-                                    <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">32</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Content - HIỂN THỊ VISA_TYPES */}
-                          <div className="bg-white app-dark:bg-[#111827]! rounded-[20px] border border-slate-100 app-dark:border-[#334155]! p-4 shadow-sm relative z-0">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm">Danh sách sản phẩm</h4>
-                              <div className="flex bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-                                <button className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm text-xs">
-                                  <i className="fa fa-grid-2"></i>
+                                  {idx + 1}
                                 </button>
-                                <button className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs">
-                                  <i className="fa fa-list"></i>
-                                </button>
-                              </div>
+                              ))}
                             </div>
-
-                            {!selectedVisaType ? (
-                              <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                  {VISA_TYPES.map(type => (
-                                    <div
-                                      key={type.id}
-                                      onClick={() => setSelectedVisaType(type.id)}
-                                      className={`relative flex flex-col border border-slate-100/50 app-dark:border-[#334155]! rounded-[16px] overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${type.gradient} app-dark:bg-none! app-dark:bg-[#1e293b]/50!`}
-                                    >
-                                      <div className="px-3 pt-4 pb-3 flex flex-col items-center text-center flex-1">
-                                        <div className={`w-[48px] h-[48px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)] mb-3 ${type.color}`}>
-                                          <i className={`fa ${type.icon} text-xl`}></i>
-                                        </div>
-                                        <h5 className={`text-sm font-bold mb-1 ${type.color}`}>{type.name}</h5>
-                                        <p className="text-slate-500 app-dark:text-slate-400! text-[11px] leading-relaxed mb-2 line-clamp-2">{type.desc}</p>
-
-                                        <div className="w-full border-t border-dashed border-slate-200/80 app-dark:border-slate-700/80! my-1.5"></div>
-
-                                        <div className="w-full flex justify-between px-0.5">
-                                          <div className="flex items-center gap-1.5">
-                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-sm ${type.color}`}>
-                                              <i className="fa fa-user text-[8px]"></i>
-                                            </div>
-                                            <div className="text-left">
-                                              <div className="text-xs font-extrabold text-slate-800 app-dark:text-slate-150! leading-none mb-0.5">{type.docsCount}</div>
-                                              <div className="text-[8px] text-slate-400 app-dark:text-slate-500!">Hồ sơ</div>
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center gap-1.5">
-                                            <div className={`w-[18px] h-[18px] rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-sm ${type.color}`}>
-                                              <i className="fa fa-file-lines text-[8px]"></i>
-                                            </div>
-                                            <div className="text-left">
-                                              <div className="text-xs font-extrabold text-slate-800 app-dark:text-slate-150! leading-none mb-0.5">{type.filesCount}</div>
-                                              <div className="text-[8px] text-slate-400 app-dark:text-slate-500!">Tài liệu</div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="px-2.5 pb-2.5">
-                                        <button className={`w-full py-1.5 rounded-xl flex items-center justify-center transition-colors shadow-sm text-xs ${type.btnBg} app-dark:bg-[#0b6fb3]/25! app-dark:text-[#0b6fb3]!`}>
-                                          <i className="fa fa-arrow-right"></i>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="mt-3 bg-[#f8fafc] app-dark:bg-[#1e1e1e]! border border-[#f1f5f9] app-dark:border-slate-850! rounded-xl px-3 py-2 flex items-center gap-2">
-                                  <i className="fa fa-circle-info text-blue-500 text-sm"></i>
-                                  <span className="text-[11px] text-slate-500 app-dark:text-slate-400! font-medium">Click vào danh mục để xem chi tiết và quản lý hồ sơ, tài liệu.</span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="flex flex-col gap-3 bg-white app-dark:bg-[#111827]! p-3 rounded-2xl border border-slate-100 app-dark:border-[#334155]! shadow-sm">
-                                <div className="flex items-center gap-2 bg-slate-50 app-dark:bg-slate-900! p-2 rounded-lg border border-slate-200 app-dark:border-slate-800!">
-                                  <button
-                                    onClick={() => setSelectedVisaType(null)}
-                                    className="text-slate-600 app-dark:text-slate-300! hover:text-cyan-700 app-dark:hover:text-cyan-400! bg-white app-dark:bg-slate-850! border border-slate-200 app-dark:border-slate-700! px-2.5 py-1 rounded-lg text-[10px] font-semibold shadow-sm transition-colors flex items-center gap-1"
-                                  >
-                                    <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
-                                  </button>
-                                  <span className="font-bold text-slate-800 app-dark:text-slate-100! text-xs">
-                                    Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
-                                  </span>
-                                </div>
-                                {renderProductGrid(visiblePrograms)}
-                                {renderShowMoreBtn(hasMore, hiddenCount)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // ============ STANDARD CATEGORY ============
-                    const totalCatDocs = displayPrograms.reduce((sum, prog) => sum + (prog.brochure ? 1 : 0) + (prog.documents?.length || 0), 0);
-                    const defaultCoverImage = "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80";
-
-                    return (
-                      <div key={cat.id} className="mb-6 relative z-0">
-                        <div className="bg-linear-to-b from-[#f0f7ff] to-[#f8fafc] app-dark:bg-none! app-dark:bg-[#111827]! rounded-t-[20px] rounded-b-[12px] border border-blue-100 app-dark:border-[#334155]! p-4 md:p-5 flex flex-col md:flex-row justify-between mb-4 shadow-sm relative">
-                          <div className="absolute top-0 right-0 bottom-0 w-1/3 md:w-2/5 bg-linear-to-l from-blue-100/15 to-transparent pointer-events-none overflow-hidden rounded-t-[20px] rounded-b-[12px]">
-                            <img
-                              src={cat.coverImageUrl || defaultCoverImage}
-                              alt={cat.name}
-                              className="absolute right-0 w-[300px] md:w-[350px] h-[150%] object-cover mix-blend-overlay opacity-15 -rotate-12 translate-x-8 -translate-y-10"
-                            />
-                          </div>
-
-                          <div className="relative z-10 w-full">
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4 w-full">
-                              <div className="flex items-start gap-3">
-                                <div className="w-[48px] h-[48px] rounded-[16px] bg-[#2563eb] flex items-center justify-center shadow-md shrink-0">
-                                  <i className="fa fa-layer-group text-white text-xl"></i>
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                    <h3 className="text-xl md:text-2xl font-extrabold text-slate-800 app-dark:text-slate-100! m-0 leading-none tracking-tight">{cat.name}</h3>
-                                  </div>
-                                  {cat.description && (
-                                    <p className="text-slate-500 app-dark:text-slate-400! text-xs md:text-sm m-0 max-w-xl leading-relaxed line-clamp-2">{cat.description}</p>
-                                  )}
-                                </div>
-                              </div>
-
-                              {canManageProducts && (
-                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEditCategory(cat)}
-                                    className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                                  >
-                                    <i className="fa fa-pen text-[10px]"></i> Sửa
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                                    className="bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-50 app-dark:hover:bg-slate-700! px-2.5 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
-                                  >
-                                    {cat.status === "inactive" || cat.status === "hidden" ? (
-                                      <><i className="fa fa-eye text-[10px]"></i> Hiện</>
-                                    ) : (
-                                      <><i className="fa fa-eye-slash text-[10px]"></i> Ẩn</>
-                                    )}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
-                                <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] app-dark:bg-[#16a34a]/15! text-[#16a34a] app-dark:text-[#16a34a]! flex items-center justify-center text-sm shrink-0">
-                                  <i className="fa fa-box-open"></i>
-                                </div>
-                                <div>
-                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Sản phẩm</div>
-                                  <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">{displayPrograms.length}</div>
-                                </div>
-                              </div>
-                              <div className="bg-white app-dark:bg-slate-900! rounded-xl p-2.5 flex items-center gap-2 shadow-sm border border-slate-100/50 app-dark:border-[#334155]!">
-                                <div className="w-8 h-8 rounded-lg bg-[#eff6ff] app-dark:bg-[#2563eb]/15! text-[#2563eb] app-dark:text-[#2563eb]! flex items-center justify-center text-sm shrink-0">
-                                  <i className="fa fa-file-lines"></i>
-                                </div>
-                                <div>
-                                  <div className="text-[9px] font-semibold text-slate-400 app-dark:text-slate-500! uppercase tracking-wider mb-0.5">Tài liệu</div>
-                                  <div className="text-lg font-bold text-slate-800 app-dark:text-slate-100! leading-none">{totalCatDocs}</div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {displayPrograms.length > 0 && (
-                          <div className="bg-white app-dark:bg-[#111827]! rounded-[20px] border border-slate-100 app-dark:border-[#334155]! p-4 shadow-sm relative z-0">
-                            {renderProductGrid(visiblePrograms)}
-                            {renderShowMoreBtn(hasMore, hiddenCount)}
+                            <button
+                              type="button"
+                              disabled={safeLeftPage === totalLeftPages - 1}
+                              onClick={() => setLeftCategoryPage(p => Math.min(totalLeftPages - 1, p + 1))}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
+                              aria-label="Trang sau"
+                            >
+                              <i className="fa fa-chevron-right text-[10px]"></i>
+                            </button>
+                            <span className="text-[10px] text-slate-450 app-dark:text-slate-500! ml-1">
+                              Trang {safeLeftPage + 1} / {totalLeftPages}
+                            </span>
                           </div>
                         )}
                       </div>
-                    );
-                  })
-                })()
-              ) : (
-                <div className="col-span-full text-center py-16 bg-white app-dark:bg-[#252525]! border border-slate-100 app-dark:border-white/8! rounded-2xl shadow-sm app-dark:shadow-none!">
-                  <svg className="w-12 h-12 text-slate-300 app-dark:text-slate-600! mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <h5 className="text-slate-500 app-dark:text-slate-400! font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
-                  <p className="text-slate-400 app-dark:text-slate-500! text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
-                  <button className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold px-4 py-2 rounded-xl mt-1 transition-colors" onClick={handleResetFilters}>
-                    Xóa bộ lọc
-                  </button>
-                </div>
-              )}
-            </div>
+                    )}
 
-            {/* PHÂN TRANG DANH MỤC */}
-            {(() => {
-              const totalCatPages = Math.ceil(filteredCategories.length / CATEGORIES_PER_PAGE);
-              if (totalCatPages <= 1) return null;
-              const safeCatPage = Math.min(categoryPage, totalCatPages - 1);
-              return (
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  <button
-                    type="button"
-                    disabled={safeCatPage === 0}
-                    onClick={() => setCategoryPage(p => Math.max(0, p - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
-                    aria-label="Trang trước"
-                  >
-                    <i className="fa fa-chevron-left text-xs"></i>
-                  </button>
-
-                  <div className="flex items-center gap-1.5">
-                    {Array.from({ length: totalCatPages }).map((_, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setCategoryPage(idx)}
-                        className={`rounded-full transition-all duration-200 font-semibold text-xs ${idx === safeCatPage
-                          ? "h-8 w-8 bg-cyan-900 text-white shadow-sm"
-                          : "h-8 w-8 bg-white app-dark:bg-[#252525]! border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-400! hover:bg-slate-50 app-dark:hover:bg-[#2e2e2e]!"
-                          }`}
-                        aria-label={`Trang ${idx + 1}`}
-                      >
-                        {idx + 1}
-                      </button>
-                    ))}
+                    {/* RIGHT COLUMN: Visa category */}
+                    {isVisaVisible && (
+                      <div className={isTwoColumn ? "xl:col-span-6 space-y-6" : "xl:col-span-12 space-y-6"}>
+                        {renderCategorySection(visaCat)}
+                      </div>
+                    )}
                   </div>
-
-                  <button
-                    type="button"
-                    disabled={safeCatPage === totalCatPages - 1}
-                    onClick={() => setCategoryPage(p => Math.min(totalCatPages - 1, p + 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 app-dark:border-slate-700! text-slate-500 app-dark:text-slate-300! disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-100 app-dark:hover:bg-[#252525]! transition-colors"
-                    aria-label="Trang sau"
-                  >
-                    <i className="fa fa-chevron-right text-xs"></i>
-                  </button>
-
-                  <span className="text-xs text-slate-400 app-dark:text-slate-500! ml-2">
-                    Trang {safeCatPage + 1} / {totalCatPages}
-                  </span>
-                </div>
-              );
-            })()}
+                );
+              })()
+            ) : (
+              <div className="text-center py-16 bg-white app-dark:bg-[#252525]! border border-slate-100 app-dark:border-white/8! rounded-2xl shadow-sm app-dark:shadow-none!">
+                <svg className="w-12 h-12 text-slate-300 app-dark:text-slate-600! mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <h5 className="text-slate-500 app-dark:text-slate-400! font-semibold text-sm mb-1">Không tìm thấy kết quả phù hợp</h5>
+                <p className="text-slate-400 app-dark:text-slate-500! text-xs mb-4">Thử thay đổi từ khóa hoặc xóa bộ lọc đang áp dụng.</p>
+                <button className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold px-4 py-2 rounded-xl mt-1 transition-colors" onClick={handleResetFilters}>
+                  Xóa bộ lọc
+                </button>
+              </div>
+            )}
           </>
         )}
 

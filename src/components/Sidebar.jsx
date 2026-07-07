@@ -117,7 +117,7 @@ export const Sidebar = ({
   const [openMenu, setOpenMenu] = useState(() =>
     ["tintuc", "newsEventsManage"].includes(currentPage)
       ? "newsEvents"
-      : "",
+      : "sanpham",
   );
 
   // ==========================================
@@ -141,9 +141,8 @@ export const Sidebar = ({
       "daotaongonngu",
       "nophosoonline",
       "sanpham",
-      "productOverview",
-      "productManagement",
     ].includes(currentPage) ||
+    (currentPage === "productOverview" && (selectedCategoryId !== null || selectedRegionName !== null)) ||
     currentPage.startsWith("product:");
   const isNewsPage = ["tintuc", "newsEventsManage"].includes(currentPage);
   const canManageNews = canManageNewsEvents(currentUser);
@@ -310,7 +309,7 @@ export const Sidebar = ({
           "[Sidebar] Không tải được danh mục sản phẩm, sử dụng Mock Data dự phòng:",
           err.message,
         );
-
+        
         // Mock fallback to keep development functional
         const mockCategoriesNormalized = [
           {
@@ -416,7 +415,7 @@ export const Sidebar = ({
 
     productCategories.forEach(cat => {
       const nameLower = cat.name.toLowerCase();
-
+      
       // Bỏ qua danh mục Dịch vụ rỗng (vì sản phẩm của nó đã được chuyển sang Visa)
       if (nameLower === "dịch vụ" || nameLower === "dich vu") {
         return;
@@ -695,7 +694,7 @@ export const Sidebar = ({
           {/* --- 1. DASHBOARD --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "active text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "dashboard" ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
               onClick={(e) => {
@@ -767,82 +766,86 @@ export const Sidebar = ({
             </a>
           </li>
 
-          {/* --- 1C. TỔNG SẢN PHẨM (Đã di chuyển vào trong dropdown) --- */}
-
-          {/* --- 2. SẢN PHẨM --- */}
-          <li className="menu-item mb-2">
-            <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isProductPage ? "active text-primary fw-bold" : "text-body-secondary"}`}
-              href="#"
-              role="button"
-              style={{ textDecoration: "none" }}
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigate?.("productOverview");
-              }}
-            >
-              <div
-                className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
-                style={{ width: "36px", height: "36px" }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-              </div>
-              <span
-                className="menu-label"
-                style={{ flex: 1, fontSize: "14px" }}
-              >
-                Sản phẩm
-              </span>
-
-              <span
-                style={{ cursor: "pointer", padding: "4px" }}
+          {/* --- 1C. TỔNG SẢN PHẨM --- */}
+          {hasProductDetailPermission && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${
+                  (currentPage === "productOverview" || currentPage === "nophosoonline" || currentPage.startsWith("product:") || ["duhocduc", "dinhcu", "visa", "daotaongonngu", "sanpham"].includes(currentPage))
+                    ? "text-primary fw-bold"
+                    : "text-body-secondary"
+                }`}
+                href="#"
+                style={{ textDecoration: "none" }}
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
-                  setOpenMenu(openMenu === "sanpham" ? "" : "sanpham");
+                  handleGoToProductOverview();
                 }}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{
-                    transform:
-                      openMenu === "sanpham"
-                        ? "rotate(180deg)"
-                        : "rotate(0deg)",
-                    transition: "transform 0.3s ease",
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="3" width="7" height="9"></rect>
+                    <rect x="14" y="3" width="7" height="5"></rect>
+                    <rect x="14" y="12" width="7" height="9"></rect>
+                    <rect x="3" y="16" width="7" height="5"></rect>
+                  </svg>
+                </div>
+                <span
+                  className="menu-label"
+                  style={{ flex: 1, fontSize: "14px" }}
+                >
+                  Tổng sản phẩm
+                </span>
+
+                <span
+                  style={{ cursor: "pointer", padding: "4px" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpenMenu(openMenu === "sanpham" ? "" : "sanpham");
                   }}
                 >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </span>
-            </a>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform:
+                        openMenu === "sanpham"
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      transition: "transform 0.3s ease",
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </a>
 
-            <ul
-              className="menu-inner list-unstyled mb-0"
-              style={{
-                display: openMenu === "sanpham" ? "block" : "none",
-                paddingLeft: "28px",
-              }}
-            >
+              <ul
+                className="menu-inner list-unstyled mb-0"
+                style={{
+                  display: openMenu === "sanpham" ? "block" : "none",
+                  paddingLeft: "28px",
+                }}
+              >
               {categoriesLoading ? (
                 <li className="menu-item mb-1">
                   <span
@@ -854,30 +857,13 @@ export const Sidebar = ({
                 </li>
               ) : (
                 <>
-                  {/* --- 0. TỔNG SẢN PHẨM --- */}
-                  {hasProductDetailPermission && (
-                    <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
-                      <a
-                        className={`menu-link d-block px-3 py-1.5 rounded-2 ${currentPage === "productOverview" && !selectedCategoryId && !selectedRegionName && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                          }`}
-                        style={{ textDecoration: "none", fontSize: "13px" }}
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleGoToProductOverview();
-                        }}
-                      >
-                        Tổng sản phẩm
-                      </a>
-                    </li>
-                  )}
-
                   {/* --- A. TUYỂN SINH DU HỌC (Dropdown Group) --- */}
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
-                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isTuyensinhExpanded ? "text-primary" : "text-body-secondary"
-                          }`}
+                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
+                          isTuyensinhExpanded ? "text-primary" : "text-body-secondary"
+                        }`}
                         style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                         href="#"
                         onClick={(e) => {
@@ -933,8 +919,9 @@ export const Sidebar = ({
                             <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                    }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
+                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                  }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1009,8 +996,9 @@ export const Sidebar = ({
                             <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                    }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
+                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                  }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1084,8 +1072,9 @@ export const Sidebar = ({
                             <li key={cat.id} className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                    }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
+                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                  }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1163,8 +1152,9 @@ export const Sidebar = ({
                       <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                         <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                           <a
-                            className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isCatSelected && !selectedCountryName ? "text-primary" : "text-body-secondary"
-                              }`}
+                            className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
+                              isCatSelected && !selectedCountryName ? "text-primary" : "text-body-secondary"
+                            }`}
                             style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                             href="#"
                             onClick={(e) => {
@@ -1240,8 +1230,9 @@ export const Sidebar = ({
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
-                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${isServicesExpanded ? "text-primary" : "text-body-secondary"
-                          }`}
+                        className={`menu-link d-block px-3 py-2 rounded-2 flex-grow-1 fw-bold ${
+                          isServicesExpanded ? "text-primary" : "text-body-secondary"
+                        }`}
                         style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                         href="#"
                         onClick={(e) => {
@@ -1296,8 +1287,9 @@ export const Sidebar = ({
                             <li key={cat.id} className="menu-item mb-1" style={{ listStyleType: "none" }}>
                               <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light">
                                 <a
-                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                                    }`}
+                                  className={`menu-link d-block px-3 py-1.5 rounded-2 flex-grow-1 ${
+                                    isCatSelected && !selectedCountryName ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                                  }`}
                                   style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
                                   href="#"
                                   onClick={(e) => {
@@ -1364,8 +1356,9 @@ export const Sidebar = ({
                         {/* 2. Nộp hồ sơ online */}
                         <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                           <a
-                            className={`menu-link d-block px-3 py-1.5 rounded-2 ${currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
-                              }`}
+                            className={`menu-link d-block px-3 py-1.5 rounded-2 ${
+                              currentPage === "nophosoonline" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                            }`}
                             style={{ textDecoration: "none", fontSize: "13px" }}
                             href="#"
                             onClick={(e) => {
@@ -1383,11 +1376,12 @@ export const Sidebar = ({
               )}
             </ul>
           </li>
+        )}
 
           {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal", "jobDescriptions"].includes(currentPage) || (typeof currentPage === "string" && currentPage.startsWith("dept-")) ? "active text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal"].includes(currentPage) || (typeof currentPage === "string" && currentPage.startsWith("dept-")) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -1597,7 +1591,7 @@ export const Sidebar = ({
           {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "active text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               role="button"
               style={{ textDecoration: "none" }}
@@ -1697,7 +1691,7 @@ export const Sidebar = ({
           {/* --- 5. TIN TỨC & SỰ KIỆN --- */}
           <li className="menu-item mb-2">
             <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "active text-primary fw-bold" : "text-body-secondary"}`}
+              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "text-primary fw-bold" : "text-body-secondary"}`}
               href="#"
               style={{ textDecoration: "none" }}
               role="button"
@@ -1943,7 +1937,7 @@ export const Sidebar = ({
           {/* --- 8A. AI NỘI BỘ --- */}
           {canViewAIManagement(currentUser) && (
             <li className="menu-item mb-2">
-              {/* <a
+              <a
                 className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["aiConfig", "aiPending", "aiHistory"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
                 href="#"
                 role="button"
@@ -2004,7 +1998,7 @@ export const Sidebar = ({
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </span>
-              </a> */}
+              </a>
 
               {/* <ul className="menu-inner list-unstyled mb-0" style={{ display: openMenu === "ai" ? "block" : "none", paddingLeft: "52px", marginTop: "4px" }}>
                 {isAdmin(currentUser) && (
