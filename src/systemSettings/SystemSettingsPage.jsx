@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
+import { API_BASE_URL } from "../config/api";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 
@@ -29,6 +31,8 @@ export function SystemSettingsPage({ currentUser }) {
   // Settings states
   const [chatConfig, setChatConfig] = useState(DEFAULT_CHAT_CONFIG);
   const [commissionConfig, setCommissionConfig] = useState(DEFAULT_COMMISSION_CONFIG);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [savingCommission, setSavingCommission] = useState(false);
 
   // Success/Error Message Toast emulation
   const [toast, setToast] = useState(null);
@@ -49,19 +53,41 @@ export function SystemSettingsPage({ currentUser }) {
   useEffect(() => {
     if (!isAdmin) return;
 
-    try {
-      const storedChat = localStorage.getItem("hto_chat_config");
-      if (storedChat) {
-        setChatConfig({ ...DEFAULT_CHAT_CONFIG, ...JSON.parse(storedChat) });
-      }
+    let isMounted = true;
 
-      const storedCommission = localStorage.getItem("hto_commission_config");
-      if (storedCommission) {
-        setCommissionConfig({ ...DEFAULT_COMMISSION_CONFIG, ...JSON.parse(storedCommission) });
+    const loadSettings = async () => {
+      setSettingsLoading(true);
+
+      try {
+        const response = await authFetch(`${API_BASE_URL}/system-settings`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+        });
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(payload?.message || "Không thể tải cấu hình hệ thống.");
+        }
+
+        const data = payload?.data || {};
+        if (!isMounted) return;
+        setChatConfig({ ...DEFAULT_CHAT_CONFIG, ...(data.chatConfig || {}) });
+        setCommissionConfig({ ...DEFAULT_COMMISSION_CONFIG, ...(data.commissionConfig || {}) });
+      } catch (e) {
+        if (!isMounted) return;
+        showToast(e instanceof Error ? e.message : "Không thể tải cấu hình hệ thống.", "error");
+      } finally {
+        if (isMounted) setSettingsLoading(false);
       }
-    } catch (e) {
-      console.error("Lỗi đọc cấu hình từ localStorage:", e);
-    }
+    };
+
+    void loadSettings();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isAdmin]);
 
   // Handle changes
@@ -86,13 +112,31 @@ export function SystemSettingsPage({ currentUser }) {
     }
   };
 
-  const handleSaveCommission = (e) => {
+  const handleSaveCommission = async (e) => {
     e.preventDefault();
+    setSavingCommission(true);
+
     try {
-      localStorage.setItem("hto_commission_config", JSON.stringify(commissionConfig));
+      const response = await authFetch(`${API_BASE_URL}/system-settings/commission`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(commissionConfig),
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Lưu cấu hình hoa hồng thất bại.");
+      }
+
+      setCommissionConfig({ ...DEFAULT_COMMISSION_CONFIG, ...(payload?.data || {}) });
       showToast("Lưu cấu hình hoa hồng thành công!", "success");
     } catch (err) {
-      showToast("Lưu cấu hình hoa hồng thất bại.", "error");
+      showToast(err instanceof Error ? err.message : "Lưu cấu hình hoa hồng thất bại.", "error");
+    } finally {
+      setSavingCommission(false);
     }
   };
 
@@ -263,6 +307,11 @@ export function SystemSettingsPage({ currentUser }) {
           <p className="text-slate-500 text-xs mb-4">Cấu hình tỷ lệ phần trăm hoa hồng được áp dụng cho từng cấp độ đại sứ khi có Deal thành công.</p>
 
           <form onSubmit={handleSaveCommission} className="space-y-4">
+            {settingsLoading && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
+                Đang tải cấu hình hoa hồng từ hệ thống...
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Khách hàng thân thiết */}
               <div>
@@ -276,6 +325,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.khachHangThanThiet}
                     onChange={(e) => handleCommissionChange("khachHangThanThiet", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -293,6 +343,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.daiSuGieoMamDong}
                     onChange={(e) => handleCommissionChange("daiSuGieoMamDong", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -310,6 +361,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.daiSuKetNoiBac}
                     onChange={(e) => handleCommissionChange("daiSuKetNoiBac", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -327,6 +379,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.daiSuTruCotVang}
                     onChange={(e) => handleCommissionChange("daiSuTruCotVang", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -344,6 +397,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.daiSuTinhAnhKimCuong}
                     onChange={(e) => handleCommissionChange("daiSuTinhAnhKimCuong", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -361,6 +415,7 @@ export function SystemSettingsPage({ currentUser }) {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-10 py-2 text-[13px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
                     value={commissionConfig.daiSuTanTamMaster}
                     onChange={(e) => handleCommissionChange("daiSuTanTamMaster", e.target.value)}
+                    disabled={settingsLoading || savingCommission}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</div>
                 </div>
@@ -373,14 +428,16 @@ export function SystemSettingsPage({ currentUser }) {
                 type="button"
                 className="bg-transparent hover:bg-slate-100 text-slate-550 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-all"
                 onClick={() => setCommissionConfig(DEFAULT_COMMISSION_CONFIG)}
+                disabled={settingsLoading || savingCommission}
               >
                 Đặt lại Mặc định
               </button>
               <button
                 type="submit"
-                className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-bold py-2 px-5 rounded-xl transition-all shadow-sm"
+                disabled={settingsLoading || savingCommission}
+                className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-bold py-2 px-5 rounded-xl transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Lưu cấu hình Hoa hồng
+                {savingCommission ? "Đang lưu..." : "Lưu cấu hình Hoa hồng"}
               </button>
             </div>
           </form>

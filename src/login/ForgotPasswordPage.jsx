@@ -25,6 +25,7 @@ export const ForgotPasswordPage = ({ onSwitchToLogin }) => {
   });
 
   const onSubmit = async (data) => {
+    if (loading) return;
     setApiError("");
     setLoading(true);
 

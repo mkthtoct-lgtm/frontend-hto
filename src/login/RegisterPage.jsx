@@ -205,6 +205,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
   }, [onLayoutModeChange, registrationStep]);
 
   const onSubmit = async (data) => {
+    if (loading) return;
     setApiError("");
     clearErrors("email");
     setLoading(true);
@@ -319,6 +320,7 @@ export const RegisterPage = ({ onLayoutModeChange, onSwitchToLogin, onRegister }
   };
 
   const handleProfileComplete = async (profileData) => {
+    if (loading) return;
     setApiError("");
     setLoading(true);
 

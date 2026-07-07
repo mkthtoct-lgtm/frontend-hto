@@ -11,6 +11,7 @@ import { ForgotPasswordPage } from "./login/ForgotPasswordPage";
 import { ResetPasswordPage } from "./login/ResetPasswordPage";
 import { AuthLayout } from "./login/AuthLayout";
 import { UserList } from "./UserList/UserList";
+import { RoleManagementPage } from "./RoleManagement/RoleManagementPage";
 import { DepartmentsPage } from "./departments/DepartmentsPage";
 import DepartmentGeneralPage from "./departments/DepartmentGeneralPage";
 import { AuditLogPage } from "./auditLogs/AuditLogPage";
@@ -1298,6 +1299,8 @@ function App() {
         ) : currentPage === "users" ? (
           // Truyền currentUser (chính là state 'user' ở App.jsx) xuống để check quyền
           <UserList currentUser={user} />
+        ) : currentPage === "roles" ? (
+          <RoleManagementPage currentUser={user} />
         ) : currentPage === "departments" ? (
           <DepartmentsPage currentUser={user} />
         ) : currentPage === "auditLogs" ? (

@@ -27,20 +27,16 @@ const ROLE_LABELS = {
 };
 
 const RANKS = [
-  { key: "none", name: "Chưa có deal", title: "Chưa có deal", minDeals: 0, color: "#64748b" },
-  { key: "loyal", name: "Khách hàng thân thiết", title: "Khách hàng thân thiết", minDeals: 5, color: "#0ea5e9", badgeImage: "/assets/images/huyhieu7.png" },
-  { key: "bronze", name: "Đồng", title: "Đại sứ gieo mầm", minDeals: 15, color: "#b45309" },
-  { key: "silver", name: "Bạc", title: "Đại sứ kết nối", minDeals: 50, color: "#64748b" },
-  { key: "gold", name: "Vàng", title: "Đại sứ trụ cột", minDeals: 150, color: "#ca8a04" },
-  { key: "diamond", name: "Kim cương", title: "Đại sứ tinh anh", minDeals: null, color: "#0891b2" },
-  { key: "master", name: "Master", title: "Đại sứ tận tâm", minDeals: null, color: "#7c3aed" },
+  { key: "loyal", name: "Khách hàng thân thiết", title: "Khách hàng thân thiết", minDeals: 0, color: "#0ea5e9", badgeImage: "/assets/images/khtt.png" },
+  { key: "bronze", name: "Đồng", title: "Đại sứ gieo mầm", minDeals: 15, color: "#b45309", badgeImage: "/assets/images/dong.png" },
+  { key: "silver", name: "Bạc", title: "Đại sứ kết nối", minDeals: 50, color: "#64748b", badgeImage: "/assets/images/bac.png" },
+  { key: "gold", name: "Vàng", title: "Đại sứ trụ cột", minDeals: 150, color: "#ca8a04", badgeImage: "/assets/images/vang.png" },
+  { key: "diamond", name: "Kim cương", title: "Đại sứ tinh anh", minDeals: 250, color: "#0891b2", badgeImage: "/assets/images/kc.png" },
+  { key: "master", name: "Master", title: "Đại sứ tận tâm", minDeals: 350, color: "#7c3aed", badgeImage: "/assets/images/master.png" },
 ];
 
-const DEMO_QUARTER_MONTHS = [
-  { month: "Tháng 4", target: 5, deals: 6 },
-  { month: "Tháng 5", target: 5, deals: 3 },
-  { month: "Tháng 6", target: 5, deals: 4 },
-];
+const MONTHLY_KPI_TARGET = 5;
+const RANK_ORDER = RANKS.map((rank) => rank.key);
 
 const ADDRESS_PROVINCES = [
   "An Giang",
@@ -141,11 +137,28 @@ const normalizeUserPayload = (payload, fallback = {}) => {
     referralCode: data.referralCode || data.referral_code || profile.referralCode || fallback.referralCode || "",
     roleId: data.roleId || fallback.roleId || "",
     role: data.role || ROLE_ID_MAP[data.roleId] || fallback.role || ROLE_ID_MAP[fallback.roleId] || "user",
+    rank: data.rank || fallback.rank || "",
     departmentId: data.departmentId || fallback.departmentId || "",
     status: data.status || fallback.status || "active",
-    dealCount: Number(data.dealCount ?? data.deals ?? profile.dealCount ?? fallback.dealCount ?? 18) || 0,
+    dealCount: Number(data.dealCount ?? data.deals ?? profile.dealCount ?? fallback.dealCount ?? 0) || 0,
   };
 };
+
+async function requestMe() {
+  const response = await authFetch(`${API_BASE_URL}/auth/me`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(getApiMessage(payload, "Không thể tải thông tin hồ sơ hiện tại."));
+  }
+
+  return payload;
+}
 
 async function requestUser(userId) {
   const response = await authFetch(`${API_BASE_URL}/users/${userId}`, {
@@ -215,10 +228,53 @@ async function requestReferralInfo() {
   return payload?.data ?? payload;
 }
 
-const getCurrentQuarterLabel = () => {
+async function requestMyQualifiedLeads() {
+  const response = await authFetch(`${API_BASE_URL}/leads/my?status=xu_ly_ho_so`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(getApiMessage(payload, "Không thể tải dữ liệu KPI theo tháng."));
+  }
+
+  const data = payload?.data ?? payload;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.leads)) return data.leads;
+  return [];
+}
+
+const getQuarterKey = (date = new Date()) => {
+  const quarter = Math.floor(date.getMonth() / 3) + 1;
+  return `${date.getFullYear()}-Q${quarter}`;
+};
+
+const formatQuarterLabel = (quarterKey) => {
+  const [year, quarter] = String(quarterKey).split("-Q");
+  return `Quý ${quarter}/${year}`;
+};
+
+const getQuarterMonthIndexes = (quarterKey) => {
+  const quarter = Number(String(quarterKey).split("-Q")[1]) || 1;
+  const start = (quarter - 1) * 3;
+  return [start, start + 1, start + 2];
+};
+
+const getRecentQuarterOptions = (count = 6) => {
   const now = new Date();
-  const quarter = Math.floor(now.getMonth() / 3) + 1;
-  return `Quý ${quarter}/${now.getFullYear()}`;
+  const currentQuarterIndex = now.getFullYear() * 4 + Math.floor(now.getMonth() / 3);
+
+  return Array.from({ length: count }, (_, index) => {
+    const quarterIndex = currentQuarterIndex - index;
+    const year = Math.floor(quarterIndex / 4);
+    const quarter = (quarterIndex % 4) + 1;
+    const value = `${year}-Q${quarter}`;
+    return { value, label: formatQuarterLabel(value) };
+  });
 };
 
 const getRankByDeals = (dealCount) => {
@@ -226,8 +282,13 @@ const getRankByDeals = (dealCount) => {
   return ranked[ranked.length - 1] || RANKS[0];
 };
 
-const getNextRank = (dealCount) =>
+const getNextRankByDeals = (dealCount) =>
   RANKS.find((rank) => typeof rank.minDeals === "number" && rank.minDeals > dealCount) || null;
+
+const downgradeRank = (rank, steps = 1) => {
+  const currentIndex = Math.max(0, RANK_ORDER.indexOf(rank?.key));
+  return RANKS[Math.max(0, currentIndex - steps)] || RANKS[0];
+};
 
 const parseAddressDraft = (address = "") => {
   const parts = String(address || "")
@@ -346,7 +407,7 @@ const Icon = ({ name, className = "h-5 w-5" }) => {
 };
 
 const KpiCircle = ({ percent, tone }) => {
-  const color = tone === "warning" ? "#f59e0b" : "#34c27b";
+  const color = tone === "pending" ? "#94a3b8" : tone === "warning" ? "#f59e0b" : "#34c27b";
   return (
     <div
       className="grid h-[70px] w-[70px] place-items-center rounded-full"
@@ -378,6 +439,10 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const [referralInfo, setReferralInfo] = useState(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState("");
+  const [qualifiedLeads, setQualifiedLeads] = useState([]);
+  const [kpiLoading, setKpiLoading] = useState(false);
+  const [kpiLoaded, setKpiLoaded] = useState(false);
+  const [selectedQuarter, setSelectedQuarter] = useState(() => getQuarterKey());
 
   useEffect(() => {
     let isMounted = true;
@@ -386,20 +451,13 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
       if (!currentUser?.id) return;
       const extras = readProfileExtras(currentUser.id);
 
-      if (!canUseUserManagementApi) {
-        const fallbackProfile = normalizeUserPayload({ data: currentUser }, { ...currentUser, ...extras });
-        setProfile(fallbackProfile);
-        setFormData(fallbackProfile);
-        setError("");
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       setError("");
 
       try {
-        const payload = await requestUser(currentUser.id);
+        const payload = canUseUserManagementApi
+          ? await requestUser(currentUser.id)
+          : await requestMe();
         if (!isMounted) return;
         const nextProfile = normalizeUserPayload(payload, { ...currentUser, ...extras });
         const mergedProfile = { ...nextProfile, ...extras };
@@ -424,9 +482,6 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     };
   }, [canUseUserManagementApi, currentUser]);
 
-  const currentRank = useMemo(() => getRankByDeals(profile.dealCount), [profile.dealCount]);
-  const previewBadgeImage = "/assets/images/huyhieu7.png";
-  const nextRank = useMemo(() => getNextRank(profile.dealCount), [profile.dealCount]);
   const roleKey = profile.role || ROLE_ID_MAP[profile.roleId] || currentUser?.role || ROLE_ID_MAP[currentUser?.roleId] || "user";
   const wardOptions = ADDRESS_WARDS[addressDraft.province] || [];
   const isCustomWard = Boolean(addressDraft.ward && !wardOptions.includes(addressDraft.ward));
@@ -444,6 +499,22 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
         : "",
     [referralUrl],
   );
+  const quarterOptions = useMemo(() => {
+    const recent = getRecentQuarterOptions();
+    const leadQuarterKeys = new Set(
+      qualifiedLeads
+        .map((lead) => lead.createdAt || lead.updatedAt)
+        .filter(Boolean)
+        .map((value) => getQuarterKey(new Date(value))),
+    );
+    const merged = [...recent];
+    leadQuarterKeys.forEach((value) => {
+      if (!merged.some((option) => option.value === value)) {
+        merged.push({ value, label: formatQuarterLabel(value) });
+      }
+    });
+    return merged.sort((a, b) => (a.value < b.value ? 1 : -1));
+  }, [qualifiedLeads]);
 
   useEffect(() => {
     let isMounted = true;
@@ -481,14 +552,100 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     };
   }, [isCollaboratorProfile, profile.id]);
 
-  const quarterStats = useMemo(() => {
-    const failedMonths = DEMO_QUARTER_MONTHS.filter((item) => item.deals < item.target).length;
-    return {
-      failedMonths,
-      passedMonths: DEMO_QUARTER_MONTHS.length - failedMonths,
-      isDowngradeRisk: failedMonths >= 3,
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadKpiLeads = async () => {
+      if (!isCollaboratorProfile || !profile.id) {
+        setQualifiedLeads([]);
+        setKpiLoading(false);
+        setKpiLoaded(false);
+        return;
+      }
+
+      setKpiLoading(true);
+      setKpiLoaded(false);
+
+      try {
+        const leads = await requestMyQualifiedLeads();
+        if (isMounted) {
+          setQualifiedLeads(leads);
+          setKpiLoaded(true);
+        }
+      } catch {
+        if (isMounted) {
+          setQualifiedLeads([]);
+          setKpiLoaded(false);
+        }
+      } finally {
+        if (isMounted) setKpiLoading(false);
+      }
     };
-  }, []);
+
+    void loadKpiLeads();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isCollaboratorProfile, profile.id]);
+
+  const quarterStats = useMemo(() => {
+    const monthIndexes = getQuarterMonthIndexes(selectedQuarter);
+    const [year] = String(selectedQuarter).split("-Q");
+    const yearNumber = Number(year) || new Date().getFullYear();
+    const monthlyDeals = new Map(monthIndexes.map((monthIndex) => [monthIndex, 0]));
+
+    qualifiedLeads.forEach((lead) => {
+      const date = new Date(lead.createdAt || lead.updatedAt || "");
+      if (Number.isNaN(date.getTime())) return;
+      if (date.getFullYear() !== yearNumber || !monthlyDeals.has(date.getMonth())) return;
+      monthlyDeals.set(date.getMonth(), (monthlyDeals.get(date.getMonth()) || 0) + 1);
+    });
+
+    if (!kpiLoaded && qualifiedLeads.length === 0 && selectedQuarter === getQuarterKey()) {
+      const currentMonthIndex = new Date().getMonth();
+      let remainingDeals = Number(profile.dealCount || 0);
+      monthIndexes.forEach((monthIndex) => {
+        if (monthIndex > currentMonthIndex) return;
+        const deals = Math.min(MONTHLY_KPI_TARGET, remainingDeals);
+        monthlyDeals.set(monthIndex, deals);
+        remainingDeals -= deals;
+      });
+    }
+
+    const months = monthIndexes.map((monthIndex) => {
+      const deals = monthlyDeals.get(monthIndex) || 0;
+      const monthQuarterKey = getQuarterKey(new Date(yearNumber, monthIndex, 1));
+      const isCurrentQuarter = selectedQuarter === getQuarterKey();
+      const isPastQuarter = selectedQuarter < getQuarterKey();
+      const isDue = isPastQuarter || (isCurrentQuarter && monthIndex <= new Date().getMonth());
+      return {
+        month: `Tháng ${monthIndex + 1}`,
+        target: MONTHLY_KPI_TARGET,
+        deals,
+        isDue,
+        quarterKey: monthQuarterKey,
+      };
+    });
+    const dueMonths = months.filter((item) => item.isDue);
+    const failedMonths = dueMonths.filter((item) => item.deals < item.target).length;
+
+    return {
+      months,
+      failedMonths,
+      passedMonths: dueMonths.length - failedMonths,
+      isDowngradeRisk: failedMonths > 0,
+    };
+  }, [kpiLoaded, profile.dealCount, qualifiedLeads, selectedQuarter]);
+
+  const realDealCount = kpiLoaded ? qualifiedLeads.length : Number(profile.dealCount || 0);
+  const earnedRank = useMemo(() => getRankByDeals(realDealCount), [realDealCount]);
+  const currentRank = useMemo(
+    () => (quarterStats.isDowngradeRisk ? downgradeRank(earnedRank) : earnedRank),
+    [earnedRank, quarterStats.isDowngradeRisk],
+  );
+  const previewBadgeImage = currentRank.badgeImage;
+  const nextRank = useMemo(() => getNextRankByDeals(realDealCount), [realDealCount]);
 
   const handleFieldChange = (field, value) => {
     setFormData((current) => ({ ...current, [field]: value }));
@@ -624,17 +781,57 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     }
   };
 
-  const handleShare = async () => {
+  const openExternalShare = (url) => {
+    window.open(url, "_blank", "noopener,noreferrer,width=720,height=640");
+  };
+
+  const handleShare = async (channel = "native") => {
     if (!referralUrl) return;
-    if (navigator.share) {
-      await navigator.share({
-        title: "Mã giới thiệu HTO",
-        text: `Đăng ký tài khoản với mã giới thiệu ${referralCode}`,
-        url: referralUrl,
-      });
+
+    const encodedUrl = encodeURIComponent(referralUrl);
+    const shareTitle = "Mã giới thiệu HTO";
+    const shareText = `Đăng ký tài khoản HTO qua mã giới thiệu ${referralCode}`;
+    const encodedText = encodeURIComponent(shareText);
+
+    if (channel === "facebook") {
+      openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`);
       return;
     }
+
+    if (channel === "zalo") {
+      openExternalShare(`https://zalo.me/share?u=${encodedUrl}`);
+      return;
+    }
+
+    if (channel === "messenger") {
+      openExternalShare(`https://www.facebook.com/dialog/send?link=${encodedUrl}&redirect_uri=${encodedUrl}`);
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: referralUrl,
+        });
+        return;
+      } catch (shareError) {
+        if (shareError?.name === "AbortError") return;
+      }
+    }
+
     await copyText(referralUrl, "link");
+  };
+
+  const handleDownloadQr = () => {
+    if (!qrUrl) return;
+    const link = document.createElement("a");
+    link.href = qrUrl;
+    link.download = `hto-referral-${referralCode || profile.id || "qr"}.png`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.click();
   };
 
   const handlePasswordReset = async () => {
@@ -783,17 +980,22 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
           {nextRank ? (
             <div>
               <p className="mx-auto max-w-[210px] text-sm leading-6 text-slate-600">
-                Bạn cần <span className="font-black text-orange-500">{Math.max(0, nextRank.minDeals - profile.dealCount)} deal</span> nữa để lên hạng {nextRank.name}
+                Bạn cần <span className="font-black text-orange-500">{Math.max(0, nextRank.minDeals - realDealCount)} deal</span> nữa để lên hạng {nextRank.name}
               </p>
               <div className="mt-4">
                 <div className="mb-2 flex justify-center gap-1 text-lg font-black">
-                  <span className="text-indigo-600">{profile.dealCount}</span>
+                  <span className="text-indigo-600">{realDealCount}</span>
                   <span className="text-slate-500">/ {nextRank.minDeals} deal</span>
                 </div>
                 <div className="mx-auto h-2 w-[84%] overflow-hidden rounded-full bg-indigo-100">
-                  <span className="block h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (profile.dealCount / nextRank.minDeals) * 100)}%` }} />
+                  <span className="block h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, (realDealCount / nextRank.minDeals) * 100)}%` }} />
                 </div>
               </div>
+              {quarterStats.isDowngradeRisk && (
+                <p className="mx-auto mt-3 max-w-[220px] text-xs font-bold leading-5 text-orange-600">
+                  Hạng đang bị hạ tạm do chưa đủ KPI tháng trong quý đã chọn.
+                </p>
+              )}
             </div>
           ) : (
             <p className="mt-6 text-sm text-slate-500">Điều kiện hạng tiếp theo đang cập nhật.</p>
@@ -806,31 +1008,43 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
               <h2 className="text-lg font-black text-slate-950">Tiến độ KPI theo quý</h2>
               
             </div>
-                <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 app-dark:border-slate-700 app-dark:bg-slate-800 app-dark:text-slate-100">
-              {getCurrentQuarterLabel()}
-              <span className="text-slate-400">⌄</span>
-            </button>
+            <select
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none app-dark:border-slate-700 app-dark:bg-slate-800 app-dark:text-slate-100"
+              value={selectedQuarter}
+              onChange={(event) => setSelectedQuarter(event.target.value)}
+            >
+              {quarterOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-[repeat(3,minmax(0,1fr))_118px]">
-            {DEMO_QUARTER_MONTHS.map((item) => {
+            {quarterStats.months.map((item) => {
               const percent = Math.round((item.deals / item.target) * 100);
               const passed = item.deals >= item.target;
+              const pending = !item.isDue;
               return (
                 <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm app-dark:border-slate-700 app-dark:bg-slate-950" key={item.month}>
                   <div className="mb-2 flex items-start justify-between">
                     <div>
                       <h3 className="text-sm font-black text-slate-950">{item.month}</h3>
-                      <p className="mt-0.5 text-[11px] leading-4 text-slate-600">{passed ? "Đạt KPI" : "Thiếu KPI"}</p>
+                      <p className="mt-0.5 text-[11px] leading-4 text-slate-600">
+                        {pending ? "Chưa đến hạn" : passed ? "Đạt KPI" : "Thiếu KPI"}
+                      </p>
                     </div>
-                    <span className={`text-base font-black ${passed ? "text-green-500" : "text-orange-400"}`}>{passed ? "✓" : "▲"}</span>
+                    <span className={`text-base font-black ${pending ? "text-slate-300" : passed ? "text-green-500" : "text-orange-400"}`}>
+                      {pending ? "•" : passed ? "✓" : "▲"}
+                    </span>
                   </div>
                   <div className="flex justify-center">
-                    <KpiCircle percent={percent} tone={passed ? "success" : "warning"} />
+                    <KpiCircle percent={percent} tone={pending ? "pending" : passed ? "success" : "warning"} />
                   </div>
                   <div className="mt-2 pt-2 text-center">
                     <p className="text-xs font-bold text-slate-950">{item.deals} / {item.target} deal</p>
-                    <span className={`mt-1.5 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${passed ? "bg-green-100 text-green-800" : "bg-orange-50 text-orange-700 ring-1 ring-orange-200"}`}>
-                      {passed ? "Đạt" : "-1 điểm"}
+                    <span className={`mt-1.5 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${pending ? "bg-slate-100 text-slate-500" : passed ? "bg-green-100 text-green-800" : "bg-orange-50 text-orange-700 ring-1 ring-orange-200"}`}>
+                      {pending ? "Chờ" : passed ? "Đạt" : "-1 điểm"}
                     </span>
                   </div>
                 </div>
@@ -840,7 +1054,9 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
               <p className="text-xs font-black text-slate-950">Cảnh báo</p>
                 <div className="my-3 h-px bg-slate-200 app-dark:bg-slate-700" />
               <p className="text-xl font-black text-orange-500">-{quarterStats.failedMonths}</p>
-              <p className="mt-2 text-[11px] leading-4 text-slate-600">Đạt KPI mỗi tháng để giữ hạng.</p>
+              <p className="mt-2 text-[11px] leading-4 text-slate-600">
+                {kpiLoading ? "Đang tải KPI..." : "Đạt KPI mỗi tháng để giữ hạng."}
+              </p>
                 <button className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-black text-indigo-600 app-dark:border-indigo-800 app-dark:bg-indigo-950 app-dark:text-indigo-200" type="button">
                 Quy định xếp hạng
               </button>
@@ -876,13 +1092,24 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
           </div>
           <div className="border-y border-slate-200 py-2 lg:border-x lg:border-y-0 lg:px-5">
             <p className="mb-3 text-sm font-black text-slate-900">Chia sẻ nhanh</p>
-            <div className="grid grid-cols-4 gap-3 text-center text-xs text-slate-600">
-              {["Facebook", "Zalo", "Messenger", "Khác"].map((item, index) => (
-                <button className="grid gap-2 justify-items-center" type="button" onClick={handleShare} key={item}>
-                  <span className={`grid h-10 w-10 place-items-center rounded-full text-base font-black text-white ${index === 0 ? "bg-blue-600" : index === 1 ? "bg-sky-500" : index === 2 ? "bg-violet-600" : "bg-slate-400"}`}>
-                    {item[0]}
+            <div className="grid grid-cols-2 gap-3 text-center text-xs text-slate-600 sm:grid-cols-4">
+              {[
+                { label: "Facebook", channel: "facebook", className: "bg-blue-600" },
+                { label: "Zalo", channel: "zalo", className: "bg-sky-500" },
+                { label: "Messenger", channel: "messenger", className: "bg-violet-600" },
+                { label: "Khác", channel: "native", className: "bg-slate-400" },
+              ].map((item) => (
+                <button
+                  className="grid min-w-0 gap-2 justify-items-center disabled:cursor-not-allowed disabled:opacity-50"
+                  type="button"
+                  onClick={() => handleShare(item.channel)}
+                  disabled={!referralUrl || referralLoading}
+                  key={item.label}
+                >
+                  <span className={`grid h-10 w-10 place-items-center rounded-full text-base font-black text-white ${item.className}`}>
+                    {item.label[0]}
                   </span>
-                  {item}
+                  <span className="max-w-full truncate">{item.label}</span>
                 </button>
               ))}
             </div>
@@ -892,7 +1119,12 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
                 <div className="mx-auto grid h-[116px] w-[116px] place-items-center rounded-xl border border-slate-200 bg-white app-dark:border-slate-700 app-dark:bg-slate-950">
               {referralLoading ? <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-slate-300 border-t-indigo-500" /> : qrUrl ? <img className="h-[96px] w-[96px]" src={qrUrl} alt="QR mã giới thiệu" /> : <span className="text-sm text-slate-400">QR</span>}
             </div>
-            <button className="mt-3 inline-flex items-center gap-2 text-sm font-black text-indigo-600" type="button">
+            <button
+              className="mt-3 inline-flex items-center gap-2 text-sm font-black text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
+              disabled={!qrUrl || referralLoading}
+              onClick={handleDownloadQr}
+            >
               <Icon name="download" className="h-4 w-4" />
               Tải xuống
             </button>

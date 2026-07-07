@@ -69,6 +69,7 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
   });
 
   const onSubmit = async (data) => {
+    if (loading) return;
     setApiError("");
     setLoading(true);
 

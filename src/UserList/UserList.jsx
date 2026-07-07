@@ -86,9 +86,25 @@ const writeUserFeaturePermissions = (permissionsByUserId) => {
 
 const getDefaultFeaturePermissions = (role) => DEFAULT_FEATURE_PERMISSIONS_BY_ROLE[role] || [];
 
+const getRoleColorBySlug = (slug) => {
+  const map = {
+    admin: "bg-danger text-white",
+    bangiamdoc: "bg-primary text-white",
+    truongbophan: "bg-warning text-dark",
+    nhansu: "bg-info text-dark",
+    daily: "bg-success text-white",
+    congtacvien: "bg-secondary text-white",
+    staff: "bg-dark text-white",
+    user: "bg-light text-dark border"
+  };
+  return map[slug] || "bg-secondary text-white";
+};
+
 const ROLE_ID_TO_KEY = Object.fromEntries(
   Object.entries(ROLE_MAP).map(([key, value]) => [value.roleId, key]),
 );
+
+const normalizeRoleId = (value) => String(value?._id || value?.id || value || "");
 
 const getUserDepartmentsMapping = () => {
   try {
@@ -103,8 +119,17 @@ const saveUserDepartmentsMapping = (mapping) => {
   localStorage.setItem("hto_user_departments_mapping", JSON.stringify(mapping));
 };
 
-const normalizeUser = (user) => {
-  const role = user.role || ROLE_ID_TO_KEY[user.roleId] || "hethong";
+const normalizeUser = (user, apiRoles = []) => {
+  const rawRoleId = normalizeRoleId(user.roleId);
+  const matchedRole = apiRoles.find((r) => (
+    normalizeRoleId(r.id) === rawRoleId ||
+    r.slug === user.role ||
+    r.slug === user.roleId
+  ));
+  const role = matchedRole?.slug || user.role || ROLE_ID_TO_KEY[rawRoleId] || "hethong";
+  const roleLabel = matchedRole?.name || ROLE_MAP[role]?.label || role;
+  const roleColor = matchedRole?.color || ROLE_MAP[role]?.color || getRoleColorBySlug(role);
+
   const department =
     user.department?.name ||
     user.departmentName ||
@@ -125,7 +150,9 @@ const normalizeUser = (user) => {
     socialLink: user.socialLink || user.socialUrl || user.profile?.socialLink || "",
     referralCode: user.referralCode || user.referral_code || user.profile?.referralCode || "",
     role,
-    roleId: user.roleId || ROLE_MAP[role]?.roleId || "",
+    roleLabel,
+    roleColor,
+    roleId: rawRoleId || matchedRole?.id || ROLE_MAP[role]?.roleId || "",
     department,
     departmentId: user.departmentId || "",
     departmentIds,
@@ -211,8 +238,10 @@ async function departmentsRequest(path = "", options = {}) {
 }
 
 export const UserList = ({ currentUser }) => {
-  // States quản lý Data
+   // States quản lý Data
   const [users, setUsers] = useState([]);
+  const [apiRoles, setApiRoles] = useState([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -235,13 +264,66 @@ export const UserList = ({ currentUser }) => {
   const [permissionUser, setPermissionUser] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, control, watch, formState: { errors } } = useForm({
     mode: "onTouched"
   });
   const selectedRoleValue = useWatch({ control, name: "role" });
   const selectedDepartmentValue = useWatch({ control, name: "departmentId" });
+  const roleOptions = (apiRoles.length > 0
+    ? apiRoles
+    : Object.entries(ROLE_MAP).map(([key, value]) => ({
+        id: value.roleId,
+        name: value.label,
+        slug: key,
+        color: value.color,
+        isHidden: false,
+      }))
+  )
+    .filter((role) => !role.isHidden)
+    .map((role) => ({
+      label: role.name,
+      value: role.slug,
+    }));
 
-  const fetchUsers = useCallback(async () => {
+  const fetchRoles = useCallback(async () => {
+    setRolesLoading(true);
+    let mapped = [];
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      };
+      const response = await authFetch(`${API_BASE_URL}/roles?includeHidden=true`, { headers });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      const list = Array.isArray(payload) ? payload : (payload?.data || payload?.items || []);
+      mapped = list.map(r => ({
+        id: r._id || r.id,
+        name: r.name,
+        slug: r.slug,
+        isHidden: r.isHidden || false,
+        color: r.color || getRoleColorBySlug(r.slug)
+      }));
+      setApiRoles(mapped);
+    } catch (err) {
+      console.error("Lỗi tải danh sách vai trò động:", err);
+      mapped = Object.entries(ROLE_MAP).map(([key, value]) => ({
+        id: value.roleId,
+        name: value.label,
+        slug: key,
+        color: value.color,
+        isHidden: false
+      }));
+      setApiRoles(mapped);
+    } finally {
+      setRolesLoading(false);
+    }
+    return mapped;
+  }, []);
+
+  const fetchUsers = useCallback(async (currentRoles = []) => {
     setLoading(true);
     setError("");
     try {
@@ -262,7 +344,7 @@ export const UserList = ({ currentUser }) => {
         ];
       }
 
-      setUsers(allUsers.map(normalizeUser));
+      setUsers(allUsers.map(u => normalizeUser(u, currentRoles)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
     } finally {
@@ -271,8 +353,12 @@ export const UserList = ({ currentUser }) => {
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchUsers());
-  }, [fetchUsers]);
+    const initData = async () => {
+      const rolesData = await fetchRoles();
+      await fetchUsers(rolesData);
+    };
+    void initData();
+  }, [fetchRoles, fetchUsers]);
 
   const fetchDepartments = useCallback(async () => {
     setDepartmentsLoading(true);
@@ -327,11 +413,17 @@ export const UserList = ({ currentUser }) => {
         ? data.departmentIds[0]
         : undefined;
 
+      const selectedRoleObj = apiRoles.find(r => r.slug === data.role);
+      const roleId = selectedRoleObj?.id || ROLE_MAP[data.role]?.roleId;
+      if (!roleId) {
+        throw new Error("Vai trò đã chọn không hợp lệ hoặc chưa tải xong danh sách vai trò.");
+      }
+
       const input = {
         fullName: data.name.trim(),
         email: data.email.trim(),
         phone: data.phone?.trim() || undefined,
-        roleId: ROLE_MAP[data.role]?.roleId,
+        roleId,
         departmentId: primaryDepartmentId || data.departmentId?.trim() || undefined,
       };
 
@@ -362,7 +454,7 @@ export const UserList = ({ currentUser }) => {
         saveUserDepartmentsMapping(mapping);
       }
 
-      const updatedUser = normalizeUser(savedUserRaw);
+      const updatedUser = normalizeUser(savedUserRaw, apiRoles);
 
       setUsers(prev => {
         if (modalMode === "create") {
@@ -397,7 +489,7 @@ export const UserList = ({ currentUser }) => {
         method: "PATCH",
         body: { status: newStatus },
       });
-      const updatedUser = normalizeUser(payload?.data ?? payload);
+      const updatedUser = normalizeUser(payload?.data ?? payload, apiRoles);
       setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
     } catch (err) {
       alert("Lỗi: " + (err instanceof Error ? err.message : "Cập nhật trạng thái thất bại"));
@@ -477,7 +569,7 @@ export const UserList = ({ currentUser }) => {
 
     try {
       const payload = await usersRequest(`/${user.id}`);
-      setDetailUser(normalizeUser(payload?.data ?? payload));
+      setDetailUser(normalizeUser(payload?.data ?? payload, apiRoles));
     } catch {
       setDetailUser(user);
     }
@@ -539,10 +631,7 @@ export const UserList = ({ currentUser }) => {
             }}
             options={[
               { label: "Tất cả vai trò", value: "" },
-              ...Object.entries(ROLE_MAP).map(([key, data]) => ({
-                label: data.label,
-                value: key,
-              })),
+              ...roleOptions,
             ]}
             placeholder="Tất cả vai trò"
             value={filterRole}
@@ -605,7 +694,6 @@ export const UserList = ({ currentUser }) => {
                 </tr>
               ) : (
                 paginatedUsers.map((user, index) => {
-                  const roleData = ROLE_MAP[user.role] || { label: user.role, color: "bg-secondary", link: "#" };
                   const featurePermissionCount = getFeaturePermissionCount(user);
                   
                   return (
@@ -619,8 +707,8 @@ export const UserList = ({ currentUser }) => {
                       </td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <span className={`badge ${roleData.color}`}>
-                            {roleData.label}
+                          <span className={`badge ${user.roleColor || "bg-secondary text-white"}`}>
+                            {user.roleLabel || user.role}
                           </span>
                         </div>
                       </td>
@@ -767,7 +855,7 @@ export const UserList = ({ currentUser }) => {
                 <DetailItem label="Địa chỉ" value={detailUser.address} />
                 <DetailItem label="Link mạng xã hội" value={detailUser.socialLink} isLink />
                 <DetailItem label="Mã giới thiệu" value={detailUser.referralCode} />
-                <DetailItem label="Vai trò" value={ROLE_MAP[detailUser.role]?.label || detailUser.role} />
+                <DetailItem label="Vai trò" value={detailUser.roleLabel || detailUser.role} />
                 <DetailItem label="Phòng ban" value={
                   (() => {
                     const userDeptIds = detailUser.departmentIds || [];
@@ -808,7 +896,7 @@ export const UserList = ({ currentUser }) => {
               <div>
                 <h5>Quyền chức năng</h5>
                 <div className="text-body-secondary" style={{ fontSize: "13px" }}>
-                  {permissionUser.name} · {ROLE_MAP[permissionUser.role]?.label || permissionUser.role}
+                  {permissionUser.name} · {permissionUser.roleLabel || permissionUser.role}
                 </div>
               </div>
               <button className="btn-close-modal" onClick={closePermissionModal}>
@@ -929,14 +1017,11 @@ export const UserList = ({ currentUser }) => {
                     <label className="form-label" style={{ fontSize: "14px", fontWeight: "600" }}>Vai trò <span className="text-danger">*</span></label>
                     <input type="hidden" {...register("role", { required: "Vui lòng chọn vai trò" })} />
                     <TailwindDropdown
-                      disabled={actionLoading}
+                      disabled={actionLoading || rolesLoading}
                       error={Boolean(errors.role)}
                       onChange={(value) => setValue("role", value, { shouldDirty: true, shouldValidate: true })}
-                      options={Object.entries(ROLE_MAP).map(([key, data]) => ({
-                        label: data.label,
-                        value: key,
-                      }))}
-                      placeholder="-- Chọn vai trò --"
+                      options={roleOptions}
+                      placeholder={rolesLoading ? "Đang tải vai trò..." : "-- Chọn vai trò --"}
                       value={selectedRoleValue}
                     />
                     {errors.role && <div className="invalid-feedback">{errors.role.message}</div>}

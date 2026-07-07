@@ -2097,6 +2097,45 @@ export const Sidebar = ({
             </a>
           </li>
 
+          {/* --- 8B. QUẢN LÝ VAI TRÒ --- */}
+          {["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "roles" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                href="#"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("roles");
+                }}
+              >
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                </div>
+                <span
+                  className="menu-label"
+                  style={{ flex: 1, fontSize: "14px" }}
+                >
+                  Quản lý vai trò
+                </span>
+              </a>
+            </li>
+          )}
+
           {/* --- 7B. QUẢN LÝ SẢN PHẨM --- */}
           {["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser)) && (
             <li className="menu-item mb-2">

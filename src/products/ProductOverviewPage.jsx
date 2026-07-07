@@ -3,6 +3,7 @@ import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { ToastDispatchContext, useToast } from "./ToastContext";
 import { beginLeadSubmission, finishLeadSubmission, normalizeLeadPhone } from "../utils/leadSubmission";
+import { MOCK_CATEGORIES } from "./mockCategories";
 const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
 // Key dùng chung với Sidebar.jsx để truyền danh mục được chọn khi điều hướng
@@ -140,81 +141,83 @@ const VISA_TYPES = [
   { id: "vtype-4", name: "Visa Công tác", icon: "fa-briefcase", desc: "Hồ sơ xin visa công tác, làm việc", color: "text-[#7c3aed]", gradient: "bg-linear-to-b from-[#f3e8ff] to-white", btnBg: "bg-[#faf5ff] text-[#7c3aed] hover:bg-[#f3e8ff]", docsCount: 5, filesCount: 6 }
 ];
 
-const MOCK_CATEGORIES = [
-  {
-    id: "cat-1",
-    name: "Du học hè",
-    description: "Các chương trình du học hè ngắn hạn kết hợp học tập, rèn luyện kỹ năng và giao lưu văn hóa tại nhiều quốc gia phát triển.",
-    status: "active",
-    coverImageUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80",
-    programs: [
-      {
-        id: "prog-1-1",
-        name: "Du học hè Singapore",
-        country: "Singapore",
-        region: "Châu Á",
-        description: "Chương trình du học hè tại Singapore",
-        detailDescription: "Chi tiết chương trình du học hè Singapore",
-        targetAudience: "Học sinh 7-17 tuổi",
-        highlights: ["Học tiếng Anh với giáo viên bản ngữ", "Tham quan các địa danh nổi tiếng"],
-        processSteps: ["Đăng ký", "Nộp hồ sơ", "Phỏng vấn"],
-        tags: ["Chất lượng cao", "An toàn"],
-        websiteUrl: "",
-        serviceFee: 0,
-        currency: "VND",
-        image: "",
-        brochure: null,
-        documents: [],
-        updatedAt: "2026-06-17",
-        status: "active",
-        isActive: true
-      }
-    ]
-  },
-  {
-    id: "cat-2",
-    name: "Du học nghề",
-    description: "Lộ trình du học nghề kép vừa học vừa làm có hưởng lương. Miễn 100% học phí, nhận trợ cấp thực hành và cam kết việc làm sau tốt nghiệp.",
-    status: "active",
-    coverImageUrl: "https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=800&q=80",
-    programs: []
-  },
-  {
-    id: "cat-3",
-    name: "Visa",
-    description: "Dịch vụ tư vấn, thẩm định hồ sơ, luyện phỏng vấn và hoàn thiện thủ tục xin Visa du học, du lịch, định cư và công tác các nước.",
-    status: "active",
-    coverImageUrl: "https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=800&q=80",
-    programs: [
-      {
-        id: "prog-visa-1",
-        name: "Dịch vụ xin Visa Úc trọn gói",
-        country: "Úc",
-        region: "Châu Đại Dương",
-        description: "Tư vấn và xử lý hồ sơ xin visa Úc chuyên nghiệp",
-        targetAudience: "Khách hàng có nhu cầu xin visa",
-        status: "active",
-        isActive: true
-      }
-    ]
-  },
-  {
-    id: "cat-4",
-    name: "Định cư",
-    description: "Giải pháp định cư an toàn cho cả gia đình thông qua các chương trình lao động tay nghề cao, đầu tư kinh doanh hoặc bảo lãnh nhân thân.",
-    status: "active",
-    coverImageUrl: "https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=800&q=80",
-    programs: []
-  },
-  {
-    id: "cat-5",
-    name: "Đào tạo ngôn ngữ",
-    description: "Khóa đào tạo ngoại ngữ cấp tốc chất lượng cao (Tiếng Đức, Anh, Hàn, Nhật) cam kết chuẩn đầu ra phục vụ làm việc và xin visa.",
-    status: "active",
-    coverImageUrl: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80",
-    programs: []
-  }
+
+
+export const EXCEL_PRODUCTS = [
+  { visaCode: "CA-TRV-TOUR-SGL", shortCode: "VIS-CA-01", country: "Canada", name: "Canada", purpose: "Du lịch/Thăm thân", serviceFee: 8100000 },
+  { visaCode: "CA-TRV-CHILD-U14-WITH-PARENTS", shortCode: "VIS-CA-02", country: "Canada", name: "Canada (trẻ em dưới 14t) đi cùng bố mẹ", purpose: "Du lịch/Thăm thân", serviceFee: 4590000 },
+  { visaCode: "CA-TRV-CHILD-U14-SEPARATE", shortCode: "VIS-CA-03", country: "Canada", name: "Canada (trẻ em dưới 14t) nộp riêng", purpose: "Du lịch/Thăm thân", serviceFee: 6210000 },
+  { visaCode: "US-B1B2-TOUR-BIZ", shortCode: "VIS-US-01", country: "Mỹ", name: "Mỹ", purpose: "Du lịch/Công tác", serviceFee: 8100000 },
+  { visaCode: "US-B1B2-RENEWAL", shortCode: "VIS-US-02", country: "Mỹ", name: "Mỹ gia hạn visa", purpose: "Du lịch/Công tác", serviceFee: 8100000 },
+  { visaCode: "SCH-TOUR-SGL", shortCode: "VIS-SCH-01", country: "Schengen", name: "Schengen", purpose: "Du lịch/Thăm thân/Công tác", serviceFee: 7290000 },
+  { visaCode: "AU-600-TOUR-VISIT", shortCode: "VIS-AU-01", country: "Úc", name: "Úc", purpose: "Du lịch/Thăm thân/Công tác", serviceFee: 7560000 },
+  { visaCode: "NZ-VISITOR-TOUR", shortCode: "VIS-NZ-01", country: "New Zealand", name: "New Zealand", purpose: "Du lịch/Thăm thân", serviceFee: 10260000 },
+  { visaCode: "UK-STANDARD-VISITOR-6M", shortCode: "VIS-UK-01", country: "UK", name: "UK (6 tháng)", purpose: "Du lịch/Thăm thân/Công tác", serviceFee: 12150000 },
+  { visaCode: "KR-C31-TOUR-SGL-3M-SOUTH", shortCode: "VIS-KR-01", country: "Hàn Quốc", name: "Hàn (miền Nam) 3 tháng Single", purpose: "Du lịch", serviceFee: 3180000 },
+  { visaCode: "KR-F15-FAMILY-VISIT-SGL", shortCode: "VIS-KR-02", country: "Hàn Quốc", name: "Hàn thăm thân F1-5", purpose: "Thăm thân", serviceFee: 3445000 },
+  { visaCode: "KR-C31-TOUR-MUL-5Y-SOUTH", shortCode: "VIS-KR-03", country: "Hàn Quốc", name: "Hàn (miền Nam) 5 năm Multiple", purpose: "Du lịch", serviceFee: 5300000 },
+  { visaCode: "KR-C31-TOUR-MUL-10Y-SOUTH", shortCode: "VIS-KR-04", country: "Hàn Quốc", name: "Hàn (miền Nam) 10 Năm Multiple", purpose: "Du lịch", serviceFee: 6360000 },
+  { visaCode: "KR-C31-TOUR-SGL-3M-NORTH", shortCode: "VIS-KR-05", country: "Hàn Quốc", name: "Hàn (miền Bắc) 3 tháng Single", purpose: "Du lịch", serviceFee: 3510000 },
+  { visaCode: "KR-C31-TOUR-MUL-5Y10Y-SOUTH", shortCode: "VIS-KR-06", country: "Hàn Quốc", name: "Hàn (miền Nam) 5 năm = 10 Năm Multiple", purpose: "Du lịch", serviceFee: 6750000 },
+  { visaCode: "JP-TOUR-SGL", shortCode: "VIS-JP-01", country: "Nhật Bản", name: "Nhật SGL", purpose: "Du lịch", serviceFee: 2970000 },
+  { visaCode: "JP-TOUR-MUL", shortCode: "VIS-JP-02", country: "Nhật Bản", name: "Nhật MUL", purpose: "Du lịch", serviceFee: 3510000 },
+  { visaCode: "TW-TOUR-STANDARD-5D", shortCode: "VIS-TW-01", country: "Đài Loan", name: "Đài Loan thường 5 ngày", purpose: "Du lịch", serviceFee: 3240000 },
+  { visaCode: "TW-TOUR-URGENT-3D", shortCode: "VIS-TW-02", country: "Đài Loan", name: "Đài Loan khẩn 3 ngày", purpose: "Du lịch", serviceFee: 4050000 },
+  { visaCode: "CN-TOUR-BIZ-SGL", shortCode: "VIS-CN-01", country: "Trung Quốc", name: "Trung Quốc du lịch = thương mại", purpose: "Du lịch/Thương mại", serviceFee: 3510000 },
+  { visaCode: "KR-C39-TOUR-SGL-3M", shortCode: "", country: "Hàn Quốc", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "KR-C39-TOUR-MUL-5Y", shortCode: "", country: "Hàn Quốc", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "CN-L-TOUR-SGL", shortCode: "", country: "Trung Quốc", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "CN-M-BIZ-SGL", shortCode: "", country: "Trung Quốc", name: "Công tác", purpose: "Công tác", serviceFee: 0 },
+  { visaCode: "JP-VISIT-FAMILY", shortCode: "", country: "Nhật Bản", name: "Thăm thân", purpose: "Thăm thân", serviceFee: 0 },
+  { visaCode: "TW-TOUR-STANDARD", shortCode: "", country: "Đài Loan", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "TW-BIZ-STANDARD", shortCode: "", country: "Đài Loan", name: "Công tác", purpose: "Công tác", serviceFee: 0 },
+  { visaCode: "HK-EVISA-TOUR", shortCode: "", country: "Hong Kong", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "HK-EVISA-BIZ", shortCode: "", country: "Hong Kong", name: "Thương mại", purpose: "Thương mại", serviceFee: 0 },
+  { visaCode: "HK-EVISA-TRANSIT", shortCode: "", country: "Hong Kong", name: "Quá cảnh", purpose: "Quá cảnh", serviceFee: 0 },
+  { visaCode: "SCH-VISIT-FAMILY", shortCode: "", country: "Schengen", name: "Thăm thân", purpose: "Thăm thân", serviceFee: 0 },
+  { visaCode: "SCH-BIZ-SGL", shortCode: "", country: "Schengen", name: "Công tác", purpose: "Công tác", serviceFee: 0 },
+  { visaCode: "CA-TRV-TOUR", shortCode: "", country: "Canada", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "AU-600-TOUR", shortCode: "", country: "Úc", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "AU-600-VISIT-FAMILY", shortCode: "", country: "Úc", name: "Thăm thân", purpose: "Thăm thân", serviceFee: 0 },
+  { visaCode: "AU-600-BIZ", shortCode: "", country: "Úc", name: "Công tác", purpose: "Công tác", serviceFee: 0 },
+  { visaCode: "NZ-VISITOR-GROUP", shortCode: "", country: "New Zealand", name: "Gia đình/nhóm", purpose: "Gia đình/nhóm", serviceFee: 0 },
+  { visaCode: "ID-VISITOR-TOUR", shortCode: "", country: "Indonesia", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "IN-VISITOR-TOUR", shortCode: "", country: "Ấn Độ", name: "Du lịch", purpose: "Du lịch", serviceFee: 0 },
+  { visaCode: "KR-STUDY-LANG-D41", shortCode: "VIS-KR-ST01", country: "Hàn Quốc", name: "Du học tiếng Hàn", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "KR-STUDY-VET-D46", shortCode: "VIS-KR-ST02", country: "Hàn Quốc", name: "Du học nghề Hàn Quốc", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "KR-STUDY-ASSOC-D21", shortCode: "VIS-KR-ST03", country: "Hàn Quốc", name: "Cao đẳng chuyên ngành", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "KR-STUDY-UNI-D22", shortCode: "VIS-KR-ST04", country: "Hàn Quốc", name: "Đại học chính quy", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "KR-STUDY-POST-D23D24", shortCode: "VIS-KR-ST05", country: "Hàn Quốc", name: "Thạc sĩ/Tiến sĩ", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "KR-STUDY-EXCH-D26", shortCode: "VIS-KR-ST06", country: "Hàn Quốc", name: "Trao đổi sinh viên", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "JP-STUDY-STUDENT-COE", shortCode: "VIS-JP-ST01", country: "Nhật Bản", name: "Visa du học Nhật Bản", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "CN-STUDY-X1-LONG", shortCode: "VIS-CN-ST01", country: "Trung Quốc", name: "Du học dài hạn Trung Quốc", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "CN-STUDY-X2-SHORT", shortCode: "VIS-CN-ST02", country: "Trung Quốc", name: "Du học ngắn hạn Trung Quốc", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "TW-STUDY-RESIDENT", shortCode: "VIS-TW-ST01", country: "Đài Loan", name: "Resident Visa for Study", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "TW-STUDY-VISITOR", shortCode: "VIS-TW-ST02", country: "Đài Loan", name: "Visitor Visa for Study", purpose: "Du học", serviceFee: 13600000 },
+  { visaCode: "DE-STUDY-VET-BERUF", shortCode: "VIS-DE-ST01", country: "Đức", name: "Du học nghề Đức", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "DE-STUDY-UNI-STUDIUM", shortCode: "VIS-DE-ST02", country: "Đức", name: "Du học Đại học/Sau Đại học Đức", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "DE-STUDY-SOP-KOLLEG", shortCode: "VIS-DE-ST03", country: "Đức", name: "Dự bị Đại học/Tìm trường Đức", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "DE-STUDY-LANG-SPRACH", shortCode: "VIS-DE-ST04", country: "Đức", name: "Khóa tiếng Đức chuyên sâu", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "SCH-STUDY-SHORT-C", shortCode: "VIS-SCH-ST01", country: "Khối Schengen", name: "Du học ngắn hạn Schengen", purpose: "Du học", serviceFee: 20400000 },
+  { visaCode: "SCH-STUDY-LONG-D", shortCode: "VIS-SCH-ST02", country: "Khối Schengen", name: "Du học dài hạn quốc gia", purpose: "Du học", serviceFee: 20400000 },
+  { visaCode: "UK-STUDY-STUDENT", shortCode: "VIS-UK-ST01", country: "Anh Quốc", name: "Student Visa UK", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "UK-STUDY-CHILD", shortCode: "VIS-UK-ST02", country: "Anh Quốc", name: "Child Student Visa UK", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "UK-STUDY-SHORT-11M", shortCode: "VIS-UK-ST03", country: "Anh Quốc", name: "Short-term Study Visa UK", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "UK-STUDY-VISITOR-6M", shortCode: "VIS-UK-ST04", country: "Anh Quốc", name: "Standard Visitor học ngắn hạn", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "US-STUDY-F1-ACADEMIC", shortCode: "VIS-US-ST01", country: "Mỹ", name: "Du học chính quy Mỹ", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "US-STUDY-M1-VOCATIONAL", shortCode: "VIS-US-ST02", country: "Mỹ", name: "Du học nghề Mỹ", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "US-STUDY-J1-EXCHANGE", shortCode: "VIS-US-ST03", country: "Mỹ", name: "Giao lưu văn hóa/trao đổi Mỹ", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "AU-STUDY-SUBCLASS500", shortCode: "VIS-AU-ST01", country: "Úc", name: "Student Visa Úc", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "AU-STUDY-GD-SUBCLASS590", shortCode: "VIS-AU-ST02", country: "Úc", name: "Người giám hộ du học sinh Úc", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "CA-STUDY-PERMIT-REGULAR", shortCode: "VIS-CA-ST01", country: "Canada", name: "Study Permit Canada thường", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "CA-STUDY-PERMIT-SDS", shortCode: "VIS-CA-ST02", country: "Canada", name: "Study Permit diện SDS", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "CA-STUDY-VISITOR-SHORT", shortCode: "VIS-CA-ST03", country: "Canada", name: "Khóa học ngắn hạn Canada", purpose: "Du học", serviceFee: 30600000 },
+  { visaCode: "NZ-STUDY-FEE-PAYING", shortCode: "VIS-NZ-ST01", country: "New Zealand", name: "Fee Paying Student Visa", purpose: "Du học", serviceFee: 20400000 },
+  { visaCode: "NZ-STUDY-PATHWAY", shortCode: "VIS-NZ-ST02", country: "New Zealand", name: "Pathway Student Visa", purpose: "Du học", serviceFee: 20400000 },
+  { visaCode: "NZ-STUDY-EXCHANGE", shortCode: "VIS-NZ-ST03", country: "New Zealand", name: "Exchange Student Visa", purpose: "Du học", serviceFee: 20400000 },
+  { visaCode: "NZ-STUDY-FOREIGN-DOMESTIC", shortCode: "VIS-NZ-ST04", country: "New Zealand", name: "Foreign Domestic Student Visa", purpose: "Du học", serviceFee: 20400000 },
 ];
+
 
 // ==========================================
 // TOAST NOTIFICATION SYSTEM
@@ -1108,6 +1111,146 @@ function ProductOverviewPageInner({ currentUser }) {
   const [viewMode, setViewMode] = useState(() => pendingSidebarProduct ? "detail" : "overview");
   const [selectedProduct, setSelectedProduct] = useState(() => pendingSidebarProduct);
 
+  const resolvedProduct = useMemo(() => {
+    if (!selectedProduct) return null;
+
+    const info = {
+      ...selectedProduct,
+      name: selectedProduct.name || "",
+      serviceFee: selectedProduct.serviceFee || 0,
+      shortCode: selectedProduct.shortCode || "",
+      visaCode: selectedProduct.visaCode || "",
+      purpose: selectedProduct.purpose || "",
+      currency: selectedProduct.currency || "VND"
+    };
+
+    // 1. Trích xuất mã visa từ tên sản phẩm nếu có định dạng "Tên - VisaCode"
+    let nameVisaCode = "";
+    if (info.name.includes(" - ")) {
+      const parts = info.name.split(" - ");
+      nameVisaCode = parts[parts.length - 1].trim().toLowerCase();
+    }
+
+    // 2. Tìm kiếm trong danh sách EXCEL_PRODUCTS
+    let match = EXCEL_PRODUCTS.find(p => {
+      if (p.visaCode && info.visaCode && p.visaCode.toLowerCase() === info.visaCode.toLowerCase()) return true;
+      if (p.visaCode && nameVisaCode && p.visaCode.toLowerCase() === nameVisaCode) return true;
+      if (p.shortCode && info.shortCode && p.shortCode.toLowerCase() === info.shortCode.toLowerCase()) return true;
+      if (p.name && info.name && p.name.trim().toLowerCase() === info.name.trim().toLowerCase()) return true;
+      if (p.visaCode && info.name && info.name.toLowerCase().includes(p.visaCode.toLowerCase())) return true;
+      return false;
+    });
+
+    // 2.5. Nếu không tìm thấy khớp trực tiếp, đối chiếu dự phòng theo Quốc gia và phân loại Du học / Visa
+    if (!match) {
+      const c = (info.country || "").trim().toUpperCase();
+      const isStudy = info.name.toLowerCase().includes("du học") || 
+                      info.name.toLowerCase().includes("học") || 
+                      info.name.toLowerCase().includes("school") || 
+                      info.name.toLowerCase().includes("college") || 
+                      info.name.toLowerCase().includes("trại hè") || 
+                      info.name.toLowerCase().includes("camp") || 
+                      info.name.toLowerCase().includes("study");
+                      
+      // Map quốc gia code/tên về visaCode chuẩn
+      let fallbackVisaCode = "";
+      if (["CA", "CANADA"].includes(c)) {
+        fallbackVisaCode = isStudy ? "CA-STUDY-PERMIT-REGULAR" : "CA-TRV-TOUR-SGL";
+      } else if (["US", "USA", "MỸ"].includes(c)) {
+        fallbackVisaCode = isStudy ? "US-STUDY-F1-ACADEMIC" : "US-B1B2-TOUR-BIZ";
+      } else if (["AU", "ÚC", "AUSTRALIA"].includes(c)) {
+        fallbackVisaCode = isStudy ? "AU-STUDY-SUBCLASS500" : "AU-600-TOUR-VISIT";
+      } else if (["UK", "ANH QUỐC", "ANH"].includes(c)) {
+        fallbackVisaCode = isStudy ? "UK-STUDY-STUDENT" : "UK-STANDARD-VISITOR-6M";
+      } else if (["DE", "ĐỨC", "GERMANY"].includes(c)) {
+        fallbackVisaCode = isStudy ? "DE-STUDY-VET-BERUF" : "";
+      } else if (["KR", "HÀN QUỐC", "HÀN", "KOREA"].includes(c)) {
+        fallbackVisaCode = isStudy ? "KR-STUDY-LANG-D41" : "KR-C31-TOUR-SGL-3M-SOUTH";
+      } else if (["JP", "NHẬT BẢN", "NHẬT", "JAPAN"].includes(c)) {
+        fallbackVisaCode = isStudy ? "JP-STUDY-STUDENT-COE" : "JP-TOUR-SGL";
+      } else if (["TW", "ĐÀI LOAN", "TAIWAN"].includes(c)) {
+        fallbackVisaCode = isStudy ? "TW-STUDY-RESIDENT" : "TW-TOUR-STANDARD-5D";
+      } else if (["CN", "TRUNG QUỐC", "CHINA"].includes(c)) {
+        fallbackVisaCode = isStudy ? "CN-STUDY-X1-LONG" : "CN-TOUR-BIZ-SGL";
+      } else if (["NZ", "NEW ZEALAND"].includes(c)) {
+        fallbackVisaCode = isStudy ? "NZ-STUDY-FEE-PAYING" : "NZ-VISITOR-TOUR";
+      } else if (["SCH", "SCHENGEN", "KHỐI SCHENGEN"].includes(c)) {
+        fallbackVisaCode = isStudy ? "SCH-STUDY-LONG-D" : "SCH-TOUR-SGL";
+      }
+
+      if (fallbackVisaCode) {
+        match = EXCEL_PRODUCTS.find(p => p.visaCode === fallbackVisaCode);
+      }
+    }
+
+    if (match) {
+      if (!info.visaCode) info.visaCode = match.visaCode;
+      if (!info.shortCode) info.shortCode = match.shortCode;
+      if (!info.purpose) info.purpose = match.purpose;
+      if (info.serviceFee === 0 && match.serviceFee > 0) {
+        info.serviceFee = match.serviceFee;
+      }
+    }
+
+    // 3. Dự phòng bảng giá khác
+    const PRODUCT_PRICES = {
+      'd41': 85000000,
+      'd22': 85000000,
+      'd26': 150000000,
+      'vhvl + 1 + 4': 45000000,
+      'intense': 45000000,
+      'intership (6 tháng)': 40500000,
+      'intership (1 năm)': 45900000,
+      'du học nghề': 220000000,
+      'dhn học tiếng': 360000000
+    };
+
+    const cleanName = info.name.trim().toLowerCase();
+    const knownShortCodes = ['d41', 'd22', 'd26', 'vhvl + 1 + 4', 'intense', 'intership (6 tháng)', 'intership (1 năm)', 'du học nghề', 'dhn học tiếng'];
+    const isNameAShortCode = knownShortCodes.includes(cleanName);
+
+    if (info.serviceFee === 0) {
+      if (PRODUCT_PRICES[cleanName]) {
+        info.serviceFee = PRODUCT_PRICES[cleanName];
+      } else if (nameVisaCode && PRODUCT_PRICES[nameVisaCode]) {
+        info.serviceFee = PRODUCT_PRICES[nameVisaCode];
+      }
+    }
+
+    if (!info.visaCode) {
+      if (nameVisaCode) {
+        info.visaCode = nameVisaCode.toUpperCase();
+      } else if (isNameAShortCode) {
+        info.visaCode = info.name.toUpperCase();
+      }
+    }
+
+    if (!info.shortCode) {
+      if (isNameAShortCode) {
+        info.shortCode = info.name.toUpperCase();
+      } else if (nameVisaCode) {
+        const prefix = nameVisaCode.split("-")[0] || "";
+        info.shortCode = prefix ? `VIS-${prefix.toUpperCase()}` : nameVisaCode.toUpperCase();
+      }
+    }
+
+    if (!info.purpose) {
+      if (info.name.toLowerCase().includes("du học")) {
+        info.purpose = "Du học";
+      } else if (info.name.toLowerCase().includes("định cư")) {
+        info.purpose = "Định cư";
+      } else if (info.name.toLowerCase().includes("visa")) {
+        info.purpose = "Visa";
+      } else {
+        info.purpose = "Tư vấn tổng hợp";
+      }
+    }
+
+    return info;
+  }, [selectedProduct]);
+
+
+
   // Danh mục Sidebar đã chọn (nếu có), đọc một lần duy nhất lúc khởi tạo component
   const [pendingSidebarCategory] = useState(() => readPendingSidebarCategory());
 
@@ -1191,7 +1334,21 @@ function ProductOverviewPageInner({ currentUser }) {
   const [contractType, setContractType] = useState("main");
 
   const currentUserName = useMemo(() => {
-    return currentUser?.name || currentUser?.username || "CTV/Đại lý HTO";
+    try {
+      const stored = JSON.parse(window.localStorage.getItem("auth_user") || "null");
+      return currentUser?.fullName || currentUser?.name || stored?.fullName || stored?.name || currentUser?.username || stored?.username || "CTV/Đại lý HTO";
+    } catch {
+      return currentUser?.name || currentUser?.username || "CTV/Đại lý HTO";
+    }
+  }, [currentUser]);
+
+  const currentUserPhone = useMemo(() => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem("auth_user") || "null");
+      return currentUser?.phone || currentUser?.phoneNumber || stored?.phone || stored?.phoneNumber || (currentUser?.username && /^\d+$/.test(currentUser.username) ? currentUser.username : "") || (stored?.username && /^\d+$/.test(stored.username) ? stored.username : "") || "—";
+    } catch {
+      return currentUser?.phone || "—";
+    }
   }, [currentUser]);
 
   // Status options matching backend enum
@@ -4527,7 +4684,7 @@ function ProductOverviewPageInner({ currentUser }) {
         )}
 
         {/* MODAL: XEM TRƯỚC HỢP ĐỒNG MẪU */}
-        {showContractPreview && selectedProduct && (
+        {showContractPreview && resolvedProduct && (
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-[6px] flex items-center justify-center p-4 md:p-6 z-1100 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[850px] flex flex-col animate-slide-up overflow-hidden" style={{ maxHeight: "95vh" }}>
               <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
@@ -4685,15 +4842,15 @@ function ProductOverviewPageInner({ currentUser }) {
                       <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 1: NỘI DUNG DỊCH VỤ & PHẠM VI CÔNG VIỆC</div>
                       <p>1. Bên B tự nguyện đăng ký và Bên A nhận cung cấp dịch vụ tư vấn, làm thủ tục du học cho Bên B đối với:</p>
                       <ul className="list-disc pl-5 space-y-1 mt-2">
-                        <li><strong>Chương trình du học:</strong> <span className="text-cyan-950 font-bold bg-yellow-100/50 px-1 rounded">{cleanVietnameseText(selectedProduct.name)}</span></li>
-                        <li><strong>Quốc gia học tập:</strong> <span className="text-cyan-950 font-bold bg-slate-50 px-1 rounded">{cleanVietnameseText(resolveCountryName(selectedProduct.country))}</span></li>
-                        {selectedProduct.visaCode && <li><strong>Mã Visa hệ thống (visaCode):</strong> <span className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11.5px]">{selectedProduct.visaCode}</span></li>}
+                        <li><strong>Chương trình du học:</strong> <span className="text-cyan-950 font-bold bg-yellow-100/50 px-1 rounded">{cleanVietnameseText(resolvedProduct.name)}</span></li>
+                        <li><strong>Quốc gia học tập:</strong> <span className="text-cyan-950 font-bold bg-slate-50 px-1 rounded">{cleanVietnameseText(resolveCountryName(resolvedProduct.country))}</span></li>
+                        {resolvedProduct.visaCode && <li><strong>Mã Visa hệ thống (visaCode):</strong> <span className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11.5px]">{resolvedProduct.visaCode}</span></li>}
                       </ul>
                       <p className="mt-2">2. Bên A chịu trách nhiệm hướng dẫn Bên B chuẩn bị hồ sơ cá nhân đầy đủ và hợp lệ, liên hệ các trường đối tác nước ngoài để xin thư mời học, hướng dẫn thủ tục xin Visa, tổ chức đào tạo định hướng hành trang trước khi xuất cảnh.</p>
 
                       <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 2: PHÍ DỊCH VỤ VÀ PHƯƠNG THỨC THANH TOÁN</div>
-                      <p>1. Phí dịch vụ tư vấn du học trọn gói đối với chương trình này là: <strong>{selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}</strong></p>
-                      <p>2. Bằng chữ: <em className="text-cyan-950 font-bold bg-yellow-100/50 px-2 py-0.5 rounded block mt-1">{cleanVietnameseText(numberToVietnameseWords(selectedProduct.serviceFee))}</em></p>
+                      <p>1. Phí dịch vụ tư vấn du học trọn gói đối với chương trình này là: <strong>{resolvedProduct.serviceFee ? resolvedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {resolvedProduct.currency || "VND"}</strong></p>
+                      <p>2. Bằng chữ: <em className="text-cyan-950 font-bold bg-yellow-100/50 px-2 py-0.5 rounded block mt-1">{cleanVietnameseText(numberToVietnameseWords(resolvedProduct.serviceFee))}</em></p>
                       <p>3. Chi phí trên chưa bao gồm các khoản lệ phí đóng trực tiếp cho Đại sứ quán, vé máy bay, bảo hiểm hoặc học phí đóng trực tiếp cho nhà trường tại nước sở tại (nếu có).</p>
 
                       <div className="font-bold text-[12.5px] mt-6 mb-2 text-slate-900">ĐIỀU 3: CAM KẾT VÀ HIỆU LỰC</div>
@@ -4785,23 +4942,23 @@ function ProductOverviewPageInner({ currentUser }) {
                             </tr>
                             <tr>
                               <td className="py-1 font-bold">Chương trình tuyển sinh:</td>
-                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(selectedProduct.name)}</td>
+                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(resolvedProduct.name)}</td>
                             </tr>
                             <tr>
                               <td className="py-1 font-bold">Quốc gia đích đến:</td>
-                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(resolveCountryName(selectedProduct.country))}</td>
+                              <td className="py-1 text-cyan-950 font-bold bg-slate-50 px-2 rounded">{cleanVietnameseText(resolveCountryName(resolvedProduct.country))}</td>
                             </tr>
                             <tr>
                               <td className="py-1 font-bold">Mã ngắn nội bộ (shortCode):</td>
-                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{selectedProduct.shortCode || "Chưa thiết lập"}</td>
+                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{resolvedProduct.shortCode || "Chưa thiết lập"}</td>
                             </tr>
                             <tr>
                               <td className="py-1 font-bold">Mã Visa diện tuyển sinh:</td>
-                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{selectedProduct.visaCode || "Chưa thiết lập"}</td>
+                              <td className="py-1 font-mono bg-slate-100 px-2 rounded text-[12px]">{resolvedProduct.visaCode || "Chưa thiết lập"}</td>
                             </tr>
                             <tr>
                               <td className="py-1 font-bold">Mục đích phân loại (purpose):</td>
-                              <td className="py-1 bg-slate-50 px-2 rounded">{selectedProduct.purpose || "Chưa thiết lập"}</td>
+                              <td className="py-1 bg-slate-50 px-2 rounded">{resolvedProduct.purpose || "Chưa thiết lập"}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -4826,12 +4983,10 @@ function ProductOverviewPageInner({ currentUser }) {
                                   : "—"}
                               </td>
                               <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
-                                {!["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(userRole) 
-                                  ? cleanVietnameseText(currentUserName) 
-                                  : "—"}
+                                {cleanVietnameseText(interestForm.customerName) || "—"}
                               </td>
                               <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
-                                {currentUser?.phone || "—"}
+                                {interestForm.phone || "—"}
                               </td>
                             </tr>
                           </tbody>
@@ -4856,18 +5011,18 @@ function ProductOverviewPageInner({ currentUser }) {
                               <td className="border border-slate-300 p-2">1</td>
                               <td className="border border-slate-300 p-2 text-left">Phí dịch vụ tư vấn (HT Ocean Group)</td>
                               <td className="border border-slate-300 p-2 text-right font-bold text-cyan-950">
-                                {selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}
+                                {resolvedProduct.serviceFee ? resolvedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {resolvedProduct.currency || "VND"}
                               </td>
                             </tr>
                             <tr className="bg-slate-50 font-bold">
                               <td className="border border-slate-300 p-2" colSpan="2">Tổng chi phí dịch vụ:</td>
                               <td className="border border-slate-300 p-2 text-right text-cyan-950">
-                                {selectedProduct.serviceFee ? selectedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {selectedProduct.currency || "VND"}
+                                {resolvedProduct.serviceFee ? resolvedProduct.serviceFee.toLocaleString("vi-VN") : "0"} {resolvedProduct.currency || "VND"}
                               </td>
                             </tr>
                           </tbody>
                         </table>
-                        <p className="italic">Bằng chữ: <strong className="text-cyan-950 bg-yellow-100/50 px-2 py-0.5 rounded">{cleanVietnameseText(numberToVietnameseWords(selectedProduct.serviceFee))}</strong></p>
+                        <p className="italic">Bằng chữ: <strong className="text-cyan-950 bg-yellow-100/50 px-2 py-0.5 rounded">{cleanVietnameseText(numberToVietnameseWords(resolvedProduct.serviceFee))}</strong></p>
                       </div>
 
                       {/* PHẦN III */}
@@ -4878,7 +5033,7 @@ function ProductOverviewPageInner({ currentUser }) {
                         <ol className="list-decimal pl-5 space-y-2 mt-2">
                           <li><strong>Giai đoạn 1:</strong> Tiếp nhận thông tin học viên, đối soát thông tin cá nhân và thẩm định học bạ/CCCD. Tổ chức ký Hợp đồng tư vấn du học.</li>
                           <li><strong>Giai đoạn 2:</strong> Dịch thuật hồ sơ công chứng, nộp hồ sơ xin Thư mời học (Admission Letter) từ trường đối tác thuộc diện tuyển dụng.</li>
-                          <li><strong>Giai đoạn 3:</strong> Hoàn tất hồ sơ chứng minh tài chính, nộp xin lịch hẹn phỏng vấn Visa tại cơ quan Ngoại giao theo diện <strong>{selectedProduct.visaCode || "tương ứng"}</strong>.</li>
+                          <li><strong>Giai đoạn 3:</strong> Hoàn tất hồ sơ chứng minh tài chính, nộp xin lịch hẹn phỏng vấn Visa tại cơ quan Ngoại giao theo diện <strong>{resolvedProduct.visaCode || "tương ứng"}</strong>.</li>
                           <li><strong>Giai đoạn 4:</strong> Nhận kết quả Visa, đào tạo định hướng kỹ năng hội nhập, hướng dẫn xuất cảnh và nhập học chính thức.</li>
                         </ol>
                       </div>

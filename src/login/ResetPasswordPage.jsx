@@ -34,6 +34,7 @@ export const ResetPasswordPage = ({ onSwitchToLogin }) => {
   const password = watch("password");
 
   const onSubmit = async (data) => {
+    if (loading) return;
     setApiError("");
 
     if (!resetToken) {
