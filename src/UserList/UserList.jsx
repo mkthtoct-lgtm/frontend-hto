@@ -37,6 +37,7 @@ const FEATURE_PERMISSION_GROUPS = [
     title: "Tài liệu",
     permissions: [
       { id: "documents:view", label: "Xem tài liệu" },
+      { id: "documents:download", label: "Tải tài liệu" },
       { id: "documents:upload", label: "Upload tài liệu" },
       { id: "documents:edit", label: "Sửa tài liệu" },
       { id: "documents:delete", label: "Xóa tài liệu" },
@@ -63,7 +64,7 @@ const FEATURE_PERMISSION_GROUPS = [
 
 const DEFAULT_FEATURE_PERMISSIONS_BY_ROLE = {
   admin: FEATURE_PERMISSION_GROUPS.flatMap((group) => group.permissions.map((permission) => permission.id)),
-  bangiamdoc: ["dashboard:view", "dashboard:export", "documents:view", "notifications:view", "notifications:create", "users:view"],
+  bangiamdoc: ["dashboard:view", "dashboard:export", "documents:view", "documents:download", "notifications:view", "notifications:create", "users:view"],
   truongbophan: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "notifications:create"],
   nhansu: ["dashboard:view", "documents:view", "documents:upload", "notifications:view", "users:view"],
   daily: ["dashboard:view", "documents:view", "notifications:view"],
@@ -85,6 +86,57 @@ const writeUserFeaturePermissions = (permissionsByUserId) => {
 };
 
 const getDefaultFeaturePermissions = (role) => DEFAULT_FEATURE_PERMISSIONS_BY_ROLE[role] || [];
+const ALL_FEATURE_PERMISSION_IDS = FEATURE_PERMISSION_GROUPS.flatMap((group) =>
+  group.permissions.map((permission) => permission.id),
+);
+
+const CANONICAL_PERMISSION_TO_FEATURE_IDS = {
+  "dashboard:view": ["dashboard:view"],
+  "dashboard:edit": ["dashboard:edit"],
+  "dashboard:export": ["dashboard:export"],
+  "documents:read": ["documents:view"],
+  "documents:download": ["documents:download"],
+  "documents:write": ["documents:upload", "documents:edit", "documents:delete"],
+  "documents:view": ["documents:view"],
+  "documents:upload": ["documents:upload"],
+  "documents:edit": ["documents:edit"],
+  "documents:delete": ["documents:delete"],
+  "notifications:read": ["notifications:view"],
+  "notifications:write": ["notifications:create"],
+  "notifications:view": ["notifications:view"],
+  "notifications:create": ["notifications:create"],
+  "users:read": ["users:view"],
+  "users:write": ["users:edit", "users:lock"],
+  "users:view": ["users:view"],
+  "users:edit": ["users:edit"],
+  "users:lock": ["users:lock"],
+};
+
+const expandFeaturePermissions = (permissions = []) => {
+  const expanded = new Set();
+  if (!Array.isArray(permissions)) return expanded;
+
+  permissions.filter(Boolean).forEach((permission) => {
+    if (permission === "*") {
+      ALL_FEATURE_PERMISSION_IDS.forEach((item) => expanded.add(item));
+      expanded.add("*");
+      return;
+    }
+
+    expanded.add(permission);
+    const featureIds = CANONICAL_PERMISSION_TO_FEATURE_IDS[permission] || [];
+    featureIds.forEach((item) => expanded.add(item));
+  });
+
+  return expanded;
+};
+
+const haveSamePermissions = (left = [], right = []) => {
+  if (!Array.isArray(left) || !Array.isArray(right)) return false;
+  if (left.length !== right.length) return false;
+  const rightSet = new Set(right);
+  return left.every((item) => rightSet.has(item));
+};
 
 const getRoleColorBySlug = (slug) => {
   const map = {
@@ -157,6 +209,8 @@ const normalizeUser = (user, apiRoles = []) => {
     departmentId: user.departmentId || "",
     departmentIds,
     status: user.status || "active",
+    permissions: Array.isArray(user.permissions) ? user.permissions : [],
+    grantedPermissions: Array.isArray(user.grantedPermissions) ? user.grantedPermissions : [],
   };
 };
 
@@ -254,7 +308,12 @@ export const UserList = ({ currentUser }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [featurePermissionsByUserId, setFeaturePermissionsByUserId] = useState(() => readUserFeaturePermissions());
-  const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.roleId === ADMIN_ROLE_ID;
+  const isCurrentUserAdmin = currentUser?.role === "admin" || 
+                             currentUser?.roleId === ADMIN_ROLE_ID ||
+                             (Array.isArray(currentUser?.permissions) && (
+                               currentUser.permissions.includes("users:write") ||
+                               currentUser.permissions.includes("*")
+                             ));
 
   // States quản lý Modal (Create/Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -530,12 +589,64 @@ export const UserList = ({ currentUser }) => {
         ),
       );
 
-  const getUserFeaturePermissions = (user) => {
-    const customPermissions = featurePermissionsByUserId[user.id];
-    return Array.isArray(customPermissions) ? customPermissions : getDefaultFeaturePermissions(user.role);
+  const getRoleFeaturePermissions = (user) => {
+    if (!user) return [];
+
+    const matchedRole = apiRoles.find((role) => (
+      normalizeRoleId(role.id) === normalizeRoleId(user.roleId) ||
+      role.slug === user.role
+    ));
+    const rolePermissions = Array.isArray(matchedRole?.permissions)
+      ? matchedRole.permissions
+      : getDefaultFeaturePermissions(user.role);
+
+    return Array.from(expandFeaturePermissions(rolePermissions));
   };
 
-  const getFeaturePermissionCount = (user) => getUserFeaturePermissions(user).length;
+  const getUserGrantedFeaturePermissions = (user) => {
+    if (!user) return [];
+    const customPermissions = featurePermissionsByUserId[user.id];
+    if (Array.isArray(customPermissions)) return Array.from(expandFeaturePermissions(customPermissions));
+    return Array.from(expandFeaturePermissions(user.grantedPermissions || []));
+  };
+
+  const getUserFeaturePermissions = (user) => {
+    const permissions = new Set([
+      ...getRoleFeaturePermissions(user),
+      ...getUserGrantedFeaturePermissions(user),
+    ]);
+    return Array.from(permissions);
+  };
+
+  useEffect(() => {
+    if (!isCurrentUserAdmin || users.length === 0) return;
+
+    Object.entries(featurePermissionsByUserId).forEach(([userId, permissions]) => {
+      if (!Array.isArray(permissions)) return;
+      const user = users.find((item) => String(item.id) === String(userId));
+      if (!user || haveSamePermissions(user.grantedPermissions || [], permissions)) return;
+
+      usersRequest(`/${userId}`, {
+        method: "PATCH",
+        body: { grantedPermissions: permissions },
+      })
+        .then(() => {
+          setUsers((current) =>
+            current.map((item) =>
+              String(item.id) === String(userId)
+                ? { ...item, grantedPermissions: permissions }
+                : item,
+            ),
+          );
+        })
+        .catch((error) => {
+          console.warn("[UserList] Không thể đồng bộ quyền chức năng lên server:", error.message);
+        });
+    });
+  }, [featurePermissionsByUserId, isCurrentUserAdmin, users]);
+
+  const getFeaturePermissionCount = (user) =>
+    getUserFeaturePermissions(user).filter((permission) => permission !== "*").length;
 
   const openPermissionModal = (user) => {
     setPermissionUser(user);
@@ -545,15 +656,21 @@ export const UserList = ({ currentUser }) => {
     setPermissionUser(null);
   };
 
-  const toggleFeaturePermission = (userId, permissionId) => {
+  const toggleFeaturePermission = async (userId, permissionId) => {
     if (!isCurrentUserAdmin) return;
 
     const user = users.find((item) => item.id === userId) || permissionUser;
-    const currentPermissions = getUserFeaturePermissions(user);
+    const inheritedPermissions = getRoleFeaturePermissions(user);
+    if (inheritedPermissions.includes("*") || inheritedPermissions.includes(permissionId)) {
+      return;
+    }
+
+    const currentPermissions = getUserGrantedFeaturePermissions(user).filter((item) => item !== "*");
     const nextPermissions = currentPermissions.includes(permissionId)
       ? currentPermissions.filter((item) => item !== permissionId)
       : [...currentPermissions, permissionId];
 
+    const previousPermissionsByUserId = featurePermissionsByUserId;
     setFeaturePermissionsByUserId((current) => {
       const next = {
         ...current,
@@ -562,6 +679,38 @@ export const UserList = ({ currentUser }) => {
       writeUserFeaturePermissions(next);
       return next;
     });
+
+    setUsers((current) =>
+      current.map((item) =>
+        item.id === userId ? { ...item, grantedPermissions: nextPermissions } : item,
+      ),
+    );
+    if (permissionUser?.id === userId) {
+      setPermissionUser((current) =>
+        current ? { ...current, grantedPermissions: nextPermissions } : current,
+      );
+    }
+
+    try {
+      await usersRequest(`/${userId}`, {
+        method: "PATCH",
+        body: { grantedPermissions: nextPermissions },
+      });
+    } catch (error) {
+      setFeaturePermissionsByUserId(previousPermissionsByUserId);
+      writeUserFeaturePermissions(previousPermissionsByUserId);
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === userId ? { ...item, grantedPermissions: currentPermissions } : item,
+        ),
+      );
+      if (permissionUser?.id === userId) {
+        setPermissionUser((current) =>
+          current ? { ...current, grantedPermissions: currentPermissions } : current,
+        );
+      }
+      alert(error instanceof Error ? error.message : "Không thể lưu quyền chức năng.");
+    }
   };
 
   const openUserDetail = async (user) => {
@@ -579,7 +728,12 @@ export const UserList = ({ currentUser }) => {
     setDetailUser(null);
   };
 
-  if (!["admin", "bangiamdoc"].includes(currentUser?.role)) {
+  const userPermissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+  const hasAccess = ["admin", "bangiamdoc"].includes(currentUser?.role) ||
+                    userPermissions.includes("users:read") ||
+                    userPermissions.includes("*");
+
+  if (!hasAccess) {
     return (
       <div className="container-fluid pt-5 text-center">
         <h2 className="text-danger">Từ chối truy cập</h2>
@@ -909,6 +1063,9 @@ export const UserList = ({ currentUser }) => {
                   Bạn chỉ có thể xem quyền chức năng. Chỉ Admin mới được phân thêm hoặc thu hồi quyền.
                 </div>
               )}
+              <div className="alert alert-secondary py-2" style={{ fontSize: "13px" }}>
+                Quyền được tính theo: quyền vai trò + quyền cấp riêng tài khoản. Quyền kế thừa từ vai trò chỉ sửa ở màn hình Quản lý vai trò.
+              </div>
               <div className="permissions-container">
                 {FEATURE_PERMISSION_GROUPS.map((group) => (
                   <div className="module-group" key={group.id}>
@@ -917,17 +1074,29 @@ export const UserList = ({ currentUser }) => {
                     </div>
                     <div className="permissions-grid">
                       {group.permissions.map((permission) => {
-                        const checked = getUserFeaturePermissions(permissionUser).includes(permission.id);
+                        const rolePermissions = getRoleFeaturePermissions(permissionUser);
+                        const grantedPermissions = getUserGrantedFeaturePermissions(permissionUser);
+                        const isInherited = rolePermissions.includes("*") || rolePermissions.includes(permission.id);
+                        const isGranted = grantedPermissions.includes(permission.id);
+                        const checked = isInherited || isGranted;
 
                         return (
                           <label className="permission-checkbox" key={permission.id}>
                             <input
                               type="checkbox"
                               checked={checked}
-                              disabled={!isCurrentUserAdmin}
+                              disabled={!isCurrentUserAdmin || isInherited}
                               onChange={() => toggleFeaturePermission(permissionUser.id, permission.id)}
                             />
-                            <span>{permission.label}</span>
+                            <span>
+                              {permission.label}
+                              {isInherited && (
+                                <small className="text-body-secondary ms-1">(theo vai trò)</small>
+                              )}
+                              {!isInherited && isGranted && (
+                                <small className="text-primary ms-1">(cấp riêng)</small>
+                              )}
+                            </span>
                           </label>
                         );
                       })}

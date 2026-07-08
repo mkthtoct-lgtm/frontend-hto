@@ -404,7 +404,11 @@ export const RoleManagementPage = ({ currentUser }) => {
   }, [roles, searchTerm]);
 
   // Kiểm tra quyền truy cập trang quản lý vai trò
-  const isAuthorized = ["admin", "bangiamdoc"].includes(currentUser?.role);
+  const userPermissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+  const isAuthorized = ["admin", "bangiamdoc"].includes(currentUser?.role) ||
+                       userPermissions.includes("roles:read") ||
+                       userPermissions.includes("roles:write") ||
+                       userPermissions.includes("*");
 
   if (!isAuthorized) {
     return (

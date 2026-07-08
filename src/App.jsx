@@ -519,6 +519,7 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772e": "daily",
   "69fc5af682ef85451120772f": "congtacvien",
   "69fc5af782ef854511207730": "user",
+  "60c72b2f9b1d8b2bad000001": "staff",
 };
 
 const AUTH_USER_STORAGE_KEY = "auth_user";
@@ -560,6 +561,37 @@ const getUserDepartmentsMapping = () => {
   }
 };
 
+const normalizePermissionList = (...permissionSources) => {
+  const permissions = [];
+
+  permissionSources.forEach((source) => {
+    if (!source) return;
+    if (typeof source === "string") {
+      permissions.push(source);
+      return;
+    }
+    if (Array.isArray(source)) {
+      source.forEach((permission) => {
+        if (typeof permission === "string") {
+          permissions.push(permission);
+        } else if (permission?.id) {
+          permissions.push(String(permission.id));
+        } else if (permission?.name) {
+          permissions.push(String(permission.name));
+        }
+      });
+      return;
+    }
+    if (typeof source === "object") {
+      normalizePermissionList(source.permissions).forEach((permission) => {
+        permissions.push(permission);
+      });
+    }
+  });
+
+  return Array.from(new Set(permissions.filter(Boolean).map((permission) => permission.trim())));
+};
+
 const normalizeUser = (userData) => {
   if (!userData?.id || !userData?.email || !userData?.roleId) {
     return null;
@@ -576,12 +608,16 @@ const normalizeUser = (userData) => {
     avatarUrl: userData.avatarUrl || "",
     roleId: userData.roleId,
     departmentId: userData.departmentId || null,
+    departmentName: userData.departmentName || null,
     departmentIds,
     role: userData.role || normalizeRole(userData.roleId),
+    permissions: normalizePermissionList(
+      userData.permissions,
+      userData.role?.permissions,
+      userData.roleId?.permissions,
+    ),
     // Quyền được admin/bangiamdoc cấp thêm (mảng string, ví dụ: ["view_product_details"])
-    grantedPermissions: Array.isArray(userData.grantedPermissions)
-      ? userData.grantedPermissions
-      : [],
+    grantedPermissions: normalizePermissionList(userData.grantedPermissions),
     hasSeenAdminTutorial: userData.hasSeenAdminTutorial,
     seenTours: userData.seenTours || [],
   };
@@ -633,7 +669,10 @@ const getStoredUser = () => {
     id: tokenPayload?.sub,
     email: tokenPayload?.email,
     roleId: tokenPayload?.roleId,
+    role: tokenPayload?.role,
+    permissions: tokenPayload?.permissions,
     departmentId: tokenPayload?.departmentId,
+    departmentName: tokenPayload?.departmentName,
   });
 };
 
@@ -1114,9 +1153,26 @@ function App() {
       return;
     }
 
-    document.querySelectorAll(".app-menubar").forEach((menubar) => {
-      menubar.classList.toggle("open");
+    const menubar = document.getElementById("menubar");
+    if (menubar) {
+      const isOpen = menubar.classList.toggle("open");
+      if (isOpen) {
+        document.documentElement.classList.add("mobile-sidebar-open");
+      } else {
+        document.documentElement.classList.remove("mobile-sidebar-open");
+      }
+    }
+  };
+
+  const handleCloseMobileSidebar = () => {
+    const menubar = document.getElementById("menubar");
+    if (menubar) {
+      menubar.classList.remove("open");
+    }
+    document.querySelectorAll(".app-toggler").forEach((toggler) => {
+      toggler.classList.remove("active");
     });
+    document.documentElement.classList.remove("mobile-sidebar-open");
   };
 
   const handleToggleTheme = (e) => {
@@ -1137,6 +1193,9 @@ function App() {
     if (page === "hotro") {
       setSupportInitialTab(options.activeTab || "faq");
     }
+
+    // Tự động đóng sidebar trên mobile khi chuyển trang
+    handleCloseMobileSidebar();
   };
 
   // Lắng nghe navigate event từ DashboardPage
@@ -1144,6 +1203,31 @@ function App() {
     const handler = (e) => handleNavigate(e.detail?.page);
     window.addEventListener("app:navigate", handler);
     return () => window.removeEventListener("app:navigate", handler);
+  }, []);
+
+  // Đóng sidebar khi click/chạm ra ngoài (trên mobile/tablet)
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (window.innerWidth < 1191) {
+        const menubar = document.getElementById("menubar");
+        if (menubar && menubar.classList.contains("open")) {
+          // Kiểm tra xem vị trí click có nằm ngoài sidebar và các nút toggle không
+          const isClickInsideMenu = menubar.contains(e.target);
+          const isClickOnToggler = e.target.closest(".app-toggler");
+
+          if (!isClickInsideMenu && !isClickOnToggler) {
+            handleCloseMobileSidebar();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("click", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
   }, []);
 
   const handleLogin = (userData) => {
@@ -1179,6 +1263,112 @@ function App() {
     setCurrentPage("dashboard");
     setAuthMode("login");
   };
+
+  // Đồng bộ thông tin user từ server khi khởi chạy hoặc tải lại ứng dụng
+  useEffect(() => {
+    const token = window.localStorage.getItem("token");
+    if (!token) return;
+
+    let isMounted = true;
+    const refreshUserProfile = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        if (response.ok) {
+          const payload = await response.json();
+          if (payload?.success && payload?.data && isMounted) {
+            const freshUser = {
+              id: payload.data._id || payload.data.id,
+              name: payload.data.fullName || payload.data.name || "",
+              fullName: payload.data.fullName || payload.data.name || "",
+              email: payload.data.email,
+              avatarUrl: payload.data.avatarUrl || "",
+              roleId: payload.data.roleId,
+              role: payload.data.role,
+              permissions: normalizePermissionList(
+                payload.data.permissions,
+                payload.data.role?.permissions,
+                payload.data.roleId?.permissions,
+              ),
+              grantedPermissions: normalizePermissionList(payload.data.grantedPermissions),
+              departmentId: payload.data.departmentId || null,
+              departmentName: payload.data.departmentName || null,
+              status: payload.data.status,
+            };
+            // Lưu vào localStorage và cập nhật state
+            storeAuthUser(freshUser);
+            setUser(normalizeUser(freshUser));
+          }
+        } else if (response.status === 401) {
+          // Token hết hạn hoặc không hợp lệ -> logout
+          if (isMounted) {
+            handleLogout();
+          }
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi đồng bộ thông tin tài khoản:", error);
+      }
+    };
+
+    refreshUserProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("token");
+    const shouldRefreshPermissions =
+      currentPage === "documents" ||
+      currentPage.startsWith("dept-docs:") ||
+      currentPage.startsWith("dept-sop:");
+
+    if (!token || !user?.id || !shouldRefreshPermissions) return;
+
+    let isMounted = true;
+    const refreshUserPermissions = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!payload?.success || !payload?.data || !isMounted) return;
+
+        const freshUser = {
+          id: payload.data._id || payload.data.id,
+          name: payload.data.fullName || payload.data.name || "",
+          fullName: payload.data.fullName || payload.data.name || "",
+          email: payload.data.email,
+          avatarUrl: payload.data.avatarUrl || "",
+          roleId: payload.data.roleId,
+          role: payload.data.role,
+          permissions: normalizePermissionList(
+            payload.data.permissions,
+            payload.data.role?.permissions,
+            payload.data.roleId?.permissions,
+          ),
+          grantedPermissions: normalizePermissionList(payload.data.grantedPermissions),
+          departmentId: payload.data.departmentId || null,
+          departmentName: payload.data.departmentName || null,
+          status: payload.data.status,
+        };
+        const normalizedUser = storeAuthUser(freshUser);
+        if (normalizedUser) {
+          setUser(normalizedUser);
+        }
+      } catch (error) {
+        console.error("❌ Lỗi khi đồng bộ quyền tài liệu:", error);
+      }
+    };
+
+    refreshUserPermissions();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, user?.id]);
 
 
   if (!user) {
@@ -1270,6 +1460,9 @@ function App() {
         onToggleSidebar={handleToggleSidebar}
       />
 
+      {/* Backdrop overlay for mobile menu */}
+      <div className="sidebar-mobile-backdrop" onClick={handleCloseMobileSidebar} />
+
       <main
         className={`app-wrapper${
           currentPage === "notifications" ? " notifications-wrapper" : ""
@@ -1320,7 +1513,7 @@ function App() {
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
         ) : currentPage === "nghiepvu" ? (
-          <JobDescriptionsPage currentUser={user} />
+          <AccountingManagementPage currentUser={user} />
         ) : currentPage === "doisoatdeal" ? (
           <AccountingManagementPage currentUser={user} />
         ) : currentPage === "dashboardStats" ? (

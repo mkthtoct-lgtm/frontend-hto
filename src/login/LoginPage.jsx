@@ -13,6 +13,7 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772e": "daily",
   "69fc5af682ef85451120772f": "congtacvien",
   "69fc5af782ef854511207730": "user",
+  "60c72b2f9b1d8b2bad000001": "staff",
 };
 
 const PASSWORD_PATTERN =
@@ -45,6 +46,37 @@ function getLoginErrorMessage(response, status) {
 
   return "Đăng nhập thất bại";
 }
+
+const normalizePermissionList = (...permissionSources) => {
+  const permissions = [];
+
+  permissionSources.forEach((source) => {
+    if (!source) return;
+    if (typeof source === "string") {
+      permissions.push(source);
+      return;
+    }
+    if (Array.isArray(source)) {
+      source.forEach((permission) => {
+        if (typeof permission === "string") {
+          permissions.push(permission);
+        } else if (permission?.id) {
+          permissions.push(String(permission.id));
+        } else if (permission?.name) {
+          permissions.push(String(permission.name));
+        }
+      });
+      return;
+    }
+    if (typeof source === "object") {
+      normalizePermissionList(source.permissions).forEach((permission) => {
+        permissions.push(permission);
+      });
+    }
+  });
+
+  return Array.from(new Set(permissions.filter(Boolean).map((permission) => permission.trim())));
+};
 
 export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -110,7 +142,14 @@ export const LoginPage = ({ onLogin, onSwitchToRegister, onSwitchToForgot }) => 
         avatarUrl: responseData.user.avatarUrl || "",
         roleId: responseData.user.roleId,
         departmentId: responseData.user.departmentId,
-        role: normalizeRole(responseData.user.roleId),
+        departmentName: responseData.user.departmentName || null,
+        role: responseData.user.role || normalizeRole(responseData.user.roleId),
+        permissions: normalizePermissionList(
+          responseData.user.permissions,
+          responseData.user.role?.permissions,
+          responseData.user.roleId?.permissions,
+        ),
+        grantedPermissions: normalizePermissionList(responseData.user.grantedPermissions),
         hasSeenAdminTutorial: responseData.user.hasSeenAdminTutorial,
         seenTours: responseData.user.seenTours || [],
       };

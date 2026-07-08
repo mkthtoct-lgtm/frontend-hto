@@ -329,12 +329,17 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
       setLoading(true);
       
       const KNOWN_HIDDEN_DEPTS = {
-        "67cfe24df1ba48e42f9a0d54": "laptop m4",
-        "67cfe255f1ba48e42f9a0d5c": "laptop lenovo",
-        "67cfe25df1ba48e42f9a0d64": "laptop dell",
-        "67cfe263f1ba48e42f9a0d6c": "laptop acer",
-        "67cfe26df1ba48e42f9a0d74": "laptop asus",
-        "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
+        "6a2928bd198af598139ab42a": "laptop M4",
+        "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+        "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+        "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+        "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+        "6a1d04686d7314acd051155c": "Nghiệp vụ",
+        "6a1d047a6d7314acd051155d": "Telesale & CSKH",
+        "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
+        "6a1d04996d7314acd051155f": "Kinh doanh",
+        "6a1d04a86d7314acd0511560": "Tổng Hợp",
+        "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
       };
 
       const initialDepartments = {
