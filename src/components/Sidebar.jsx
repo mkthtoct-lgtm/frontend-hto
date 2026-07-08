@@ -43,6 +43,7 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772e": "daily",
   "69fc5af682ef85451120772f": "congtacvien",
   "69fc5af782ef854511207730": "user",
+  "60c72b2f9b1d8b2bad000001": "staff",
 };
 
 const normalizeRoleKey = (roleValue) => {
@@ -63,7 +64,13 @@ const getUserRoleKey = (user) => {
 };
 
 const isAdmin = (user) => {
-  return getUserRoleKey(user) === "admin" || user?.roleId === ADMIN_ROLE_ID;
+  const roleKey = getUserRoleKey(user);
+  const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  return roleKey === "admin" || 
+         user?.roleId === ADMIN_ROLE_ID ||
+         permissions.includes("*") ||
+         permissions.includes("departments:write") ||
+         permissions.includes("departments:read");
 };
 
 const canViewAIManagement = (user) => {
@@ -78,14 +85,18 @@ const canManageNewsEvents = (user) => {
   return ["admin", "bangiamdoc", "truongbophan"].includes(roleKey);
 };
 
-// KIỂM TRA QUYỀN XEM CHI TIẾT SẢN PHẨM (chỉ dùng cho "Tổng quan sản phẩm")
+// KIỂM TRA QUYỀN XEM CHI TIẾT SẢN PHẨM (cho phép tất cả người dùng xem)
 const canViewProductDetails = (user) => {
+  return true;
+};
+
+// KIỂM TRA QUYỀN HẠN ĐỘNG CỦA USER
+const hasPermission = (user, requiredPermission) => {
   const roleKey = getUserRoleKey(user);
-  if (["admin", "bangiamdoc", "truongbophan"].includes(roleKey)) return true;
-  const granted = Array.isArray(user?.grantedPermissions)
-    ? user.grantedPermissions
-    : [];
-  return granted.includes("view_product_details");
+  if (roleKey === "admin") return true;
+
+  const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  return permissions.includes("*") || permissions.includes(requiredPermission);
 };
 
 const normalizeApiCategoryList = (payload) => {
@@ -456,7 +467,7 @@ export const Sidebar = ({
     const fetchDepts = async () => {
       try {
         const roleKey = getUserRoleKey(currentUser);
-        const canReadDepts = ["admin", "bangiamdoc", "truongbophan", "nhansu", "staff"].includes(roleKey);
+        const canReadDepts = hasPermission(currentUser, "departments:read") || ["admin", "bangiamdoc", "truongbophan", "nhansu", "staff"].includes(roleKey);
 
         let normalized = [];
         if (canReadDepts) {
@@ -476,13 +487,21 @@ export const Sidebar = ({
         // --- BỔ SUNG PHÒNG BAN ẨN MÀ USER THUỘC VỀ ---
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
-          "67cfe24df1ba48e42f9a0d54": "laptop m4",
-          "67cfe255f1ba48e42f9a0d5c": "laptop lenovo",
-          "67cfe25df1ba48e42f9a0d64": "laptop dell",
-          "67cfe263f1ba48e42f9a0d6c": "laptop acer",
-          "67cfe26df1ba48e42f9a0d74": "laptop asus",
-          "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
+          "6a2928bd198af598139ab42a": "laptop M4",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
+          "6a1d047a6d7314acd051155d": "Telesale & CSKH",
+          "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
+          "6a1d04996d7314acd051155f": "Kinh doanh",
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
+        if (currentUser?.departmentId && currentUser?.departmentName) {
+          KNOWN_HIDDEN_DEPTS[currentUser.departmentId] = currentUser.departmentName;
+        }
 
         userDeptIds.forEach(id => {
           if (id && !normalized.some(d => String(d.id) === String(id))) {
@@ -497,13 +516,21 @@ export const Sidebar = ({
 
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
-          "67cfe24df1ba48e42f9a0d54": "laptop m4",
-          "67cfe255f1ba48e42f9a0d5c": "laptop lenovo",
-          "67cfe25df1ba48e42f9a0d64": "laptop dell",
-          "67cfe263f1ba48e42f9a0d6c": "laptop acer",
-          "67cfe26df1ba48e42f9a0d74": "laptop asus",
-          "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
+          "6a2928bd198af598139ab42a": "laptop M4",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
+          "6a1d047a6d7314acd051155d": "Telesale & CSKH",
+          "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
+          "6a1d04996d7314acd051155f": "Kinh doanh",
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
+        if (currentUser?.departmentId && currentUser?.departmentName) {
+          KNOWN_HIDDEN_DEPTS[currentUser.departmentId] = currentUser.departmentName;
+        }
         const fallback = [];
         userDeptIds.forEach(id => {
           if (id) {
@@ -1576,7 +1603,12 @@ export const Sidebar = ({
               })()}
 
               {/* Vẫn giữ trang Đối soát Deal cho kế toán và quản trị nếu cần */}
-              {(["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser))) && (
+              {(["admin", "bangiamdoc", "truongbophan", "congtacvien", "daily", "staff"].includes(getUserRoleKey(currentUser)) ||
+                currentUser?.permissions?.includes("*") ||
+                currentUser?.permissions?.includes("settings:manage") ||
+                currentUser?.permissions?.includes("commissions:read") ||
+                currentUser?.permissions?.includes("commissions:write")
+              ) && (
                 <li className="menu-item mb-1 border-top pt-1 mt-1" style={{ listStyleType: "none" }}>
                   <a
                     className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "doisoatdeal" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
@@ -2058,47 +2090,56 @@ export const Sidebar = ({
 
           {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
 
-          <li className="menu-item mb-2 border-top pt-3 mt-3">
-            <a
-              className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "users" ? "text-primary fw-bold" : "text-body-secondary"}`}
-              href="#"
-              style={{ textDecoration: "none" }}
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigate?.("users");
-              }}
-            >
-              <div
-                className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
-                style={{ width: "36px", height: "36px" }}
+          {(["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) ||
+            currentUser?.permissions?.includes("users:read") ||
+            currentUser?.permissions?.includes("*")
+          ) && (
+            <li className="menu-item mb-2 border-top pt-3 mt-3">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "users" ? "text-primary fw-bold" : "text-body-secondary"}`}
+                href="#"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("users");
+                }}
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
+                  style={{ width: "36px", height: "36px" }}
                 >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </div>
-              <span
-                className="menu-label"
-                style={{ flex: 1, fontSize: "14px" }}
-              >
-                Quản lý tài khoản
-              </span>
-            </a>
-          </li>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <span
+                  className="menu-label"
+                  style={{ flex: 1, fontSize: "14px" }}
+                >
+                  Quản lý tài khoản
+                </span>
+              </a>
+            </li>
+          )}
 
           {/* --- 8B. QUẢN LÝ VAI TRÒ --- */}
-          {["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) && (
+          {(["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) ||
+            currentUser?.permissions?.includes("roles:read") ||
+            currentUser?.permissions?.includes("roles:write") ||
+            currentUser?.permissions?.includes("*")
+          ) && (
             <li className="menu-item mb-2">
               <a
                 className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "roles" ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -2137,7 +2178,10 @@ export const Sidebar = ({
           )}
 
           {/* --- 7B. QUẢN LÝ SẢN PHẨM --- */}
-          {["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser)) && (
+          {(["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser)) ||
+            currentUser?.permissions?.includes("products:write") ||
+            currentUser?.permissions?.includes("*")
+          ) && (
             <li className="menu-item mb-2">
               <a
                 className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "productManagement" ? "text-primary fw-bold" : "text-body-secondary"}`}

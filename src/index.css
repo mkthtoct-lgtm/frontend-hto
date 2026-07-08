@@ -880,3 +880,23 @@
     border-color: var(--line) !important;
   }
 }
+
+/* Back drop overlay for mobile menu */
+.sidebar-mobile-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1040;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-in-out;
+}
+
+html.mobile-sidebar-open .sidebar-mobile-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}

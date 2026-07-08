@@ -507,9 +507,13 @@ function StatTile({ label, value, tone }) {
   const T = useT();
   const TONE = makeTone(T);
   const t = TONE[tone] || TONE["text-primary"];
+  const displayValue =
+    typeof value === "number" || (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value)))
+      ? formatNumber(value)
+      : value;
   return (
     <div style={{ flex:"1 1 calc(50% - 6px)", borderRadius:T.rSm, background:t.soft, border:`1px solid ${t.mid}`, padding:"14px" }}>
-      <div style={{ fontSize:"22px", fontWeight:800, color:t.color, lineHeight:1, letterSpacing:"-.01em" }}>{formatNumber(value)}</div>
+      <div style={{ fontSize:"22px", fontWeight:800, color:t.color, lineHeight:1, letterSpacing:"-.01em" }}>{displayValue}</div>
       <div style={{ fontSize:"11px", color:T.inkMuted, marginTop:"4px", lineHeight:1.3 }}>{label}</div>
     </div>
   );
@@ -1043,20 +1047,95 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772e": "daily",
   "69fc5af682ef85451120772f": "congtacvien",
   "69fc5af782ef854511207730": "user",
+  "60c72b2f9b1d8b2bad000001": "staff",
 };
-const ALLOWED_ROLES = ["admin", "bangiamdoc", "truongbophan"];
+const ALLOWED_ROLES = ["admin", "bangiamdoc", "truongbophan", "nhansu", "daily", "congtacvien", "staff", "user"];
 
-function decodeJwt(token) {
-  try {
-    const payload = token.split(".")[1];
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-    return JSON.parse(window.atob(padded));
-  } catch { return null; }
+const normalizeRoleKey = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+
+const getUserRoleKey = (user) => {
+  const roleValue = user?.role?.slug || user?.role?.name || user?.roleName || user?.role || "";
+  return normalizeRoleKey(roleValue || ROLE_ID_MAP[user?.roleId] || "user");
+};
+
+function CollaboratorDashboard({ data }) {
+  const T = useT();
+  const monthlyStats = data?.monthlyStats?.stats || {};
+  const summaries = data?.commissionSummaries || {};
+  const user = data?.user || {};
+  const recentCommissions = data?.recentCommissions || [];
+
+  const money = (value) => `${formatNumber(value || 0)} VND`;
+  const cards = [
+    { label: "Lead phát sinh", value: monthlyStats.referrals || 0, change: "trong tháng", tone: "text-primary" },
+    { label: "Data đủ điều kiện", value: monthlyStats.qualified || 0, change: "hồ sơ", tone: "text-success" },
+    { label: "Doanh số", value: monthlyStats.sales || 0, change: "VND ghi nhận", tone: "text-warning" },
+    { label: "Hoa hồng", value: monthlyStats.commissionEarned || 0, change: "VND tạm tính", tone: "text-info" },
+  ];
+
+  return (
+    <div className="dash-fadein">
+      <div style={{ marginBottom: "20px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: T.ink }}>Dashboard cộng tác viên</h1>
+          <div style={{ fontSize: "13px", color: T.inkMuted, marginTop: "3px" }}>
+            {user.fullName || "Cộng tác viên"} · Hạng <strong style={{ color: T.ink }}>{user.rank || "Bronze"}</strong>
+          </div>
+        </div>
+        <span style={{ fontSize: "12px", fontWeight: 600, color: T.blue, background: T.blueSoft, border: `1px solid ${T.blueMid}`, padding: "6px 12px", borderRadius: "999px" }}>
+          {data?.roleName || "Cộng tác viên"}
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: "14px", marginBottom: "18px" }}>
+        {cards.map((card) => (
+          <KpiCard key={card.label} {...card} />
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "14px", alignItems: "stretch" }}>
+        <Card>
+          <CardHeader title="Tổng hợp hoa hồng" />
+          <CardBody style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: "10px" }}>
+            <StatTile label="Chờ đối soát" value={money(summaries.pending)} tone="text-warning" />
+            <StatTile label="Đã đối soát" value={money(summaries.approved)} tone="text-success" />
+            <StatTile label="Đã thanh toán" value={money(summaries.paid)} tone="text-primary" />
+            <StatTile label="Tổng hợp lệ" value={money(summaries.total)} tone="text-info" />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Hoa hồng gần đây" />
+          <CardBody style={{ padding: "0 0 14px 0", maxHeight: "320px", overflowY: "auto" }}>
+            {recentCommissions.length === 0 ? (
+              <p style={{ fontSize: "13px", color: T.inkFaint, textAlign: "center", padding: "32px 16px", margin: 0 }}>Chưa có giao dịch hoa hồng.</p>
+            ) : (
+              recentCommissions.map((item) => (
+                <div key={item.id || item._id} className="dash-act-row" style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: "13px", color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.customerName || "Khách hàng"}</div>
+                    <div style={{ fontSize: "11px", color: T.inkMuted }}>{item.productInterest || "Dịch vụ"} · {item.status || "pending"}</div>
+                  </div>
+                  <strong style={{ fontSize: "13px", color: T.green, whiteSpace: "nowrap" }}>{money(item.commissionAmount)}</strong>
+                </div>
+              ))
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 // ─── MAIN EXPORT ──────────────────────────────────────────────────────────────
-export const DashboardPage = () => {
+export const DashboardPage = ({ currentUser }) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState(null);
@@ -1074,13 +1153,36 @@ export const DashboardPage = () => {
       try {
         const token = window.localStorage.getItem("token");
         if (!token) throw new Error("Chưa đăng nhập.");
-        const decoded = decodeJwt(token);
-        const roleId = decoded?.roleId || "";
-        const roleSlug = ROLE_ID_MAP[roleId] || "user";
-        if (!ALLOWED_ROLES.includes(roleSlug)) { if (!cancelled) setAccessDenied(true); return; }
-        const endpoint = roleSlug === "truongbophan"
-          ? `${API_BASE_URL}/dashboard/department-head`
-          : `${API_BASE_URL}/dashboard/board-of-directors`;
+
+        // Kiểm tra quyền dynamic của user (dùng currentUser từ profile sync, không dùng JWT decode)
+        const userRole = getUserRoleKey(currentUser);
+        const userPermissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+        const isAuthorized = ALLOWED_ROLES.includes(userRole) ||
+          userPermissions.includes("dashboard:view") ||
+          userPermissions.includes("*");
+
+        if (!isAuthorized) {
+          if (!cancelled) setAccessDenied(true);
+          return;
+        }
+
+        // Xác định endpoint dựa trên role và phòng ban của user
+        const isTopLevel = ["admin", "bangiamdoc"].includes(userRole);
+        const hasDepartment = Boolean(currentUser?.departmentId);
+        let endpoint = `${API_BASE_URL}/dashboard`;
+
+        if (isTopLevel) {
+          endpoint = `${API_BASE_URL}/dashboard/board-of-directors`;
+        } else if (userRole === "congtacvien") {
+          endpoint = `${API_BASE_URL}/dashboard/collaborator`;
+        } else if (userRole === "daily") {
+          endpoint = `${API_BASE_URL}/dashboard/agent`;
+        } else if (userRole === "truongbophan" || hasDepartment) {
+          endpoint = `${API_BASE_URL}/dashboard/department-head`;
+        } else {
+          endpoint = `${API_BASE_URL}/dashboard/employee`;
+        }
+
         const res = await fetch(endpoint, { headers: { Authorization:`Bearer ${token}`, "Content-Type":"application/json" } });
         if (cancelled) return;
         if (res.status === 403) { if (!cancelled) setAccessDenied(true); return; }
@@ -1095,7 +1197,7 @@ export const DashboardPage = () => {
     };
     fetchDashboardData();
     return () => { cancelled = true; };
-  }, [retryCount]);
+  }, [retryCount, currentUser]);
 
   const renderContent = () => {
     if (loading)      return <LoadingSpinner/>;
@@ -1103,9 +1205,14 @@ export const DashboardPage = () => {
     if (error)        return <ErrorState message={error} onRetry={handleRetry}/>;
     if (!dashboardData) return null;
     const role = dashboardData.role;
+    // Hiển thị đúng dashboard tương ứng với dữ liệu API trả về
     if (role === "admin" || role === "board_of_directors" || role === "bangiamdoc") return <BoardDashboard data={dashboardData}/>;
+    if (role === "congtacvien") return <CollaboratorDashboard data={dashboardData}/>;
     if (role === "truongbophan") return <DepartmentHeadDashboard data={dashboardData}/>;
-    return <AccessDenied/>;
+    // Nếu user được cấp dashboard:view nhưng không rơi vào 2 loại trên,
+    // hiển thị DepartmentHeadDashboard (nếu dữ liệu từ department-head) hoặc BoardDashboard
+    if (dashboardData.department) return <DepartmentHeadDashboard data={dashboardData}/>;
+    return <BoardDashboard data={dashboardData}/>;
   };
 
   return (

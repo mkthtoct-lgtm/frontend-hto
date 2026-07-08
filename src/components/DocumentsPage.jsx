@@ -8,6 +8,12 @@ const DEPARTMENT_HEAD_ROLE_ID = "69fc5af582ef85451120772c";
 const DOCUMENT_PERMISSIONS_STORAGE_KEY = "hto_document_permissions";
 const DOCUMENT_STATUS_STORAGE_KEY = "hto_document_statuses";
 const DOCUMENT_PREVIEWS_STORAGE_KEY = "hto_document_previews";
+const DOCUMENT_PERMISSION_ALIASES = {
+  "documents:view": "documents:read",
+  "documents:upload": "documents:write",
+  "documents:edit": "documents:write",
+  "documents:delete": "documents:write",
+};
 
 const ROLE_OPTIONS = [
   { id: "admin", roleId: ADMIN_ROLE_ID, label: "Admin" },
@@ -43,9 +49,105 @@ const DOCUMENT_STATUS_OPTIONS = [
 const DOCUMENT_DOWNLOAD_BLOCKED_STATUSES = new Set(["Nháp", "Ngừng dùng"]);
 const REMOTE_DOCUMENT_PAGE_SIZE = 100;
 
-const canUploadDocument = (user) =>
-  ["admin", "truongbophan"].includes(user?.role) ||
-  [ADMIN_ROLE_ID, DEPARTMENT_HEAD_ROLE_ID].includes(user?.roleId);
+const normalizePermissionList = (...permissionSources) => {
+  const permissions = [];
+
+  permissionSources.forEach((source) => {
+    if (!source) return;
+
+    if (typeof source === "string") {
+      permissions.push(source);
+      return;
+    }
+
+    if (Array.isArray(source)) {
+      source.forEach((permission) => {
+        if (typeof permission === "string") {
+          permissions.push(permission);
+        } else if (permission?.id) {
+          permissions.push(String(permission.id));
+        } else if (permission?.name) {
+          permissions.push(String(permission.name));
+        }
+      });
+      return;
+    }
+
+    if (typeof source === "object") {
+      normalizePermissionList(source.permissions).forEach((permission) => {
+        permissions.push(permission);
+      });
+    }
+  });
+
+  return Array.from(new Set(permissions.filter(Boolean).map((permission) => permission.trim())));
+};
+
+const getEffectiveUserPermissions = (user) => {
+  const rawPermissions = normalizePermissionList(
+    user?.permissions,
+    user?.grantedPermissions,
+    user?.role?.permissions,
+    user?.roleId?.permissions,
+  );
+  const permissions = new Set(rawPermissions);
+
+  rawPermissions.forEach((permission) => {
+    const alias = DOCUMENT_PERMISSION_ALIASES[permission];
+    if (alias) {
+      permissions.add(alias);
+    }
+  });
+
+  return permissions;
+};
+
+const normalizeAuthenticatedDocumentUser = (payload, fallbackUser = null) => {
+  const data = payload?.data?.data ?? payload?.data ?? payload ?? {};
+  const id = data._id || data.id || fallbackUser?.id;
+
+  if (!id) {
+    return fallbackUser;
+  }
+
+  return {
+    ...fallbackUser,
+    id,
+    name: data.name || data.fullName || fallbackUser?.name || "",
+    fullName: data.fullName || data.name || fallbackUser?.fullName || "",
+    email: data.email || fallbackUser?.email || "",
+    avatarUrl: data.avatarUrl || fallbackUser?.avatarUrl || "",
+    roleId: data.roleId || fallbackUser?.roleId || "",
+    role: data.role || fallbackUser?.role || "",
+    departmentId: data.departmentId || fallbackUser?.departmentId || null,
+    departmentName: data.departmentName || fallbackUser?.departmentName || null,
+    departmentIds: fallbackUser?.departmentIds || (data.departmentId ? [data.departmentId] : []),
+    permissions: normalizePermissionList(
+      data.permissions,
+      data.role?.permissions,
+      data.roleId?.permissions,
+      fallbackUser?.permissions,
+      fallbackUser?.role?.permissions,
+      fallbackUser?.roleId?.permissions,
+    ),
+    grantedPermissions: normalizePermissionList(
+      data.grantedPermissions,
+      fallbackUser?.grantedPermissions,
+    ),
+  };
+};
+
+const canUploadDocument = (user) => {
+  if (!user) return false;
+  const role = user.role || "";
+  const permissions = getEffectiveUserPermissions(user);
+  return (
+    role === "admin" ||
+    role === "truongbophan" ||
+    permissions.has("*") ||
+    permissions.has("documents:write")
+  );
+};
 
 const initialDepartments = [
   { id: "dept-hanh-chinh", name: "Hành chính" },
@@ -214,10 +316,28 @@ const getUserGroupIds = (user) => {
   return groups;
 };
 
-const isAdminUser = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID;
+const isAdminUser = (user) => user?.role === "admin" || user?.roleId === ADMIN_ROLE_ID ||
+  getEffectiveUserPermissions(user).has("*");
 
 const canUseDocumentAction = (user, document, action) => {
   if (isAdminUser(user)) {
+    return true;
+  }
+
+  // Kiểm tra quyền cấp vai trò (role-level permissions) được admin phân quyền
+  const userPermissions = getEffectiveUserPermissions(user);
+  const actionPermissionMap = {
+    edit: "documents:write",
+    delete: "documents:write",
+    download: "documents:read",
+    view: "documents:read",
+  };
+  const requiredPermission = actionPermissionMap[action];
+  if (
+    requiredPermission &&
+    (userPermissions.has(requiredPermission) ||
+      (action === "download" && userPermissions.has("documents:download")))
+  ) {
     return true;
   }
 
@@ -543,17 +663,19 @@ const isTextPreview = (document) => {
 };
 
 const normalizeDocumentsPayload = (payload) => {
-  if (Array.isArray(payload)) return { items: payload, total: payload.length };
-  if (Array.isArray(payload?.items)) return { items: payload.items, total: payload.total };
-  if (Array.isArray(payload?.data)) return { items: payload.data, total: payload.total };
+  if (Array.isArray(payload)) return { items: payload, total: payload.length, capabilities: {} };
+  if (Array.isArray(payload?.items)) {
+    return { items: payload.items, total: payload.total, capabilities: payload.capabilities || {} };
+  }
+  if (Array.isArray(payload?.data)) {
+    return { items: payload.data, total: payload.total, capabilities: payload.capabilities || {} };
+  }
 
-  return { items: [], total: 0 };
+  return { items: [], total: 0, capabilities: {} };
 };
 
 const normalizeDocument = (document) => {
   const id = document.id || document._id;
-  const storedPermissions = readStoredPermissions();
-  const storedStatuses = readStoredStatuses();
   const category = normalizeDocumentCategory(document);
   const fileUrl = document.fileUrl || document.url || document.link || "";
   const absoluteFileUrl = getAbsoluteDocumentUrl(fileUrl);
@@ -572,7 +694,7 @@ const normalizeDocument = (document) => {
   const departmentId =
     document.departmentId ||
     document.allowedDepartmentId ||
-    getDepartmentIdFromPermissions(storedPermissions[id] || document.permissions) ||
+    getDepartmentIdFromPermissions(document.permissions) ||
     document.category?.departmentId ||
     "";
   const metadata = {
@@ -589,8 +711,8 @@ const normalizeDocument = (document) => {
     typeof document.canDownload === "boolean"
       ? document.canDownload
       : true;
+  const capabilities = document.capabilities || {};
   const permissions = normalizePermissions(
-    storedPermissions[id] ||
     document.permissions || {
       view: { groups: ["all"], roles: [], departments: [] },
       download: {
@@ -611,7 +733,7 @@ const normalizeDocument = (document) => {
     departmentId,
     updatedAt: formatDate(document.updatedAt),
     createdAt: formatDate(document.createdAt),
-    status: storedStatuses[id] || status,
+    status: status,
     sourceType: document.sourceType || (absoluteFileUrl ? "file" : "link"),
     sourceName: fileName,
     fileType,
@@ -620,6 +742,10 @@ const normalizeDocument = (document) => {
     previewImage: document.previewImage || document.thumbnailUrl || "",
     metadata,
     canDownload,
+    canEdit: Boolean(document.canEdit ?? capabilities.canEdit),
+    canDelete: Boolean(document.canDelete ?? capabilities.canDelete),
+    canUpload: Boolean(document.canUpload ?? capabilities.canUpload),
+    capabilities,
     canView: document.canView ?? true,
     isRemote: true,
     permissions,
@@ -773,11 +899,12 @@ const getReadableDocuments = async (params = {}) => {
   }
 
   const payload = await requestReadableDocuments(`?${searchParams.toString()}`);
-  const { items, total } = normalizeDocumentsPayload(payload);
+  const { items, total, capabilities } = normalizeDocumentsPayload(payload);
 
   return {
     items: items.map(normalizeDocument).filter((document) => document.id),
     total: total ?? items.length,
+    capabilities,
   };
 };
 
@@ -838,8 +965,10 @@ const toggleDocumentCategoryVisibility = async (categoryId) => {
 };
 
 export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryName }) => {
+  const [freshCurrentUser, setFreshCurrentUser] = useState(null);
   const [categories, setCategories] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [documentCapabilities, setDocumentCapabilities] = useState({});
   const [documentTotal, setDocumentTotal] = useState(0);
   const [documentLoading, setDocumentLoading] = useState(false);
   const [documentDetailLoading, setDocumentDetailLoading] = useState(false);
@@ -888,11 +1017,47 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   }, [forcedCategoryId]);
   const permissionConfigRef = useRef(null);
   const isSopMode = Boolean(forceCategoryName);
+  const documentCurrentUser = freshCurrentUser || currentUser;
 
-  const canUpload = canUploadDocument(currentUser);
-  const canManageCategories = isAdminUser(currentUser);
-  const canLoadCategories = Boolean(currentUser);
-  const canConfigurePermissions = isAdminUser(currentUser);
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!currentUser) {
+      setFreshCurrentUser(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const refreshDocumentUser = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!payload?.success || !payload?.data) return;
+
+        const nextUser = normalizeAuthenticatedDocumentUser(payload.data, currentUser);
+        if (isMounted) {
+          setFreshCurrentUser(nextUser);
+        }
+      } catch (error) {
+        console.warn("[DocumentsPage] Không thể đồng bộ quyền tài liệu:", error.message);
+      }
+    };
+
+    refreshDocumentUser();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
+
+  const canUpload = canUploadDocument(documentCurrentUser) || Boolean(documentCapabilities.canUpload);
+  const canManageCategories = isAdminUser(documentCurrentUser);
+  const canLoadCategories = Boolean(documentCurrentUser);
+  const canConfigurePermissions = isAdminUser(documentCurrentUser);
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [String(c.id), c])),
@@ -907,7 +1072,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     let isMounted = true;
     const fetchDepts = async () => {
       try {
-        const canReadDepts = ["admin", "bangiamdoc", "truongbophan", "nhansu", "staff"].includes(currentUser?.role);
+        const canReadDepts = ["admin", "bangiamdoc", "truongbophan", "nhansu", "staff"].includes(documentCurrentUser?.role);
 
         let normalized = [];
         if (canReadDepts) {
@@ -928,15 +1093,20 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
         // Bổ sung các phòng ban ẩn / phòng ban của user hiện tại
         const KNOWN_HIDDEN_DEPTS = {
-          "67cfe24df1ba48e42f9a0d54": "laptop m4",
-          "67cfe255f1ba48e42f9a0d5c": "laptop lenovo",
-          "67cfe25df1ba48e42f9a0d64": "laptop dell",
-          "67cfe263f1ba48e42f9a0d6c": "laptop acer",
-          "67cfe26df1ba48e42f9a0d74": "laptop asus",
-          "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
+          "6a2928bd198af598139ab42a": "laptop M4",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
+          "6a1d047a6d7314acd051155d": "Telesale & CSKH",
+          "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
+          "6a1d04996d7314acd051155f": "Kinh doanh",
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
         
-        const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
+        const userDeptIds = documentCurrentUser?.departmentIds || (documentCurrentUser?.departmentId ? [documentCurrentUser.departmentId] : []);
         userDeptIds.forEach(id => {
           if (id && !normalized.some(d => String(d.id) === String(id))) {
             const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `Phòng ban ẩn`;
@@ -950,14 +1120,19 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
       } catch (err) {
         console.warn("[DocumentsPage] Không tải được danh mục phòng ban:", err.message);
         
-        const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
+        const userDeptIds = documentCurrentUser?.departmentIds || (documentCurrentUser?.departmentId ? [documentCurrentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
-          "67cfe24df1ba48e42f9a0d54": "laptop m4",
-          "67cfe255f1ba48e42f9a0d5c": "laptop lenovo",
-          "67cfe25df1ba48e42f9a0d64": "laptop dell",
-          "67cfe263f1ba48e42f9a0d6c": "laptop acer",
-          "67cfe26df1ba48e42f9a0d74": "laptop asus",
-          "67cfe2a8f1ba48e42f9a0d84": "laptop hasee"
+          "6a2928bd198af598139ab42a": "laptop M4",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
+          "6a1d047a6d7314acd051155d": "Telesale & CSKH",
+          "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
+          "6a1d04996d7314acd051155f": "Kinh doanh",
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
         const fallback = [...initialDepartments];
         userDeptIds.forEach(id => {
@@ -970,7 +1145,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     };
     fetchDepts();
     return () => { isMounted = false; };
-  }, [currentUser]);
+  }, [documentCurrentUser]);
 
   useEffect(() => {
     if (filterDepartmentId) {
@@ -992,11 +1167,11 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     safeCategoryPage * CATEGORY_PAGE_SIZE,
   );
   const filteredDocuments = documents.filter((doc) => {
-    if (doc.status === "Nháp" && !isAdminUser(currentUser)) {
+    if (doc.status === "Nháp" && !isAdminUser(documentCurrentUser)) {
       return false;
     }
 
-    if (!canUseDocumentAction(currentUser, doc, "view")) {
+    if (!canUseDocumentAction(documentCurrentUser, doc, "view")) {
       return false;
     }
 
@@ -1021,23 +1196,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     documents[0] ||
     null;
 
-  useEffect(() => {
-    const permissionsByDocumentId = documents.reduce((acc, document) => {
-      acc[document.id] = document.permissions;
-      return acc;
-    }, {});
-
-    writeStoredPermissions(permissionsByDocumentId);
-  }, [documents]);
-
-  useEffect(() => {
-    const statusesByDocumentId = documents.reduce((acc, document) => {
-      acc[document.id] = document.status;
-      return acc;
-    }, {});
-
-    writeStoredStatuses(statusesByDocumentId);
-  }, [documents]);
+  // Đồng bộ thời gian thực từ database API trực tiếp, không sử dụng cache localStorage dễ gây sai lệch dữ liệu
 
   useEffect(() => {
     setDocumentPage(1);
@@ -1087,7 +1246,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   useEffect(() => {
     let isMounted = true;
 
-    if (!currentUser) {
+    if (!documentCurrentUser) {
       return () => {
         isMounted = false;
       };
@@ -1107,6 +1266,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
         if (isMounted) {
           setDocuments(nextDocuments);
+          setDocumentCapabilities(documentData.capabilities || {});
           setDocumentTotal(documentData.total || nextDocuments.length);
           setSelectedPermissionDocId((currentId) => {
             if (nextDocuments.some((document) => String(document.id) === currentId)) {
@@ -1148,7 +1308,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     return () => {
       isMounted = false;
     };
-  }, [activeCategory, currentUser, filterDepartmentId]);
+  }, [activeCategory, documentCurrentUser, filterDepartmentId]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -1583,6 +1743,13 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
         previewDataUrl: existingDocument.previewDataUrl || detail.previewDataUrl,
         previewText: existingDocument.previewText || detail.previewText,
         mimeType: existingDocument.mimeType || detail.mimeType,
+        capabilities: {
+          ...(detail.capabilities || {}),
+          ...(existingDocument.capabilities || {}),
+        },
+        canEdit: Boolean(existingDocument.canEdit || detail.canEdit),
+        canDelete: Boolean(existingDocument.canDelete || detail.canDelete),
+        canUpload: Boolean(existingDocument.canUpload || detail.canUpload),
       };
 
       setSelectedDocument(mergedDetail);
@@ -1599,7 +1766,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   };
 
   const handleDownloadDocument = (document) => {
-    const downloadDisabledReason = getDownloadDisabledReason(currentUser, document);
+    const downloadDisabledReason = getDownloadDisabledReason(documentCurrentUser, document);
 
     if (downloadDisabledReason) {
       setSelectedDocument(document);
@@ -1924,15 +2091,15 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
         </div>
       </div>
 
-      {canUpload && (!filterDepartmentId || isSopMode) && (
-        <div id="documents-upload-card" className="card mt-3">
-          <div className="card-header border-0 pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+      {canUpload && (
+        <div id="documents-upload-card" className="mt-3 overflow-visible rounded-lg border border-slate-200 bg-white shadow-sm app-dark:border-slate-700 app-dark:bg-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 pt-4 pb-3 app-dark:border-slate-800">
             <div>
-              <h6 className="card-title mb-1">Upload tài liệu</h6>
+              <h6 className="mb-1 text-sm font-semibold text-slate-900 app-dark:text-slate-50">Upload tài liệu</h6>
             </div>
-            <span className="badge bg-success-subtle text-success">Có quyền upload</span>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-950 app-dark:text-emerald-200">Có quyền upload</span>
           </div>
-          <div className="card-body">
+          <div className="p-4">
             {uploadSuccess && (
               <div className="alert alert-success py-2" role="alert">
                 {uploadSuccess}
@@ -2298,7 +2465,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                                     action={action.id}
                                     documentId={selectedPermissionDocument.id}
                                     layout="wrap"
-                                    options={initialDepartments}
+                                    options={departmentsList}
                                     scope="departments"
                                     values={rule.departments}
                                     onToggle={updateDocumentPermission}
@@ -2351,7 +2518,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                                 action={action.id}
                                 documentId={selectedPermissionDocument.id}
                                 layout="stack"
-                                options={initialDepartments}
+                                options={departmentsList}
                                 scope="departments"
                                 values={rule.departments}
                                 onToggle={updateDocumentPermission}
@@ -2439,7 +2606,8 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                         </div>
                         <div className="d-flex gap-2 align-items-start">
                           {!selectedDocument.isUploadPreview &&
-                            canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                            (Boolean(selectedDocument.canEdit) ||
+                              canUseDocumentAction(documentCurrentUser, selectedDocument, "edit")) && (
                               <button
                                 type="button"
                                 className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
@@ -2452,7 +2620,8 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                               </button>
                             )}
                           {!selectedDocument.isUploadPreview &&
-                            canUseDocumentAction(currentUser, selectedDocument, "edit") && (
+                            (Boolean(selectedDocument.canDelete) ||
+                              canUseDocumentAction(documentCurrentUser, selectedDocument, "delete")) && (
                               <button
                                 type="button"
                                 className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
@@ -2505,9 +2674,9 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                             type="button"
                             className="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center"
                             style={{ width: "32px", height: "32px", padding: 0 }}
-                            disabled={Boolean(getDownloadDisabledReason(currentUser, selectedDocument))}
+                            disabled={Boolean(getDownloadDisabledReason(documentCurrentUser, selectedDocument))}
                             title={
-                              getDownloadDisabledReason(currentUser, selectedDocument) ||
+                              getDownloadDisabledReason(documentCurrentUser, selectedDocument) ||
                               "Tải tài liệu"
                             }
                             aria-label="Tải tài liệu"
@@ -2669,7 +2838,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                         <MetadataItem
                           label="Quyền download"
                           value={
-                            hasDownloadPermission(currentUser, selectedDocument)
+                            hasDownloadPermission(documentCurrentUser, selectedDocument)
                               ? "Được tải"
                               : "Không được tải"
                           }
@@ -2679,14 +2848,14 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                           value={
                             getDocumentActionUrl(selectedDocument)
                               ? "Có link tải"
-                              : hasDownloadPermission(currentUser, selectedDocument)
+                              : hasDownloadPermission(documentCurrentUser, selectedDocument)
                                 ? "Được cấp quyền, chưa có link tải"
                                 : "Không có link tải"
                           }
                         />
                         <MetadataItem
                           label="Lý do chặn tải"
-                          value={getDownloadDisabledReason(currentUser, selectedDocument) || "Không bị chặn"}
+                          value={getDownloadDisabledReason(documentCurrentUser, selectedDocument) || "Không bị chặn"}
                         />
                         <MetadataItem
                           label="Nguồn AI"
@@ -2836,16 +3005,16 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                   <th>Nguồn</th>
                   <th>Cập nhật</th>
                   <th>Trạng thái</th>
-                  <th className="text-center">Thao tác</th>
+                  <th className="text-center" style={{ minWidth: "188px" }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedDocuments.map((doc) => {
-                  const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
-                  const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
+                  const downloadDisabledReason = getDownloadDisabledReason(documentCurrentUser, doc);
+                  const hasDownloadAccess = hasDownloadPermission(documentCurrentUser, doc);
                   const canDownload = hasDownloadAccess && !downloadDisabledReason;
-                  const canEdit = canUseDocumentAction(currentUser, doc, "edit");
-                  const canDelete = canEdit;
+                  const canEdit = Boolean(doc.canEdit) || canUseDocumentAction(documentCurrentUser, doc, "edit");
+                  const canDelete = Boolean(doc.canDelete) || canUseDocumentAction(documentCurrentUser, doc, "delete");
                   const categoryName =
                     doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
 
@@ -2854,7 +3023,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                       key={doc.id}
                       className=""
                     >
-                      <td>
+                      <td className="overflow-visible" style={{ minWidth: "188px" }}>
                         <div className="fw-semibold text-body-emphasis">{doc.title}</div>
                         {doc.description && (
                           <div className="text-body-secondary" style={{ fontSize: "12px" }}>
@@ -2867,7 +3036,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                         <DocumentDownloadBadge
                           document={doc}
                           hasDownloadAccess={hasDownloadAccess}
-                          currentUser={currentUser}
+                          currentUser={documentCurrentUser}
                         />
                       </td>
                       <td>
@@ -2909,11 +3078,11 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
           </div>
           <div className="d-lg-none d-flex flex-column gap-2">
             {paginatedDocuments.map((doc) => {
-              const downloadDisabledReason = getDownloadDisabledReason(currentUser, doc);
-              const hasDownloadAccess = hasDownloadPermission(currentUser, doc);
+              const downloadDisabledReason = getDownloadDisabledReason(documentCurrentUser, doc);
+              const hasDownloadAccess = hasDownloadPermission(documentCurrentUser, doc);
               const canDownload = hasDownloadAccess && !downloadDisabledReason;
-              const canEdit = canUseDocumentAction(currentUser, doc, "edit");
-              const canDelete = canEdit;
+              const canEdit = Boolean(doc.canEdit) || canUseDocumentAction(documentCurrentUser, doc, "edit");
+              const canDelete = Boolean(doc.canDelete) || canUseDocumentAction(documentCurrentUser, doc, "delete");
               const categoryName =
                 doc.categoryName || categoryMap.get(String(doc.categoryId))?.name || "Danh mục ẩn";
 
@@ -2938,7 +3107,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
                     <DocumentDownloadBadge
                       document={doc}
                       hasDownloadAccess={hasDownloadAccess}
-                      currentUser={currentUser}
+                      currentUser={documentCurrentUser}
                     />
                   </summary>
 
@@ -3047,12 +3216,14 @@ function DocumentActionButtons({
   onEdit,
   onPreview,
 }) {
+  const buttonBase =
+    "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-white text-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45 app-dark:bg-slate-900 app-dark:hover:bg-slate-800";
+
   return (
-    <div className="d-flex justify-content-center gap-2">
+    <div className="flex min-w-[176px] flex-nowrap items-center justify-center gap-2 overflow-visible">
       <button
         type="button"
-        className="btn btn-sm btn-outline-primary d-inline-flex align-items-center justify-content-center"
-        style={{ width: "32px", height: "32px", padding: 0 }}
+        className={`${buttonBase} border-sky-500 text-sky-600 app-dark:border-sky-400 app-dark:text-sky-300`}
         title="Xem tài liệu"
         aria-label="Xem tài liệu"
         onClick={() => onPreview(document)}
@@ -3061,8 +3232,7 @@ function DocumentActionButtons({
       </button>
       <button
         type="button"
-        className="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
-        style={{ width: "32px", height: "32px", padding: 0 }}
+        className={`${buttonBase} border-emerald-500 text-emerald-600 app-dark:border-emerald-400 app-dark:text-emerald-300`}
         disabled={!canDownload}
         title={canDownload ? "Tải tài liệu" : downloadDisabledReason || "Bạn chưa có quyền tải"}
         aria-label="Tải tài liệu"
@@ -3073,8 +3243,7 @@ function DocumentActionButtons({
       {canEdit && (
         <button
           type="button"
-          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
-          style={{ width: "32px", height: "32px", padding: 0 }}
+          className={`${buttonBase} border-slate-500 text-slate-700 app-dark:border-slate-400 app-dark:text-slate-200`}
           title="Sửa tài liệu"
           aria-label="Sửa tài liệu"
           onClick={() => onEdit(document)}
@@ -3085,8 +3254,7 @@ function DocumentActionButtons({
       {canDelete && (
         <button
           type="button"
-          className="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
-          style={{ width: "32px", height: "32px", padding: 0 }}
+          className={`${buttonBase} border-rose-500 text-rose-600 app-dark:border-rose-400 app-dark:text-rose-300`}
           title="Xóa tài liệu"
           aria-label="Xóa tài liệu"
           onClick={() => onDelete(document)}

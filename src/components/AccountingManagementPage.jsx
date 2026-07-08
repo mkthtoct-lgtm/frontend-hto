@@ -94,8 +94,17 @@ export function AccountingManagementPage({ currentUser }) {
 
   const DEAL_PAGE_SIZE = 10;
 
-  const userRole = useMemo(() => getUserRoleKey(currentUser), [currentUser]);
-  const isAdmin = useMemo(() => ["admin", "bangiamdoc", "truongbophan"].includes(userRole), [userRole]);
+  const isAdmin = useMemo(() => {
+    const userRole = getUserRoleKey(currentUser);
+    const permissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+    return (
+      ["admin", "bangiamdoc", "truongbophan"].includes(userRole) ||
+      permissions.includes("*") ||
+      permissions.includes("settings:manage") ||
+      permissions.includes("commissions:read") ||
+      permissions.includes("commissions:write")
+    );
+  }, [currentUser]);
 
   // Fetch list of commissions
   const fetchCommissions = useCallback(async () => {
@@ -261,6 +270,8 @@ export function AccountingManagementPage({ currentUser }) {
     if (!selectedDeal) return [];
     const createdStr = new Date(selectedDeal.createdAt).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
     const updatedStr = new Date(selectedDeal.updatedAt).toLocaleString("vi-VN", { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const isApproved = selectedDeal.status === "approved" || selectedDeal.status === "paid";
+    const isPaid = selectedDeal.status === "paid";
 
     if (selectedDeal.status === "cancelled") {
       return [
@@ -271,16 +282,20 @@ export function AccountingManagementPage({ currentUser }) {
 
     return [
       { status: "Tạo deal", time: createdStr, done: true },
-      { status: "Ký hợp đồng", time: createdStr, done: true },
-      { 
-        status: "Xác nhận thu tiền", 
-        time: (selectedDeal.status === "approved" || selectedDeal.status === "paid") ? updatedStr : "Chờ xác nhận", 
-        done: (selectedDeal.status === "approved" || selectedDeal.status === "paid") 
+      {
+        status: "Ký hợp đồng",
+        time: isApproved ? updatedStr : "Chờ admin xác nhận",
+        done: isApproved
       },
       { 
-        status: selectedDeal.status === "paid" ? "Đã thanh toán" : "Đối soát hoàn tất", 
-        time: selectedDeal.status === "paid" ? updatedStr : (selectedDeal.status === "approved" ? updatedStr : ""), 
-        done: (selectedDeal.status === "approved" || selectedDeal.status === "paid") 
+        status: "Xác nhận thu tiền", 
+        time: isApproved ? updatedStr : "Chờ xác nhận", 
+        done: isApproved 
+      },
+      { 
+        status: isPaid ? "Đã thanh toán" : "Đối soát hoàn tất", 
+        time: isPaid ? updatedStr : "Chờ hoàn tất", 
+        done: isPaid 
       },
     ];
   }, [selectedDeal]);
