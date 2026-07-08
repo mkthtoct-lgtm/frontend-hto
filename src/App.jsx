@@ -1567,7 +1567,7 @@ function App() {
                     <p className="text-body-secondary mb-2" style={{ fontSize: "12px", lineHeight: "1.3" }}>
                       HTO cập nhật nhanh chóng và chính xác các thông tin du học Đức mới nhất.
                     </p>
-                    <div className="d-flex align-items-center flex-grow-1">
+                    <div className="d-flex align-items-center grow">
                       <div className="w-40 text-center pe-1 pe-xl-2">
                         <img src="./assets/images/germany-map.png" alt="Bản đồ Đức" className="img-fluid bg-body-tertiary rounded" style={{ width: "100%", maxHeight: "110px", objectFit: "contain" }} />
                       </div>
@@ -1676,7 +1676,7 @@ function App() {
                           <div key={index} className="d-flex flex-column align-items-center position-relative" style={{ flex: 1 }}>
                             {index < 5 && (
                               <div className="position-absolute" style={{ top: "12px", left: "50%", width: "100%", height: "2px", backgroundColor: theme === "dark" ? "#ffffff" : "#1e40af", zIndex: 0 }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="position-absolute top-50 start-50 translate-middle" style={{ color: theme === "dark" ? "#ffffff" : "#1e40af", backgroundColor: "var(--bs-card-bg)", padding: "0 2px" }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="position-absolute top-50 inset-s-50 translate-middle" style={{ color: theme === "dark" ? "#ffffff" : "#1e40af", backgroundColor: "var(--bs-card-bg)", padding: "0 2px" }}>
                                   <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                                 </svg>
                               </div>
@@ -1765,30 +1765,30 @@ function App() {
                     </h6>
                   </div>
                   <div className="card-body p-3 d-flex flex-column justify-content-between">
-                    <ul className="list-unstyled mb-0 flex-grow-1">
+                    <ul className="list-unstyled mb-0 grow">
                       <li className="d-flex justify-content-between align-items-center py-2">
                         {/* Style minWidth 0 là cần thiết để text-truncate hoạt động chuẩn trong Flexbox */}
                         <div className="d-flex align-items-center gap-3 pe-2 w-100" style={{ minWidth: 0 }}>
-                          <img src="./assets/images/Logo-TUM.svg.png" alt="TUM" className="rounded bg-body-secondary flex-shrink-0" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                          <img src="./assets/images/Logo-TUM.svg.png" alt="TUM" className="rounded bg-body-secondary shrink-0" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                           <span className="fw-medium text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Technical University of Munich</span>
                         </div>
-                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
+                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
                         <div className="d-flex align-items-center gap-3 pe-2 w-100" style={{ minWidth: 0 }}>
-                          <img src="./assets/images/Huberlin-logo.svg.png" alt="Humboldt" className="rounded bg-body-secondary flex-shrink-0" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                          <img src="./assets/images/Huberlin-logo.svg.png" alt="Humboldt" className="rounded bg-body-secondary shrink-0" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                           <span className="fw-medium text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Humboldt University Berlin</span>
                         </div>
-                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
+                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
 
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
                         <div className="d-flex align-items-center gap-3 pe-2 w-100" style={{ minWidth: 0 }}>
-                          <div className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" style={{ width: "32px", height: "32px", backgroundColor: "#2563eb", fontSize: "10px", letterSpacing: "0.5px" }}>
+                          <div className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm shrink-0" style={{ width: "32px", height: "32px", backgroundColor: "#2563eb", fontSize: "10px", letterSpacing: "0.5px" }}>
                             DOCX
                           </div>
                           <div className="text-truncate w-100">
@@ -1796,13 +1796,13 @@ function App() {
                             <span className="text-body-secondary d-block text-truncate" style={{ fontSize: "11px" }}>(DOCX)</span>
                           </div>
                         </div>
-                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
+                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
                       <li className="d-flex justify-content-between align-items-center py-2 border-top">
                         <div className="d-flex align-items-center gap-3 pe-2 w-100" style={{ minWidth: 0 }}>
-                          <div className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm flex-shrink-0" style={{ width: "32px", height: "32px", backgroundColor: "#ef4444", fontSize: "11px", letterSpacing: "0.5px" }}>
+                          <div className="rounded d-flex align-items-center justify-content-center text-white fw-bold shadow-sm shrink-0" style={{ width: "32px", height: "32px", backgroundColor: "#ef4444", fontSize: "11px", letterSpacing: "0.5px" }}>
                             PDF
                           </div>
                           <div className="text-truncate w-100">
@@ -1810,7 +1810,7 @@ function App() {
                             <span className="text-body-secondary d-block text-truncate" style={{ fontSize: "11px" }}>(PDF)</span>
                           </div>
                         </div>
-                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap flex-shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
+                        <button className="btn btn-sm btn-outline-primary border px-2 bg-body-tertiary text-nowrap shrink-0" style={{ fontSize: "11px", fontWeight: "600" }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="me-1 d-none d-md-inline"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg> Tải
                         </button>
                       </li>
@@ -1845,40 +1845,40 @@ function App() {
                     <div>
                       {/* Q1 */}
                       <div className="d-flex mb-3 align-items-start">
-                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 flex-shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>1</div>
-                        <div className="flex-grow-1 pe-2 w-100" style={{ minWidth: 0 }}>
+                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>1</div>
+                        <div className="grow pe-2 w-100" style={{ minWidth: 0 }}>
                           <h6 className="fw-bold mb-1 text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Có được làm thêm không?</h6>
                           <p className="text-body-secondary mb-0 text-truncate" style={{ fontSize: "11.5px", lineHeight: "1.3" }}>Có. Sinh viên được phép làm thêm tối đa...</p>
                         </div>
-                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle flex-shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
+                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
                       </div>
 
                       {/* Q2 */}
                       <div className="d-flex mb-3 pt-2 border-top align-items-start">
-                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 flex-shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>2</div>
-                        <div className="flex-grow-1 pe-2 w-100" style={{ minWidth: 0 }}>
+                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>2</div>
+                        <div className="grow pe-2 w-100" style={{ minWidth: 0 }}>
                           <h6 className="fw-bold mb-1 text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Học bổng thế nào?</h6>
                           <p className="text-body-secondary mb-0 text-truncate" style={{ fontSize: "11.5px", lineHeight: "1.3" }}>HTO hỗ trợ săn học bổng từ các trường...</p>
                         </div>
-                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle flex-shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
+                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
                       </div>
 
                       {/* Q3 */}
                       <div className="d-flex mb-2 pt-2 border-top align-items-start">
-                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 flex-shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>3</div>
-                        <div className="flex-grow-1 pe-2 w-100" style={{ minWidth: 0 }}>
+                        <div className="rounded-circle text-white d-flex justify-content-center align-items-center me-2 shrink-0" style={{ width: "22px", height: "22px", backgroundColor: "#1d4ed8", fontSize: "12px", fontWeight: "bold", marginTop: "2px" }}>3</div>
+                        <div className="grow pe-2 w-100" style={{ minWidth: 0 }}>
                           <h6 className="fw-bold mb-1 text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>Tài chính bao nhiêu?</h6>
                           <p className="text-body-secondary mb-0 text-truncate" style={{ fontSize: "11.5px", lineHeight: "1.3" }}>Tối thiểu 11.904 EUR/năm (quy định 2026).</p>
                         </div>
-                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle flex-shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
+                        <img src="./assets/images/hito_6.png" width="32" height="32" alt="HITO" className="rounded-circle shrink-0 bg-secondary-subtle" style={{ objectFit: "cover" }} />
                       </div>
                     </div>
 
                     <div className="d-flex flex-row justify-content-between align-items-center pt-2 mt-2 border-top gap-2">
                       <a href="#" className="text-decoration-none fw-bold text-primary d-flex align-items-center text-truncate" style={{ fontSize: "13px" }}>
-                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1 flex-shrink-0"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg>
+                        Xem tất cả <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="ms-1 shrink-0"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg>
                       </a>
-                      <button className="btn text-white py-1 px-3 d-flex align-items-center bg-primary flex-shrink-0 text-nowrap" style={{ borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
+                      <button className="btn text-white py-1 px-3 d-flex align-items-center bg-primary shrink-0 text-nowrap" style={{ borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
                         Hỏi mới
                       </button>
                     </div>

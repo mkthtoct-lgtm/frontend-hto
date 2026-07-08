@@ -2490,7 +2490,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
       {isDetailPanelOpen && (documentError || selectedDocument) && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1080,
@@ -2848,7 +2848,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
       {deleteTargetDocument && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1090,
@@ -3219,7 +3219,7 @@ function DocumentActionButtons({
 function DocumentDownloadBadge({ currentUser, document, hasDownloadAccess }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+      className={`badge shrink-0 ${hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
         }`}
       title={
         hasDownloadAccess
@@ -3309,7 +3309,7 @@ function PermissionActionDropdown({ actionLabel, children, rule }) {
 function CategoryStatusBadge({ isHidden }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
+      className={`badge shrink-0 ${isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
         }`}
     >
       {isHidden ? "Đang ẩn" : "Hiển thị"}
