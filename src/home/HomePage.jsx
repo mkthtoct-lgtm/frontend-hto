@@ -790,7 +790,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
               }}
             >
               <img
-                src="assets/images/Artboard1.png"
+                src="/assets/images/Artboard1.png"
                 alt="HTO Portal Dashboard"
                 className="img-fluid rounded"
                 style={{ width: "100%", height: "auto", display: "block" }}

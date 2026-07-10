@@ -1422,8 +1422,12 @@ function App() {
       );
     }
 
+    const authBannerImg = authMode === "login"
+      ? "/assets/images/BIA%20%C4%90S/BIA_HTO-03.png"
+      : "/assets/images/BIA%20%C4%90S/BIA_HTO-01.png";
+
     return (
-      <AuthLayout authMode={authMode} imageSrc="/assets/images/z7832613943587_bf4b220919f48d434d108e0de31e00e9.jpg" registerLayoutMode={registerLayoutMode}>
+      <AuthLayout authMode={authMode} imageSrc={authBannerImg} registerLayoutMode={registerLayoutMode}>
         {authContent}
       </AuthLayout>
     );

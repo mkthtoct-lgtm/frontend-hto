@@ -155,8 +155,11 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
   const [referralError, setReferralError] = useState("");
   const [referralCopied, setReferralCopied] = useState(false);
   const hasAutoOpenedNotifications = useRef(false);
+  const isFetchingRef = useRef(false);
 
   const refreshUnreadCount = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       const unreadNotifications = await getUnreadNotifications();
       const nextUnreadCount = unreadNotifications.length;
@@ -171,6 +174,8 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
     } catch {
       setUnreadNotificationCount(0);
       setNotificationItems([]);
+    } finally {
+      isFetchingRef.current = false;
     }
   }, []);
 

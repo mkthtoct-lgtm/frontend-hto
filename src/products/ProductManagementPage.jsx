@@ -199,7 +199,7 @@ const mapApiProductToUiProduct = (apiProduct, categoryId, categoryName) => {
   }
 
   const image = cleanImagePath
-    ? (cleanImagePath.startsWith("http")
+    ? (cleanImagePath.startsWith("http") || cleanImagePath.startsWith("data:")
       ? cleanImagePath
       : `${STATIC_BASE_URL}/${cleanImagePath.replace(/^\//, "")}`)
     : "";
@@ -1560,18 +1560,18 @@ export function ProductManagementPageContent({ currentUser }) {
 
                 </div>
 
-                {/* Modal Footer */}
-                <div className="p-4 border-t border-slate-200 app-dark:!border-slate-800 bg-slate-50 app-dark:!bg-[#151515] flex gap-3 justify-end">
+                 {/* Modal Footer */}
+                <div className="p-4 border-t border-slate-200 app-dark:!border-slate-800 bg-slate-50 app-dark:!bg-[#151515] flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-end">
                   <button
                     type="button"
                     onClick={() => setEditingProduct(null)}
-                    className="text-slate-600 border border-slate-250 hover:bg-slate-100 text-xs font-semibold py-2 px-4 rounded-xl transition-all cursor-pointer"
+                    className="order-2 sm:order-1 w-full sm:w-auto text-slate-600 border border-slate-250 hover:bg-slate-100 text-xs font-semibold py-2.5 px-4 rounded-xl transition-all cursor-pointer flex items-center justify-center"
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-4 rounded-xl shadow-md transition-all cursor-pointer"
+                    className="order-1 sm:order-2 w-full sm:w-auto bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center"
                   >
                     Lưu cấu hình
                   </button>
@@ -1639,17 +1639,17 @@ export function ProductManagementPageContent({ currentUser }) {
                   </select>
                 </div>
 
-                <div className="flex gap-3 justify-end pt-3">
+                <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-end pt-3">
                   <button
                     type="button"
                     onClick={() => setEditingCategory(null)}
-                    className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors cursor-pointer"
+                    className="order-2 sm:order-1 w-full sm:w-auto text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center"
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
-                    className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-md transition-colors cursor-pointer"
+                    className="order-1 sm:order-2 w-full sm:w-auto bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-4 rounded-xl shadow-md transition-colors cursor-pointer flex items-center justify-center"
                   >
                     Xác nhận lưu
                   </button>

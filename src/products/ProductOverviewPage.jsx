@@ -446,7 +446,7 @@ const mapApiProductToUiProduct = (apiProduct, categoryId, categoryName) => {
   }
 
   const image = cleanImagePath
-    ? (cleanImagePath.startsWith("http")
+    ? (cleanImagePath.startsWith("http") || cleanImagePath.startsWith("data:")
       ? cleanImagePath
       : `${STATIC_BASE_URL}/${cleanImagePath.replace(/^\//, "")}`)
     : "";
@@ -2832,7 +2832,7 @@ function ProductOverviewPageInner({ currentUser }) {
 
         {/* STATS SECTION */}
         {viewMode === "overview" && canManageProducts && selectedCategoryName === "Tất cả" && (
-          <div id="products-stats-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div id="products-stats-grid" className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div className="bg-white app-dark:bg-[#252525]! rounded-2xl p-4.5 shadow-sm border border-slate-100 app-dark:border-white/8! flex items-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 app-dark:bg-cyan-955/40! text-cyan-900 app-dark:text-cyan-300! shrink-0 mr-4">
                 <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3091,345 +3091,427 @@ function ProductOverviewPageInner({ currentUser }) {
         )}
 
         {/* PRODUCT DETAIL VIEW */}
-        {viewMode === "detail" && selectedProduct && (
-          <div className="bg-white app-dark:bg-[#252525]! rounded-2xl shadow-sm border border-slate-100 app-dark:border-white/8! overflow-hidden">
+        {viewMode === "detail" && selectedProduct && (() => {
+          const getDefaultProductImage = (prod) => {
+            const country = String(prod?.country || "").trim().toLowerCase();
+            const categoryName = String(prod?.categoryName || "").trim().toLowerCase();
+            const name = String(prod?.name || "").trim().toLowerCase();
 
-            {/* ── HERO BANNER — bố cục 2 cột trắng theo mẫu ── */}
-            <div className="relative overflow-hidden rounded-t-2xl border-b border-slate-100 app-dark:border-white/8! bg-white app-dark:bg-[#1e1e1e]!" style={{ minHeight: "260px" }}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch" style={{ minHeight: "260px" }}>
+            // Germany
+            if (country.includes("đức") || country.includes("germany") || country.includes("de")) {
+              return "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=800&q=80";
+            }
+            // Canada
+            if (country.includes("canada") || country.includes("ca")) {
+              return "https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=800&q=80";
+            }
+            // US
+            if (country.includes("mỹ") || country.includes("usa") || country.includes("us") || country.includes("united states")) {
+              return "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=800&q=80";
+            }
+            // Australia
+            if (country.includes("úc") || country.includes("australia") || country.includes("au")) {
+              return "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=800&q=80";
+            }
+            // Japan
+            if (country.includes("nhật") || country.includes("japan") || country.includes("jp")) {
+              return "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80";
+            }
+            // Korea
+            if (country.includes("hàn") || country.includes("korea") || country.includes("kr")) {
+              return "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80";
+            }
+            // UK
+            if (country.includes("anh") || country.includes("uk") || country.includes("united kingdom") || country.includes("gb")) {
+              return "https://images.unsplash.com/photo-1486299267070-83823f5448dd?auto=format&fit=crop&w=800&q=80";
+            }
+            // Philippines
+            if (country.includes("philippines") || country.includes("ph")) {
+              return "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=800&q=80";
+            }
+            // Singapore
+            if (country.includes("singapore") || country.includes("sg")) {
+              return "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80";
+            }
+            // General study
+            if (categoryName.includes("học") || name.includes("học")) {
+              return "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80";
+            }
+            // General visa
+            if (categoryName.includes("visa") || name.includes("visa")) {
+              return "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+            }
+            // General default
+            return "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80";
+          };
 
-                {/* Cột trái: thông tin */}
-                <div className="flex flex-col justify-between p-6 md:p-8 gap-4">
-                  {/* Breadcrumb text-only (không có nút quay lại) */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-400 app-dark:text-slate-500!">
-                    <span
-                      className="hover:text-[#005bbf] cursor-pointer transition-colors font-medium"
-                      onClick={() => setViewMode("overview")}
-                    >
-                      {selectedProduct.categoryName || "Sản phẩm"}
-                    </span>
-                    {(selectedProduct.region || selectedProduct.country) && (
-                      <>
-                        <span>›</span>
-                        <span className="flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          {[selectedProduct.region, resolveCountryName(selectedProduct.country)].filter(Boolean).join(" · ")}
-                        </span>
-                      </>
-                    )}
-                  </div>
+          const pImg = selectedProduct.image || getDefaultProductImage(selectedProduct);
+          const bgGradient = `linear-gradient(135deg, ${selectedProduct.gradientFrom || "#0d2040"} 0%, ${selectedProduct.gradientTo || "#1a3a6b"} 100%)`;
 
-                  {/* Nội dung chính */}
-                  <div className="flex-1">
-                    {/* Badge danh mục */}
-                    <div className="flex gap-2 mb-3 flex-wrap items-center">
-                      <span className="inline-block bg-slate-100 app-dark:bg-white/10! text-slate-600 app-dark:text-slate-300! text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-slate-200 app-dark:border-white/15!">
-                        {selectedProduct.categoryName || "Chương trình"}
-                      </span>
-                      {selectedProduct.shortCode && (
-                        <span className="inline-block bg-cyan-50 app-dark:bg-cyan-900/30 text-cyan-700 app-dark:text-cyan-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-cyan-100 app-dark:border-cyan-900/40">
-                          Mã: {selectedProduct.shortCode}
-                        </span>
-                      )}
-                      {selectedProduct.visaCode && (
-                        <span className="inline-block bg-indigo-50 app-dark:bg-indigo-900/30 text-indigo-700 app-dark:text-indigo-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-indigo-100 app-dark:border-indigo-900/40">
-                          Visa Code: {selectedProduct.visaCode}
-                        </span>
-                      )}
-                      {selectedProduct.purpose && (
-                        <span className="inline-block bg-amber-50 app-dark:bg-amber-900/30 text-amber-700 app-dark:text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-100 app-dark:border-amber-900/40">
-                          Mục đích: {selectedProduct.purpose}
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 app-dark:text-white! m-0 leading-tight">
-                      {selectedProduct.name}
-                    </h2>
-                    <p className="text-slate-500 app-dark:text-slate-400! text-sm leading-relaxed mt-2 mb-0 max-w-lg">
-                      {selectedProduct.description || selectedProduct.detailDescription || "Chương trình chất lượng cao, uy tín quốc tế."}
-                    </p>
-                  </div>
+          // Parse steps dynamically to resolve step-numbering bug
+          const parsedSteps = [];
+          (selectedProduct.processSteps || []).forEach(step => {
+            const stepTrimmed = step.trim();
+            if (stepTrimmed.startsWith("Bước ") || stepTrimmed.startsWith("Bước: ") || stepTrimmed.toLowerCase().startsWith("bước ")) {
+              parsedSteps.push({
+                title: stepTrimmed,
+                description: []
+              });
+            } else {
+              if (parsedSteps.length > 0) {
+                parsedSteps[parsedSteps.length - 1].description.push(stepTrimmed);
+              } else {
+                parsedSteps.push({
+                  title: stepTrimmed,
+                  description: []
+                });
+              }
+            }
+          });
 
-                  {/* Footer: ngày cập nhật + website */}
-                  <div className="flex items-center gap-3 flex-wrap pt-2">
-                    <p className="text-slate-400 app-dark:text-slate-500! text-[11px] flex items-center gap-1.5 m-0">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Cập nhật:{" "}
-                      {selectedProduct.updatedAt
-                        ? (() => {
-                          try {
-                            const d = new Date(selectedProduct.updatedAt);
-                            return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-                          } catch { return selectedProduct.updatedAt; }
-                        })()
-                        : new Date().toLocaleDateString("vi-VN")}
-                    </p>
-                    {selectedProduct.websiteUrl && (
-                      <button
-                        className="bg-slate-100 hover:bg-slate-200 app-dark:bg-white/8! app-dark:hover:bg-white/15! text-slate-700 app-dark:text-slate-300! border border-slate-200 app-dark:border-white/15! font-semibold text-xs rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all"
-                        onClick={() => handleOpenWebsite(selectedProduct.websiteUrl)}
+          return (
+            <div className="bg-white app-dark:bg-[#1e1e1e]! rounded-2xl shadow-lg border border-slate-100 app-dark:border-white/8! overflow-hidden">
+
+              {/* ── HERO BANNER — bố cục màu gradient xịn đè hình ── */}
+              <div className="relative overflow-hidden" style={{ minHeight: "280px", background: bgGradient }}>
+                
+                {/* Decorative background overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-10 items-center p-6 md:p-8 lg:p-10 relative z-10 gap-6">
+
+                  {/* Cột trái: thông tin (6/10) */}
+                  <div className="lg:col-span-6 flex flex-col justify-between gap-4">
+                    {/* Breadcrumb text-only */}
+                    <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-300/80">
+                      <span
+                        className="hover:text-white cursor-pointer transition-colors font-medium"
+                        onClick={() => setViewMode("overview")}
                       >
-                        <i className="fa fa-globe text-[11px]"></i> Website
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Cột phải: ảnh nghiêng + hover về thẳng */}
-                <div className="hidden lg:flex items-center justify-end pr-8 overflow-hidden">
-
-                  {/* Nút Chỉnh sửa — góc phải trên banner (theo mẫu) */}
-                  {canManageProducts && (
-                    <button
-                      className="absolute top-4 right-5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all shadow-md z-10"
-                      onClick={() => handleEditProduct(selectedProduct)}
-                    >
-                      <i className="fa fa-pen text-[11px]"></i> Chỉnh sửa
-                    </button>
-                  )}
-                  {selectedProduct.image ? (
-                    <div
-                      className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 app-dark:border-white/10! transition-transform duration-500"
-                      style={{ width: "380px", height: "240px", transform: "rotate(3deg)", flexShrink: 0 }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "rotate(0deg)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "rotate(3deg)"}
-                    >
-                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                        {selectedProduct.categoryName || "Sản phẩm"}
+                      </span>
+                      {(selectedProduct.region || selectedProduct.country) && (
+                        <>
+                          <span className="opacity-60">›</span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {[selectedProduct.region, resolveCountryName(selectedProduct.country)].filter(Boolean).join(" · ")}
+                          </span>
+                        </>
+                      )}
                     </div>
-                  ) : (
-                    <div
-                      className="rounded-2xl bg-linear-to-br from-blue-50 to-slate-100 app-dark:from-blue-900/20 app-dark:to-slate-800/30 border border-slate-200 app-dark:border-white/10! flex items-center justify-center shadow-2xl transition-transform duration-500"
-                      style={{ width: "380px", height: "240px", transform: "rotate(3deg)", flexShrink: 0 }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "rotate(0deg)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "rotate(3deg)"}
-                    >
-                      <i className="fa fa-image text-5xl text-slate-300 app-dark:text-slate-600!"></i>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* ── CONTENT ── */}
-            <div className="p-6 md:p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-
-                {/* LEFT: Main content (7/10) */}
-                <div className="lg:col-span-7 space-y-7">
-
-                  {/* Mô tả chi tiết */}
-                  {selectedProduct.detailDescription && (
-                    <div>
-                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-3 flex items-center gap-2">
-                        <i className="fa fa-align-left text-[#005bbf]"></i>
-                        <span className="text-[#005bbf] uppercase tracking-wide text-xs">Giới thiệu chương trình</span>
-                      </h4>
-                      <p className="text-slate-600 app-dark:text-slate-300! text-sm leading-relaxed whitespace-pre-line m-0">
-                        {selectedProduct.detailDescription}
+                    {/* Nội dung chính */}
+                    <div className="flex-1 mt-2">
+                      {/* Badge danh mục */}
+                      <div className="flex gap-2 mb-4 flex-wrap items-center">
+                        <span className="inline-block bg-white/15 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-white/10">
+                          {selectedProduct.categoryName || "Chương trình"}
+                        </span>
+                        {selectedProduct.shortCode && (
+                          <span className="inline-block bg-cyan-500/20 text-cyan-200 text-[10px] font-bold px-3 py-1 rounded-full border border-cyan-500/30">
+                            Mã: {selectedProduct.shortCode}
+                          </span>
+                        )}
+                        {selectedProduct.visaCode && (
+                          <span className="inline-block bg-indigo-500/20 text-indigo-200 text-[10px] font-bold px-3 py-1 rounded-full border border-indigo-500/30">
+                            Visa: {selectedProduct.visaCode}
+                          </span>
+                        )}
+                        {selectedProduct.purpose && (
+                          <span className="inline-block bg-amber-500/20 text-amber-200 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-500/30">
+                            {selectedProduct.purpose}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h2 className="text-2xl md:text-3.5xl font-extrabold text-white m-0 leading-tight tracking-tight">
+                        {selectedProduct.name}
+                      </h2>
+                      <p className="text-slate-200 app-dark:text-slate-300! text-[14px] leading-relaxed mt-3 mb-0 max-w-xl opacity-90">
+                        {selectedProduct.description || "Chương trình chất lượng cao, uy tín quốc tế của tập đoàn HT Ocean."}
                       </p>
                     </div>
-                  )}
 
-                  {/* Đối tượng phù hợp */}
-                  {selectedProduct.targetAudience && (
-                    <div className="flex gap-3 p-4 rounded-2xl bg-blue-50 app-dark:bg-white/5! border border-blue-100 app-dark:border-white/8!">
-                      <div className="w-9 h-9 rounded-xl bg-[#005bbf] text-white flex items-center justify-center shrink-0 text-sm shadow-sm">
-                        <i className="fa fa-users text-xs"></i>
-                      </div>
-                      <div>
-                        <p className="font-bold text-[#005bbf] app-dark:text-blue-300! text-[10px] uppercase tracking-widest mb-1">Đối tượng phù hợp</p>
-                        <p className="text-slate-600 app-dark:text-slate-300! text-sm leading-relaxed m-0">{selectedProduct.targetAudience}</p>
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-
-                {/* RIGHT: Sidebar (3/10) */}
-                <div className="lg:col-span-3 space-y-4">
-
-                  {/* Card tài liệu & brochure */}
-                  <div className="bg-slate-50 app-dark:bg-white/5! rounded-2xl border border-slate-200 app-dark:border-white/8! overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-200 app-dark:border-white/8! flex items-center gap-2">
-                      <div className="w-7 h-7 bg-[#005bbf]/10 rounded-lg flex items-center justify-center">
-                        <i className="fa fa-folder-open text-[#005bbf] text-sm"></i>
-                      </div>
-                      <span className="font-bold text-slate-700 app-dark:text-slate-200! text-sm">Tài liệu & Brochure</span>
-                    </div>
-
-                    <div className="p-4 space-y-4">
-                      {/* Brochure */}
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Brochure chính thức</p>
-                        {selectedProduct.brochure ? (
-                          <div className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              {selectedProduct.brochure.sourceType === "link" ? (
-                                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                                  <i className="fa fa-link text-[#005bbf] text-xs"></i>
-                                </div>
-                              ) : selectedProduct.brochure.fileType === "IMAGE" ? (
-                                selectedProduct.brochure.url ? (
-                                  <img src={selectedProduct.brochure.url} alt="preview" className="rounded-lg w-7 h-7 object-cover shrink-0 border border-slate-200" />
-                                ) : (
-                                  <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
-                                    <i className="fa fa-file-image text-emerald-500 text-xs"></i>
-                                  </div>
-                                )
-                              ) : (
-                                <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
-                                  <i className="fa fa-file-pdf text-red-500 text-xs"></i>
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={selectedProduct.brochure.name}>{selectedProduct.brochure.name}</p>
-                                <p className="text-slate-400 text-[10px] m-0">{selectedProduct.brochure.size || "Link"}</p>
-                              </div>
-                            </div>
-                            {selectedProduct.brochure.sourceType === "link" ? (
-                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>Mở</button>
-                            ) : selectedProduct.brochure.fileType === "IMAGE" && selectedProduct.brochure.url ? (
-                              <a href={selectedProduct.brochure.url} target="_blank" rel="noreferrer" className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors">Xem</a>
-                            ) : (
-                              <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>Tải</button>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
-                            <i className="fa fa-description text-slate-300 text-sm"></i>
-                            <p className="text-slate-400 text-xs italic m-0">Chưa có brochure</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Tài liệu tư vấn */}
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tài liệu hướng dẫn tư vấn</p>
-                        {selectedProduct.documents && selectedProduct.documents.length > 0 ? (
-                          <div className="flex flex-col gap-2">
-                            {selectedProduct.documents.map((doc) => (
-                              <div key={doc.id} className="bg-white app-dark:bg-white/5! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  {doc.sourceType === "link" ? (
-                                    <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                                      <i className="fa fa-link text-[#005bbf] text-[10px]"></i>
-                                    </div>
-                                  ) : (
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${doc.type === "PDF" ? "bg-red-50" : doc.type === "XLSX" ? "bg-emerald-50" : "bg-sky-50"}`}>
-                                      <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : doc.type === "XLSX" ? "fa-file-excel text-emerald-500" : "fa-file-lines text-sky-500"} text-[10px]`}></i>
-                                    </div>
-                                  )}
-                                  <div className="min-w-0">
-                                    <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={doc.name}>{doc.name}</p>
-                                    <p className="text-slate-400 text-[10px] m-0">{doc.size || "Link"} · {doc.updatedAt || "2026-06-01"}</p>
-                                  </div>
-                                </div>
-                                {doc.sourceType === "link" ? (
-                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(doc.url)}>Mở</button>
-                                ) : (
-                                  <button className="text-slate-600 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(doc.name)}>Tải</button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
-                            <i className="fa fa-menu-book text-slate-300 text-sm"></i>
-                            <p className="text-slate-400 text-xs italic m-0">Chưa có tài liệu</p>
-                          </div>
-                        )}
-                      </div>
+                    {/* Footer: ngày cập nhật + website */}
+                    <div className="flex items-center gap-4 flex-wrap pt-4 border-t border-white/10 mt-2">
+                      <p className="text-slate-300 text-xs flex items-center gap-1.5 m-0 opacity-80">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Cập nhật:{" "}
+                        {selectedProduct.updatedAt
+                          ? (() => {
+                            try {
+                              const d = new Date(selectedProduct.updatedAt);
+                              return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                            } catch { return selectedProduct.updatedAt; }
+                          })()
+                          : new Date().toLocaleDateString("vi-VN")}
+                      </p>
+                      {selectedProduct.websiteUrl && (
+                        <button
+                          className="bg-white/10 hover:bg-white/20 text-white border border-white/25 font-semibold text-xs rounded-xl px-3.5 py-2 flex items-center gap-1.5 transition-all shadow-sm"
+                          onClick={() => handleOpenWebsite(selectedProduct.websiteUrl)}
+                        >
+                          <i className="fa fa-globe text-[11px]"></i> Website
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  {/* Nút Quan tâm sản phẩm — GIỮ NGUYÊN onClick & logic */}
-                  <button
-                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3.5 px-4 rounded-2xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-                    onClick={handleOpenInterestModal}
-                  >
-                    <i className="fa fa-paper-plane"></i> Quan tâm sản phẩm
-                  </button>
+                  {/* Cột phải: ảnh banner phẳng, đổ bóng sâu (4/10) */}
+                  <div className="lg:col-span-4 flex items-center justify-center lg:justify-end overflow-hidden relative">
+                    
+                    {/* Nút Chỉnh sửa — góc phải trên banner */}
+                    {canManageProducts && (
+                      <button
+                        className="absolute top-0 right-0 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all shadow-md z-25"
+                        onClick={() => handleEditProduct(selectedProduct)}
+                      >
+                        <i className="fa fa-pen text-[11px]"></i> Chỉnh sửa
+                      </button>
+                    )}
+
+                    <div
+                      className="rounded-2xl overflow-hidden shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-white/15 transition-transform duration-300 hover:scale-[1.02]"
+                      style={{ width: "100%", maxWidth: "380px", height: "230px", flexShrink: 0 }}
+                    >
+                      <img src={pImg} alt={selectedProduct.name} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* ── ROW: Điểm nổi bật (7) + Quy trình (3) ── */}
-              {(selectedProduct.highlights?.length > 0 || selectedProduct.processSteps?.length > 0) && (
-                <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mt-6 pt-6 border-t border-slate-100 app-dark:border-white/8!">
+              {/* ── CONTENT ── */}
+              <div className="p-6 md:p-8 lg:p-10">
+                <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
-                  {/* Điểm nổi bật — 7/10 */}
-                  {selectedProduct.highlights && selectedProduct.highlights.length > 0 && (
-                    <div className="lg:col-span-7">
-                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
-                        <i className="fa fa-star text-amber-400"></i>
-                        <span className="text-slate-700 app-dark:text-slate-200!">Điểm nổi bật</span>
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedProduct.highlights.map((hl, i) => (
-                          <div
-                            key={i}
-                            className="flex items-start gap-3 p-3.5 rounded-xl bg-white app-dark:bg-white/5! border border-slate-200 app-dark:border-white/8! shadow-sm hover:border-blue-200 hover:shadow-md transition-all duration-200"
-                          >
-                            <div className="w-8 h-8 bg-blue-50 app-dark:bg-blue-900/30! rounded-lg flex items-center justify-center shrink-0">
-                              <i className="fa fa-circle-check text-[#005bbf] app-dark:text-blue-400! text-sm"></i>
-                            </div>
-                            <span className="text-slate-700 app-dark:text-slate-300! text-sm leading-relaxed">{hl}</span>
-                          </div>
-                        ))}
+                  {/* LEFT: Main content (7/10) */}
+                  <div className="lg:col-span-7 space-y-8">
+
+                    {/* Mô tả chi tiết */}
+                    {selectedProduct.detailDescription && (
+                      <div>
+                        <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
+                          <i className="fa fa-align-left text-[#005bbf]"></i>
+                          <span className="text-[#005bbf] uppercase tracking-wide text-xs">Giới thiệu chương trình</span>
+                        </h4>
+                        <div className="space-y-4">
+                          {selectedProduct.detailDescription.split("\n\n").map((para, idx) => (
+                            <p key={idx} className="text-slate-600 app-dark:text-slate-300! text-[14.5px] leading-relaxed m-0 border-l-3 border-[#005bbf]/25 pl-4 py-0.5">
+                              {para}
+                            </p>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Quy trình xử lý — 3/10, stepper dọc */}
-                  {selectedProduct.processSteps && selectedProduct.processSteps.length > 0 && (
-                    <div className="lg:col-span-3">
-                      <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
-                        <i className="fa fa-list-check text-[#005bbf]"></i>
-                        <span className="text-slate-700 app-dark:text-slate-200!">Quy trình xử lý</span>
-                        <span className="ml-auto text-[10px] font-semibold text-slate-400 bg-slate-100 app-dark:bg-white/10! px-2 py-0.5 rounded-full">
-                          {selectedProduct.processSteps.length} bước
-                        </span>
-                      </h4>
-                      <div className="flex flex-col">
-                        {selectedProduct.processSteps.map((step, i) => (
-                          <div key={i} className="flex items-start gap-3">
-                            <div className="flex flex-col items-center shrink-0">
-                              <div className="w-7 h-7 bg-[#005bbf] text-white font-bold rounded-full flex items-center justify-center text-[11px] shadow-sm z-10">
-                                {i + 1}
+                    {/* Đối tượng phù hợp */}
+                    {selectedProduct.targetAudience && (
+                      <div className="flex gap-4 p-5 rounded-2xl bg-cyan-50/50 app-dark:bg-white/3! border border-cyan-100/50 app-dark:border-white/8!">
+                        <div className="w-10 h-10 rounded-xl bg-[#005bbf] text-white flex items-center justify-center shrink-0 text-sm shadow-md">
+                          <i className="fa fa-users text-xs"></i>
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#005bbf] app-dark:text-blue-300! text-[10px] uppercase tracking-widest mb-1.5">Đối tượng phù hợp</p>
+                          <p className="text-slate-600 app-dark:text-slate-300! text-[14px] leading-relaxed m-0">{selectedProduct.targetAudience}</p>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* RIGHT: Sidebar (3/10) */}
+                  <div className="lg:col-span-3 space-y-4">
+
+                    {/* Card tài liệu & brochure */}
+                    <div className="bg-slate-50 app-dark:bg-white/3! rounded-2xl border border-slate-200 app-dark:border-white/8! overflow-hidden shadow-sm">
+                      <div className="px-4 py-3.5 border-b border-slate-200 app-dark:border-white/8! flex items-center gap-2 bg-slate-100/50 app-dark:bg-white/2!">
+                        <div className="w-7 h-7 bg-[#005bbf]/10 rounded-lg flex items-center justify-center">
+                          <i className="fa fa-folder-open text-[#005bbf] text-sm"></i>
+                        </div>
+                        <span className="font-bold text-slate-700 app-dark:text-slate-200! text-sm">Tài liệu & Brochure</span>
+                      </div>
+
+                      <div className="p-4 space-y-4">
+                        {/* Brochure */}
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Brochure chính thức</p>
+                          {selectedProduct.brochure ? (
+                            <div className="bg-white app-dark:bg-[#252525]! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2 shadow-xs">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {selectedProduct.brochure.sourceType === "link" ? (
+                                  <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <i className="fa fa-link text-[#005bbf] text-xs"></i>
+                                  </div>
+                                ) : selectedProduct.brochure.fileType === "IMAGE" ? (
+                                  selectedProduct.brochure.url ? (
+                                    <img src={selectedProduct.brochure.url} alt="preview" className="rounded-lg w-7 h-7 object-cover shrink-0 border border-slate-200" />
+                                  ) : (
+                                    <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
+                                      <i className="fa fa-file-image text-emerald-500 text-xs"></i>
+                                    </div>
+                                  )
+                                ) : (
+                                  <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center shrink-0">
+                                    <i className="fa fa-file-pdf text-red-500 text-xs"></i>
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={selectedProduct.brochure.name}>{selectedProduct.brochure.name}</p>
+                                  <p className="text-slate-400 text-[10px] m-0">{selectedProduct.brochure.size || "Link"}</p>
+                                </div>
                               </div>
-                              {i < selectedProduct.processSteps.length - 1 && (
-                                <div className="w-0.5 h-5 bg-blue-200 app-dark:bg-blue-900/50! my-1" />
+                              {selectedProduct.brochure.sourceType === "link" ? (
+                                <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(selectedProduct.brochure.url)}>Mở</button>
+                              ) : selectedProduct.brochure.fileType === "IMAGE" && selectedProduct.brochure.url ? (
+                                <a href={selectedProduct.brochure.url} target="_blank" rel="noreferrer" className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors">Xem</a>
+                              ) : (
+                                <button className="text-[#005bbf] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(selectedProduct.brochure.name)}>Tải</button>
                               )}
                             </div>
-                            <p className="text-slate-600 app-dark:text-slate-300! text-xs leading-relaxed pt-1.5 pb-3 m-0">{step}</p>
-                          </div>
-                        ))}
+                          ) : (
+                            <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
+                              <i className="fa fa-description text-slate-355 text-sm"></i>
+                              <p className="text-slate-400 text-xs italic m-0">Chưa có brochure</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Tài liệu tư vấn */}
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Tài liệu hướng dẫn tư vấn</p>
+                          {selectedProduct.documents && selectedProduct.documents.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                              {selectedProduct.documents.map((doc) => (
+                                <div key={doc.id} className="bg-white app-dark:bg-[#252525]! border border-slate-200/80 app-dark:border-white/10! rounded-xl p-3 flex justify-between items-center gap-2 shadow-xs">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {doc.sourceType === "link" ? (
+                                      <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
+                                        <i className="fa fa-link text-[#005bbf] text-[10px]"></i>
+                                      </div>
+                                    ) : (
+                                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${doc.type === "PDF" ? "bg-red-50" : doc.type === "XLSX" ? "bg-emerald-50" : "bg-sky-50"}`}>
+                                        <i className={`fa ${doc.type === "PDF" ? "fa-file-pdf text-red-500" : doc.type === "XLSX" ? "fa-file-excel text-emerald-500" : "fa-file-lines text-sky-500"} text-[10px]`}></i>
+                                      </div>
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="font-semibold text-xs text-slate-800 app-dark:text-slate-200! truncate m-0" title={doc.name}>{doc.name}</p>
+                                      <p className="text-slate-400 text-[10px] m-0">{doc.size || "Link"} · {doc.updatedAt || "2026-06-01"}</p>
+                                    </div>
+                                  </div>
+                                  {doc.sourceType === "link" ? (
+                                    <button className="text-slate-650 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleOpenWebsite(doc.url)}>Mở</button>
+                                  ) : (
+                                    <button className="text-slate-650 border border-slate-200 hover:bg-slate-50 text-xs font-semibold py-1 px-3 rounded-lg shrink-0 transition-colors" onClick={() => handleDownloadDoc(doc.name)}>Tải</button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 py-2.5 px-3 bg-white app-dark:bg-white/3! border border-dashed border-slate-200 app-dark:border-white/10! rounded-xl">
+                              <i className="fa fa-menu-book text-slate-355 text-sm"></i>
+                              <p className="text-slate-400 text-xs italic m-0">Chưa có tài liệu</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
 
-              {/* Tags */}
-              {selectedProduct.tags && selectedProduct.tags.length > 0 && (
-                <div className="flex items-center flex-wrap gap-2 mt-5 pt-5 border-t border-slate-100 app-dark:border-white/8!">
-                  {selectedProduct.tags.map((tag, i) => (
-                    <span
-                      key={i}
-                      className="bg-blue-50 app-dark:bg-blue-900/20! text-[#005bbf] app-dark:text-blue-300! border border-blue-100 app-dark:border-blue-900/40! px-3 py-1 rounded-full text-xs font-semibold"
+                    {/* Nút Quan tâm sản phẩm */}
+                    <button
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-3.5 px-4 rounded-2xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                      onClick={handleOpenInterestModal}
                     >
-                      #{tag}
-                    </span>
-                  ))}
+                      <i className="fa fa-paper-plane"></i> Quan tâm sản phẩm
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {/* ── ROW: Điểm nổi bật (7) + Quy trình (3) ── */}
+                {(selectedProduct.highlights?.length > 0 || parsedSteps.length > 0) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-10 gap-8 mt-8 pt-8 border-t border-slate-100 app-dark:border-white/8!">
+
+                    {/* Điểm nổi bật — 7/10 */}
+                    {selectedProduct.highlights && selectedProduct.highlights.length > 0 && (
+                      <div className="lg:col-span-7">
+                        <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-4 flex items-center gap-2">
+                          <i className="fa fa-star text-amber-400"></i>
+                          <span className="text-slate-700 app-dark:text-slate-200!">Điểm nổi bật</span>
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          {selectedProduct.highlights.map((hl, i) => (
+                            <div
+                              key={i}
+                              className="flex items-start gap-3.5 p-4 rounded-xl bg-white app-dark:bg-white/3! border border-slate-200 app-dark:border-white/8! shadow-xs hover:border-[#005bbf]/30 hover:scale-[1.01] hover:shadow-sm transition-all duration-200"
+                            >
+                              <div className="w-8 h-8 bg-emerald-50 app-dark:bg-emerald-950/20! text-emerald-600 app-dark:text-emerald-400! rounded-lg flex items-center justify-center shrink-0">
+                                <i className="fa fa-circle-check text-sm"></i>
+                              </div>
+                              <span className="text-slate-750 app-dark:text-slate-300! text-[13.5px] leading-relaxed">{hl}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quy trình xử lý — 3/10, stepper dọc rút gọn */}
+                    {parsedSteps.length > 0 && (
+                      <div className="lg:col-span-3">
+                        <h4 className="font-bold text-slate-800 app-dark:text-slate-100! text-sm mb-5 flex items-center gap-2">
+                          <i className="fa fa-list-check text-[#005bbf]"></i>
+                          <span className="text-slate-700 app-dark:text-slate-200!">Quy trình xử lý</span>
+                          <span className="ml-auto text-[10px] font-semibold text-slate-400 bg-slate-100 app-dark:bg-white/10! px-2 py-0.5 rounded-full">
+                            {parsedSteps.length} bước
+                          </span>
+                        </h4>
+                        
+                        <div className="flex flex-col relative pl-6 border-l-2 border-slate-100 app-dark:border-white/8! space-y-6">
+                          {parsedSteps.map((step, i) => (
+                            <div key={i} className="relative">
+                              {/* Circle number indicator */}
+                              <div className="absolute -left-[35px] top-0 w-6 h-6 bg-[#005bbf] text-white font-bold rounded-full flex items-center justify-center text-[10px] shadow-md">
+                                {i + 1}
+                              </div>
+                              <div>
+                                <h5 className="font-bold text-slate-800 app-dark:text-slate-100! text-[13.5px] mb-1 leading-snug">
+                                  {step.title}
+                                </h5>
+                                {step.description.map((desc, dIdx) => (
+                                  <p key={dIdx} className="text-slate-500 app-dark:text-slate-400! text-xs leading-relaxed m-0 mt-1">
+                                    {desc}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tags */}
+                {selectedProduct.tags && selectedProduct.tags.length > 0 && (
+                  <div className="flex items-center flex-wrap gap-2 mt-6 pt-6 border-t border-slate-100 app-dark:border-white/8!">
+                    {selectedProduct.tags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="bg-blue-50 app-dark:bg-blue-900/20! text-[#005bbf] app-dark:text-blue-300! border border-blue-100 app-dark:border-blue-900/40! px-3 py-1 rounded-full text-xs font-semibold"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* MODAL: THÊM / SỬA DANH MỤC LỚN */}
         {editingCategory && (
@@ -3684,20 +3766,20 @@ function ProductOverviewPageInner({ currentUser }) {
                   )}
                 </div>
 
-                <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end items-center">
+                <div className="bg-slate-50 p-4 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-end">
                   {editingCategory !== "new" && (
                     <button
                       type="button"
-                      className="bg-transparent hover:bg-red-50 text-red-650 border border-red-200 hover:border-red-350 text-xs font-semibold py-2 px-4 rounded-xl transition-all duration-200 mr-auto cursor-pointer flex items-center gap-1.5"
+                      className="order-3 sm:order-1 w-full sm:w-auto sm:mr-auto bg-transparent hover:bg-red-50 text-red-650 border border-red-200 hover:border-red-350 text-xs font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
                       onClick={() => handleDeleteCategory(editingCategory)}
                     >
                       <i className="fa fa-trash-can text-sm"></i> Xóa danh mục
                     </button>
                   )}
-                  <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors cursor-pointer" onClick={() => setEditingCategory(null)}>
+                  <button type="button" className="order-2 sm:order-2 w-full sm:w-auto bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors cursor-pointer flex items-center justify-center" onClick={() => setEditingCategory(null)}>
                     Hủy bỏ
                   </button>
-                  <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors cursor-pointer">
+                  <button type="submit" className="order-1 sm:order-3 w-full sm:w-auto bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-5 rounded-xl transition-colors cursor-pointer flex items-center justify-center">
                     {editingCategory === "new" ? "Lưu danh mục" : "Cập nhật danh mục"}
                   </button>
                 </div>
@@ -4325,11 +4407,11 @@ function ProductOverviewPageInner({ currentUser }) {
                   )}
                 </div>
 
-                <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end">
-                  <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors" onClick={() => setEditingProduct(null)}>
+                <div className="bg-slate-50 p-4 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-end">
+                  <button type="button" className="order-2 sm:order-1 w-full sm:w-auto bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors flex items-center justify-center" onClick={() => setEditingProduct(null)}>
                     Hủy bỏ
                   </button>
-                  <button type="submit" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors">
+                  <button type="submit" className="order-1 sm:order-2 w-full sm:w-auto bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-5 rounded-xl transition-colors flex items-center justify-center">
                     Lưu thay đổi
                   </button>
                 </div>
@@ -4576,19 +4658,19 @@ function ProductOverviewPageInner({ currentUser }) {
                 </div>
               </form>
 
-              <div className="bg-slate-50 p-4 border-t border-slate-100 flex gap-3 justify-end shrink-0">
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-end shrink-0">
                 <button
                   type="button"
-                  className="mr-auto bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-4 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm"
+                  className="order-2 sm:order-1 w-full sm:w-auto sm:mr-auto bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                   onClick={() => setShowContractPreview(true)}
                 >
                   <i className="fa fa-file-signature text-blue-600 text-sm"></i>
                   Xem hợp đồng mẫu
                 </button>
-                <button type="button" className="bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2 px-4 rounded-xl transition-colors disabled:opacity-50" onClick={handleCloseInterestModal} disabled={isSubmittingInterest}>
+                <button type="button" className="order-3 sm:order-2 w-full sm:w-auto bg-transparent hover:bg-slate-150 text-slate-650 border border-slate-250 text-xs font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center" onClick={handleCloseInterestModal} disabled={isSubmittingInterest}>
                   Hủy bỏ
                 </button>
-                <button type="submit" form="interestForm" className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2 px-5 rounded-xl transition-colors disabled:opacity-50" disabled={isSubmittingInterest}>
+                <button type="submit" form="interestForm" className="order-1 sm:order-3 w-full sm:w-auto bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold py-2.5 px-5 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center" disabled={isSubmittingInterest}>
                   {isSubmittingInterest ? "Đang gửi..." : "Gửi liên hệ tư vấn"}
                 </button>
               </div>

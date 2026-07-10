@@ -900,3 +900,14 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   opacity: 1;
   pointer-events: auto;
 }
+
+@media (max-width: 1190.98px) {
+  .app-menubar {
+    z-index: 1050 !important;
+  }
+}
+
+/* Fix header z-index to avoid scrollable content/images overlapping it */
+.app-header {
+  z-index: 1000 !important;
+}

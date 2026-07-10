@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
@@ -214,7 +214,11 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
     manualActiveNotificationId ||
     (selectedNotificationId !== closedSelectedNotificationId ? selectedNotificationId : null);
 
+  const isFetchingRef = useRef(false);
+
   const loadNotifications = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     setLoading(true);
     setApiError("");
 
@@ -228,6 +232,7 @@ export const NotificationsPage = ({ currentUser, selectedNotificationId }) => {
       setReadByNotificationId({});
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
