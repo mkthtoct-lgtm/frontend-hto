@@ -34,7 +34,7 @@ export const AuthLayout = ({ children, authMode, imageSrc, registerLayoutMode = 
             </div>
           </div>
           <div
-            className={`relative z-[3] flex ${imageWidthClass} ${imageAlignClass} items-center overflow-hidden rounded-[24px] transition-transform duration-700 ease-[cubic-bezier(0.7,0,0.3,1)] max-md:h-auto max-md:w-full max-md:flex-none max-md:justify-center max-md:!translate-x-0 ${imageTranslateClass}`}
+            className={`relative z-[3] flex ${imageWidthClass} ${imageAlignClass} items-center overflow-hidden rounded-[24px] transition-transform duration-700 ease-[cubic-bezier(0.7,0,0.3,1)] max-md:hidden ${imageTranslateClass}`}
           >
             <img
               src={imageSrc}
