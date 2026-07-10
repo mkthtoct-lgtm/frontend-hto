@@ -800,8 +800,11 @@ async function requestReadableDocuments(path = "", options = {}) {
   return payload?.data ?? payload;
 }
 
-async function uploadDocumentFile(file) {
+async function uploadDocumentFile(file, categoryId) {
   const formData = new FormData();
+  if (categoryId) {
+    formData.append("categoryId", categoryId);
+  }
   formData.append("file", file);
 
   const response = await authFetch(`${API_BASE_URL}/documents/upload`, {
@@ -1387,7 +1390,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     try {
       const uploadedFile =
         previewDocument.sourceType === "file" && uploadForm.file
-          ? await uploadDocumentFile(uploadForm.file)
+          ? await uploadDocumentFile(uploadForm.file, previewDocument.categoryId)
           : {
             fileUrl: previewDocument.fileUrl,
             fileType: previewDocument.fileType,
