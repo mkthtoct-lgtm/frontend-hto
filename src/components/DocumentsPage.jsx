@@ -126,9 +126,11 @@ const normalizeAuthenticatedDocumentUser = (payload, fallbackUser = null) => {
       data.permissions,
       data.role?.permissions,
       data.roleId?.permissions,
+      data.grantedPermissions,
       fallbackUser?.permissions,
       fallbackUser?.role?.permissions,
       fallbackUser?.roleId?.permissions,
+      fallbackUser?.grantedPermissions,
     ),
     grantedPermissions: normalizePermissionList(
       data.grantedPermissions,
@@ -391,37 +393,13 @@ const getDownloadDisabledReason = (user, document) => {
   return "";
 };
 
-const readStoredPermissions = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(DOCUMENT_PERMISSIONS_STORAGE_KEY) || "{}");
-  } catch {
-    window.localStorage.removeItem(DOCUMENT_PERMISSIONS_STORAGE_KEY);
-    return {};
-  }
-};
+// readStoredPermissions: đã loại bỏ (không còn sử dụng)
 
-const writeStoredPermissions = (permissionsByDocumentId) => {
-  window.localStorage.setItem(
-    DOCUMENT_PERMISSIONS_STORAGE_KEY,
-    JSON.stringify(permissionsByDocumentId),
-  );
-};
+// writeStoredPermissions: đã loại bỏ (không còn sử dụng)
 
-const readStoredStatuses = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(DOCUMENT_STATUS_STORAGE_KEY) || "{}");
-  } catch {
-    window.localStorage.removeItem(DOCUMENT_STATUS_STORAGE_KEY);
-    return {};
-  }
-};
+// readStoredStatuses: đã loại bỏ (không còn sử dụng)
 
-const writeStoredStatuses = (statusesByDocumentId) => {
-  window.localStorage.setItem(
-    DOCUMENT_STATUS_STORAGE_KEY,
-    JSON.stringify(statusesByDocumentId),
-  );
-};
+// writeStoredStatuses: đã loại bỏ (không còn sử dụng)
 
 const readStoredPreviews = () => {
   try {
@@ -752,21 +730,7 @@ const normalizeDocument = (document) => {
   });
 };
 
-const applyStoredPermissions = (documents) => {
-  const storedPermissions = readStoredPermissions();
-  const storedStatuses = readStoredStatuses();
-
-  return documents.map((document) =>
-    applyStoredPreview({
-      ...document,
-      status: storedStatuses[document.id] || document.status,
-      permissions: normalizePermissions(
-        storedPermissions[document.id] || document.permissions,
-        document.departmentId,
-      ),
-    }),
-  );
-};
+// applyStoredPermissions: đã loại bỏ (không còn sử dụng)
 
 const normalizeCategory = (category) => ({
   id: category.id || category._id,
@@ -868,21 +832,7 @@ async function uploadDocumentFile(file) {
   };
 }
 
-const getReadableDocumentCategories = async () => {
-  const payload = await requestReadableDocuments("?page=1&limit=100");
-  const { items: documents } = normalizeDocumentsPayload(payload);
-  const categoriesById = new Map();
-
-  documents.forEach((document) => {
-    const category = normalizeDocumentCategory(document);
-
-    if (category) {
-      categoriesById.set(String(category.id), category);
-    }
-  });
-
-  return Array.from(categoriesById.values());
-};
+// getReadableDocumentCategories: đã loại bỏ (không còn sử dụng)
 
 const getReadableDocuments = async (params = {}) => {
   const searchParams = new URLSearchParams({
@@ -1005,15 +955,12 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   }, [forceCategoryName, categories]);
 
   useEffect(() => {
-    if (forcedCategoryId) {
+    if (!forcedCategoryId) return;
+    // Dùng queueMicrotask để tránh setState đồng bộ trong effect
+    queueMicrotask(() => {
       setActiveCategory(forcedCategoryId);
-    }
-  }, [forcedCategoryId]);
-
-  useEffect(() => {
-    if (forcedCategoryId) {
       setUploadForm((prev) => ({ ...prev, categoryId: forcedCategoryId }));
-    }
+    });
   }, [forcedCategoryId]);
   const permissionConfigRef = useRef(null);
   const isSopMode = Boolean(forceCategoryName);
@@ -1023,7 +970,10 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
     let isMounted = true;
 
     if (!currentUser) {
-      setFreshCurrentUser(null);
+      // Dùng queueMicrotask để tránh setState đồng bộ trong effect
+      queueMicrotask(() => {
+        if (isMounted) setFreshCurrentUser(null);
+      });
       return () => {
         isMounted = false;
       };
@@ -1148,11 +1098,10 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   }, [documentCurrentUser]);
 
   useEffect(() => {
-    if (filterDepartmentId) {
-      setUploadForm((prev) => ({ ...prev, departmentId: filterDepartmentId }));
-    } else {
-      setUploadForm((prev) => ({ ...prev, departmentId: "" }));
-    }
+    // Dùng queueMicrotask để tránh setState đồng bộ trong effect
+    queueMicrotask(() => {
+      setUploadForm((prev) => ({ ...prev, departmentId: filterDepartmentId || "" }));
+    });
   }, [filterDepartmentId]);
 
   const visibleCategories = categories.filter((c) => !c.isHidden);
@@ -1199,7 +1148,8 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
   // Đồng bộ thời gian thực từ database API trực tiếp, không sử dụng cache localStorage dễ gây sai lệch dữ liệu
 
   useEffect(() => {
-    setDocumentPage(1);
+    // Dùng queueMicrotask để tránh setState đồng bộ trong effect
+    queueMicrotask(() => setDocumentPage(1));
   }, [activeCategory]);
 
   useEffect(() => {
@@ -2540,7 +2490,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
       {isDetailPanelOpen && (documentError || selectedDocument) && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1080,
@@ -2898,7 +2848,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
 
       {deleteTargetDocument && (
         <div
-          className="position-fixed top-0 start-0 w-100 h-100"
+          className="position-fixed top-0 inset-s-0 w-100 h-100"
           style={{
             backgroundColor: "rgba(15, 23, 42, 0.45)",
             zIndex: 1090,
@@ -3269,7 +3219,7 @@ function DocumentActionButtons({
 function DocumentDownloadBadge({ currentUser, document, hasDownloadAccess }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
+      className={`badge shrink-0 ${hasDownloadAccess ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"
         }`}
       title={
         hasDownloadAccess
@@ -3359,7 +3309,7 @@ function PermissionActionDropdown({ actionLabel, children, rule }) {
 function CategoryStatusBadge({ isHidden }) {
   return (
     <span
-      className={`badge flex-shrink-0 ${isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
+      className={`badge shrink-0 ${isHidden ? "bg-danger-subtle text-danger" : "bg-success-subtle text-success"
         }`}
     >
       {isHidden ? "Đang ẩn" : "Hiển thị"}

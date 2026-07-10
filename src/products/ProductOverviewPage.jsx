@@ -143,7 +143,7 @@ const VISA_TYPES = [
 
 
 
-export const EXCEL_PRODUCTS = [
+const EXCEL_PRODUCTS = [
   { visaCode: "CA-TRV-TOUR-SGL", shortCode: "VIS-CA-01", country: "Canada", name: "Canada", purpose: "Du lịch/Thăm thân", serviceFee: 8100000 },
   { visaCode: "CA-TRV-CHILD-U14-WITH-PARENTS", shortCode: "VIS-CA-02", country: "Canada", name: "Canada (trẻ em dưới 14t) đi cùng bố mẹ", purpose: "Du lịch/Thăm thân", serviceFee: 4590000 },
   { visaCode: "CA-TRV-CHILD-U14-SEPARATE", shortCode: "VIS-CA-03", country: "Canada", name: "Canada (trẻ em dưới 14t) nộp riêng", purpose: "Du lịch/Thăm thân", serviceFee: 6210000 },
@@ -1343,14 +1343,7 @@ function ProductOverviewPageInner({ currentUser }) {
     }
   }, [currentUser]);
 
-  const currentUserPhone = useMemo(() => {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem("auth_user") || "null");
-      return currentUser?.phone || currentUser?.phoneNumber || stored?.phone || stored?.phoneNumber || (currentUser?.username && /^\d+$/.test(currentUser.username) ? currentUser.username : "") || (stored?.username && /^\d+$/.test(stored.username) ? stored.username : "") || "—";
-    } catch {
-      return currentUser?.phone || "—";
-    }
-  }, [currentUser]);
+
 
   // Status options matching backend enum
   const statusOptions = useMemo(() => [
@@ -1565,12 +1558,9 @@ function ProductOverviewPageInner({ currentUser }) {
     setSelectedRegion("Tất cả");
     setSelectedStatus("all");
     setSelectedVisaType(null);
-    setCategoryPage(0);
     setLeftCategoryPage(0);
   };
 
-  const CATEGORIES_PER_PAGE = 6;
-  const [categoryPage, setCategoryPage] = useState(0);
   const LEFT_CATEGORIES_PER_PAGE = 2;
   const [leftCategoryPage, setLeftCategoryPage] = useState(0);
 
@@ -1580,7 +1570,6 @@ function ProductOverviewPageInner({ currentUser }) {
   };
 
   useEffect(() => {
-    setCategoryPage(0);
     setLeftCategoryPage(0);
   }, [searchQuery, selectedCategoryName, selectedCountry, selectedRegion, selectedStatus]);
 
@@ -2530,13 +2519,13 @@ function ProductOverviewPageInner({ currentUser }) {
             <div
               key={prog.id}
               id={isFirstCard ? "tour-first-program-card" : undefined}
-              className="bg-slate-50/50 app-dark:!bg-[#1e1e1e]/60 border border-slate-200/60 app-dark:!border-slate-700/80 rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/20 app-dark:hover:!bg-cyan-955/10 hover:border-cyan-300/80 app-dark:hover:!border-cyan-900/50 hover:shadow-sm cursor-pointer flex flex-row items-center relative group"
+              className="bg-slate-50/50 app-dark:bg-[#1e1e1e]/60! border border-slate-200/60 app-dark:border-slate-700/80! rounded-xl overflow-hidden transition-all duration-200 hover:bg-cyan-50/20 app-dark:hover:bg-cyan-955/10! hover:border-cyan-300/80 app-dark:hover:border-cyan-900/50! hover:shadow-sm cursor-pointer flex flex-row items-center relative group"
               onClick={() => {
                 setSelectedProduct(prog);
                 setViewMode("detail");
               }}
             >
-              <div className="flex-shrink-0 w-14 h-14 bg-slate-200 app-dark:!bg-slate-700 relative overflow-hidden m-2 rounded-lg border border-slate-200/80 app-dark:!border-slate-650">
+              <div className="shrink-0 w-14 h-14 bg-slate-200 app-dark:bg-slate-700! relative overflow-hidden m-2 rounded-lg border border-slate-200/80 app-dark:border-slate-650!">
                 {prog.image ? (
                   <img
                     src={prog.image}
@@ -2544,29 +2533,29 @@ function ProductOverviewPageInner({ currentUser }) {
                     className="w-full h-full object-cover absolute inset-0"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
-                    <i className="fa fa-image text-base text-slate-300 app-dark:!text-slate-600"></i>
+                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-cyan-900/10 to-cyan-700/20 app-dark:from-cyan-900/30 app-dark:to-cyan-700/40">
+                    <i className="fa fa-image text-base text-slate-300 app-dark:text-slate-600!"></i>
                   </div>
                 )}
               </div>
 
               <div className="flex flex-col justify-center flex-1 min-w-0 py-2 pr-2 pl-0.5">
-                <div className="font-bold text-slate-800 app-dark:!text-slate-100 text-[12px] mb-0.5 line-clamp-1 leading-tight pr-6" title={prog.name}>
+                <div className="font-bold text-slate-800 app-dark:text-slate-100! text-[12px] mb-0.5 line-clamp-1 leading-tight pr-6" title={prog.name}>
                   {prog.name}
                 </div>
                 {prog.description ? (
-                  <p className="text-[9.5px] text-slate-450 app-dark:!text-slate-400 line-clamp-1 leading-normal m-0">
+                  <p className="text-[9.5px] text-slate-450 app-dark:text-slate-400! line-clamp-1 leading-normal m-0">
                     {prog.description}
                   </p>
                 ) : (
                   <div className="h-3.5"></div>
                 )}
-                <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100 app-dark:!border-slate-800/80">
-                  <span className="bg-slate-100 app-dark:!bg-slate-800/80 text-slate-600 app-dark:!text-slate-300 px-1.5 py-0.5 rounded text-[8px] font-medium flex items-center gap-0.5 max-w-[80px] truncate">
+                <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-100 app-dark:border-slate-800/80!">
+                  <span className="bg-slate-100 app-dark:bg-slate-800/80! text-slate-600 app-dark:text-slate-300! px-1.5 py-0.5 rounded text-[8px] font-medium flex items-center gap-0.5 max-w-[80px] truncate">
                     <i className="fa fa-earth-asia text-[7.5px] text-cyan-600"></i>
                     {resolveCountryName(prog.country)}
                   </span>
-                  <span className="text-[8px] text-slate-400 app-dark:!text-slate-500 font-medium flex items-center gap-0.5">
+                  <span className="text-[8px] text-slate-400 app-dark:text-slate-500! font-medium flex items-center gap-0.5">
                     <i className="fa fa-folder-open text-[8px]"></i>
                     {totalDocs} TL
                   </span>
@@ -2609,7 +2598,7 @@ function ProductOverviewPageInner({ currentUser }) {
           <button
             type="button"
             onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !isExpanded }))}
-            className="flex items-center gap-1 text-[9.5px] font-semibold text-cyan-800 app-dark:!text-cyan-400 hover:text-cyan-950 bg-cyan-50/50 app-dark:!bg-cyan-955/20 hover:bg-cyan-100 app-dark:hover:!bg-cyan-955/40 border border-cyan-100 app-dark:!border-cyan-900/40 px-2.5 py-0.5 rounded-full transition-all duration-200"
+            className="flex items-center gap-1 text-[9.5px] font-semibold text-cyan-800 app-dark:text-cyan-400! hover:text-cyan-950 bg-cyan-50/50 app-dark:bg-cyan-955/20! hover:bg-cyan-100 app-dark:hover:bg-cyan-955/40! border border-cyan-100 app-dark:border-cyan-900/40! px-2.5 py-0.5 rounded-full transition-all duration-200"
           >
             {isExpanded ? (
               <><i className="fa fa-chevron-up text-[7.5px]"></i> Thu gọn</>
@@ -2623,21 +2612,21 @@ function ProductOverviewPageInner({ currentUser }) {
 
     if (cat.name === "Visa") {
       return (
-        <div key={cat.id} className="bg-white app-dark:!bg-[#111827] rounded-2xl border border-slate-150 app-dark:!border-slate-800 p-4 md:p-5 mb-6 shadow-sm relative z-0">
+        <div key={cat.id} className="bg-white app-dark:bg-[#111827]! rounded-2xl border border-slate-150 app-dark:border-slate-800! p-4 md:p-5 mb-6 shadow-sm relative z-0">
           {/* Header Row */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:!border-slate-800/80">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:border-slate-800/80!">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:!bg-cyan-955/20 text-[#0d919c] app-dark:!text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-100/60 app-dark:!border-cyan-900/40">
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:bg-cyan-955/20! text-[#0d919c] app-dark:text-cyan-400! flex items-center justify-center shrink-0 border border-cyan-100/60 app-dark:border-cyan-900/40!">
                 <i className="fa fa-earth-americas text-base"></i>
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-none">Visa</h3>
-                  <span className="bg-blue-50 app-dark:!bg-blue-950/30 text-blue-700 app-dark:!text-blue-400 border border-blue-100/60 app-dark:!border-blue-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold">
+                  <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:text-slate-100! m-0 leading-none">Visa</h3>
+                  <span className="bg-blue-50 app-dark:bg-blue-950/30! text-blue-700 app-dark:text-blue-400! border border-blue-100/60 app-dark:border-blue-900/30! px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold">
                     4 SP
                   </span>
                 </div>
-                <p className="text-slate-500 app-dark:!text-slate-400 text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
+                <p className="text-slate-500 app-dark:text-slate-400! text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1">Quản lý các danh mục visa và hồ sơ liên quan</p>
               </div>
             </div>
             {canManageProducts && (
@@ -2645,14 +2634,14 @@ function ProductOverviewPageInner({ currentUser }) {
                 <button
                   type="button"
                   onClick={() => handleEditCategory(cat)}
-                  className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50/50 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                  className="bg-slate-50 app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50/50 app-dark:hover:bg-slate-700! px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                 >
                   <i className="fa fa-pen text-[9px]"></i> Sửa
                 </button>
                 <button
                   type="button"
                   onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                  className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-100 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                  className="bg-slate-50 app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-100 app-dark:hover:bg-slate-700! px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
                 >
                   {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[9px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[9px]"></i> Ẩn</>}
                 </button>
@@ -2669,22 +2658,22 @@ function ProductOverviewPageInner({ currentUser }) {
                     <div
                       key={type.id}
                       onClick={() => setSelectedVisaType(type.id)}
-                      className={`relative flex flex-col border border-slate-100 app-dark:!border-slate-800/80 rounded-xl overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${type.gradient} app-dark:!bg-[#1e293b]/40`}
+                      className={`relative flex flex-col border border-slate-100 app-dark:border-slate-800/80! rounded-xl overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${type.gradient} app-dark:bg-[#1e293b]/40!`}
                     >
                       <div className="p-3 flex flex-col items-center text-center flex-1">
-                        <div className={`w-9 h-9 rounded-full bg-white app-dark:!bg-slate-800 flex items-center justify-center shadow-sm mb-2 ${type.color}`}>
+                        <div className={`w-9 h-9 rounded-full bg-white app-dark:bg-slate-800! flex items-center justify-center shadow-sm mb-2 ${type.color}`}>
                           <i className={`fa ${type.icon} text-sm`}></i>
                         </div>
                         <h5 className={`text-[12px] font-bold mb-0.5 ${type.color}`}>{type.name}</h5>
-                        <p className="text-slate-500 app-dark:!text-slate-400 text-[10px] leading-snug line-clamp-2">{type.desc}</p>
-                        <div className="w-full border-t border-dashed border-slate-200/50 app-dark:!border-slate-700/50 my-2"></div>
+                        <p className="text-slate-500 app-dark:text-slate-400! text-[10px] leading-snug line-clamp-2">{type.desc}</p>
+                        <div className="w-full border-t border-dashed border-slate-200/50 app-dark:border-slate-700/50! my-2"></div>
                         <div className="w-full flex justify-around text-[10px]">
                           <div>
-                            <div className="font-extrabold text-slate-700 app-dark:!text-slate-300">{type.docsCount}</div>
+                            <div className="font-extrabold text-slate-700 app-dark:text-slate-300!">{type.docsCount}</div>
                             <div className="text-[8px] text-slate-400">Hồ sơ</div>
                           </div>
                           <div>
-                            <div className="font-extrabold text-slate-700 app-dark:!text-slate-300">{type.filesCount}</div>
+                            <div className="font-extrabold text-slate-700 app-dark:text-slate-300!">{type.filesCount}</div>
                             <div className="text-[8px] text-slate-400">Tài liệu</div>
                           </div>
                         </div>
@@ -2692,21 +2681,21 @@ function ProductOverviewPageInner({ currentUser }) {
                     </div>
                   ))}
                 </div>
-                <div className="bg-[#f8fafc] app-dark:!bg-slate-900/50 border border-[#f1f5f9] app-dark:!border-slate-800/60 rounded-xl px-3 py-2 flex items-center gap-1.5">
+                <div className="bg-[#f8fafc] app-dark:bg-slate-900/50! border border-[#f1f5f9] app-dark:border-slate-800/60! rounded-xl px-3 py-2 flex items-center gap-1.5">
                   <i className="fa fa-info-circle text-cyan-650 text-xs"></i>
-                  <span className="text-[10px] text-slate-500 app-dark:!text-slate-400 font-medium">Click chọn loại Visa để xem hồ sơ và tài liệu cụ thể.</span>
+                  <span className="text-[10px] text-slate-500 app-dark:text-slate-400! font-medium">Click chọn loại Visa để xem hồ sơ và tài liệu cụ thể.</span>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col gap-3 bg-white app-dark:!bg-[#111827] p-2.5 rounded-xl border border-slate-100 app-dark:!border-slate-800/80 shadow-xs">
-                <div className="flex items-center gap-2 bg-slate-50 app-dark:!bg-slate-900/50 p-2 rounded-lg border border-slate-150 app-dark:!border-slate-800/60">
+              <div className="flex flex-col gap-3 bg-white app-dark:bg-[#111827]! p-2.5 rounded-xl border border-slate-100 app-dark:border-slate-800/80! shadow-xs">
+                <div className="flex items-center gap-2 bg-slate-50 app-dark:bg-slate-900/50! p-2 rounded-lg border border-slate-150 app-dark:border-slate-800/60!">
                   <button
                     onClick={() => setSelectedVisaType(null)}
-                    className="text-slate-600 app-dark:!text-slate-300 hover:text-cyan-700 app-dark:hover:text-cyan-400 bg-white app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 px-2 py-1 rounded-md text-[10px] font-semibold shadow-xs transition-colors flex items-center gap-1"
+                    className="text-slate-600 app-dark:text-slate-300! hover:text-cyan-700 app-dark:hover:text-cyan-400 bg-white app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! px-2 py-1 rounded-md text-[10px] font-semibold shadow-xs transition-colors flex items-center gap-1"
                   >
                     <i className="fa fa-arrow-left text-[8px]"></i> Trở lại
                   </button>
-                  <span className="font-bold text-slate-800 app-dark:!text-slate-100 text-xs">
+                  <span className="font-bold text-slate-800 app-dark:text-slate-100! text-xs">
                     Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
                   </span>
                 </div>
@@ -2721,45 +2710,45 @@ function ProductOverviewPageInner({ currentUser }) {
 
     const totalCatDocs = displayPrograms.reduce((sum, prog) => sum + (prog.brochure ? 1 : 0) + (prog.documents?.length || 0), 0);
     return (
-      <div key={cat.id} className="bg-white app-dark:!bg-[#111827] rounded-2xl border border-slate-150 app-dark:!border-slate-800 p-4 md:p-5 mb-6 shadow-sm relative z-0">
+      <div key={cat.id} className="bg-white app-dark:bg-[#111827]! rounded-2xl border border-slate-150 app-dark:border-slate-800! p-4 md:p-5 mb-6 shadow-sm relative z-0">
         {/* Header Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:!border-slate-800/80">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3.5 border-b border-slate-100 app-dark:border-slate-800/80!">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:!bg-cyan-950/30 text-[#0d919c] app-dark:!text-cyan-400 flex items-center justify-center flex-shrink-0 border border-cyan-100/60 app-dark:!border-cyan-900/40">
+            <div className="w-10 h-10 rounded-xl bg-cyan-50 app-dark:bg-cyan-950/30! text-[#0d919c] app-dark:text-cyan-400! flex items-center justify-center shrink-0 border border-cyan-100/60 app-dark:border-cyan-900/40!">
               <i className="fa fa-layer-group text-base"></i>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:!text-slate-100 m-0 leading-none">{cat.name}</h3>
+                <h3 className="text-base md:text-[16px] font-bold text-slate-800 app-dark:text-slate-100! m-0 leading-none">{cat.name}</h3>
                 <div className="flex gap-1 items-center">
-                  <span className="bg-emerald-50 app-dark:!bg-emerald-950/30 text-emerald-700 app-dark:!text-emerald-400 border border-emerald-100/60 app-dark:!border-emerald-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
+                  <span className="bg-emerald-50 app-dark:bg-emerald-950/30! text-emerald-700 app-dark:text-emerald-400! border border-emerald-100/60 app-dark:border-emerald-900/30! px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
                     <i className="fa fa-box-open text-[8.5px]"></i>
                     {displayPrograms.length} SP
                   </span>
-                  <span className="bg-blue-50 app-dark:!bg-blue-950/30 text-blue-700 app-dark:!text-blue-400 border border-blue-100/60 app-dark:!border-blue-900/30 px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
+                  <span className="bg-blue-50 app-dark:bg-blue-950/30! text-blue-700 app-dark:text-blue-400! border border-blue-100/60 app-dark:border-blue-900/30! px-1.5 py-0.5 rounded-lg text-[9.5px] font-semibold flex items-center gap-1">
                     <i className="fa fa-file-lines text-[8.5px]"></i>
                     {totalCatDocs} TL
                   </span>
                 </div>
               </div>
               {cat.description && (
-                <p className="text-slate-500 app-dark:!text-slate-400 text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1" title={cat.description}>{cat.description}</p>
+                <p className="text-slate-500 app-dark:text-slate-400! text-[11px] md:text-[11.5px] m-0 max-w-2xl leading-normal mt-1 line-clamp-1" title={cat.description}>{cat.description}</p>
               )}
             </div>
           </div>
           {canManageProducts && (
-            <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap ml-auto sm:ml-0">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap ml-auto sm:ml-0">
               <button
                 type="button"
                 onClick={() => handleEditCategory(cat)}
-                className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-[#ea580c] app-dark:!text-orange-400 hover:bg-orange-50/50 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                className="bg-slate-50 app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-[#ea580c] app-dark:text-orange-400! hover:bg-orange-50/50 app-dark:hover:bg-slate-700! px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
               >
                 <i className="fa fa-pen text-[9px]"></i> Sửa
               </button>
               <button
                 type="button"
                 onClick={() => handleToggleCategoryStatus(cat.id, cat.status)}
-                className="bg-slate-50 app-dark:!bg-slate-800 border border-slate-200 app-dark:!border-slate-700 text-slate-600 app-dark:!text-slate-300 hover:bg-slate-100 app-dark:hover:!bg-slate-700 px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
+                className="bg-slate-50 app-dark:bg-slate-800! border border-slate-200 app-dark:border-slate-700! text-slate-600 app-dark:text-slate-300! hover:bg-slate-100 app-dark:hover:bg-slate-700! px-2 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 shadow-sm transition-colors"
               >
                 {cat.status === "inactive" || cat.status === "hidden" ? <><i className="fa fa-eye text-[9px]"></i> Hiện</> : <><i className="fa fa-eye-slash text-[9px]"></i> Ẩn</>}
               </button>
@@ -2774,7 +2763,7 @@ function ProductOverviewPageInner({ currentUser }) {
             {renderShowMoreBtn(hasMore, hiddenCount)}
           </div>
         ) : (
-          <div className="text-center py-6 text-slate-400 app-dark:!text-slate-500 text-xs">
+          <div className="text-center py-6 text-slate-400 app-dark:text-slate-500! text-xs">
             Danh mục này chưa có sản phẩm nào.
           </div>
         )}
