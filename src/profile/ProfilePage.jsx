@@ -4,7 +4,7 @@ import { API_BASE_URL } from "../config/api";
 
 const PROFILE_EXTRAS_KEY = "hto_profile_extras";
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const COLLABORATOR_ROLE_ID = "69fc5af682ef85451120772f";
+const COLLABORATOR_ROLE_ID = "69fc5af782ef854511207730";
 
 const ROLE_ID_MAP = {
   "69fc5af582ef85451120772a": "admin",
@@ -12,8 +12,8 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772c": "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "congtacvien",
-  "69fc5af782ef854511207730": "user",
+  "69fc5af682ef85451120772f": "user",
+  "69fc5af782ef854511207730": "congtacvien",
   "60c72b2f9b1d8b2bad000001": "staff",
 };
 
@@ -138,7 +138,7 @@ const normalizeUserPayload = (payload, fallback = {}) => {
     bannerUrl: data.bannerUrl || profile.bannerUrl || fallback.bannerUrl || "",
     referralCode: data.referralCode || data.referral_code || profile.referralCode || fallback.referralCode || "",
     roleId: data.roleId || fallback.roleId || "",
-    role: data.role || ROLE_ID_MAP[data.roleId] || fallback.role || ROLE_ID_MAP[fallback.roleId] || "user",
+    role: ROLE_ID_MAP[data.roleId] || ROLE_ID_MAP[fallback.roleId] || "user",
     rank: data.rank || fallback.rank || "",
     departmentId: data.departmentId || fallback.departmentId || "",
     status: data.status || fallback.status || "active",

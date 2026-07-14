@@ -24,8 +24,8 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772c": "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "congtacvien",
-  "69fc5af782ef854511207730": "user",
+  "69fc5af682ef85451120772f": "user",
+  "69fc5af782ef854511207730": "congtacvien",
 };
 
 const normalizeRoleKey = (roleValue) => {

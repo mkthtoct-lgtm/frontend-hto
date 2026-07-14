@@ -518,8 +518,8 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772c": "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "congtacvien",
-  "69fc5af782ef854511207730": "user",
+  "69fc5af682ef85451120772f": "user",
+  "69fc5af782ef854511207730": "congtacvien",
   "60c72b2f9b1d8b2bad000001": "staff",
 };
 
@@ -611,7 +611,7 @@ const normalizeUser = (userData) => {
     departmentId: userData.departmentId || null,
     departmentName: userData.departmentName || null,
     departmentIds,
-    role: userData.role || normalizeRole(userData.roleId),
+    role: normalizeRole(userData.roleId),
     permissions: normalizePermissionList(
       userData.permissions,
       userData.role?.permissions,

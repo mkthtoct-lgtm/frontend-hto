@@ -14,8 +14,8 @@ const ROLE_MAP = {
   truongbophan: { label: "Trưởng bộ phận", color: "bg-warning text-dark", link: "/role-links/truong-bo-phan", roleId: "69fc5af582ef85451120772c" },
   nhansu: { label: "Nhân sự", color: "bg-info text-dark", link: "/role-links/nhan-su", roleId: "69fc5af582ef85451120772d" },
   daily: { label: "Đại lý", color: "bg-success", link: "/role-links/dai-ly", roleId: "69fc5af582ef85451120772e" },
-  congtacvien: { label: "Cộng tác viên", color: "bg-secondary", link: "/role-links/cong-tac-vien", roleId: "69fc5af682ef85451120772f" },
-  hethong: { label: "Hệ thống", color: "bg-dark", link: "/role-links/he-thong", roleId: "69fc5af782ef854511207730" }
+  congtacvien: { label: "Cộng tác viên", color: "bg-secondary", link: "/role-links/cong-tac-vien", roleId: "69fc5af782ef854511207730" },
+  hethong: { label: "Hệ thống", color: "bg-dark", link: "/role-links/he-thong", roleId: "69fc5af682ef85451120772f" }
 };
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
@@ -358,13 +358,25 @@ export const UserList = ({ currentUser }) => {
       }
       const payload = await response.json();
       const list = Array.isArray(payload) ? payload : (payload?.data || payload?.items || []);
-      mapped = list.map(r => ({
-        id: r._id || r.id,
-        name: r.name,
-        slug: r.slug,
-        isHidden: r.isHidden || false,
-        color: r.color || getRoleColorBySlug(r.slug)
-      }));
+      mapped = list.map(r => {
+        let id = r._id || r.id;
+        let slug = r.slug;
+        let name = r.name;
+        if (id === "69fc5af682ef85451120772f") {
+          slug = "hethong";
+          name = "Hệ thống";
+        } else if (id === "69fc5af782ef854511207730") {
+          slug = "congtacvien";
+          name = "Cộng tác viên";
+        }
+        return {
+          id,
+          name,
+          slug,
+          isHidden: r.isHidden || false,
+          color: r.color || getRoleColorBySlug(slug)
+        };
+      });
       setApiRoles(mapped);
     } catch (err) {
       console.error("Lỗi tải danh sách vai trò động:", err);
