@@ -14,7 +14,7 @@ const ROLE_LABELS = {
   user: "Nguoi dung",
 };
 
-const COLLABORATOR_ROLE_ID = "69fc5af782ef854511207730";
+const COLLABORATOR_ROLE_ID = "69fc5af682ef85451120772f";
 const PROFILE_EXTRAS_KEY = "hto_profile_extras";
 
 const getInitials = (name = "") =>

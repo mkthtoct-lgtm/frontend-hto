@@ -519,8 +519,8 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772c": "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "user",
-  "69fc5af782ef854511207730": "congtacvien",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
   "60c72b2f9b1d8b2bad000001": "staff",
 };
 
@@ -745,6 +745,28 @@ function App() {
       return nextUser;
     });
   }, []);
+
+  // Sync user profile details from server on app load to reflect dynamic admin role/permission changes
+  useEffect(() => {
+    const token = window.localStorage.getItem("token");
+    if (!token) return;
+
+    const syncUserProfile = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        const json = await response.json().catch(() => null);
+        if (response.ok && json?.success && json?.data) {
+          handleUserUpdate(json.data);
+        }
+      } catch (err) {
+        console.error("Lỗi đồng bộ thông tin tài khoản từ máy chủ:", err);
+      }
+    };
+
+    void syncUserProfile();
+  }, [handleUserUpdate]);
   const [theme, setTheme] = useState(() => {
     const storedTheme = window.localStorage.getItem("app-theme");
 

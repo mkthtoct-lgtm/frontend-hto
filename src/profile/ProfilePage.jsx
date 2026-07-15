@@ -4,7 +4,7 @@ import { API_BASE_URL } from "../config/api";
 
 const PROFILE_EXTRAS_KEY = "hto_profile_extras";
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
-const COLLABORATOR_ROLE_ID = "69fc5af782ef854511207730";
+const COLLABORATOR_ROLE_ID = "69fc5af682ef85451120772f";
 
 const ROLE_ID_MAP = {
   "69fc5af582ef85451120772a": "admin",
@@ -12,8 +12,8 @@ const ROLE_ID_MAP = {
   "69fc5af582ef85451120772c": "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "user",
-  "69fc5af782ef854511207730": "congtacvien",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
   "60c72b2f9b1d8b2bad000001": "staff",
 };
 

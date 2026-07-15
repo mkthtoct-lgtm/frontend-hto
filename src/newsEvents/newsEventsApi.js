@@ -12,8 +12,8 @@ const ROLE_ID_MAP = {
   [DEPARTMENT_HEAD_ROLE_ID]: "truongbophan",
   "69fc5af582ef85451120772d": "nhansu",
   "69fc5af582ef85451120772e": "daily",
-  "69fc5af682ef85451120772f": "user",
-  "69fc5af782ef854511207730": "congtacvien",
+  "69fc5af682ef85451120772f": "congtacvien",
+  "69fc5af782ef854511207730": "user",
 };
 
 export const normalizeRoleKey = (value) =>
