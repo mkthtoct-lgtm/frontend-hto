@@ -131,13 +131,6 @@ const expandFeaturePermissions = (permissions = []) => {
   return expanded;
 };
 
-const haveSamePermissions = (left = [], right = []) => {
-  if (!Array.isArray(left) || !Array.isArray(right)) return false;
-  if (left.length !== right.length) return false;
-  const rightSet = new Set(right);
-  return left.every((item) => rightSet.has(item));
-};
-
 const getRoleColorBySlug = (slug) => {
   const map = {
     admin: "bg-danger text-white",
@@ -323,11 +316,11 @@ export const UserList = ({ currentUser }) => {
   const [permissionUser, setPermissionUser] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const { register, handleSubmit, reset, setValue, control, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm({
     mode: "onTouched"
   });
   const selectedRoleValue = useWatch({ control, name: "role" });
-  const selectedDepartmentValue = useWatch({ control, name: "departmentId" });
+  const selectedDepartmentIdsValue = useWatch({ control, name: "departmentIds" }) || [];
   const roleOptions = (apiRoles.length > 0
     ? apiRoles
     : Object.entries(ROLE_MAP).map(([key, value]) => ({
@@ -346,41 +339,21 @@ export const UserList = ({ currentUser }) => {
 
   const fetchRoles = useCallback(async () => {
     setRolesLoading(true);
-    let mapped = [];
     try {
-      const headers = {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      };
-      const response = await authFetch(`${API_BASE_URL}/roles?includeHidden=true`, { headers });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const payload = await response.json();
+      const payload = await usersRequest("/roles?includeHidden=true");
       const list = Array.isArray(payload) ? payload : (payload?.data || payload?.items || []);
-      mapped = list.map(r => {
-        let id = r._id || r.id;
-        let slug = r.slug;
-        let name = r.name;
-        if (id === "69fc5af682ef85451120772f") {
-          slug = "hethong";
-          name = "Hệ thống";
-        } else if (id === "69fc5af782ef854511207730") {
-          slug = "congtacvien";
-          name = "Cộng tác viên";
-        }
-        return {
-          id,
-          name,
-          slug,
-          isHidden: r.isHidden || false,
-          color: r.color || getRoleColorBySlug(slug)
-        };
-      });
+      const mapped = list.map(r => ({
+        id: r._id || r.id,
+        name: r.name,
+        slug: r.slug,
+        isHidden: r.isHidden || false,
+        color: r.color || getRoleColorBySlug(r.slug)
+      }));
       setApiRoles(mapped);
+      return mapped;
     } catch (err) {
       console.error("Lỗi tải danh sách vai trò động:", err);
-      mapped = Object.entries(ROLE_MAP).map(([key, value]) => ({
+      const mapped = Object.entries(ROLE_MAP).map(([key, value]) => ({
         id: value.roleId,
         name: value.label,
         slug: key,
@@ -388,10 +361,10 @@ export const UserList = ({ currentUser }) => {
         isHidden: false
       }));
       setApiRoles(mapped);
+      return mapped;
     } finally {
       setRolesLoading(false);
     }
-    return mapped;
   }, []);
 
   const fetchUsers = useCallback(async (currentRoles = []) => {
@@ -415,7 +388,18 @@ export const UserList = ({ currentUser }) => {
         ];
       }
 
-      setUsers(allUsers.map(u => normalizeUser(u, currentRoles)));
+      const normalized = allUsers.map(u => normalizeUser(u, currentRoles));
+      setUsers(normalized);
+
+      // Đồng bộ state featurePermissionsByUserId từ dữ liệu server
+      setFeaturePermissionsByUserId(prev => {
+        const next = { ...prev };
+        normalized.forEach(u => {
+          next[u.id] = u.grantedPermissions || [];
+        });
+        writeUserFeaturePermissions(next);
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
     } finally {
@@ -495,7 +479,7 @@ export const UserList = ({ currentUser }) => {
         email: data.email.trim(),
         phone: data.phone?.trim() || undefined,
         roleId,
-        departmentId: primaryDepartmentId || data.departmentId?.trim() || undefined,
+        departmentId: primaryDepartmentId || data.departmentId?.trim() || null,
       };
 
       let savedUserRaw;
@@ -533,6 +517,16 @@ export const UserList = ({ currentUser }) => {
         } else {
           return prev.map(u => u.id === selectedUser.id ? updatedUser : u);
         }
+      });
+
+      // Đồng bộ state featurePermissionsByUserId khi tạo/sửa user
+      setFeaturePermissionsByUserId(prev => {
+        const next = {
+          ...prev,
+          [updatedUser.id]: updatedUser.grantedPermissions || []
+        };
+        writeUserFeaturePermissions(next);
+        return next;
       });
 
       if (modalMode === "edit") {
@@ -630,32 +624,8 @@ export const UserList = ({ currentUser }) => {
     return Array.from(permissions);
   };
 
-  useEffect(() => {
-    if (!isCurrentUserAdmin || users.length === 0) return;
-
-    Object.entries(featurePermissionsByUserId).forEach(([userId, permissions]) => {
-      if (!Array.isArray(permissions)) return;
-      const user = users.find((item) => String(item.id) === String(userId));
-      if (!user || haveSamePermissions(user.grantedPermissions || [], permissions)) return;
-
-      usersRequest(`/${userId}`, {
-        method: "PATCH",
-        body: { grantedPermissions: permissions },
-      })
-        .then(() => {
-          setUsers((current) =>
-            current.map((item) =>
-              String(item.id) === String(userId)
-                ? { ...item, grantedPermissions: permissions }
-                : item,
-            ),
-          );
-        })
-        .catch((error) => {
-          console.warn("[UserList] Không thể đồng bộ quyền chức năng lên server:", error.message);
-        });
-    });
-  }, [featurePermissionsByUserId, isCurrentUserAdmin, users]);
+  // Tự động đồng bộ quyền chức năng từ server khi load trang đã được giải quyết tại fetchUsers.
+  // Loại bỏ cơ chế auto-patch ghi đè từ localStorage lên database để tránh lỗi đồng bộ dữ liệu.
 
   const getFeaturePermissionCount = (user) =>
     getUserFeaturePermissions(user).filter((permission) => permission !== "*").length;
@@ -1217,7 +1187,7 @@ export const UserList = ({ currentUser }) => {
                         <span className="text-body-secondary small">Đang tải phòng ban...</span>
                       ) : (
                         departmentOptions.map((dept) => {
-                          const currentIds = watch("departmentIds") || [];
+                          const currentIds = selectedDepartmentIdsValue;
                           const isChecked = currentIds.includes(dept.id);
                           return (
                             <label key={dept.id} className="d-flex align-items-center gap-1 cursor-pointer mb-0 px-2 py-0.5 bg-body rounded border" style={{ fontSize: "12px" }}>
