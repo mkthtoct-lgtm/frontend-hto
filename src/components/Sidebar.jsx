@@ -1596,6 +1596,21 @@ export const Sidebar = ({
                 });
               })()}
 
+              {/* Tra cứu trường du học */}
+              <li className="menu-item mb-1 border-top pt-1 mt-1" style={{ listStyleType: "none" }}>
+                <a
+                  className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "schoolSearch" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("schoolSearch");
+                  }}
+                >
+                  Tra cứu trường du học
+                </a>
+              </li>
+
               {/* Vẫn giữ trang Đối soát Deal cho kế toán và quản trị nếu cần */}
               {(["admin", "bangiamdoc", "truongbophan", "congtacvien", "daily", "staff"].includes(getUserRoleKey(currentUser)) ||
                 currentUser?.permissions?.includes("*") ||

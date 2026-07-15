@@ -518,6 +518,145 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
         : "",
     [zaloReferralUrl]
   );
+
+  const [activeSurveys, setActiveSurveys] = useState([]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("hto_surveys_data");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setActiveSurveys(parsed.filter(s => s.status === "active"));
+      } catch {
+        setActiveSurveys([
+          { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
+          { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
+        ]);
+      }
+    } else {
+      setActiveSurveys([
+        { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
+        { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
+      ]);
+    }
+  }, []);
+
+  const getSurveyReferralUrl = (baseUrl, code) => {
+    if (!baseUrl || !code) return baseUrl || "";
+    const cleanUrl = baseUrl.replace(/\/$/, "");
+    const separator = cleanUrl.includes("?") ? "&" : "?";
+    return `${cleanUrl}${separator}ctv=${code}`;
+  };
+
+  const handleDownloadSurveyQr = (baseUrl, title) => {
+    if (!referralCode) return;
+    const refUrl = getSurveyReferralUrl(baseUrl, referralCode);
+    const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(refUrl)}`;
+    
+    const link = document.createElement("a");
+    link.href = qrDownloadUrl;
+    link.download = `hto-survey-${title.replace(/[^a-zA-Z0-9]/g, "-")}-${referralCode}.png`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.click();
+  };
+
+  // Crop & Reposition States
+  const [rawImageSrc, setRawImageSrc] = useState("");
+  const [imageScale, setImageScale] = useState(1);
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imgRatio, setImgRatio] = useState(1);
+
+  // Drag and Touch Handlers
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - imageOffset.x, y: e.clientY - imageOffset.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setImageOffset({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    setIsDragging(true);
+    const touch = e.touches[0];
+    setDragStart({ x: touch.clientX - imageOffset.x, y: touch.clientY - imageOffset.y });
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setImageOffset({
+      x: touch.clientX - dragStart.x,
+      y: touch.clientY - dragStart.y
+    });
+  };
+
+  // Canvas Image Cropper
+  const cropImage = (src, scale, offset, isAvatar) => {
+    return new Promise((resolve, reject) => {
+      if (!src) {
+        resolve("");
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = src;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Output dimensions
+        const targetWidth = isAvatar ? 300 : 900;
+        const targetHeight = isAvatar ? 300 : 300;
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        
+        const imgRatio = img.width / img.height;
+        const targetRatio = targetWidth / targetHeight;
+        
+        let drawWidth, drawHeight;
+        if (imgRatio > targetRatio) {
+          drawHeight = targetHeight * scale;
+          drawWidth = drawHeight * imgRatio;
+        } else {
+          drawWidth = targetWidth * scale;
+          drawHeight = drawWidth / imgRatio;
+        }
+        
+        // Read actual UI container width dynamically for responsive precision
+        const cropBoxElement = document.getElementById(isAvatar ? "avatar-crop-box" : "banner-crop-box");
+        const previewWidth = cropBoxElement ? cropBoxElement.offsetWidth : (isAvatar ? 160 : 450);
+        const ratioMultiplier = targetWidth / previewWidth;
+        
+        const x = (targetWidth - drawWidth) / 2 + offset.x * ratioMultiplier;
+        const y = (targetHeight - drawHeight) / 2 + offset.y * ratioMultiplier;
+        
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetWidth, targetHeight);
+        ctx.drawImage(img, x, y, drawWidth, drawHeight);
+        
+        resolve(canvas.toDataURL("image/jpeg", 0.9));
+      };
+      img.onerror = () => {
+        resolve(src); // Fallback to raw if crop fails (e.g. CORS)
+      };
+    });
+  };
+
   const quarterOptions = useMemo(() => {
     const recent = getRecentQuarterOptions();
     const leadQuarterKeys = new Set(

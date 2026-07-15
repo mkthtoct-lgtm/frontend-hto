@@ -284,6 +284,24 @@ async function departmentsRequest(path = "", options = {}) {
   return payload;
 }
 
+async function rolesRequest(path = "", options = {}) {
+  const response = await authFetch(`${API_BASE_URL}/roles${path}`, {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
+  });
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(payload, "Không thể tải danh sách vai trò."));
+  }
+
+  return payload;
+}
+
 export const UserList = ({ currentUser }) => {
    // States quản lý Data
   const [users, setUsers] = useState([]);
@@ -340,7 +358,7 @@ export const UserList = ({ currentUser }) => {
   const fetchRoles = useCallback(async () => {
     setRolesLoading(true);
     try {
-      const payload = await usersRequest("/roles?includeHidden=true");
+      const payload = await rolesRequest("?includeHidden=true");
       const list = Array.isArray(payload) ? payload : (payload?.data || payload?.items || []);
       const mapped = list.map(r => ({
         id: r._id || r.id,

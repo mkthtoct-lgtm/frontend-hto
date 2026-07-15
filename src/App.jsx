@@ -35,6 +35,7 @@ import { NewsEventsManagementPage } from "./newsEvents/NewsEventsManagementPage"
 import { AUTH_EVENTS, authFetch, getAuthHeaders } from "./auth/session";
 import { SupportPage } from "./components/SupportPage";
 import { SystemSettingsPage } from "./systemSettings/SystemSettingsPage";
+import { SchoolSearchPage } from "./components/SchoolSearchPage";
 import { SurveyManagementPage } from "./SurveyManagement/SurveyManagementPage";
 import { API_BASE_URL } from "./config/api";
 import { driver } from "driver.js";
@@ -1503,6 +1504,8 @@ function App() {
           <DocumentSearchPage currentUser={user} />
         ) : currentPage === "leadForm" ? (
           <LeadFormPage currentUser={user} />
+        ) : currentPage === "schoolSearch" ? (
+          <SchoolSearchPage />
         ) : currentPage === "aiConfig" ? (
           <AIConfigPage currentUser={user} />
         ) : currentPage === "aiPending" ? (
