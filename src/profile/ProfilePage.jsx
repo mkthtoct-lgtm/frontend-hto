@@ -437,7 +437,6 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [copied, setCopied] = useState("");
   const [referralInfo, setReferralInfo] = useState(null);
   const [referralLoading, setReferralLoading] = useState(false);
   const [referralError, setReferralError] = useState("");
@@ -487,10 +486,9 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const roleKey = profile.role || ROLE_ID_MAP[profile.roleId] || currentUser?.role || ROLE_ID_MAP[currentUser?.roleId] || "user";
   const wardOptions = ADDRESS_WARDS[addressDraft.province] || [];
   const isCustomWard = Boolean(addressDraft.ward && !wardOptions.includes(addressDraft.ward));
-  const isAdminProfile = roleKey === "admin" || profile.roleId === ADMIN_ROLE_ID;
   const isCollaboratorProfile = roleKey === "congtacvien" || profile.roleId === COLLABORATOR_ROLE_ID;
   const roleLabel = ROLE_LABELS[roleKey] || "Tài khoản";
-  const canEditProfile = isAdminProfile;
+  const canEditProfile = true;
   const canEditLocalProfile = Boolean(profile.id);
   const referralCode = referralInfo?.referralCode || "";
   const referralUrl = referralInfo?.referralUrl || "";
@@ -500,6 +498,25 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
         ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(referralUrl)}`
         : "",
     [referralUrl],
+  );
+
+  const zaloReferralUrl = useMemo(
+    () => {
+      if (!referralCode) return "";
+      const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      return isLocalDev
+        ? `https://zalo.me/s/4590120319578198541/?env=testing&ctv=${referralCode}`
+        : `https://zalo.me/s/4590120319578198541/?ctv=${referralCode}`;
+    },
+    [referralCode]
+  );
+
+  const zaloQrUrl = useMemo(
+    () =>
+      zaloReferralUrl
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zaloReferralUrl)}`
+        : "",
+    [zaloReferralUrl]
   );
   const quarterOptions = useMemo(() => {
     const recent = getRecentQuarterOptions();
@@ -544,9 +561,14 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     if (isCollaboratorProfile && profile.id) {
       void loadReferralInfo();
     } else {
-      setReferralInfo(null);
-      setReferralError("");
-      setReferralLoading(false);
+      // Tránh cảnh báo "cascading renders" bằng cách dời việc set state ra khỏi luồng đồng bộ
+      Promise.resolve().then(() => {
+        if (isMounted) {
+          setReferralInfo(null);
+          setReferralError("");
+          setReferralLoading(false);
+        }
+      });
     }
 
     return () => {
@@ -776,8 +798,8 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(label);
-      window.setTimeout(() => setCopied(""), 1800);
+      setNotice(`Đã sao chép ${label} vào bộ nhớ tạm.`);
+      window.setTimeout(() => setNotice(""), 3000);
     } catch {
       setError("Không thể sao chép nội dung.");
     }
@@ -793,7 +815,6 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     const encodedUrl = encodeURIComponent(referralUrl);
     const shareTitle = "Mã giới thiệu HTO";
     const shareText = `Đăng ký tài khoản HTO qua mã giới thiệu ${referralCode}`;
-    const encodedText = encodeURIComponent(shareText);
 
     if (channel === "facebook") {
       openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`);
@@ -831,6 +852,16 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
     const link = document.createElement("a");
     link.href = qrUrl;
     link.download = `hto-referral-${referralCode || profile.id || "qr"}.png`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.click();
+  };
+
+  const handleDownloadZaloQr = () => {
+    if (!zaloQrUrl) return;
+    const link = document.createElement("a");
+    link.href = zaloQrUrl;
+    link.download = `hto-zalo-survey-${referralCode || profile.id || "qr"}.png`;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.click();
@@ -1070,13 +1101,22 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
           <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(30,64,175,0.07)] app-dark:border-slate-700 app-dark:bg-slate-900">
         <h2 className="mb-4 text-lg font-black text-slate-950">Mã giới thiệu của bạn</h2>
         {referralError && <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700">{referralError}</div>}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_260px_170px]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_260px_180px]">
           <div className="grid gap-3">
             <label className="grid gap-2 text-sm font-bold text-slate-800">
               Link giới thiệu
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
                 <input className="min-w-0 px-3 py-2.5 text-sm outline-none" value={referralLoading ? "Đang tải link giới thiệu..." : referralUrl} readOnly />
                 <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!referralUrl || referralLoading} onClick={() => copyText(referralUrl, "link")}>
+                  <Icon name="copy" className="h-5 w-5" />
+                </button>
+              </div>
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-slate-800">
+              Link khảo sát Zalo
+              <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
+                <input className="min-w-0 px-3 py-2.5 text-sm outline-none" value={referralLoading ? "Đang tải link khảo sát..." : zaloReferralUrl} readOnly />
+                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!zaloReferralUrl || referralLoading} onClick={() => copyText(zaloReferralUrl, "link khảo sát")}>
                   <Icon name="copy" className="h-5 w-5" />
                 </button>
               </div>
@@ -1116,20 +1156,37 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
               ))}
             </div>
           </div>
-          <div className="text-center">
-            <p className="mb-3 text-sm font-black text-slate-900">QR Code</p>
-                <div className="mx-auto grid h-[116px] w-[116px] place-items-center rounded-xl border border-slate-200 bg-white app-dark:border-slate-700 app-dark:bg-slate-950">
-              {referralLoading ? <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-slate-300 border-t-indigo-500" /> : qrUrl ? <img className="h-[96px] w-[96px]" src={qrUrl} alt="QR mã giới thiệu" /> : <span className="text-sm text-slate-400">QR</span>}
+          <div className="flex flex-col gap-4 text-center lg:border-l lg:border-slate-200 lg:pl-5">
+            <div>
+              <p className="mb-2 text-xs font-black text-slate-500 uppercase tracking-wider">QR Đăng ký CTV</p>
+              <div className="mx-auto grid h-[116px] w-[116px] place-items-center rounded-xl border border-slate-200 bg-white app-dark:border-slate-700 app-dark:bg-slate-950">
+                {referralLoading ? <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-slate-300 border-t-indigo-500" /> : qrUrl ? <img className="h-[96px] w-[96px]" src={qrUrl} alt="QR mã giới thiệu" /> : <span className="text-sm text-slate-400">QR</span>}
+              </div>
+              <button
+                className="mt-2 inline-flex items-center gap-2 text-sm font-black text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                disabled={!qrUrl || referralLoading}
+                onClick={handleDownloadQr}
+              >
+                <Icon name="download" className="h-4 w-4" />
+                Tải xuống
+              </button>
             </div>
-            <button
-              className="mt-3 inline-flex items-center gap-2 text-sm font-black text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-              type="button"
-              disabled={!qrUrl || referralLoading}
-              onClick={handleDownloadQr}
-            >
-              <Icon name="download" className="h-4 w-4" />
-              Tải xuống
-            </button>
+            <div className="border-t border-slate-100 pt-3">
+              <p className="mb-2 text-xs font-black text-slate-500 uppercase tracking-wider">QR Khảo sát Zalo</p>
+              <div className="mx-auto grid h-[116px] w-[116px] place-items-center rounded-xl border border-slate-200 bg-white app-dark:border-slate-700 app-dark:bg-slate-950">
+                {referralLoading ? <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-slate-300 border-t-indigo-500" /> : zaloQrUrl ? <img className="h-[96px] w-[96px]" src={zaloQrUrl} alt="QR khảo sát Zalo" /> : <span className="text-sm text-slate-400">QR</span>}
+              </div>
+              <button
+                className="mt-2 inline-flex items-center gap-2 text-sm font-black text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                disabled={!zaloQrUrl || referralLoading}
+                onClick={handleDownloadZaloQr}
+              >
+                <Icon name="download" className="h-4 w-4" />
+                Tải xuống
+              </button>
+            </div>
           </div>
         </div>
       </section>

@@ -3176,7 +3176,7 @@ function ProductOverviewPageInner({ currentUser }) {
               <div className="relative overflow-hidden" style={{ minHeight: "280px", background: bgGradient }}>
                 
                 {/* Decorative background overlay */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-10 items-center p-6 md:p-8 lg:p-10 relative z-10 gap-6">
 
@@ -3474,7 +3474,7 @@ function ProductOverviewPageInner({ currentUser }) {
                           {parsedSteps.map((step, i) => (
                             <div key={i} className="relative">
                               {/* Circle number indicator */}
-                              <div className="absolute -left-[35px] top-0 w-6 h-6 bg-[#005bbf] text-white font-bold rounded-full flex items-center justify-center text-[10px] shadow-md">
+                              <div className="absolute left-[-35px] top-0 w-6 h-6 bg-[#005bbf] text-white font-bold rounded-full flex items-center justify-center text-[10px] shadow-md">
                                 {i + 1}
                               </div>
                               <div>
