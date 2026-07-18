@@ -37,6 +37,7 @@ import { SupportPage } from "./components/SupportPage";
 import { SystemSettingsPage } from "./systemSettings/SystemSettingsPage";
 import { SchoolSearchPage } from "./components/SchoolSearchPage";
 import { SurveyManagementPage } from "./SurveyManagement/SurveyManagementPage";
+import { PublicSurveyPage } from "./SurveyManagement/PublicSurveyPage";
 import { API_BASE_URL } from "./config/api";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
@@ -724,6 +725,7 @@ const resetAuthUrl = () => {
 };
 
 function App() {
+  const publicSurveyMatch = window.location.pathname.match(/^\/survey\/([a-f\d]{24})\/?$/i);
   const [currentPage, setCurrentPage] = useState(() => getStoredPage());
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
@@ -1397,6 +1399,10 @@ function App() {
     };
   }, [currentPage, user?.id]);
 
+
+  if (publicSurveyMatch) {
+    return <PublicSurveyPage surveyId={publicSurveyMatch[1]} />;
+  }
 
   if (!user) {
     let authContent;
