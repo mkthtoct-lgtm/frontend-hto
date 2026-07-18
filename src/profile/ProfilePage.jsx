@@ -522,23 +522,22 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const [activeSurveys, setActiveSurveys] = useState([]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("hto_surveys_data");
-    if (stored) {
+    let isMounted = true;
+    const loadSurveys = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        setActiveSurveys(parsed.filter(s => s.status === "active"));
-      } catch {
-        setActiveSurveys([
-          { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
-          { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
-        ]);
+        const res = await authFetch(`${API_BASE_URL}/surveys?status=active`, {
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        });
+        const json = await res.json().catch(() => null);
+        if (isMounted && res.ok && json?.success && Array.isArray(json.data)) {
+          setActiveSurveys(json.data);
+        }
+      } catch (err) {
+        console.error("Lỗi tải danh sách khảo sát cho CTV:", err);
       }
-    } else {
-      setActiveSurveys([
-        { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
-        { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
-      ]);
-    }
+    };
+    loadSurveys();
+    return () => { isMounted = false; };
   }, []);
 
   const getSurveyReferralUrl = (baseUrl, code) => {
@@ -966,7 +965,21 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
       setNotice(`Đã sao chép ${label} vào bộ nhớ tạm.`);
       window.setTimeout(() => setNotice(""), 3000);
     } catch {
-      setError("Không thể sao chép nội dung.");
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (copied) {
+        setNotice(`Đã sao chép ${label} vào bộ nhớ tạm.`);
+        window.setTimeout(() => setNotice(""), 3000);
+      } else {
+        setError("Không thể tự động sao chép. Hãy bôi đen link và nhấn Ctrl+C.");
+      }
     }
   };
 
@@ -1382,9 +1395,14 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono max-w-[450px] truncate block" title={refUrl}>
-                            {referralLoading ? "Đang tải link giới thiệu..." : refUrl}
-                          </span>
+                          <input
+                            className="w-full min-w-[280px] max-w-[520px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-mono text-xs text-slate-600 outline-none focus:border-indigo-400 app-dark:border-slate-700 app-dark:bg-slate-950 app-dark:text-slate-300"
+                            value={referralLoading ? "Đang tải link giới thiệu..." : refUrl}
+                            readOnly
+                            title="Bấm vào ô để chọn toàn bộ link"
+                            onFocus={(event) => event.currentTarget.select()}
+                            onClick={(event) => event.currentTarget.select()}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">
