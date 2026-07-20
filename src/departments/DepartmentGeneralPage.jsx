@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { DocumentsPage } from "../components/DocumentsPage";
@@ -285,9 +285,51 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
   const [loading, setLoading] = useState(true);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
-  // States quản lý việc chỉnh sửa
+  // States quản lý việc chỉnh sửa SOP
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
+
+  // States quản lý Sơ đồ cây tổ chức động (Thêm/Sửa/Xóa nút sơ đồ)
+  const [orgChartNodes, setOrgChartNodes] = useState(null);
+  const [isOrgNodeModalOpen, setIsOrgNodeModalOpen] = useState(false);
+  const [editingNode, setEditingNode] = useState(null);
+  const [nodeForm, setNodeForm] = useState({ title: "", fullName: "", role: "", level: "member", avatarUrl: "" });
+
+  // Refs & Handlers Tải ảnh từ máy tính (Local Computer File Upload)
+  const nodeAvatarFileRef = useRef(null);
+  const bannerFileRef = useRef(null);
+
+  const handleAvatarFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Dung lượng tệp ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setNodeForm(prev => ({ ...prev, avatarUrl: event.target.result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBannerFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Dung lượng tệp ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 8MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setEditData(prev => ({ ...prev, image: event.target.result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Kiểm duyệt quyền của user hiện tại (chỉ Admin, Ban Giám Đốc, Trưởng bộ phận mới được sửa)
   const isAllowedToEdit = useMemo(() => {
@@ -306,7 +348,7 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
     };
   }, [departmentId, departmentName, sopConfig]);
 
-  // Load cấu hình lưu trong LocalStorage khi thay đổi departmentId
+  // Load cấu hình SOP và Sơ đồ tổ chức lưu trong LocalStorage khi thay đổi departmentId
   useEffect(() => {
     if (!departmentId) return;
     const stored = localStorage.getItem(`hto_sop_config_${departmentId}`);
@@ -319,7 +361,119 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
     } else {
       setSopConfig(null);
     }
+
+    const storedOrg = localStorage.getItem(`hto_org_chart_${departmentId}`);
+    if (storedOrg) {
+      try {
+        setOrgChartNodes(JSON.parse(storedOrg));
+      } catch {
+        setOrgChartNodes(null);
+      }
+    } else {
+      setOrgChartNodes(null);
+    }
   }, [departmentId]);
+
+  const activeOrgChartNodes = useMemo(() => {
+    if (orgChartNodes && Array.isArray(orgChartNodes)) return orgChartNodes;
+
+    const leader = members.find(m => m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"));
+    const otherMembers = members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý")));
+
+    return [
+      {
+        id: "leader-node-default",
+        title: "TRƯỞNG BỘ PHẬN",
+        fullName: leader ? leader.fullName : "Chưa bổ nhiệm",
+        role: leader ? leader.role : "Quản lý phòng ban",
+        avatarUrl: leader?.avatarUrl || "/assets/images/avatar/avatar1.webp",
+        level: "leader"
+      },
+      ...otherMembers.map((m, idx) => ({
+        id: `member-node-${m.id || idx}`,
+        title: m.role || "Thành viên chuyên môn",
+        fullName: m.fullName,
+        role: m.role || "Nhân sự",
+        avatarUrl: m.avatarUrl || `/assets/images/avatar/avatar${(idx % 9) + 1}.webp`,
+        level: "member"
+      }))
+    ];
+  }, [members, orgChartNodes]);
+
+  const handleSaveOrgChartNodes = (nodes) => {
+    setOrgChartNodes(nodes);
+    localStorage.setItem(`hto_org_chart_${departmentId}`, JSON.stringify(nodes));
+  };
+
+  const handleOpenAddNodeModal = () => {
+    const firstMember = members[0];
+    setEditingNode(null);
+    setNodeForm({ 
+      title: "Chuyên viên nhiệm vụ", 
+      fullName: firstMember?.fullName || "", 
+      role: firstMember?.role || "Thành viên chuyên môn", 
+      avatarUrl: firstMember?.avatarUrl || "/assets/images/avatar/avatar1.webp",
+      level: "member" 
+    });
+    setIsOrgNodeModalOpen(true);
+  };
+
+  const handleOpenEditNodeModal = (node) => {
+    setEditingNode(node);
+    setNodeForm({ 
+      title: node.title, 
+      fullName: node.fullName, 
+      role: node.role || "", 
+      avatarUrl: node.avatarUrl || "/assets/images/avatar/avatar1.webp",
+      level: node.level || "member" 
+    });
+    setIsOrgNodeModalOpen(true);
+  };
+
+  const handleDeleteNode = (nodeId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa vị trí này khỏi Sơ đồ tổ chức?")) return;
+    const nextNodes = activeOrgChartNodes.filter(n => n.id !== nodeId);
+    handleSaveOrgChartNodes(nextNodes);
+  };
+
+  const handleSaveNodeForm = (e) => {
+    e.preventDefault();
+    if (!nodeForm.fullName.trim()) return;
+
+    if (editingNode) {
+      const nextNodes = activeOrgChartNodes.map(n => 
+        n.id === editingNode.id 
+          ? { 
+              ...n, 
+              title: nodeForm.title, 
+              fullName: nodeForm.fullName.trim(), 
+              role: nodeForm.role, 
+              avatarUrl: nodeForm.avatarUrl || "/assets/images/avatar/avatar1.webp",
+              level: nodeForm.level 
+            }
+          : n
+      );
+      handleSaveOrgChartNodes(nextNodes);
+    } else {
+      const newNode = {
+        id: `custom-node-${Date.now()}`,
+        title: nodeForm.title || "Vị trí chuyên môn",
+        fullName: nodeForm.fullName.trim(),
+        role: nodeForm.role || "Nhân sự",
+        avatarUrl: nodeForm.avatarUrl || "/assets/images/avatar/avatar1.webp",
+        level: nodeForm.level || "member"
+      };
+      handleSaveOrgChartNodes([...activeOrgChartNodes, newNode]);
+    }
+    setIsOrgNodeModalOpen(false);
+  };
+
+  const handleResetOrgChart = () => {
+    if (window.confirm("Khôi phục sơ đồ cây tổ chức về mặc định ban đầu?")) {
+      localStorage.removeItem(`hto_org_chart_${departmentId}`);
+      setOrgChartNodes(null);
+    }
+  };
 
   // Gọi API lấy thông tin tên phòng ban và thành viên thực tế từ Backend
   useEffect(() => {
@@ -384,35 +538,42 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
           }
         }
 
-        // 2. Lấy thành viên phòng ban
-        if (canReadUsers) {
-          try {
-            const usersRes = await authFetch(`${API_BASE_URL}/users?page=1&limit=100`, { headers });
-            if (usersRes.ok) {
-              const usersPayload = await usersRes.json().catch(() => null);
-              const usersList = usersPayload?.data || usersPayload?.users || usersPayload || [];
-              
-              const deptMembers = usersList.filter(user => {
-                const userDeptId = user.departmentId || user.department?._id || user.department?.id;
-                return String(userDeptId) === String(departmentId);
-              });
-              
-              if (isMounted) {
-                setMembers(deptMembers.map((u, index) => ({
-                  id: u._id || u.id,
-                  fullName: u.fullName || u.name || "Nhân viên HTO",
-                  email: u.email || "",
-                  role: u.roleName || u.role?.name || "Nhân sự chuyên môn",
-                  avatarUrl: u.avatarUrl || `/assets/images/avatar/avatar${(index % 9) + 1}.webp`
-                })));
-              }
+        // 2. Lấy thành viên phòng ban từ Swagger API thật (Backend MongoDB)
+        try {
+          const usersRes = await authFetch(`${API_BASE_URL}/users?page=1&limit=200`, { headers });
+          if (usersRes.ok) {
+            const usersPayload = await usersRes.json().catch(() => null);
+            const usersList = Array.isArray(usersPayload?.data?.users)
+              ? usersPayload.data.users
+              : Array.isArray(usersPayload?.data)
+              ? usersPayload.data
+              : Array.isArray(usersPayload?.users)
+              ? usersPayload.users
+              : [];
+            
+            const deptMembers = usersList.filter(user => {
+              const userDeptId = user.departmentId || user.department?._id || user.department?.id;
+              return String(userDeptId) === String(departmentId);
+            });
+
+            // Ưu tiên nhân sự thuộc phòng ban này, nếu rỗng thì dùng tất cả User thực tế trong DB
+            const finalMembers = deptMembers.length > 0 ? deptMembers : usersList;
+            
+            if (isMounted && finalMembers.length > 0) {
+              setMembers(finalMembers.map((u, index) => ({
+                id: u._id || u.id,
+                fullName: u.fullName || u.name || u.email || "Nhân sự HTO",
+                email: u.email || "",
+                role: u.roleName || u.role?.name || u.role || "Nhân sự chuyên môn",
+                avatarUrl: u.avatarUrl || `/assets/images/avatar/avatar${(index % 8) + 1}.webp`
+              })));
             } else {
               loadFallbackMembers();
             }
-          } catch (e) {
+          } else {
             loadFallbackMembers();
           }
-        } else {
+        } catch (e) {
           loadFallbackMembers();
         }
 
@@ -611,38 +772,92 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
                 <OutlineIcon name="users" className="text-primary" size={20} />
                 <h5 className="card-title fw-bold text-body-emphasis mb-0">Sơ đồ tổ chức & Thành viên chuyên môn</h5>
               </div>
-              <span className="badge bg-secondary-subtle text-body-secondary fw-semibold">
-                {members.length} nhân sự hoạt động
-              </span>
+              <div className="d-flex align-items-center gap-2">
+                {isAllowedToEdit && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary d-flex align-items-center gap-1 py-1 px-2.5"
+                      style={{ fontSize: "12px", fontWeight: 600 }}
+                      onClick={handleOpenAddNodeModal}
+                    >
+                      <OutlineIcon name="plus" className="text-white" size={13} />
+                      Thêm vị trí sơ đồ
+                    </button>
+                    {orgChartNodes && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary py-1 px-2"
+                        style={{ fontSize: "11px" }}
+                        onClick={handleResetOrgChart}
+                        title="Khôi phục sơ đồ mặc định"
+                      >
+                        Mặc định
+                      </button>
+                    )}
+                  </>
+                )}
+                <span className="badge bg-secondary-subtle text-body-secondary fw-semibold">
+                  {members.length} nhân sự hoạt động
+                </span>
+              </div>
             </div>
             <div className="card-body p-4">
               {/* ORG CHART CARD GRAPHIC */}
-              <div className="org-chart-wrapper bg-body-tertiary rounded-4 p-4 mb-4 text-center border">
+              <div className="org-chart-wrapper bg-body-tertiary rounded-4 p-4 mb-4 text-center border position-relative">
                 <h6 className="fw-bold text-body-secondary uppercase small mb-3">Sơ đồ cây tổ chức</h6>
                 <div className="d-flex flex-column align-items-center gap-3">
-                  {/* Leader Node - Solid Primary */}
-                  <div className="card border shadow-sm bg-primary text-white p-2.5 px-4 rounded-3 text-center" style={{ minWidth: "200px" }}>
-                    <div className="fw-bold text-white-50" style={{ fontSize: "11px" }}>TRƯỞNG BỘ PHẬN</div>
-                    <div className="fw-semibold text-white fs-6 mt-0.5">
-                      {members.find(m => m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"))?.fullName || "Chưa bổ nhiệm"}
-                    </div>
-                  </div>
-                  
-                  {/* Connecting Line */}
-                  <div style={{ width: "2px", height: "24px", backgroundColor: "var(--bs-border-color)" }}></div>
-                  
-                  {/* Team Members Grid in Chart */}
+                  {/* Leaders Row */}
                   <div className="d-flex flex-wrap justify-content-center gap-3">
-                    {members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"))).slice(0, 3).map((m, idx) => (
-                      <div key={idx} className="card border shadow-sm bg-body p-2 px-3 rounded-3 text-center" style={{ minWidth: "150px" }}>
-                        <div className="fw-bold text-body-emphasis text-truncate" style={{ fontSize: "13px" }}>{m.fullName}</div>
-                        <div className="text-body-secondary small mt-0.5" style={{ fontSize: "11px" }}>{m.role}</div>
+                    {activeOrgChartNodes.filter(n => n.level === "leader").map((node) => (
+                      <div key={node.id} className="card border-0 shadow-md p-3 px-4 rounded-3 text-center position-relative" style={{ minWidth: "220px", backgroundColor: "#1e40af", color: "#ffffff" }}>
+                        {isAllowedToEdit && (
+                          <div className="position-absolute top-2 end-2 d-flex gap-1 bg-black/40 p-1 rounded">
+                            <button type="button" className="btn btn-xs text-white p-0 border-0" title="Sửa vị trí" onClick={() => handleOpenEditNodeModal(node)}>
+                              <OutlineIcon name="edit" className="text-white" size={13} />
+                            </button>
+                            <button type="button" className="btn btn-xs text-danger p-0 border-0 ms-1" title="Xóa vị trí" onClick={() => handleDeleteNode(node.id)}>
+                              <OutlineIcon name="trash" className="text-danger" size={13} />
+                            </button>
+                          </div>
+                        )}
+                        {node.avatarUrl && (
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-2 border-white mx-auto mb-2" style={{ width: "48px", height: "48px", objectFit: "cover" }} />
+                        )}
+                        <div className="fw-bold text-uppercase" style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", letterSpacing: "0.5px" }}>{node.title || "TRƯỞNG BỘ PHẬN"}</div>
+                        <div className="fw-bold fs-6 mt-0.5" style={{ color: "#ffffff" }}>{node.fullName}</div>
+                        {node.role && <div className="small mt-0.5" style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.85)" }}>{node.role}</div>}
                       </div>
                     ))}
-                    {members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"))).length > 3 && (
-                      <div className="card border border-dashed shadow-sm bg-body p-2 px-3 rounded-3 d-flex align-items-center justify-content-center" style={{ minWidth: "150px", fontSize: "12px" }}>
-                        <span className="text-body-secondary fw-semibold">+ {members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"))).length - 3} Nhân sự khác</span>
+                  </div>
+
+                  {/* Connecting Line */}
+                  <div style={{ width: "2px", height: "24px", backgroundColor: "var(--bs-border-color)" }}></div>
+
+                  {/* Member Nodes Grid */}
+                  <div className="d-flex flex-wrap justify-content-center gap-3">
+                    {activeOrgChartNodes.filter(n => n.level !== "leader").map((node) => (
+                      <div key={node.id} className="card border shadow-sm p-3 px-3 rounded-3 text-center position-relative" style={{ minWidth: "170px", backgroundColor: "#ffffff", color: "#0f172a" }}>
+                        {node.avatarUrl && (
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border mx-auto mb-1.5" style={{ width: "38px", height: "38px", objectFit: "cover" }} />
+                        )}
+                        <div className="fw-bold text-truncate" style={{ fontSize: "13.5px", color: "#0f172a" }}>{node.fullName}</div>
+                        <div className="small mt-0.5" style={{ fontSize: "11px", color: "#64748b" }}>{node.title || node.role}</div>
+                        {isAllowedToEdit && (
+                          <div className="d-flex justify-content-center gap-2 mt-2 border-top pt-1.5">
+                            <button type="button" className="btn btn-xs text-primary p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleOpenEditNodeModal(node)}>
+                              Sửa
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button type="button" className="btn btn-xs text-danger p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleDeleteNode(node.id)}>
+                              Xóa
+                            </button>
+                          </div>
+                        )}
                       </div>
+                    ))}
+                    {activeOrgChartNodes.filter(n => n.level !== "leader").length === 0 && (
+                      <div className="text-body-secondary small italic py-2">Chưa có vị trí thành viên nào. Bấm "Thêm vị trí sơ đồ" để bổ sung.</div>
                     )}
                   </div>
                 </div>
@@ -901,10 +1116,31 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
                   ></textarea>
                 </div>
                 <div className="mb-3">
-                  <label className="form-label small fw-bold">Ảnh bìa URL</label>
+                  <label className="form-label small fw-bold">Ảnh bìa phòng ban</label>
+                  <input
+                    type="file"
+                    ref={bannerFileRef}
+                    accept="image/*"
+                    className="d-none"
+                    onChange={handleBannerFileUpload}
+                  />
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5"
+                      onClick={() => bannerFileRef.current?.click()}
+                    >
+                      <OutlineIcon name="edit" className="text-primary" size={14} />
+                      Chọn ảnh từ máy tính
+                    </button>
+                    {editData.image && (
+                      <span className="small text-success fw-bold" style={{ fontSize: "11px" }}>✓ Đã chọn ảnh</span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
-                    className="form-control" 
+                    className="form-control font-mono" 
+                    placeholder="URL ảnh hoặc bấm chọn ảnh từ máy tính ở trên..."
                     value={editData.image || ""} 
                     onChange={e => setEditData({ ...editData, image: e.target.value })}
                   />
@@ -1139,6 +1375,185 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CHỈNH SỬA / THÊM MỚI VỊ TRÍ SƠ ĐỒ CÂY TỔ CHỨC */}
+      {isOrgNodeModalOpen && (
+        <div className="custom-modal-overlay d-flex align-items-center justify-content-center position-fixed w-100 h-100" style={{ zIndex: 1095, top: 0, left: 0, backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
+          <div className="card border shadow-lg bg-body w-100 mx-3 p-0" style={{ maxWidth: "520px", borderRadius: "16px", overflow: "hidden" }}>
+            <div className="card-header border-bottom bg-transparent py-3 px-4 d-flex align-items-center justify-content-between">
+              <h5 className="card-title fw-bold text-body-emphasis mb-0 d-flex align-items-center gap-2">
+                <OutlineIcon name="users" className="text-primary" size={20} />
+                {editingNode ? "Chỉnh sửa vị trí sơ đồ" : "Thêm vị trí vào Sơ đồ cây"}
+              </h5>
+              <button 
+                type="button" 
+                className="btn-close border-0 bg-transparent text-body-secondary fs-4" 
+                onClick={() => setIsOrgNodeModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveNodeForm}>
+              <div className="card-body p-4">
+                {/* 1. Select from Department Members */}
+                {members.length > 0 && (
+                  <div className="mb-3 p-2.5 bg-body-tertiary rounded-3 border">
+                    <label className="form-label small fw-bold text-primary mb-1">
+                      Chọn nhanh nhân sự có sẵn trong phòng ban:
+                    </label>
+                    <select
+                      className="form-select form-select-sm"
+                      value=""
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const m = members.find((user) => String(user.id) === String(selectedId));
+                        if (m) {
+                          setNodeForm({
+                            ...nodeForm,
+                            fullName: m.fullName,
+                            role: m.role || nodeForm.role,
+                            avatarUrl: m.avatarUrl || nodeForm.avatarUrl || "/assets/images/avatar/avatar1.webp",
+                          });
+                        }
+                      }}
+                    >
+                      <option value="">-- Click để chọn nhân sự tự động --</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.fullName} ({m.role || "Nhân sự"})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Chức danh / Vị trí hiển thị <span className="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    required
+                    placeholder="Ví dụ: TRƯỞNG BỘ PHẬN, Kỹ năng viên Kinh doanh, Chuyên viên nhiệm vụ..." 
+                    value={nodeForm.title} 
+                    onChange={e => setNodeForm({ ...nodeForm, title: e.target.value })}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Họ và tên nhân sự <span className="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    required
+                    placeholder="Nhập họ và tên..." 
+                    value={nodeForm.fullName} 
+                    onChange={e => setNodeForm({ ...nodeForm, fullName: e.target.value })}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Mô tả ngắn / Chuyên môn</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Ví dụ: Quản lý bộ phận, Kỹ năng viên Kinh doanh..." 
+                    value={nodeForm.role} 
+                    onChange={e => setNodeForm({ ...nodeForm, role: e.target.value })}
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">Ảnh đại diện (Avatar)</label>
+                  <input
+                    type="file"
+                    ref={nodeAvatarFileRef}
+                    accept="image/*"
+                    className="d-none"
+                    onChange={handleAvatarFileUpload}
+                  />
+                  <div className="d-flex align-items-center gap-2 mb-2">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5"
+                      onClick={() => nodeAvatarFileRef.current?.click()}
+                    >
+                      <OutlineIcon name="edit" className="text-primary" size={14} />
+                      Chọn ảnh từ máy tính
+                    </button>
+                    {nodeForm.avatarUrl && (
+                      <div className="d-flex align-items-center gap-1.5 bg-body-tertiary px-2 py-1 rounded border">
+                        <img
+                          src={nodeForm.avatarUrl}
+                          alt="Preview"
+                          className="rounded-circle border"
+                          style={{ width: "24px", height: "24px", objectFit: "cover" }}
+                        />
+                        <span className="small text-success fw-bold" style={{ fontSize: "11px" }}>Đã chọn ảnh</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="input-group input-group-sm mb-1.5">
+                    <input 
+                      type="text" 
+                      className="form-control font-mono" 
+                      placeholder="/assets/images/avatar/avatar1.webp hoặc URL ảnh..." 
+                      value={nodeForm.avatarUrl} 
+                      onChange={e => setNodeForm({ ...nodeForm, avatarUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="d-flex align-items-center gap-1.5 flex-wrap">
+                    <span className="small text-body-secondary" style={{ fontSize: "11px" }}>Mẫu avatar:</span>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
+                      const url = `/assets/images/avatar/avatar${num}.webp`;
+                      return (
+                        <img
+                          key={num}
+                          src={url}
+                          alt={`Avatar ${num}`}
+                          className={`rounded-circle cursor-pointer border ${nodeForm.avatarUrl === url ? "border-primary border-2" : ""}`}
+                          style={{ width: "26px", height: "26px", objectFit: "cover" }}
+                          onClick={() => setNodeForm({ ...nodeForm, avatarUrl: url })}
+                          title={`Chọn Avatar ${num}`}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <label className="form-label small fw-bold">Cấp bậc hiển thị trên sơ đồ cây</label>
+                  <select 
+                    className="form-select" 
+                    value={nodeForm.level} 
+                    onChange={e => setNodeForm({ ...nodeForm, level: e.target.value })}
+                  >
+                    <option value="leader">Cấp trên (Lãnh đạo / Trưởng phòng - Khung màu xanh nổi bật)</option>
+                    <option value="member">Cấp dưới (Thành viên / Chuyên viên - Khung màu trắng bên dưới)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="card-footer border-top bg-transparent py-3 px-4 d-flex align-items-center justify-content-end gap-2">
+                <button 
+                  type="button" 
+                  className="btn btn-sm btn-light border px-3" 
+                  onClick={() => setIsOrgNodeModalOpen(false)}
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-sm btn-primary px-4 fw-bold"
+                >
+                  {editingNode ? "Lưu thay đổi" : "Thêm vị trí"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

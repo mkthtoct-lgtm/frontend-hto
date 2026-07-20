@@ -41,6 +41,25 @@ export function SchoolSearchPage() {
   // Filter lists fetched dynamically from DB
   const [regionOptions, setRegionOptions] = useState([]);
   const [systemOptions, setSystemOptions] = useState([]);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  // Active filters count
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (activeCountry !== "all") count++;
+    if (activeProgram !== "all") count++;
+    if (regionFilter !== "all") count++;
+    if (systemFilter !== "all") count++;
+    return count;
+  }, [activeCountry, activeProgram, regionFilter, systemFilter]);
+
+  const resetAllFilters = () => {
+    setActiveCountry("all");
+    setActiveProgram("all");
+    setRegionFilter("all");
+    setSystemFilter("all");
+    setSearchTerm("");
+  };
 
   // Auth User check
   const currentUser = useMemo(() => {
@@ -342,11 +361,27 @@ export function SchoolSearchPage() {
 
   const handleAddSource = async (e) => {
     e.preventDefault();
+    let { name, country, program, spreadsheetId, gid } = newSource;
+    spreadsheetId = (spreadsheetId || "").trim();
+    gid = (gid || "").trim();
+
+    if (spreadsheetId.includes("/d/")) {
+      const matchId = spreadsheetId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (matchId) spreadsheetId = matchId[1];
+    }
+    if (newSource.spreadsheetId.includes("gid=")) {
+      const matchGid = newSource.spreadsheetId.match(/gid=([0-9]+)/);
+      if (matchGid) gid = matchGid[1];
+    }
+    gid = gid || "0";
+
+    const payload = { name, country, program, spreadsheetId, gid };
+
     try {
       const res = await authFetch(`${API_BASE_URL}/schools/sources`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-        body: JSON.stringify(newSource)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         setNewSource({ name: "", country: "", program: "", spreadsheetId: "", gid: "" });
@@ -429,156 +464,307 @@ export function SchoolSearchPage() {
         </div>
       </div>
 
-      {/* Country and Program Tab Pickers */}
-      <div className="row g-3 mb-4">
-        {/* Country Selector */}
-        <div className="col-12 col-sm-4 col-md-3">
-          <label className="form-label fw-bold small text-secondary">Chọn Quốc gia</label>
-          <select className="form-select border-1" value={activeCountry} onChange={handleCountryChange}>
-            <option value="all">Tất cả quốc gia</option>
-            {countries.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
+      {/* Search Bar & Filter Toggle Button Header */}
+      <div className="card border-0 shadow-sm mb-3" style={{ borderRadius: "12px" }}>
+        <div className="card-body p-3">
+          <div className="d-flex flex-column flex-md-row gap-2 align-items-center">
+            {/* Search Input */}
+            <div className="position-relative flex-grow-1 w-100">
+              <input
+                type="text"
+                placeholder="Tìm kiếm nhanh tên trường, chuyên ngành, địa chỉ, khu vực..."
+                className="form-control bg-body border-1 ps-5 py-2"
+                style={{ fontSize: "14px" }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && fetchSchools()}
+              />
+              <span className="position-absolute start-0 top-50 translate-middle-y ms-3 text-body-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+              </span>
+              <button className="btn btn-sm btn-primary position-absolute end-0 top-50 translate-middle-y me-1 px-3" type="button" onClick={() => fetchSchools()}>
+                Tìm kiếm
+              </button>
+            </div>
 
-        {/* Program Selection Bar */}
-        <div className="col-12 col-sm-8 col-md-9 d-flex align-items-end">
-          <div className="d-flex flex-wrap gap-2 bg-body-secondary p-1 rounded-3 w-100" style={{ border: "1px solid var(--bs-border-color-translucent)" }}>
+            {/* Vertical Filter Toggle Button */}
             <button
               type="button"
-              className={`btn btn-sm px-3 py-1.5 border-0 rounded-2 font-semibold transition-all ${activeProgram === "all" ? "bg-body text-primary shadow-sm fw-bold" : "text-secondary hover:text-body bg-transparent"}`}
-              onClick={() => handleProgramChange("all")}
+              className={`btn btn-md d-inline-flex align-items-center gap-2 px-3 py-2 text-nowrap transition-all ${isFilterPanelOpen ? "btn-primary shadow-sm" : "btn-outline-primary"}`}
+              onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+              title="Mở/Đóng cột bộ lọc bên phải"
             >
-              Tất cả chương trình
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+              <span>Bộ lọc</span>
+              {activeFilterCount > 0 && (
+                <span className={`badge rounded-pill ${isFilterPanelOpen ? "bg-white text-primary" : "bg-primary text-white"}`}>
+                  {activeFilterCount}
+                </span>
+              )}
             </button>
-            {programs.map(p => (
-              <button
-                key={p}
-                type="button"
-                className={`btn btn-sm px-3 py-1.5 border-0 rounded-2 font-semibold transition-all ${activeProgram === p ? "bg-body text-primary shadow-sm fw-bold" : "text-secondary hover:text-body bg-transparent"}`}
-                onClick={() => handleProgramChange(p)}
-              >
-                {p}
-              </button>
-            ))}
           </div>
+
+          {/* Active Filter Chips Summary */}
+          {(activeFilterCount > 0 || searchTerm) && (
+            <div className="d-flex flex-wrap align-items-center gap-1.5 mt-2.5 pt-2 border-top">
+              <span className="small text-body-secondary me-1 fw-semibold" style={{ fontSize: "12px" }}>Đang lọc:</span>
+              {activeCountry !== "all" && (
+                <span className="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                  Quốc gia: <strong>{activeCountry}</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}></button>
+                </span>
+              )}
+              {activeProgram !== "all" && (
+                <span className="badge bg-info-subtle text-info-emphasis border border-info-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                  Chương trình: <strong>{activeProgram}</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => handleProgramChange("all")}></button>
+                </span>
+              )}
+              {regionFilter !== "all" && (
+                <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                  Khu vực: <strong>{regionFilter}</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setRegionFilter("all")}></button>
+                </span>
+              )}
+              {systemFilter !== "all" && (
+                <span className="badge bg-success-subtle text-success-emphasis border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
+                  Hệ: <strong>{systemFilter}</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setSystemFilter("all")}></button>
+                </span>
+              )}
+              {searchTerm && (
+                <span className="badge bg-secondary-subtle text-body-secondary border d-inline-flex align-items-center gap-1 py-1 px-2">
+                  Từ khóa: <strong>"{searchTerm}"</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setSearchTerm("")}></button>
+                </span>
+              )}
+              <button
+                type="button"
+                className="btn btn-link btn-xs text-danger text-decoration-none ms-auto fw-semibold p-0"
+                style={{ fontSize: "12px" }}
+                onClick={resetAllFilters}
+              >
+                Xóa tất cả bộ lọc
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <section className="card border-0 mb-4 shadow-sm" style={{ borderRadius: "8px" }}>
-        <div className="card-body p-3">
-          <div className="row g-2">
-            <div className="col-12 col-md-6 col-lg-6">
-              <div className="position-relative">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm nhanh tên trường, chuyên ngành, khu vực..."
-                  className="form-control bg-body border-1 ps-4"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && fetchSchools()}
-                />
-                <button className="btn btn-sm btn-primary position-absolute end-0 top-50 translate-middle-y me-1" type="button" onClick={() => fetchSchools()}>Tìm</button>
-                <span className="position-absolute start-0 top-50 translate-middle-y ms-2 text-body-secondary">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                </span>
-              </div>
-            </div>
-
-            <div className="col-6 col-md-3 col-lg-3">
-              <select className="form-select bg-body border-1" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
-                <option value="all">Tất cả Khu vực</option>
-                {regionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-            </div>
-
-            <div className="col-6 col-md-3 col-lg-3">
-              <select className="form-select bg-body border-1" value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)}>
-                <option value="all">Tất cả Hệ tuyển sinh</option>
-                {systemOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
+      {/* Main Content Area: Table on Left + Vertical Filter Drawer on Right */}
+      <div className="d-flex flex-column flex-lg-row gap-3 align-items-start position-relative">
+        {/* Left Side: Main Data Table */}
+        <section className="card border-0 shadow-sm flex-grow-1 w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
+          <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
+            <h6 className="fw-bold text-body-emphasis mb-0">Bảng dữ liệu trường học ({activeCountry !== "all" ? activeCountry : "Tất cả các nước"})</h6>
+            <div className="d-flex align-items-center gap-2">
+              <span className="badge bg-primary-subtle text-primary px-2.5 py-1">
+                Hiển thị {filteredRecords.length} / {records.length} trường
+              </span>
+              {!isFilterPanelOpen && (
+                <button
+                  type="button"
+                  className="btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1"
+                  onClick={() => setIsFilterPanelOpen(true)}
+                  title="Mở cột bộ lọc dọc bên phải"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+                  Bộ lọc
+                </button>
+              )}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Spreadsheet Grid */}
-      <section className="card border-0 shadow-sm" style={{ borderRadius: "8px" }}>
-        <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
-          <h6 className="fw-bold text-body-emphasis mb-0">Bảng dữ liệu trường học ({activeCountry !== "all" ? activeCountry : "Tất cả các nước"})</h6>
-          <span className="badge bg-primary-subtle text-primary px-2 py-1">
-            Hiển thị {filteredRecords.length} / {records.length} trường
-          </span>
-        </div>
-        <div className="card-body p-0">
-          <div className="table-responsive" style={{ maxHeight: "650px", overflowY: "auto" }}>
-            <table className="table table-bordered table-hover align-middle mb-0" style={{ fontSize: "13px" }}>
-              <thead className="table-light sticky-top" style={{ zIndex: 10 }}>
-                <tr>
-                  {headers.filter(h => h !== "_id").map(h => (
-                    <th key={h} className="text-body-secondary fw-semibold py-3 text-nowrap px-3">{h}</th>
-                  ))}
-                  <th className="text-body-secondary fw-semibold py-3 text-center text-nowrap px-3" style={{ width: "110px" }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
+          <div className="card-body p-0">
+            <div className="table-responsive" style={{ maxHeight: "650px", overflowY: "auto" }}>
+              <table className="table table-bordered table-hover align-middle mb-0" style={{ fontSize: "13px" }}>
+                <thead className="table-light sticky-top" style={{ zIndex: 10 }}>
                   <tr>
-                    <td colSpan={headers.length + 1} className="text-center py-5">
-                      <div className="spinner-border spinner-border-sm text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
-                      <span className="ms-2">Đang tải danh sách trường du học...</span>
-                    </td>
+                    {headers.filter(h => h !== "_id").map(h => (
+                      <th key={h} className="text-body-secondary fw-semibold py-3 text-nowrap px-3">{h}</th>
+                    ))}
+                    <th className="text-body-secondary fw-semibold py-3 text-center text-nowrap px-3" style={{ width: "110px" }}>Thao tác</th>
                   </tr>
-                ) : error ? (
-                  <tr><td colSpan={headers.length + 1} className="text-center py-4 text-danger">{error}</td></tr>
-                ) : filteredRecords.length === 0 ? (
-                  <tr><td colSpan={headers.length + 1} className="text-center py-5 text-body-secondary">Không tìm thấy trường nào phù hợp.</td></tr>
-                ) : (
-                  filteredRecords.map((row, rowIdx) => (
-                    <tr key={row._id || rowIdx} style={{ cursor: "pointer" }} onClick={() => handleOpenDetailModal(row)}>
-                      {headers.filter(h => h !== "_id").map(h => {
-                        const val = row[h] || "";
-                        const isLink = String(val).startsWith("http");
-                        const isImage = isLink && (
-                          h.toLowerCase().includes("ảnh") || h.toLowerCase().includes("image") || /\.(jpg|jpeg|png|webp|gif|svg)/i.test(val.split("?")[0])
-                        );
-                        return (
-                          <td key={h} className="px-3 py-2 text-truncate" style={{ maxWidth: "220px" }} title={val}>
-                            {isLink ? (
-                              <a href={val} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="fw-semibold">
-                                {isImage ? "Xem ảnh " : `Mở ${h.trim()}`}
-                              </a>
-                            ) : (
-                              highlightText(val, searchTerm)
-                            )}
-                          </td>
-                        );
-                      })}
-                      <td className="text-center px-2 py-1" onClick={e => e.stopPropagation()}>
-                        <div className="d-flex justify-content-center gap-1">
-                          <button className="btn btn-sm btn-outline-primary p-1" type="button" title="Xem chi tiết" onClick={() => handleOpenDetailModal(row)}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                          </button>
-                          {isAdmin && (
-                            <>
-                              <button className="btn btn-sm btn-outline-warning p-1" type="button" title="Sửa" onClick={() => openSchoolModal(row)}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" /></svg>
-                              </button>
-                              <button className="btn btn-sm btn-outline-danger p-1" type="button" title="Xóa" onClick={(e) => handleSchoolDelete(row._id, e)}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></svg>
-                              </button>
-                            </>
-                          )}
-                        </div>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={headers.length + 1} className="text-center py-5">
+                        <div className="spinner-border spinner-border-sm text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
+                        <span className="ms-2">Đang tải danh sách trường du học...</span>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : error ? (
+                    <tr><td colSpan={headers.length + 1} className="text-center py-4 text-danger">{error}</td></tr>
+                  ) : filteredRecords.length === 0 ? (
+                    <tr><td colSpan={headers.length + 1} className="text-center py-5 text-body-secondary">Không tìm thấy trường nào phù hợp.</td></tr>
+                  ) : (
+                    filteredRecords.map((row, rowIdx) => (
+                      <tr key={row._id || rowIdx} style={{ cursor: "pointer" }} onClick={() => handleOpenDetailModal(row)}>
+                        {headers.filter(h => h !== "_id").map(h => {
+                          const val = row[h] || "";
+                          const isLink = String(val).startsWith("http");
+                          const isImage = isLink && (
+                            h.toLowerCase().includes("ảnh") || h.toLowerCase().includes("image") || /\.(jpg|jpeg|png|webp|gif|svg)/i.test(val.split("?")[0])
+                          );
+                          return (
+                            <td key={h} className="px-3 py-2 text-truncate" style={{ maxWidth: "220px" }} title={val}>
+                              {isLink ? (
+                                <a href={val} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="fw-semibold">
+                                  {isImage ? "Xem ảnh " : `Mở ${h.trim()}`}
+                                </a>
+                              ) : (
+                                highlightText(val, searchTerm)
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="text-center px-2 py-1" onClick={e => e.stopPropagation()}>
+                          <div className="d-flex justify-content-center gap-1">
+                            <button className="btn btn-sm btn-outline-primary p-1" type="button" title="Xem chi tiết" onClick={() => handleOpenDetailModal(row)}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                            </button>
+                            {isAdmin && (
+                              <>
+                                <button className="btn btn-sm btn-outline-warning p-1" type="button" title="Sửa" onClick={() => openSchoolModal(row)}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" /></svg>
+                                </button>
+                                <button className="btn btn-sm btn-outline-danger p-1" type="button" title="Xóa" onClick={(e) => handleSchoolDelete(row._id, e)}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></svg>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Right Side: Floating Slide-over Offcanvas Drawer Panel */}
+        {isFilterPanelOpen && (
+          <>
+            {/* Light Backdrop Overlay */}
+            <div
+              className="position-fixed top-0 start-0 w-100 h-100 bg-black/20 backdrop-blur-[1px]"
+              style={{ zIndex: 1040 }}
+              onClick={() => setIsFilterPanelOpen(false)}
+            />
+
+            {/* Floating Drawer Card Pinned to Top-Right */}
+            <aside
+              className="position-fixed top-0 end-0 h-100 bg-body shadow-lg border-start d-flex flex-column transition-all duration-300"
+              style={{
+                width: "360px",
+                maxWidth: "92vw",
+                zIndex: 1050,
+                borderTopLeftRadius: "16px",
+                borderBottomLeftRadius: "16px",
+              }}
+            >
+              <div className="card-header bg-body-tertiary border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                <h6 className="fw-bold text-body-emphasis mb-0 d-flex align-items-center gap-2" style={{ fontSize: "15px" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+                  Bộ lọc chuyên sâu
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close border-0 bg-transparent text-body-secondary fs-5"
+                  onClick={() => setIsFilterPanelOpen(false)}
+                  title="Thu gọn bộ lọc"
+                ></button>
+              </div>
+
+              <div className="card-body p-4 d-grid gap-3 flex-grow-1 overflow-y-auto">
+                {/* Stack 1: Chọn Quốc gia */}
+                <div className="p-3 bg-body-tertiary rounded-3 border">
+                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                    <span>1. Chọn Quốc gia</span>
+                    {activeCountry !== "all" && (
+                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}>Bỏ chọn</span>
+                    )}
+                  </label>
+                  <select className="form-select border-1" value={activeCountry} onChange={handleCountryChange}>
+                    <option value="all">Tất cả quốc gia</option>
+                    {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                {/* Stack 2: Chương trình du học */}
+                <div className="p-3 bg-body-tertiary rounded-3 border">
+                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                    <span>2. Chương trình du học</span>
+                    {activeProgram !== "all" && (
+                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleProgramChange("all")}>Bỏ chọn</span>
+                    )}
+                  </label>
+                  <div className="d-grid gap-1.5">
+                    <button
+                      type="button"
+                      className={`btn btn-sm text-start py-1.5 px-3 rounded-2 transition-all ${activeProgram === "all" ? "btn-primary fw-bold shadow-sm" : "btn-light border text-body"}`}
+                      style={{ fontSize: "12.5px" }}
+                      onClick={() => handleProgramChange("all")}
+                    >
+                      Tất cả chương trình
+                    </button>
+                    {programs.map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`btn btn-sm text-start py-1.5 px-3 rounded-2 transition-all ${activeProgram === p ? "btn-primary fw-bold shadow-sm" : "btn-light border text-body"}`}
+                        style={{ fontSize: "12.5px" }}
+                        onClick={() => handleProgramChange(p)}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stack 3: Khu vực */}
+                <div className="p-3 bg-body-tertiary rounded-3 border">
+                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                    <span>3. Khu vực / Tỉnh bang</span>
+                    {regionFilter !== "all" && (
+                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setRegionFilter("all")}>Bỏ chọn</span>
+                    )}
+                  </label>
+                  <select className="form-select border-1" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
+                    <option value="all">Tất cả Khu vực</option>
+                    {regionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+
+                {/* Stack 4: Hệ tuyển sinh */}
+                <div className="p-3 bg-body-tertiary rounded-3 border">
+                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                    <span>4. Hệ tuyển sinh</span>
+                    {systemFilter !== "all" && (
+                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setSystemFilter("all")}>Bỏ chọn</span>
+                    )}
+                  </label>
+                  <select className="form-select border-1" value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)}>
+                    <option value="all">Tất cả Hệ tuyển sinh</option>
+                    {systemOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="card-footer bg-body-tertiary border-top p-3 d-flex align-items-center justify-content-between gap-2">
+                <button type="button" className="btn btn-sm btn-outline-secondary py-1.5 px-3" style={{ fontSize: "12px" }} onClick={resetAllFilters}>
+                  Đặt lại tất cả
+                </button>
+                <button type="button" className="btn btn-sm btn-primary py-1.5 px-4 fw-bold shadow-sm" style={{ fontSize: "12px" }} onClick={() => setIsFilterPanelOpen(false)}>
+                  Áp dụng ✕
+                </button>
+              </div>
+            </aside>
+          </>
+        )}
+      </div>
 
       {/* School Detail Modal Dialog */}
       {selectedSchool && (
@@ -678,71 +864,71 @@ export function SchoolSearchPage() {
             <div className="p-4 overflow-y-auto flex-1 row g-3">
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">Tên trường *</label>
-                <input type="text" className="form-control" required value={schoolForm.name} onChange={e => setSchoolForm({...schoolForm, name: e.target.value})} />
+                <input type="text" className="form-control" required value={schoolForm.name} onChange={e => setSchoolForm({ ...schoolForm, name: e.target.value })} />
               </div>
               <div className="col-6 col-md-3">
                 <label className="form-label fw-semibold">Quốc gia *</label>
-                <input type="text" className="form-control" required placeholder="Ví dụ: Đài Loan, Đức" value={schoolForm.country} onChange={e => setSchoolForm({...schoolForm, country: e.target.value})} />
+                <input type="text" className="form-control" required placeholder="Ví dụ: Đài Loan, Đức" value={schoolForm.country} onChange={e => setSchoolForm({ ...schoolForm, country: e.target.value })} />
               </div>
               <div className="col-6 col-md-3">
                 <label className="form-label fw-semibold">Chương trình *</label>
-                <input type="text" className="form-control" required placeholder="Ví dụ: Đại học, THPT" value={schoolForm.program} onChange={e => setSchoolForm({...schoolForm, program: e.target.value})} />
+                <input type="text" className="form-control" required placeholder="Ví dụ: Đại học, THPT" value={schoolForm.program} onChange={e => setSchoolForm({ ...schoolForm, program: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
                 <label className="form-label fw-semibold">Khu vực</label>
-                <input type="text" className="form-control" value={schoolForm.region} onChange={e => setSchoolForm({...schoolForm, region: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.region} onChange={e => setSchoolForm({ ...schoolForm, region: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
                 <label className="form-label fw-semibold">Hệ tuyển sinh</label>
-                <input type="text" className="form-control" value={schoolForm.admissionSystem} onChange={e => setSchoolForm({...schoolForm, admissionSystem: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.admissionSystem} onChange={e => setSchoolForm({ ...schoolForm, admissionSystem: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
                 <label className="form-label fw-semibold">Thứ tự hiển thị (STT)</label>
-                <input type="number" className="form-control" value={schoolForm.stt} onChange={e => setSchoolForm({...schoolForm, stt: parseInt(e.target.value) || 0})} />
+                <input type="number" className="form-control" value={schoolForm.stt} onChange={e => setSchoolForm({ ...schoolForm, stt: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="col-12">
                 <label className="form-label fw-semibold">Địa chỉ</label>
-                <input type="text" className="form-control" value={schoolForm.address} onChange={e => setSchoolForm({...schoolForm, address: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.address} onChange={e => setSchoolForm({ ...schoolForm, address: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">Chuyên ngành</label>
-                <textarea className="form-control" rows="2" value={schoolForm.majors} onChange={e => setSchoolForm({...schoolForm, majors: e.target.value})}></textarea>
+                <textarea className="form-control" rows="2" value={schoolForm.majors} onChange={e => setSchoolForm({ ...schoolForm, majors: e.target.value })}></textarea>
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">Điều kiện tuyển sinh</label>
-                <textarea className="form-control" rows="2" value={schoolForm.requirements} onChange={e => setSchoolForm({...schoolForm, requirements: e.target.value})}></textarea>
+                <textarea className="form-control" rows="2" value={schoolForm.requirements} onChange={e => setSchoolForm({ ...schoolForm, requirements: e.target.value })}></textarea>
               </div>
               <div className="col-6">
                 <label className="form-label fw-semibold">Hạn báo danh</label>
-                <input type="text" className="form-control" value={schoolForm.deadlineRegister} onChange={e => setSchoolForm({...schoolForm, deadlineRegister: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.deadlineRegister} onChange={e => setSchoolForm({ ...schoolForm, deadlineRegister: e.target.value })} />
               </div>
               <div className="col-6">
                 <label className="form-label fw-semibold">Hạn nộp hồ sơ</label>
-                <input type="text" className="form-control" value={schoolForm.deadlineDocument} onChange={e => setSchoolForm({...schoolForm, deadlineDocument: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.deadlineDocument} onChange={e => setSchoolForm({ ...schoolForm, deadlineDocument: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">Học phí học tiếng</label>
-                <input type="text" className="form-control" value={schoolForm.tuitionLanguage} onChange={e => setSchoolForm({...schoolForm, tuitionLanguage: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.tuitionLanguage} onChange={e => setSchoolForm({ ...schoolForm, tuitionLanguage: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">Học phí chuyên ngành</label>
-                <input type="text" className="form-control" value={schoolForm.tuitionMajor} onChange={e => setSchoolForm({...schoolForm, tuitionMajor: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.tuitionMajor} onChange={e => setSchoolForm({ ...schoolForm, tuitionMajor: e.target.value })} />
               </div>
               <div className="col-6">
                 <label className="form-label fw-semibold">Ký túc xá</label>
-                <input type="text" className="form-control" value={schoolForm.dormitory} onChange={e => setSchoolForm({...schoolForm, dormitory: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.dormitory} onChange={e => setSchoolForm({ ...schoolForm, dormitory: e.target.value })} />
               </div>
               <div className="col-6">
                 <label className="form-label fw-semibold">Học bổng</label>
-                <input type="text" className="form-control" value={schoolForm.scholarship} onChange={e => setSchoolForm({...schoolForm, scholarship: e.target.value})} />
+                <input type="text" className="form-control" value={schoolForm.scholarship} onChange={e => setSchoolForm({ ...schoolForm, scholarship: e.target.value })} />
               </div>
               <div className="col-12">
                 <label className="form-label fw-semibold">Website trường</label>
-                <input type="url" className="form-control font-mono" value={schoolForm.website} onChange={e => setSchoolForm({...schoolForm, website: e.target.value})} />
+                <input type="url" className="form-control font-mono" value={schoolForm.website} onChange={e => setSchoolForm({ ...schoolForm, website: e.target.value })} />
               </div>
               <div className="col-12">
                 <label className="form-label fw-semibold">Link ảnh thông báo</label>
-                <input type="url" className="form-control font-mono" value={schoolForm.imageUrl} onChange={e => setSchoolForm({...schoolForm, imageUrl: e.target.value})} />
+                <input type="url" className="form-control font-mono" value={schoolForm.imageUrl} onChange={e => setSchoolForm({ ...schoolForm, imageUrl: e.target.value })} />
               </div>
             </div>
 
@@ -768,19 +954,19 @@ export function SchoolSearchPage() {
               <form onSubmit={handleAddSource} className="row g-2 mb-4 p-3 bg-body-secondary/30 border rounded-3">
                 <h6 className="fw-bold mb-2">Thêm Sheet liên kết mới</h6>
                 <div className="col-6 col-md-3">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Tên nguồn (vd: Đức - THPT)" value={newSource.name} onChange={e => setNewSource({...newSource, name: e.target.value})} />
+                  <input type="text" className="form-control form-control-sm" required placeholder="Tên nguồn (vd: Đức - THPT)" value={newSource.name} onChange={e => setNewSource({ ...newSource, name: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-2">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Quốc gia" value={newSource.country} onChange={e => setNewSource({...newSource, country: e.target.value})} />
+                  <input type="text" className="form-control form-control-sm" required placeholder="Quốc gia" value={newSource.country} onChange={e => setNewSource({ ...newSource, country: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-2">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Chương trình" value={newSource.program} onChange={e => setNewSource({...newSource, program: e.target.value})} />
+                  <input type="text" className="form-control form-control-sm" required placeholder="Chương trình" value={newSource.program} onChange={e => setNewSource({ ...newSource, program: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-3">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Google Sheet ID" value={newSource.spreadsheetId} onChange={e => setNewSource({...newSource, spreadsheetId: e.target.value})} />
+                  <input type="text" className="form-control form-control-sm" required placeholder="Google Sheet ID" value={newSource.spreadsheetId} onChange={e => setNewSource({ ...newSource, spreadsheetId: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-1">
-                  <input type="text" className="form-control form-control-sm" required placeholder="GID Tab" value={newSource.gid} onChange={e => setNewSource({...newSource, gid: e.target.value})} />
+                  <input type="text" className="form-control form-control-sm" required placeholder="GID Tab" value={newSource.gid} onChange={e => setNewSource({ ...newSource, gid: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-1">
                   <button className="btn btn-sm btn-primary w-100" type="submit">Thêm</button>

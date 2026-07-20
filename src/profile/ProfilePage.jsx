@@ -490,7 +490,7 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const roleLabel = ROLE_LABELS[roleKey] || "Tài khoản";
   const canEditProfile = true;
   const canEditLocalProfile = Boolean(profile.id);
-  const referralCode = referralInfo?.referralCode || "";
+  const referralCode = referralInfo?.referralCode || profile.referralCode || profile.employeeCode || currentUser?.referralCode || profile.phone || "";
   const referralUrl = referralInfo?.referralUrl || "";
   const qrUrl = useMemo(
     () =>
@@ -505,8 +505,16 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
       if (!referralCode) return "";
       const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
       return isLocalDev
-        ? `https://zalo.me/s/4590120319578198541/?env=testing&ctv=${referralCode}`
-        : `https://zalo.me/s/4590120319578198541/?ctv=${referralCode}`;
+        ? `https://zalo.me/s/4590120319578198541/?env=testing&ctv=${referralCode}&entry.799400108=${referralCode}`
+        : `https://zalo.me/s/4590120319578198541/?ctv=${referralCode}&entry.799400108=${referralCode}`;
+    },
+    [referralCode]
+  );
+
+  const googleFormReferralUrl = useMemo(
+    () => {
+      if (!referralCode) return "";
+      return `https://docs.google.com/forms/d/e/1FAIpQLSfMrm8fWYnkHlVYx-P_ERHeC4xieN-7FO1RekDFEDWfQLFx6g/viewform?usp=pp_url&entry.799400108=${encodeURIComponent(referralCode)}`;
     },
     [referralCode]
   );
@@ -542,9 +550,30 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
 
   const getSurveyReferralUrl = (baseUrl, code) => {
     if (!baseUrl || !code) return baseUrl || "";
-    const cleanUrl = baseUrl.replace(/\/$/, "");
+    let cleanUrl = baseUrl.trim();
+
+    // If it's a Google Form link
+    if (cleanUrl.includes("docs.google.com/forms")) {
+      // If it already has entry.XXXXX= parameter
+      if (/entry\.\d+=/.test(cleanUrl)) {
+        cleanUrl = cleanUrl.replace(/entry\.\d+=[^&]*/, (match) => {
+          const entryKey = match.split("=")[0];
+          return `${entryKey}=${encodeURIComponent(code)}`;
+        });
+        if (!cleanUrl.includes("ctv=")) {
+          cleanUrl += `&ctv=${encodeURIComponent(code)}`;
+        }
+        return cleanUrl;
+      }
+      
+      // If no entry parameter exists yet
+      const separator = cleanUrl.includes("?") ? "&" : "?";
+      return `${cleanUrl}${separator}entry.799400108=${encodeURIComponent(code)}&ctv=${encodeURIComponent(code)}`;
+    }
+
+    // Standard fallback for other survey links
     const separator = cleanUrl.includes("?") ? "&" : "?";
-    return `${cleanUrl}${separator}ctv=${code}`;
+    return `${cleanUrl}${separator}ctv=${encodeURIComponent(code)}&entry.799400108=${encodeURIComponent(code)}`;
   };
 
   const handleDownloadSurveyQr = (baseUrl, title) => {
@@ -1294,11 +1323,12 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
               Link khảo sát Zalo
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
                 <input className="min-w-0 px-3 py-2.5 text-sm outline-none" value={referralLoading ? "Đang tải link khảo sát..." : zaloReferralUrl} readOnly />
-                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!zaloReferralUrl || referralLoading} onClick={() => copyText(zaloReferralUrl, "link khảo sát")}>
+                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!zaloReferralUrl || referralLoading} onClick={() => copyText(zaloReferralUrl, "link khảo sát Zalo")}>
                   <Icon name="copy" className="h-5 w-5" />
                 </button>
               </div>
             </label>
+
             <label className="grid gap-2 text-sm font-bold text-slate-800">
               Mã giới thiệu
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
