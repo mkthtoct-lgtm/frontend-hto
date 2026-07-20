@@ -377,24 +377,43 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
   const activeOrgChartNodes = useMemo(() => {
     if (orgChartNodes && Array.isArray(orgChartNodes)) return orgChartNodes;
 
-    const leader = members.find(m => m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"));
-    const otherMembers = members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý")));
+    if (!members || members.length === 0) {
+      return [
+        {
+          id: "leader-node-empty",
+          title: "TRƯỞNG BỘ PHẬN",
+          fullName: "Chưa phân bổ nhân sự",
+          role: "Trưởng phòng ban",
+          avatarUrl: "/assets/images/avatar/avatar1.webp",
+          level: "leader"
+        }
+      ];
+    }
+
+    const leader = members.find(m => 
+      String(m.role).toLowerCase().includes("trưởng") || 
+      String(m.role).toLowerCase().includes("quản lý") || 
+      String(m.role).toLowerCase().includes("giám đốc") ||
+      String(m.role).toLowerCase().includes("leader")
+    ) || members[0];
+
+    const otherMembers = members.filter(m => m.id !== leader.id);
 
     return [
       {
-        id: "leader-node-default",
+        id: `leader-node-${leader.id}`,
         title: "TRƯỞNG BỘ PHẬN",
-        fullName: leader ? leader.fullName : "Chưa bổ nhiệm",
-        role: leader ? leader.role : "Quản lý phòng ban",
-        avatarUrl: leader?.avatarUrl || "/assets/images/avatar/avatar1.webp",
+        fullName: leader.fullName,
+        role: leader.role || "Quản lý phòng ban",
+        avatarUrl: leader.avatarUrl || "/assets/images/avatar/avatar1.webp",
         level: "leader"
       },
       ...otherMembers.map((m, idx) => ({
         id: `member-node-${m.id || idx}`,
-        title: m.role || "Thành viên chuyên môn",
+        title: m.role || "THÀNH VIÊN",
         fullName: m.fullName,
-        role: m.role || "Nhân sự",
-        avatarUrl: m.avatarUrl || `/assets/images/avatar/avatar${(idx % 9) + 1}.webp`,
+        role: m.role || "Nhân sự phòng ban",
+        avatarUrl: m.avatarUrl || `/assets/images/avatar/avatar${(idx % 8) + 1}.webp`,
         level: "member"
       }))
     ];
@@ -553,28 +572,37 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
             
             const deptMembers = usersList.filter(user => {
               const userDeptId = user.departmentId || user.department?._id || user.department?.id;
-              return String(userDeptId) === String(departmentId);
+              const userDeptName = String(user.departmentName || user.department?.name || "").toLowerCase();
+              const currentDeptName = String(departmentName || "").toLowerCase();
+
+              // 1. Khớp trực tiếp theo MongoDB ID phòng ban
+              if (userDeptId && String(userDeptId) === String(departmentId)) return true;
+
+              // 2. Khớp theo Tên phòng ban
+              if (currentDeptName && userDeptName && (userDeptName.includes(currentDeptName) || currentDeptName.includes(userDeptName))) return true;
+
+              // 3. Khớp theo slug tĩnh của phòng ban
+              if (departmentId === "dept-hanh-chinh" && userDeptName.includes("hành chính")) return true;
+              if (departmentId === "dept-nhan-su" && userDeptName.includes("nhân sự")) return true;
+              if (departmentId === "dept-ke-toan" && userDeptName.includes("kế toán")) return true;
+              if (departmentId === "dept-ho-so" && userDeptName.includes("hồ sơ")) return true;
+              if (departmentId === "dept-tuyen-sinh" && userDeptName.includes("tuyển sinh")) return true;
+
+              return false;
             });
 
-            // Ưu tiên nhân sự thuộc phòng ban này, nếu rỗng thì dùng tất cả User thực tế trong DB
-            const finalMembers = deptMembers.length > 0 ? deptMembers : usersList;
-            
-            if (isMounted && finalMembers.length > 0) {
-              setMembers(finalMembers.map((u, index) => ({
+            if (isMounted) {
+              setMembers(deptMembers.map((u, index) => ({
                 id: u._id || u.id,
                 fullName: u.fullName || u.name || u.email || "Nhân sự HTO",
                 email: u.email || "",
                 role: u.roleName || u.role?.name || u.role || "Nhân sự chuyên môn",
-                avatarUrl: u.avatarUrl || `/assets/images/avatar/avatar${(index % 8) + 1}.webp`
+                avatarUrl: u.avatarUrl || u.profile?.avatarUrl || `/assets/images/avatar/avatar${(index % 8) + 1}.webp`
               })));
-            } else {
-              loadFallbackMembers();
             }
-          } else {
-            loadFallbackMembers();
           }
         } catch (e) {
-          loadFallbackMembers();
+          console.error("Lỗi tải thông tin nhân sự:", e);
         }
 
       } catch (error) {
@@ -810,46 +838,46 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
                   {/* Leaders Row */}
                   <div className="d-flex flex-wrap justify-content-center gap-3">
                     {activeOrgChartNodes.filter(n => n.level === "leader").map((node) => (
-                      <div key={node.id} className="card border-0 shadow-md p-3 px-4 rounded-3 text-center position-relative" style={{ minWidth: "220px", backgroundColor: "#1e40af", color: "#ffffff" }}>
+                      <div key={node.id} className="card border border-indigo-200 shadow-md p-3 px-4 rounded-3 text-center position-relative bg-white text-slate-900" style={{ minWidth: "240px" }}>
                         {isAllowedToEdit && (
-                          <div className="position-absolute top-2 end-2 d-flex gap-1 bg-black/40 p-1 rounded">
-                            <button type="button" className="btn btn-xs text-white p-0 border-0" title="Sửa vị trí" onClick={() => handleOpenEditNodeModal(node)}>
-                              <OutlineIcon name="edit" className="text-white" size={13} />
+                          <div className="position-absolute top-2 end-2 d-flex gap-1 bg-slate-100 p-1 rounded border border-slate-200">
+                            <button type="button" className="btn btn-xs text-slate-600 p-0 border-0" title="Sửa vị trí" onClick={() => handleOpenEditNodeModal(node)}>
+                              <OutlineIcon name="edit" className="text-slate-600" size={13} />
                             </button>
-                            <button type="button" className="btn btn-xs text-danger p-0 border-0 ms-1" title="Xóa vị trí" onClick={() => handleDeleteNode(node.id)}>
-                              <OutlineIcon name="trash" className="text-danger" size={13} />
+                            <button type="button" className="btn btn-xs text-rose-600 p-0 border-0 ms-1" title="Xóa vị trí" onClick={() => handleDeleteNode(node.id)}>
+                              <OutlineIcon name="trash" className="text-rose-600" size={13} />
                             </button>
                           </div>
                         )}
                         {node.avatarUrl && (
-                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-2 border-white mx-auto mb-2" style={{ width: "48px", height: "48px", objectFit: "cover" }} />
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-2 border-indigo-500 mx-auto mb-2" style={{ width: "52px", height: "52px", objectFit: "cover" }} />
                         )}
-                        <div className="fw-bold text-uppercase" style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", letterSpacing: "0.5px" }}>{node.title || "TRƯỞNG BỘ PHẬN"}</div>
-                        <div className="fw-bold fs-6 mt-0.5" style={{ color: "#ffffff" }}>{node.fullName}</div>
-                        {node.role && <div className="small mt-0.5" style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.85)" }}>{node.role}</div>}
+                        <div className="fw-bold text-uppercase text-indigo-700" style={{ fontSize: "11px", letterSpacing: "0.5px" }}>{node.title || "TRƯỞNG BỘ PHẬN"}</div>
+                        <div className="fw-bold fs-6 mt-1 text-slate-900" style={{ color: "#0f172a", fontWeight: "800" }}>{node.fullName}</div>
+                        {node.role && <div className="small mt-0.5 text-slate-600 font-medium" style={{ fontSize: "12px", color: "#475569" }}>{node.role}</div>}
                       </div>
                     ))}
                   </div>
 
                   {/* Connecting Line */}
-                  <div style={{ width: "2px", height: "24px", backgroundColor: "var(--bs-border-color)" }}></div>
+                  <div style={{ width: "2px", height: "24px", backgroundColor: "#cbd5e1" }}></div>
 
                   {/* Member Nodes Grid */}
                   <div className="d-flex flex-wrap justify-content-center gap-3">
                     {activeOrgChartNodes.filter(n => n.level !== "leader").map((node) => (
-                      <div key={node.id} className="card border shadow-sm p-3 px-3 rounded-3 text-center position-relative" style={{ minWidth: "170px", backgroundColor: "#ffffff", color: "#0f172a" }}>
+                      <div key={node.id} className="card border border-slate-200 shadow-sm p-3 px-3 rounded-3 text-center position-relative bg-white text-slate-900" style={{ minWidth: "180px" }}>
                         {node.avatarUrl && (
-                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border mx-auto mb-1.5" style={{ width: "38px", height: "38px", objectFit: "cover" }} />
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-slate-200 mx-auto mb-1.5" style={{ width: "42px", height: "42px", objectFit: "cover" }} />
                         )}
-                        <div className="fw-bold text-truncate" style={{ fontSize: "13.5px", color: "#0f172a" }}>{node.fullName}</div>
-                        <div className="small mt-0.5" style={{ fontSize: "11px", color: "#64748b" }}>{node.title || node.role}</div>
+                        <div className="fw-bold text-slate-900 text-truncate" style={{ fontSize: "13.5px", color: "#0f172a" }}>{node.fullName}</div>
+                        <div className="small mt-0.5 text-slate-600 font-medium" style={{ fontSize: "11.5px", color: "#475569" }}>{node.title || node.role}</div>
                         {isAllowedToEdit && (
-                          <div className="d-flex justify-content-center gap-2 mt-2 border-top pt-1.5">
-                            <button type="button" className="btn btn-xs text-primary p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleOpenEditNodeModal(node)}>
+                          <div className="d-flex justify-content-center gap-2 mt-2 border-top border-slate-100 pt-1.5">
+                            <button type="button" className="btn btn-xs text-indigo-600 p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleOpenEditNodeModal(node)}>
                               Sửa
                             </button>
                             <span className="text-slate-300">|</span>
-                            <button type="button" className="btn btn-xs text-danger p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleDeleteNode(node.id)}>
+                            <button type="button" className="btn btn-xs text-rose-600 p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleDeleteNode(node.id)}>
                               Xóa
                             </button>
                           </div>
