@@ -1328,15 +1328,7 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
                 </button>
               </div>
             </label>
-            <label className="grid gap-2 text-sm font-bold text-slate-800">
-              Link Google Form khảo sát (Tự động điền mã CTV)
-              <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
-                <input className="min-w-0 px-3 py-2.5 text-sm outline-none font-mono" value={referralLoading ? "Đang tải link Google Form..." : googleFormReferralUrl} readOnly />
-                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!googleFormReferralUrl || referralLoading} onClick={() => copyText(googleFormReferralUrl, "link Google Form")}>
-                  <Icon name="copy" className="h-5 w-5" />
-                </button>
-              </div>
-            </label>
+
             <label className="grid gap-2 text-sm font-bold text-slate-800">
               Mã giới thiệu
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
