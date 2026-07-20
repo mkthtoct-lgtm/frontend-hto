@@ -377,24 +377,43 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
   const activeOrgChartNodes = useMemo(() => {
     if (orgChartNodes && Array.isArray(orgChartNodes)) return orgChartNodes;
 
-    const leader = members.find(m => m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý"));
-    const otherMembers = members.filter(m => !(m.role.toLowerCase().includes("trưởng") || m.role.toLowerCase().includes("quản lý")));
+    if (!members || members.length === 0) {
+      return [
+        {
+          id: "leader-node-empty",
+          title: "TRƯỞNG BỘ PHẬN",
+          fullName: "Chưa phân bổ nhân sự",
+          role: "Trưởng phòng ban",
+          avatarUrl: "/assets/images/avatar/avatar1.webp",
+          level: "leader"
+        }
+      ];
+    }
+
+    const leader = members.find(m => 
+      String(m.role).toLowerCase().includes("trưởng") || 
+      String(m.role).toLowerCase().includes("quản lý") || 
+      String(m.role).toLowerCase().includes("giám đốc") ||
+      String(m.role).toLowerCase().includes("leader")
+    ) || members[0];
+
+    const otherMembers = members.filter(m => m.id !== leader.id);
 
     return [
       {
-        id: "leader-node-default",
+        id: `leader-node-${leader.id}`,
         title: "TRƯỞNG BỘ PHẬN",
-        fullName: leader ? leader.fullName : "Chưa bổ nhiệm",
-        role: leader ? leader.role : "Quản lý phòng ban",
-        avatarUrl: leader?.avatarUrl || "/assets/images/avatar/avatar1.webp",
+        fullName: leader.fullName,
+        role: leader.role || "Quản lý phòng ban",
+        avatarUrl: leader.avatarUrl || "/assets/images/avatar/avatar1.webp",
         level: "leader"
       },
       ...otherMembers.map((m, idx) => ({
         id: `member-node-${m.id || idx}`,
-        title: m.role || "Thành viên chuyên môn",
+        title: m.role || "THÀNH VIÊN",
         fullName: m.fullName,
-        role: m.role || "Nhân sự",
-        avatarUrl: m.avatarUrl || `/assets/images/avatar/avatar${(idx % 9) + 1}.webp`,
+        role: m.role || "Nhân sự phòng ban",
+        avatarUrl: m.avatarUrl || `/assets/images/avatar/avatar${(idx % 8) + 1}.webp`,
         level: "member"
       }))
     ];
@@ -553,28 +572,37 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
             
             const deptMembers = usersList.filter(user => {
               const userDeptId = user.departmentId || user.department?._id || user.department?.id;
-              return String(userDeptId) === String(departmentId);
+              const userDeptName = String(user.departmentName || user.department?.name || "").toLowerCase();
+              const currentDeptName = String(departmentName || "").toLowerCase();
+
+              // 1. Khớp trực tiếp theo MongoDB ID phòng ban
+              if (userDeptId && String(userDeptId) === String(departmentId)) return true;
+
+              // 2. Khớp theo Tên phòng ban
+              if (currentDeptName && userDeptName && (userDeptName.includes(currentDeptName) || currentDeptName.includes(userDeptName))) return true;
+
+              // 3. Khớp theo slug tĩnh của phòng ban
+              if (departmentId === "dept-hanh-chinh" && userDeptName.includes("hành chính")) return true;
+              if (departmentId === "dept-nhan-su" && userDeptName.includes("nhân sự")) return true;
+              if (departmentId === "dept-ke-toan" && userDeptName.includes("kế toán")) return true;
+              if (departmentId === "dept-ho-so" && userDeptName.includes("hồ sơ")) return true;
+              if (departmentId === "dept-tuyen-sinh" && userDeptName.includes("tuyển sinh")) return true;
+
+              return false;
             });
 
-            // Ưu tiên nhân sự thuộc phòng ban này, nếu rỗng thì dùng tất cả User thực tế trong DB
-            const finalMembers = deptMembers.length > 0 ? deptMembers : usersList;
-            
-            if (isMounted && finalMembers.length > 0) {
-              setMembers(finalMembers.map((u, index) => ({
+            if (isMounted) {
+              setMembers(deptMembers.map((u, index) => ({
                 id: u._id || u.id,
                 fullName: u.fullName || u.name || u.email || "Nhân sự HTO",
                 email: u.email || "",
                 role: u.roleName || u.role?.name || u.role || "Nhân sự chuyên môn",
-                avatarUrl: u.avatarUrl || `/assets/images/avatar/avatar${(index % 8) + 1}.webp`
+                avatarUrl: u.avatarUrl || u.profile?.avatarUrl || `/assets/images/avatar/avatar${(index % 8) + 1}.webp`
               })));
-            } else {
-              loadFallbackMembers();
             }
-          } else {
-            loadFallbackMembers();
           }
         } catch (e) {
-          loadFallbackMembers();
+          console.error("Lỗi tải thông tin nhân sự:", e);
         }
 
       } catch (error) {
