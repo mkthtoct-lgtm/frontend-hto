@@ -356,7 +356,7 @@ export const DepartmentsPage = ({ currentUser }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.7fr)]">
         <section id="departments-list-card" className="card overflow-hidden rounded-xl border-0 shadow-sm">
           <div className="card-header bg-transparent border-bottom d-flex justify-content-between align-items-center">
             <span className="fw-bold text-body-emphasis">Danh sách phòng ban</span>
@@ -370,13 +370,13 @@ export const DepartmentsPage = ({ currentUser }) => {
           ) : (
             <>
               <div className="table-responsive hidden md:block">
-                <table className="table custom-table mb-0">
+                <table className="table custom-table mb-0" style={{ tableLayout: "fixed", width: "100%" }}>
                   <thead>
                     <tr>
-                      <th>Tên phòng ban</th>
-                      <th>Mô tả</th>
-                      <th className="text-center">Nhân sự</th>
-                      <th className="text-center">Thao tác</th>
+                      <th style={{ width: "26%" }}>Tên phòng ban</th>
+                      <th style={{ width: "54%" }}>Mô tả</th>
+                      <th className="text-center" style={{ width: "10%" }}>Nhân sự</th>
+                      <th className="text-center" style={{ width: "10%" }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -389,7 +389,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                         className={`cursor-pointer ${departmentHidden ? "opacity-50" : ""} ${selectedDepartmentId === department.id ? "[&>td]:!bg-[var(--bs-primary-bg-subtle)]" : ""}`}
                         onClick={() => setSelectedDepartmentId(department.id)}
                       >
-                        <td className="min-w-[220px]">
+                        <td>
                           <div className="d-flex flex-wrap align-items-center gap-2">
                             <span className="fw-bold text-body-emphasis">{department.name}</span>
                             {departmentHidden && (
@@ -397,7 +397,7 @@ export const DepartmentsPage = ({ currentUser }) => {
                             )}
                           </div>
                         </td>
-                        <td className="text-body-secondary">{department.description || "—"}</td>
+                        <td className="text-body-secondary" style={{ wordBreak: "break-word", lineHeight: "1.5", whiteSpace: "normal" }}>{department.description || "—"}</td>
                         <td className="text-center">{department.memberCount || 0}</td>
                         <td onClick={(event) => event.stopPropagation()}>
                           <div className="flex min-w-[76px] items-center justify-center gap-2 whitespace-nowrap">
