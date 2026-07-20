@@ -838,46 +838,46 @@ export default function DepartmentGeneralPage({ currentUser, departmentId }) {
                   {/* Leaders Row */}
                   <div className="d-flex flex-wrap justify-content-center gap-3">
                     {activeOrgChartNodes.filter(n => n.level === "leader").map((node) => (
-                      <div key={node.id} className="card border-0 shadow-md p-3 px-4 rounded-3 text-center position-relative" style={{ minWidth: "220px", backgroundColor: "#1e40af", color: "#ffffff" }}>
+                      <div key={node.id} className="card border border-indigo-200 shadow-md p-3 px-4 rounded-3 text-center position-relative bg-white text-slate-900" style={{ minWidth: "240px" }}>
                         {isAllowedToEdit && (
-                          <div className="position-absolute top-2 end-2 d-flex gap-1 bg-black/40 p-1 rounded">
-                            <button type="button" className="btn btn-xs text-white p-0 border-0" title="Sửa vị trí" onClick={() => handleOpenEditNodeModal(node)}>
-                              <OutlineIcon name="edit" className="text-white" size={13} />
+                          <div className="position-absolute top-2 end-2 d-flex gap-1 bg-slate-100 p-1 rounded border border-slate-200">
+                            <button type="button" className="btn btn-xs text-slate-600 p-0 border-0" title="Sửa vị trí" onClick={() => handleOpenEditNodeModal(node)}>
+                              <OutlineIcon name="edit" className="text-slate-600" size={13} />
                             </button>
-                            <button type="button" className="btn btn-xs text-danger p-0 border-0 ms-1" title="Xóa vị trí" onClick={() => handleDeleteNode(node.id)}>
-                              <OutlineIcon name="trash" className="text-danger" size={13} />
+                            <button type="button" className="btn btn-xs text-rose-600 p-0 border-0 ms-1" title="Xóa vị trí" onClick={() => handleDeleteNode(node.id)}>
+                              <OutlineIcon name="trash" className="text-rose-600" size={13} />
                             </button>
                           </div>
                         )}
                         {node.avatarUrl && (
-                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-2 border-white mx-auto mb-2" style={{ width: "48px", height: "48px", objectFit: "cover" }} />
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-2 border-indigo-500 mx-auto mb-2" style={{ width: "52px", height: "52px", objectFit: "cover" }} />
                         )}
-                        <div className="fw-bold text-uppercase" style={{ fontSize: "11px", color: "rgba(255,255,255,0.85)", letterSpacing: "0.5px" }}>{node.title || "TRƯỞNG BỘ PHẬN"}</div>
-                        <div className="fw-bold fs-6 mt-0.5" style={{ color: "#ffffff" }}>{node.fullName}</div>
-                        {node.role && <div className="small mt-0.5" style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.85)" }}>{node.role}</div>}
+                        <div className="fw-bold text-uppercase text-indigo-700" style={{ fontSize: "11px", letterSpacing: "0.5px" }}>{node.title || "TRƯỞNG BỘ PHẬN"}</div>
+                        <div className="fw-bold fs-6 mt-1 text-slate-900" style={{ color: "#0f172a", fontWeight: "800" }}>{node.fullName}</div>
+                        {node.role && <div className="small mt-0.5 text-slate-600 font-medium" style={{ fontSize: "12px", color: "#475569" }}>{node.role}</div>}
                       </div>
                     ))}
                   </div>
 
                   {/* Connecting Line */}
-                  <div style={{ width: "2px", height: "24px", backgroundColor: "var(--bs-border-color)" }}></div>
+                  <div style={{ width: "2px", height: "24px", backgroundColor: "#cbd5e1" }}></div>
 
                   {/* Member Nodes Grid */}
                   <div className="d-flex flex-wrap justify-content-center gap-3">
                     {activeOrgChartNodes.filter(n => n.level !== "leader").map((node) => (
-                      <div key={node.id} className="card border shadow-sm p-3 px-3 rounded-3 text-center position-relative" style={{ minWidth: "170px", backgroundColor: "#ffffff", color: "#0f172a" }}>
+                      <div key={node.id} className="card border border-slate-200 shadow-sm p-3 px-3 rounded-3 text-center position-relative bg-white text-slate-900" style={{ minWidth: "180px" }}>
                         {node.avatarUrl && (
-                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border mx-auto mb-1.5" style={{ width: "38px", height: "38px", objectFit: "cover" }} />
+                          <img src={node.avatarUrl} alt={node.fullName} className="rounded-circle border border-slate-200 mx-auto mb-1.5" style={{ width: "42px", height: "42px", objectFit: "cover" }} />
                         )}
-                        <div className="fw-bold text-truncate" style={{ fontSize: "13.5px", color: "#0f172a" }}>{node.fullName}</div>
-                        <div className="small mt-0.5" style={{ fontSize: "11px", color: "#64748b" }}>{node.title || node.role}</div>
+                        <div className="fw-bold text-slate-900 text-truncate" style={{ fontSize: "13.5px", color: "#0f172a" }}>{node.fullName}</div>
+                        <div className="small mt-0.5 text-slate-600 font-medium" style={{ fontSize: "11.5px", color: "#475569" }}>{node.title || node.role}</div>
                         {isAllowedToEdit && (
-                          <div className="d-flex justify-content-center gap-2 mt-2 border-top pt-1.5">
-                            <button type="button" className="btn btn-xs text-primary p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleOpenEditNodeModal(node)}>
+                          <div className="d-flex justify-content-center gap-2 mt-2 border-top border-slate-100 pt-1.5">
+                            <button type="button" className="btn btn-xs text-indigo-600 p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleOpenEditNodeModal(node)}>
                               Sửa
                             </button>
                             <span className="text-slate-300">|</span>
-                            <button type="button" className="btn btn-xs text-danger p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleDeleteNode(node.id)}>
+                            <button type="button" className="btn btn-xs text-rose-600 p-0 border-0 fw-semibold" style={{ fontSize: "11px" }} onClick={() => handleDeleteNode(node.id)}>
                               Xóa
                             </button>
                           </div>
