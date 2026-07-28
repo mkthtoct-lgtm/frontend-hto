@@ -1,50 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { authFetch, getAuthHeaders } from "../auth/session";
+import { API_BASE_URL } from "../config/api";
 
 const CHAT_STORAGE_KEY = "hto_ai_chat_sessions";
 
-const defaultSources = [
-  {
-    title: "Tài liệu & Biểu mẫu",
-    detail: "Kho tài liệu nội bộ trong portal",
-    type: "Portal",
-  },
-  {
-    title: "Sản phẩm HTO",
-    detail: "Thông tin chương trình, chi phí và quy trình đang cấu hình",
-    type: "CRM",
-  },
-  {
-    title: "Nghiệp vụ kế toán",
-    detail: "Dữ liệu kế toán chỉ khả dụng khi đã đồng bộ và đối soát",
-    type: "Kế toán",
-  },
-];
-
-const createAssistantReply = (question) => {
-  const normalizedQuestion = question.toLowerCase();
-
-  if (normalizedQuestion.includes("hoa hồng") || normalizedQuestion.includes("kế toán")) {
-    return {
-      content:
-        "Hoa hồng dự kiến phụ thuộc vào hồ sơ CRM và khoản thu đã được kế toán xác nhận. Nếu chưa có dữ liệu đối soát, hệ thống chỉ hiển thị trạng thái chờ dữ liệu và không dùng để chốt chi trả.",
-      sources: [defaultSources[1], defaultSources[2]],
-    };
-  }
-
-  if (normalizedQuestion.includes("tài liệu") || normalizedQuestion.includes("biểu mẫu") || normalizedQuestion.includes("hồ sơ")) {
-    return {
-      content:
-        "Bạn có thể kiểm tra kho Tài liệu & Biểu mẫu để xem file nội bộ, link được cấp quyền và trạng thái nguồn AI. Với hồ sơ sản phẩm, nên đối chiếu thêm điều kiện, chi phí và quy trình trong mục Sản phẩm.",
-      sources: [defaultSources[0], defaultSources[1]],
-    };
-  }
-
-  return {
-    content:
-      "Mình đã ghi nhận câu hỏi của bạn. Khi API AI được kết nối, câu trả lời sẽ được sinh từ dữ liệu portal như CRM, tài liệu nội bộ, sản phẩm và kế toán. Bản demo hiện mô phỏng luồng chat, loading, lịch sử phiên và nguồn tham chiếu.",
-    sources: defaultSources,
-  };
-};
+const DEFAULT_WELCOME_MESSAGE =
+  "Chào bạn, mình là trợ lý AI của HT Ocean Group. Bạn có thể hỏi về tài liệu, sản phẩm, CRM, kế toán hoặc bất kỳ điều gì cần hỗ trợ.";
 
 const createMessage = (role, content, sources = []) => ({
   id: `message-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -54,17 +15,11 @@ const createMessage = (role, content, sources = []) => ({
   createdAt: new Date().toISOString(),
 });
 
-const createSession = () => ({
+const createSession = (welcomeText) => ({
   id: `session-${Date.now()}`,
   title: "Phiên chat mới",
   updatedAt: new Date().toISOString(),
-  messages: [
-    createMessage(
-      "assistant",
-      "Chào bạn, mình là AI nội bộ HTO. Bạn có thể hỏi về tài liệu, sản phẩm, CRM, kế toán hoặc quy trình trong portal.",
-      [defaultSources[0]],
-    ),
-  ],
+  messages: [createMessage("assistant", welcomeText || DEFAULT_WELCOME_MESSAGE)],
 });
 
 const readSessions = () => {
@@ -111,8 +66,8 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState(DEFAULT_WELCOME_MESSAGE);
   const messagesScrollRef = useRef(null);
-  const pendingTimerRef = useRef(null);
   const isOpen = typeof controlledIsOpen === "boolean" ? controlledIsOpen : uncontrolledIsOpen;
 
   // Trạng thái bật/tắt chatbot từ Cấu hình hệ thống
@@ -152,6 +107,41 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
     };
   }, []);
 
+  // Lấy trạng thái bật/tắt + lời chào THẬT từ backend (nguồn dữ liệu chính
+  // xác, áp dụng cho MỌI người dùng - không chỉ riêng trình duyệt của Admin
+  // như cơ chế localStorage phía trên).
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPublicChatConfig = async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/system-settings/public-chat`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+        });
+        const payload = await response.json().catch(() => null);
+        if (!isMounted || !response.ok || !payload?.data) return;
+
+        if (typeof payload.data.enabled === "boolean") {
+          setIsEnabled(payload.data.enabled);
+        }
+        if (payload.data.welcomeMessage) {
+          setWelcomeMessage(payload.data.welcomeMessage);
+        }
+      } catch (e) {
+        // Giữ nguyên trạng thái mặc định/localStorage nếu không gọi được API
+      }
+    };
+
+    void loadPublicChatConfig();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === activeSessionId) || sessions[0],
     [activeSessionId, sessions],
@@ -169,12 +159,6 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
     }
   }, [activeSession?.messages.length, activeSessionId, isLoading, isOpen]);
 
-  useEffect(() => {
-    return () => {
-      window.clearTimeout(pendingTimerRef.current);
-    };
-  }, []);
-
   const setChatOpen = (nextIsOpen) => {
     if (typeof controlledIsOpen !== "boolean") {
       setUncontrolledIsOpen(nextIsOpen);
@@ -189,7 +173,7 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
   };
 
   const startNewSession = () => {
-    const nextSession = createSession();
+    const nextSession = createSession(welcomeMessage);
     const nextSessions = [nextSession, ...sessions];
 
     persistSessions(nextSessions);
@@ -216,6 +200,7 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
 
     const userMessage = createMessage("user", trimmedQuestion);
     const nextTitle = activeSession.messages.length <= 1 ? trimmedQuestion.slice(0, 48) : activeSession.title;
+    const targetSessionId = activeSession.id;
 
     updateActiveSession((session) => ({
       ...session,
@@ -226,14 +211,10 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
     setQuestion("");
     setIsLoading(true);
 
-    window.clearTimeout(pendingTimerRef.current);
-    pendingTimerRef.current = window.setTimeout(() => {
-      const reply = createAssistantReply(trimmedQuestion);
-      const assistantMessage = createMessage("assistant", reply.content, reply.sources);
-
+    const appendAssistantMessage = (assistantMessage) => {
       setSessions((currentSessions) => {
         const nextSessions = currentSessions.map((session) =>
-          session.id === activeSession.id
+          session.id === targetSessionId
             ? {
                 ...session,
                 updatedAt: new Date().toISOString(),
@@ -246,7 +227,41 @@ export function AiChatPage({ currentUser, isOpen: controlledIsOpen, onOpenChange
         return nextSessions;
       });
       setIsLoading(false);
-    }, 850);
+    };
+
+    // Gọi API AI thật ở backend (Gemini) thay vì mô phỏng cục bộ, để nhận
+    // câu trả lời được cá nhân hoá theo vai trò (nhân sự nội bộ hoặc khách
+    // hàng/CTV/Đại lý) và kiến thức nền công ty đã cấu hình.
+    (async () => {
+      try {
+        const response = await authFetch(`${API_BASE_URL}/chat/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ message: trimmedQuestion }),
+        });
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.message || "Không thể kết nối tới trợ lý AI lúc này.");
+        }
+
+        appendAssistantMessage(createMessage("assistant", payload.data?.reply || ""));
+      } catch (error) {
+        const errorText =
+          error instanceof Error && error.message
+            ? error.message
+            : "Không thể kết nối tới trợ lý AI lúc này.";
+        appendAssistantMessage(
+          createMessage(
+            "assistant",
+            `Xin lỗi, ${errorText.charAt(0).toLowerCase()}${errorText.slice(1)} Bạn vui lòng thử lại hoặc gọi hotline 1800 9078 để được hỗ trợ trực tiếp.`,
+          ),
+        );
+      }
+    })();
   };
 
   const deleteSession = (sessionId) => {
