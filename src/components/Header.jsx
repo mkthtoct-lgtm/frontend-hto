@@ -390,9 +390,8 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                       <button
                         key={notification.id}
                         type="button"
-                        className={`header-notification-item w-100 border-0 rounded-3 text-start p-2 mb-1 ${
-                          notification.isRead ? "bg-body" : "bg-primary-subtle"
-                        }`}
+                        className={`header-notification-item w-100 border-0 rounded-3 text-start p-2 mb-1 ${notification.isRead ? "bg-body" : "bg-primary-subtle"
+                          }`}
                         onClick={() => {
                           setUnreadNotificationCount((count) => Math.max(0, count - 1));
                           setNotificationItems((items) => items.filter((item) => item.id !== notification.id));
@@ -456,7 +455,7 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
               <i className="icon-message-square-text"></i>
               <span className="visually-hidden">Inbox</span>
             </a>
-         
+
             <a
               href="#"
               className="btn btn-md btn-icon btn-action-gray theme-btn"
@@ -548,36 +547,6 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                     }}
                   >
                     <i className="fi fi-rr-user scale-1x"></i> Hồ sơ cá nhân
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="pages/faq.html"
-                  >
-                    <i className="fi fi-rs-interrogation scale-1x"></i> Help
-                    Center
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigate?.("profile");
-                    }}
-                  >
-                    <i className="fi fi-rr-settings scale-1x"></i> Cài đặt tài khoản
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="dropdown-item d-flex align-items-center gap-2"
-                    href="pages/pricing.html"
-                  >
-                    <i className="fi fi-rr-usd-circle scale-1x"></i> Upgrade
-                    Plan
                   </a>
                 </li>
                 <li>

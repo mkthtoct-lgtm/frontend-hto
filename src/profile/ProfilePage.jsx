@@ -490,7 +490,7 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const roleLabel = ROLE_LABELS[roleKey] || "Tài khoản";
   const canEditProfile = true;
   const canEditLocalProfile = Boolean(profile.id);
-  const referralCode = referralInfo?.referralCode || "";
+  const referralCode = referralInfo?.referralCode || profile.referralCode || profile.employeeCode || currentUser?.referralCode || profile.phone || "";
   const referralUrl = referralInfo?.referralUrl || "";
   const qrUrl = useMemo(
     () =>
@@ -505,8 +505,16 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
       if (!referralCode) return "";
       const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
       return isLocalDev
-        ? `https://zalo.me/s/4590120319578198541/?env=testing&ctv=${referralCode}`
-        : `https://zalo.me/s/4590120319578198541/?ctv=${referralCode}`;
+        ? `https://zalo.me/s/4590120319578198541/?env=testing&ctv=${referralCode}&entry.799400108=${referralCode}`
+        : `https://zalo.me/s/4590120319578198541/?ctv=${referralCode}&entry.799400108=${referralCode}`;
+    },
+    [referralCode]
+  );
+
+  const googleFormReferralUrl = useMemo(
+    () => {
+      if (!referralCode) return "";
+      return `https://docs.google.com/forms/d/e/1FAIpQLSfMrm8fWYnkHlVYx-P_ERHeC4xieN-7FO1RekDFEDWfQLFx6g/viewform?usp=pp_url&entry.799400108=${encodeURIComponent(referralCode)}`;
     },
     [referralCode]
   );
@@ -522,30 +530,50 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
   const [activeSurveys, setActiveSurveys] = useState([]);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("hto_surveys_data");
-    if (stored) {
+    let isMounted = true;
+    const loadSurveys = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        setActiveSurveys(parsed.filter(s => s.status === "active"));
-      } catch {
-        setActiveSurveys([
-          { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
-          { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
-        ]);
+        const res = await authFetch(`${API_BASE_URL}/surveys?status=active`, {
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        });
+        const json = await res.json().catch(() => null);
+        if (isMounted && res.ok && json?.success && Array.isArray(json.data)) {
+          setActiveSurveys(json.data);
+        }
+      } catch (err) {
+        console.error("Lỗi tải danh sách khảo sát cho CTV:", err);
       }
-    } else {
-      setActiveSurveys([
-        { id: "survey-1", title: "Khảo sát nhu cầu Du học Đức 2026", baseUrl: "https://zalo.me/s/4590120319578198541/", status: "active" },
-        { id: "survey-2", title: "Khảo sát tuyển sinh Chương trình hè Singapore", baseUrl: "https://zalo.me/s/4590120319578198542/", status: "active" }
-      ]);
-    }
+    };
+    loadSurveys();
+    return () => { isMounted = false; };
   }, []);
 
   const getSurveyReferralUrl = (baseUrl, code) => {
     if (!baseUrl || !code) return baseUrl || "";
-    const cleanUrl = baseUrl.replace(/\/$/, "");
+    let cleanUrl = baseUrl.trim();
+
+    // If it's a Google Form link
+    if (cleanUrl.includes("docs.google.com/forms")) {
+      // If it already has entry.XXXXX= parameter
+      if (/entry\.\d+=/.test(cleanUrl)) {
+        cleanUrl = cleanUrl.replace(/entry\.\d+=[^&]*/, (match) => {
+          const entryKey = match.split("=")[0];
+          return `${entryKey}=${encodeURIComponent(code)}`;
+        });
+        if (!cleanUrl.includes("ctv=")) {
+          cleanUrl += `&ctv=${encodeURIComponent(code)}`;
+        }
+        return cleanUrl;
+      }
+      
+      // If no entry parameter exists yet
+      const separator = cleanUrl.includes("?") ? "&" : "?";
+      return `${cleanUrl}${separator}entry.799400108=${encodeURIComponent(code)}&ctv=${encodeURIComponent(code)}`;
+    }
+
+    // Standard fallback for other survey links
     const separator = cleanUrl.includes("?") ? "&" : "?";
-    return `${cleanUrl}${separator}ctv=${code}`;
+    return `${cleanUrl}${separator}ctv=${encodeURIComponent(code)}&entry.799400108=${encodeURIComponent(code)}`;
   };
 
   const handleDownloadSurveyQr = (baseUrl, title) => {
@@ -966,7 +994,21 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
       setNotice(`Đã sao chép ${label} vào bộ nhớ tạm.`);
       window.setTimeout(() => setNotice(""), 3000);
     } catch {
-      setError("Không thể sao chép nội dung.");
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (copied) {
+        setNotice(`Đã sao chép ${label} vào bộ nhớ tạm.`);
+        window.setTimeout(() => setNotice(""), 3000);
+      } else {
+        setError("Không thể tự động sao chép. Hãy bôi đen link và nhấn Ctrl+C.");
+      }
     }
   };
 
@@ -1281,11 +1323,12 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
               Link khảo sát Zalo
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
                 <input className="min-w-0 px-3 py-2.5 text-sm outline-none" value={referralLoading ? "Đang tải link khảo sát..." : zaloReferralUrl} readOnly />
-                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!zaloReferralUrl || referralLoading} onClick={() => copyText(zaloReferralUrl, "link khảo sát")}>
+                <button className="grid place-items-center border-l border-slate-200 text-slate-500" type="button" disabled={!zaloReferralUrl || referralLoading} onClick={() => copyText(zaloReferralUrl, "link khảo sát Zalo")}>
                   <Icon name="copy" className="h-5 w-5" />
                 </button>
               </div>
             </label>
+
             <label className="grid gap-2 text-sm font-bold text-slate-800">
               Mã giới thiệu
               <div className="grid grid-cols-[minmax(0,1fr)_44px] overflow-hidden rounded-lg border border-slate-200">
@@ -1382,9 +1425,14 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono max-w-[450px] truncate block" title={refUrl}>
-                            {referralLoading ? "Đang tải link giới thiệu..." : refUrl}
-                          </span>
+                          <input
+                            className="w-full min-w-[280px] max-w-[520px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 font-mono text-xs text-slate-600 outline-none focus:border-indigo-400 app-dark:border-slate-700 app-dark:bg-slate-950 app-dark:text-slate-300"
+                            value={referralLoading ? "Đang tải link giới thiệu..." : refUrl}
+                            readOnly
+                            title="Bấm vào ô để chọn toàn bộ link"
+                            onFocus={(event) => event.currentTarget.select()}
+                            onClick={(event) => event.currentTarget.select()}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">

@@ -21,18 +21,49 @@ const DEFAULT_COMMISSION_CONFIG = {
   daiSuTanTamMaster: 10
 };
 
+const DEFAULT_AUTOMATION_CONFIG = {
+  enabled: true,
+  autoAssignEnabled: true,
+  duplicateDetectionEnabled: true,
+  duplicateWindowDays: 30,
+  welcomeEmailEnabled: true,
+  internalAlertEnabled: true,
+  staleReminderEnabled: true,
+  staleReminderHours: 24,
+  autoLostEnabled: true,
+  autoLostDays: 14,
+  commissionReminderEnabled: true,
+  commissionPendingReminderDays: 7,
+  rankUpSuggestionEnabled: true,
+};
+
+const DEFAULT_AUTOMATION_STATS = {
+  unassignedLeads: 0,
+  staleLeads: 0,
+  dueForAutoLost: 0,
+  recentDuplicates: 0,
+  overduePendingCommissions: 0,
+};
+
 export function SystemSettingsPage({ currentUser }) {
   // Check permission
   const isAdmin = currentUser?.role === "admin" || currentUser?.roleId === ADMIN_ROLE_ID;
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState("chat"); // "chat" | "commission"
+  const [activeTab, setActiveTab] = useState("chat"); // "chat" | "commission" | "automation"
 
   // Settings states
   const [chatConfig, setChatConfig] = useState(DEFAULT_CHAT_CONFIG);
   const [commissionConfig, setCommissionConfig] = useState(DEFAULT_COMMISSION_CONFIG);
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingCommission, setSavingCommission] = useState(false);
+
+  // CRM Automation states
+  const [automationConfig, setAutomationConfig] = useState(DEFAULT_AUTOMATION_CONFIG);
+  const [automationStats, setAutomationStats] = useState(DEFAULT_AUTOMATION_STATS);
+  const [automationLoading, setAutomationLoading] = useState(false);
+  const [savingAutomation, setSavingAutomation] = useState(false);
+  const [runningAutomationNow, setRunningAutomationNow] = useState(false);
 
   // Success/Error Message Toast emulation
   const [toast, setToast] = useState(null);
@@ -90,6 +121,38 @@ export function SystemSettingsPage({ currentUser }) {
     };
   }, [isAdmin]);
 
+  // Tải cấu hình + số liệu tổng quan của CRM Automation
+  const loadAutomationOverview = async () => {
+    setAutomationLoading(true);
+    try {
+      const response = await authFetch(`${API_BASE_URL}/automation/overview`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Không thể tải cấu hình CRM Automation.");
+      }
+
+      const data = payload?.data || {};
+      setAutomationConfig({ ...DEFAULT_AUTOMATION_CONFIG, ...(data.config || {}) });
+      setAutomationStats({ ...DEFAULT_AUTOMATION_STATS, ...(data.stats || {}) });
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Không thể tải cấu hình CRM Automation.", "error");
+    } finally {
+      setAutomationLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void loadAutomationOverview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
   // Handle changes
   const handleChatChange = (field, value) => {
     setChatConfig(prev => ({ ...prev, [field]: value }));
@@ -98,6 +161,80 @@ export function SystemSettingsPage({ currentUser }) {
   const handleCommissionChange = (field, value) => {
     const numericValue = parseFloat(value) || 0;
     setCommissionConfig(prev => ({ ...prev, [field]: Math.max(0, Math.min(100, numericValue)) }));
+  };
+
+  const handleAutomationToggle = (field, value) => {
+    setAutomationConfig(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAutomationNumberChange = (field, value) => {
+    const numericValue = parseInt(value, 10);
+    setAutomationConfig(prev => ({ ...prev, [field]: Number.isFinite(numericValue) && numericValue > 0 ? numericValue : prev[field] }));
+  };
+
+  const handleSaveAutomation = async (e) => {
+    e.preventDefault();
+    setSavingAutomation(true);
+
+    try {
+      const response = await authFetch(`${API_BASE_URL}/automation/config`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(automationConfig),
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Lưu cấu hình CRM Automation thất bại.");
+      }
+
+      setAutomationConfig({ ...DEFAULT_AUTOMATION_CONFIG, ...(payload?.data || {}) });
+      showToast("Lưu cấu hình CRM Automation thành công!", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Lưu cấu hình CRM Automation thất bại.", "error");
+    } finally {
+      setSavingAutomation(false);
+    }
+  };
+
+  const handleRunAutomationNow = async () => {
+    setRunningAutomationNow(true);
+
+    try {
+      const response = await authFetch(`${API_BASE_URL}/automation/run-now`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Chạy kiểm tra CRM Automation thất bại.");
+      }
+
+      const result = payload?.data || {};
+      const staleCount = result?.staleResult?.reminded || 0;
+      const autoLostCount = result?.autoLostResult?.closed || 0;
+      const commissionCount = result?.commissionResult?.count || 0;
+      const rankUpCount = result?.rankUpResult?.suggested || 0;
+
+      showToast(
+        `Đã chạy xong: nhắc ${staleCount} lead im lặng, đóng ${autoLostCount} lead quá hạn, nhắc ${commissionCount} khoản hoa hồng, gợi ý ${rankUpCount} CTV thăng hạng.`,
+        "success"
+      );
+
+      // Cập nhật lại số liệu tổng quan sau khi chạy
+      void loadAutomationOverview();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Chạy kiểm tra CRM Automation thất bại.", "error");
+    } finally {
+      setRunningAutomationNow(false);
+    }
   };
 
   // Save changes
@@ -205,6 +342,18 @@ export function SystemSettingsPage({ currentUser }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Chính sách Hoa hồng Deal
+        </button>
+        <button
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl transition-all ${activeTab === "automation"
+            ? "border-b-2 border-cyan-900 text-cyan-900 bg-cyan-50/50"
+            : "text-slate-500 hover:text-slate-800"
+            }`}
+          onClick={() => setActiveTab("automation")}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          CRM Automation
         </button>
       </div>
 
@@ -441,6 +590,284 @@ export function SystemSettingsPage({ currentUser }) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {activeTab === "automation" && (
+        <div className="space-y-4">
+          {/* Tổng quan */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-cyan-900 rounded"></span> Tổng quan CRM Automation
+              </h4>
+              <button
+                type="button"
+                onClick={handleRunAutomationNow}
+                disabled={automationLoading || runningAutomationNow}
+                className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-bold py-2 px-4 rounded-xl transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {runningAutomationNow ? "Đang chạy..." : "Chạy kiểm tra ngay"}
+              </button>
+            </div>
+
+            {automationLoading && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600 mb-3">
+                Đang tải số liệu CRM Automation...
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
+                <div className="text-xl font-bold text-slate-800">{automationStats.unassignedLeads}</div>
+                <div className="text-[11px] text-slate-500 mt-1">Lead chưa có người phụ trách</div>
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+                <div className="text-xl font-bold text-amber-700">{automationStats.staleLeads}</div>
+                <div className="text-[11px] text-slate-500 mt-1">Lead im lặng quá hạn</div>
+              </div>
+              <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-center">
+                <div className="text-xl font-bold text-red-700">{automationStats.dueForAutoLost}</div>
+                <div className="text-[11px] text-slate-500 mt-1">Sắp bị tự động đóng</div>
+              </div>
+              <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 text-center">
+                <div className="text-xl font-bold text-orange-700">{automationStats.recentDuplicates}</div>
+                <div className="text-[11px] text-slate-500 mt-1">Lead trùng (7 ngày qua)</div>
+              </div>
+              <div className="bg-cyan-50 border border-cyan-100 rounded-xl p-3 text-center">
+                <div className="text-xl font-bold text-cyan-800">{automationStats.overduePendingCommissions}</div>
+                <div className="text-[11px] text-slate-500 mt-1">Hoa hồng chờ đối soát quá hạn</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cấu hình quy tắc */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-cyan-900 rounded"></span> Cấu hình quy tắc tự động hoá (rule-based, không dùng AI)
+            </h4>
+            <p className="text-slate-500 text-xs mb-4">
+              Tự động phân công, phát hiện trùng lặp, nhắc nhở chăm sóc khách hàng và đối soát hoa hồng theo các quy tắc và ngưỡng thời gian bên dưới.
+            </p>
+
+            <form onSubmit={handleSaveAutomation} className="space-y-3">
+              {/* Công tắc tổng */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 mb-1">
+                <div>
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Kích hoạt CRM Automation</label>
+                  <span className="text-[11px] text-slate-500">Công tắc tổng - tắt sẽ dừng toàn bộ các automation bên dưới.</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={automationConfig.enabled}
+                    onChange={(e) => handleAutomationToggle("enabled", e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                </label>
+              </div>
+
+              {/* Tự động phân công */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div>
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Tự động phân công nhân sự</label>
+                  <span className="text-[11px] text-slate-500">Lead không có CTV giới thiệu sẽ được tự động gán cho nhân viên nội bộ theo vòng xoay công bằng (round-robin).</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={automationConfig.autoAssignEnabled}
+                    onChange={(e) => handleAutomationToggle("autoAssignEnabled", e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                </label>
+              </div>
+
+              {/* Phát hiện trùng lặp */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex-1 pr-3">
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Phát hiện Lead trùng lặp</label>
+                  <span className="text-[11px] text-slate-500">Cảnh báo khi 1 khách hàng (SĐT/email) gửi lead nhiều lần trong khoảng thời gian gần đây.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                      value={automationConfig.duplicateWindowDays}
+                      onChange={(e) => handleAutomationNumberChange("duplicateWindowDays", e.target.value)}
+                      disabled={!automationConfig.duplicateDetectionEnabled}
+                    />
+                    <span className="text-[11px] text-slate-500">ngày</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={automationConfig.duplicateDetectionEnabled}
+                      onChange={(e) => handleAutomationToggle("duplicateDetectionEnabled", e.target.checked)}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Email xác nhận khách hàng */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div>
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Email xác nhận tự động cho khách hàng</label>
+                  <span className="text-[11px] text-slate-500">Gửi email cảm ơn/xác nhận ngay khi khách hàng gửi thông tin đăng ký tư vấn.</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={automationConfig.welcomeEmailEnabled}
+                    onChange={(e) => handleAutomationToggle("welcomeEmailEnabled", e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                </label>
+              </div>
+
+              {/* Thông báo nội bộ */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div>
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Thông báo nội bộ khi có Lead mới</label>
+                  <span className="text-[11px] text-slate-500">Gửi thông báo trong hệ thống + email cho người phụ trách và cấp quản lý.</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={automationConfig.internalAlertEnabled}
+                    onChange={(e) => handleAutomationToggle("internalAlertEnabled", e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                </label>
+              </div>
+
+              {/* Nhắc lead im lặng */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex-1 pr-3">
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Nhắc nhở Lead "im lặng"</label>
+                  <span className="text-[11px] text-slate-500">Nhắc người phụ trách khi lead chưa được cập nhật trạng thái sau khoảng thời gian này.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                      value={automationConfig.staleReminderHours}
+                      onChange={(e) => handleAutomationNumberChange("staleReminderHours", e.target.value)}
+                      disabled={!automationConfig.staleReminderEnabled}
+                    />
+                    <span className="text-[11px] text-slate-500">giờ</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={automationConfig.staleReminderEnabled}
+                      onChange={(e) => handleAutomationToggle("staleReminderEnabled", e.target.checked)}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Tự động đóng lead quá hạn */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex-1 pr-3">
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Tự động đóng Lead quá hạn</label>
+                  <span className="text-[11px] text-slate-500">Tự động chuyển sang "Thất bại" nếu không có cập nhật sau khoảng thời gian này.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                      value={automationConfig.autoLostDays}
+                      onChange={(e) => handleAutomationNumberChange("autoLostDays", e.target.value)}
+                      disabled={!automationConfig.autoLostEnabled}
+                    />
+                    <span className="text-[11px] text-slate-500">ngày</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={automationConfig.autoLostEnabled}
+                      onChange={(e) => handleAutomationToggle("autoLostEnabled", e.target.checked)}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Nhắc đối soát hoa hồng */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex-1 pr-3">
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Nhắc đối soát hoa hồng</label>
+                  <span className="text-[11px] text-slate-500">Nhắc Admin/BGĐ khi có hoa hồng ở trạng thái "Chờ đối soát" quá lâu.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                      value={automationConfig.commissionPendingReminderDays}
+                      onChange={(e) => handleAutomationNumberChange("commissionPendingReminderDays", e.target.value)}
+                      disabled={!automationConfig.commissionReminderEnabled}
+                    />
+                    <span className="text-[11px] text-slate-500">ngày</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={automationConfig.commissionReminderEnabled}
+                      onChange={(e) => handleAutomationToggle("commissionReminderEnabled", e.target.checked)}
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Gợi ý thăng hạng CTV */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div>
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Gợi ý thăng hạng Cộng tác viên</label>
+                  <span className="text-[11px] text-slate-500">Hàng tháng, đề xuất cấp quản lý xem xét thăng hạng CTV đạt đủ chỉ tiêu (không tự động thay đổi cấp bậc/hoa hồng).</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={automationConfig.rankUpSuggestionEnabled}
+                    onChange={(e) => handleAutomationToggle("rankUpSuggestionEnabled", e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-900"></div>
+                </label>
+              </div>
+
+              {/* Save Button */}
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={automationLoading || savingAutomation}
+                  className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-bold py-2 px-5 rounded-xl transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingAutomation ? "Đang lưu..." : "Lưu cấu hình CRM Automation"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
