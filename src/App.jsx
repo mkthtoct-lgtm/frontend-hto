@@ -26,6 +26,7 @@ import { JobDescriptionsPage } from "./jobDescriptions/JobDescriptionsPage";
 import { NotificationsPage } from "./notifications/NotificationsPage";
 import { OnlineApplicationPage } from "./products/OnlineApplicationPage";
 import { DaoTaoPage } from "./products/DaoTaoPage";
+import { MediaRepositoryPage } from "./media/MediaRepositoryPage";
 import { ProductOverviewPage } from "./products/ProductOverviewPage";
 import { ProductManagementPage } from "./products/ProductManagementPage";
 import { HomePage } from "./home/HomePage";
@@ -1576,6 +1577,8 @@ function App() {
           <OnlineApplicationPage currentUser={user} onNavigate={handleNavigate} />
         ) : currentPage === "daotao" ? (
           <DaoTaoPage onNavigate={handleNavigate} />
+        ) : currentPage === "media-repository" ? (
+          <MediaRepositoryPage />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
             {/* --- ROW 1: BANNER --- */}
