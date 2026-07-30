@@ -1396,8 +1396,54 @@ export const Sidebar = ({
                             Nộp hồ sơ online
                           </a>
                         </li>
+
                       </ul>
                     )}
+                  </li>
+                  <li className="menu-item mt-2 mb-1" style={{ listStyleType: "none" }}>
+                    <a
+                      className={`menu-link d-block px-3 py-2 rounded-2 ${
+                        currentPage === "daotao" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                      }`}
+                      style={{ textDecoration: "none", fontSize: "13.5px" }}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.("daotao");
+                      }}
+                    >
+                      Đào tạo
+                    </a>
+                  </li>
+                  <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
+                    <a
+                      className={`menu-link d-block px-3 py-2 rounded-2 ${
+                        currentPage === "banggia" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                      }`}
+                      style={{ textDecoration: "none", fontSize: "13.5px" }}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.("banggia");
+                      }}
+                    >
+                      Bảng giá
+                    </a>
+                  </li>
+                  <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
+                    <a
+                      className={`menu-link d-block px-3 py-2 rounded-2 ${
+                        currentPage === "thongtintracuu" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"
+                      }`}
+                      style={{ textDecoration: "none", fontSize: "13.5px" }}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onNavigate?.("thongtintracuu");
+                      }}
+                    >
+                      Thông tin tra cứu
+                    </a>
                   </li>
                 </>
               )}
