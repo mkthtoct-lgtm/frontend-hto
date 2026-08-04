@@ -43,6 +43,10 @@ export function SchoolSearchPage() {
   const [systemOptions, setSystemOptions] = useState([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
+  // [Bộ lọc Giá sản phẩm / Ngân sách] Khoảng học phí khách hàng mong muốn tra cứu
+  const [budgetMin, setBudgetMin] = useState("");
+  const [budgetMax, setBudgetMax] = useState("");
+
   // Active filters count
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -50,8 +54,9 @@ export function SchoolSearchPage() {
     if (activeProgram !== "all") count++;
     if (regionFilter !== "all") count++;
     if (systemFilter !== "all") count++;
+    if (budgetMin !== "" || budgetMax !== "") count++;
     return count;
-  }, [activeCountry, activeProgram, regionFilter, systemFilter]);
+  }, [activeCountry, activeProgram, regionFilter, systemFilter, budgetMin, budgetMax]);
 
   const resetAllFilters = () => {
     setActiveCountry("all");
@@ -59,6 +64,8 @@ export function SchoolSearchPage() {
     setRegionFilter("all");
     setSystemFilter("all");
     setSearchTerm("");
+    setBudgetMin("");
+    setBudgetMax("");
   };
 
   // Auth User check
@@ -192,8 +199,53 @@ export function SchoolSearchPage() {
     fetchFilterOptions(activeCountry, programVal);
   };
 
+  // [Bộ lọc Giá sản phẩm / Ngân sách] Dữ liệu trường học được đồng bộ động từ
+  // nhiều nguồn Google Sheets khác nhau (mỗi quốc gia/chương trình có thể có
+  // tên cột và đơn vị tiền tệ khác nhau), nên thay vì hard-code 1 cột học phí
+  // cụ thể, ta tự động nhận diện MỌI cột có chứa từ "học phí" trong tiêu đề.
+  const tuitionHeaders = useMemo(
+    () => headers.filter((h) => h !== "_id" && /học phí/i.test(h)),
+    [headers]
+  );
+
+  // Trích đơn vị tiền tệ hiển thị trong ngoặc ở cuối tên cột, vd:
+  // "Học phí chuyên ngành (TWD)" -> "TWD", để hiển thị minh bạch cho người dùng.
+  const tuitionCurrencyLabel = useMemo(() => {
+    const units = new Set();
+    tuitionHeaders.forEach((h) => {
+      const match = h.match(/\(([^)]+)\)\s*$/);
+      if (match && match[1]) units.add(match[1].trim());
+    });
+    return Array.from(units).join(" / ");
+  }, [tuitionHeaders]);
+
+  // Chuyển 1 chuỗi học phí thô (có thể lẫn dấu phẩy/chấm ngăn cách hàng nghìn
+  // hoặc chữ đơn vị tiền tệ) thành số nguyên để so sánh khoảng ngân sách.
+  const parseTuitionValue = (raw) => {
+    if (raw === undefined || raw === null) return null;
+    const digitsOnly = String(raw).replace(/[^\d.,]/g, "").replace(/[.,]/g, "");
+    if (!digitsOnly) return null;
+    const numeric = parseInt(digitsOnly, 10);
+    return Number.isFinite(numeric) ? numeric : null;
+  };
+
+  // Học phí đại diện của 1 trường = giá trị CAO NHẤT trong các cột học phí có
+  // dữ liệu (thường là học phí chuyên ngành - phần tốn kém nhất), dùng để so
+  // khớp với khoảng ngân sách khách hàng nhập.
+  const getRecordTuition = (record) => {
+    let max = null;
+    for (const h of tuitionHeaders) {
+      const val = parseTuitionValue(record[h]);
+      if (val !== null && (max === null || val > max)) max = val;
+    }
+    return max;
+  };
+
   // Client-side filtering
   const filteredRecords = useMemo(() => {
+    const minBudget = budgetMin !== "" ? Number(budgetMin) : null;
+    const maxBudget = budgetMax !== "" ? Number(budgetMax) : null;
+
     return records.filter(r => {
       // 1. Region Filter
       if (regionFilter !== "all") {
@@ -207,9 +259,17 @@ export function SchoolSearchPage() {
         if (system !== systemFilter) return false;
       }
 
+      // 3. Budget (Giá sản phẩm) Filter
+      if (minBudget !== null || maxBudget !== null) {
+        const tuition = getRecordTuition(r);
+        if (tuition === null) return false; // Không có dữ liệu học phí -> không thể xác nhận phù hợp ngân sách
+        if (minBudget !== null && tuition < minBudget) return false;
+        if (maxBudget !== null && tuition > maxBudget) return false;
+      }
+
       return true;
     });
-  }, [records, regionFilter, systemFilter]);
+  }, [records, regionFilter, systemFilter, budgetMin, budgetMax, tuitionHeaders]);
 
   const handleExportCsv = () => {
     if (filteredRecords.length === 0 || headers.length === 0) return;
@@ -487,12 +547,12 @@ export function SchoolSearchPage() {
               </button>
             </div>
 
-            {/* Vertical Filter Toggle Button */}
+            {/* Filter Panel Toggle Button */}
             <button
               type="button"
               className={`btn btn-md d-inline-flex align-items-center gap-2 px-3 py-2 text-nowrap transition-all ${isFilterPanelOpen ? "btn-primary shadow-sm" : "btn-outline-primary"}`}
               onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-              title="Mở/Đóng cột bộ lọc bên phải"
+              title="Mở/Đóng bảng bộ lọc"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
               <span>Bộ lọc</span>
@@ -532,6 +592,12 @@ export function SchoolSearchPage() {
                   <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setSystemFilter("all")}></button>
                 </span>
               )}
+              {(budgetMin !== "" || budgetMax !== "") && (
+                <span className="badge bg-teal-subtle text-teal-emphasis border d-inline-flex align-items-center gap-1 py-1 px-2" style={{ backgroundColor: "rgba(13,148,136,0.12)", color: "#0d9488", borderColor: "rgba(13,148,136,0.35)" }}>
+                  Học phí: <strong>{budgetMin !== "" ? Number(budgetMin).toLocaleString("vi-VN") : "0"} - {budgetMax !== "" ? Number(budgetMax).toLocaleString("vi-VN") : "∞"}</strong>
+                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => { setBudgetMin(""); setBudgetMax(""); }}></button>
+                </span>
+              )}
               {searchTerm && (
                 <span className="badge bg-secondary-subtle text-body-secondary border d-inline-flex align-items-center gap-1 py-1 px-2">
                   Từ khóa: <strong>"{searchTerm}"</strong>
@@ -551,10 +617,142 @@ export function SchoolSearchPage() {
         </div>
       </div>
 
-      {/* Main Content Area: Table on Left + Vertical Filter Drawer on Right */}
-      <div className="d-flex flex-column flex-lg-row gap-3 align-items-start position-relative">
-        {/* Left Side: Main Data Table */}
-        <section className="card border-0 shadow-sm flex-grow-1 w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
+      {/* ============================================================
+          BỘ LỌC NGANG - ĐẶT Ở VỊ TRÍ TRUNG TÂM PHÍA TRÊN (TOP CENTER)
+          Thay thế cho bộ lọc dạng cột dọc/drawer trượt bên phải trước đây,
+          giúp người dùng nhìn thấy toàn bộ tiêu chí lọc trong 1 hàng ngang,
+          không phải cuộn dọc hay bị che khuất nội dung bảng - tránh rối mắt.
+         ============================================================ */}
+      {isFilterPanelOpen && (
+        <div className="card border-0 shadow-sm mb-3 mx-auto" style={{ borderRadius: "12px", maxWidth: "1400px" }}>
+          <div className="card-header bg-body-tertiary border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+            <h6 className="fw-bold text-body-emphasis mb-0 d-flex align-items-center gap-2 text-center" style={{ fontSize: "15px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+              Bộ lọc chuyên sâu
+            </h6>
+            <button
+              type="button"
+              className="btn-close border-0 bg-transparent text-body-secondary fs-6"
+              onClick={() => setIsFilterPanelOpen(false)}
+              title="Thu gọn bộ lọc"
+            ></button>
+          </div>
+
+          <div className="card-body p-4">
+            <div className="row g-3 justify-content-center">
+              {/* Tiêu chí 1: Quốc gia */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                  <span>1. Quốc gia</span>
+                  {activeCountry !== "all" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}>Bỏ chọn</span>
+                  )}
+                </label>
+                <select className="form-select form-select-sm border-1" value={activeCountry} onChange={handleCountryChange}>
+                  <option value="all">Tất cả quốc gia</option>
+                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Tiêu chí 2: Chương trình du học */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                  <span>2. Chương trình</span>
+                  {activeProgram !== "all" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleProgramChange("all")}>Bỏ chọn</span>
+                  )}
+                </label>
+                <select className="form-select form-select-sm border-1" value={activeProgram} onChange={(e) => handleProgramChange(e.target.value)}>
+                  <option value="all">Tất cả chương trình</option>
+                  {programs.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
+              {/* Tiêu chí 3: Khu vực */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                  <span>3. Khu vực</span>
+                  {regionFilter !== "all" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setRegionFilter("all")}>Bỏ chọn</span>
+                  )}
+                </label>
+                <select className="form-select form-select-sm border-1" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
+                  <option value="all">Tất cả Khu vực</option>
+                  {regionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+
+              {/* Tiêu chí 4: Hệ tuyển sinh */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
+                  <span>4. Hệ tuyển sinh</span>
+                  {systemFilter !== "all" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setSystemFilter("all")}>Bỏ chọn</span>
+                  )}
+                </label>
+                <select className="form-select form-select-sm border-1" value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)}>
+                  <option value="all">Tất cả Hệ tuyển sinh</option>
+                  {systemOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+
+              {/* Tiêu chí 5: Giá sản phẩm (Học phí) - Từ */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold text-teal-700 mb-1.5 d-flex align-items-center justify-content-between" style={{ color: "#0d9488" }}>
+                  <span>5. Học phí từ</span>
+                  {budgetMin !== "" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setBudgetMin("")}>Bỏ chọn</span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control form-control-sm border-1"
+                  placeholder="0"
+                  value={budgetMin}
+                  onChange={(e) => setBudgetMin(e.target.value)}
+                />
+              </div>
+
+              {/* Tiêu chí 5b: Giá sản phẩm (Học phí) - Đến */}
+              <div className="col-6 col-md-4 col-lg-2">
+                <label className="form-label small fw-bold mb-1.5 d-flex align-items-center justify-content-between" style={{ color: "#0d9488" }}>
+                  <span>Đến {tuitionCurrencyLabel ? `(${tuitionCurrencyLabel})` : ""}</span>
+                  {budgetMax !== "" && (
+                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setBudgetMax("")}>Bỏ chọn</span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="form-control form-control-sm border-1"
+                  placeholder="Không giới hạn"
+                  value={budgetMax}
+                  onChange={(e) => setBudgetMax(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {tuitionHeaders.length === 0 && (budgetMin !== "" || budgetMax !== "") && (
+              <div className="alert alert-warning small mt-3 mb-0 py-2 px-3" style={{ fontSize: "12px" }}>
+                Không tìm thấy cột dữ liệu học phí cho lựa chọn Quốc gia/Chương trình hiện tại, nên bộ lọc Ngân sách chưa thể áp dụng.
+              </div>
+            )}
+          </div>
+
+          <div className="card-footer bg-body-tertiary border-top p-3 d-flex align-items-center justify-content-center gap-2">
+            <button type="button" className="btn btn-sm btn-outline-secondary py-1.5 px-3" style={{ fontSize: "12px" }} onClick={resetAllFilters}>
+              Đặt lại tất cả
+            </button>
+            <button type="button" className="btn btn-sm btn-primary py-1.5 px-4 fw-bold shadow-sm" style={{ fontSize: "12px" }} onClick={() => setIsFilterPanelOpen(false)}>
+              Áp dụng ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bảng dữ liệu trường học - toàn bộ chiều rộng (không còn chia cột với bộ lọc) */}
+      <section className="card border-0 shadow-sm w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
           <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
             <h6 className="fw-bold text-body-emphasis mb-0">Bảng dữ liệu trường học ({activeCountry !== "all" ? activeCountry : "Tất cả các nước"})</h6>
             <div className="d-flex align-items-center gap-2">
@@ -566,7 +764,7 @@ export function SchoolSearchPage() {
                   type="button"
                   className="btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1"
                   onClick={() => setIsFilterPanelOpen(true)}
-                  title="Mở cột bộ lọc dọc bên phải"
+                  title="Mở bảng bộ lọc"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
                   Bộ lọc
@@ -642,129 +840,7 @@ export function SchoolSearchPage() {
               </table>
             </div>
           </div>
-        </section>
-
-        {/* Right Side: Floating Slide-over Offcanvas Drawer Panel */}
-        {isFilterPanelOpen && (
-          <>
-            {/* Light Backdrop Overlay */}
-            <div
-              className="position-fixed top-0 start-0 w-100 h-100 bg-black/20 backdrop-blur-[1px]"
-              style={{ zIndex: 1040 }}
-              onClick={() => setIsFilterPanelOpen(false)}
-            />
-
-            {/* Floating Drawer Card Pinned to Top-Right */}
-            <aside
-              className="position-fixed top-0 end-0 h-100 bg-body shadow-lg border-start d-flex flex-column transition-all duration-300"
-              style={{
-                width: "360px",
-                maxWidth: "92vw",
-                zIndex: 1050,
-                borderTopLeftRadius: "16px",
-                borderBottomLeftRadius: "16px",
-              }}
-            >
-              <div className="card-header bg-body-tertiary border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                <h6 className="fw-bold text-body-emphasis mb-0 d-flex align-items-center gap-2" style={{ fontSize: "15px" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-                  Bộ lọc chuyên sâu
-                </h6>
-                <button
-                  type="button"
-                  className="btn-close border-0 bg-transparent text-body-secondary fs-5"
-                  onClick={() => setIsFilterPanelOpen(false)}
-                  title="Thu gọn bộ lọc"
-                ></button>
-              </div>
-
-              <div className="card-body p-4 d-grid gap-3 flex-grow-1 overflow-y-auto">
-                {/* Stack 1: Chọn Quốc gia */}
-                <div className="p-3 bg-body-tertiary rounded-3 border">
-                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                    <span>1. Chọn Quốc gia</span>
-                    {activeCountry !== "all" && (
-                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}>Bỏ chọn</span>
-                    )}
-                  </label>
-                  <select className="form-select border-1" value={activeCountry} onChange={handleCountryChange}>
-                    <option value="all">Tất cả quốc gia</option>
-                    {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                {/* Stack 2: Chương trình du học */}
-                <div className="p-3 bg-body-tertiary rounded-3 border">
-                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                    <span>2. Chương trình du học</span>
-                    {activeProgram !== "all" && (
-                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleProgramChange("all")}>Bỏ chọn</span>
-                    )}
-                  </label>
-                  <div className="d-grid gap-1.5">
-                    <button
-                      type="button"
-                      className={`btn btn-sm text-start py-1.5 px-3 rounded-2 transition-all ${activeProgram === "all" ? "btn-primary fw-bold shadow-sm" : "btn-light border text-body"}`}
-                      style={{ fontSize: "12.5px" }}
-                      onClick={() => handleProgramChange("all")}
-                    >
-                      Tất cả chương trình
-                    </button>
-                    {programs.map(p => (
-                      <button
-                        key={p}
-                        type="button"
-                        className={`btn btn-sm text-start py-1.5 px-3 rounded-2 transition-all ${activeProgram === p ? "btn-primary fw-bold shadow-sm" : "btn-light border text-body"}`}
-                        style={{ fontSize: "12.5px" }}
-                        onClick={() => handleProgramChange(p)}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Stack 3: Khu vực */}
-                <div className="p-3 bg-body-tertiary rounded-3 border">
-                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                    <span>3. Khu vực / Tỉnh bang</span>
-                    {regionFilter !== "all" && (
-                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setRegionFilter("all")}>Bỏ chọn</span>
-                    )}
-                  </label>
-                  <select className="form-select border-1" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
-                    <option value="all">Tất cả Khu vực</option>
-                    {regionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
-
-                {/* Stack 4: Hệ tuyển sinh */}
-                <div className="p-3 bg-body-tertiary rounded-3 border">
-                  <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                    <span>4. Hệ tuyển sinh</span>
-                    {systemFilter !== "all" && (
-                      <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setSystemFilter("all")}>Bỏ chọn</span>
-                    )}
-                  </label>
-                  <select className="form-select border-1" value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)}>
-                    <option value="all">Tất cả Hệ tuyển sinh</option>
-                    {systemOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="card-footer bg-body-tertiary border-top p-3 d-flex align-items-center justify-content-between gap-2">
-                <button type="button" className="btn btn-sm btn-outline-secondary py-1.5 px-3" style={{ fontSize: "12px" }} onClick={resetAllFilters}>
-                  Đặt lại tất cả
-                </button>
-                <button type="button" className="btn btn-sm btn-primary py-1.5 px-4 fw-bold shadow-sm" style={{ fontSize: "12px" }} onClick={() => setIsFilterPanelOpen(false)}>
-                  Áp dụng ✕
-                </button>
-              </div>
-            </aside>
-          </>
-        )}
-      </div>
+      </section>
 
       {/* School Detail Modal Dialog */}
       {selectedSchool && (
