@@ -167,8 +167,9 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
       setUnreadNotificationCount(nextUnreadCount);
       setNotificationItems(unreadNotifications);
 
+      // Đã tắt tính năng tự động mở menu thông báo khi có thông báo mới
       if (nextUnreadCount > 0 && !hasAutoOpenedNotifications.current) {
-        setIsNotificationMenuOpen(true);
+        // setIsNotificationMenuOpen(true);
         hasAutoOpenedNotifications.current = true;
       }
     } catch {
@@ -448,14 +449,6 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
                 </div>
               )}
             </div>
-            <a
-              href="email/inbox.html"
-              className="btn btn-md btn-icon btn-action-gray"
-            >
-              <i className="icon-message-square-text"></i>
-              <span className="visually-hidden">Inbox</span>
-            </a>
-
             <a
               href="#"
               className="btn btn-md btn-icon btn-action-gray theme-btn"

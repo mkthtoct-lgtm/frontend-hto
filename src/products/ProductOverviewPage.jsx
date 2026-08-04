@@ -80,23 +80,23 @@ const numberToVietnameseWords = (num) => {
   if (!num || isNaN(num)) return "Không đồng";
   const units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
   const unitsTen = ["", "mười", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"];
-  
+
   const readThreeDigits = (threeDigits, showZeroHundred) => {
     let hundred = Math.floor(threeDigits / 100);
     let ten = Math.floor((threeDigits % 100) / 10);
     let unit = threeDigits % 10;
     let res = "";
-    
+
     if (hundred > 0 || showZeroHundred) {
       res += units[hundred] + " trăm ";
     }
-    
+
     if (ten > 0) {
       res += unitsTen[ten] + " ";
     } else if (hundred > 0 && unit > 0) {
       res += "lẻ ";
     }
-    
+
     if (unit > 0) {
       if (unit === 1 && ten > 1) {
         res += "mốt";
@@ -1145,14 +1145,14 @@ function ProductOverviewPageInner({ currentUser }) {
     // 2.5. Nếu không tìm thấy khớp trực tiếp, đối chiếu dự phòng theo Quốc gia và phân loại Du học / Visa
     if (!match) {
       const c = (info.country || "").trim().toUpperCase();
-      const isStudy = info.name.toLowerCase().includes("du học") || 
-                      info.name.toLowerCase().includes("học") || 
-                      info.name.toLowerCase().includes("school") || 
-                      info.name.toLowerCase().includes("college") || 
-                      info.name.toLowerCase().includes("trại hè") || 
-                      info.name.toLowerCase().includes("camp") || 
-                      info.name.toLowerCase().includes("study");
-                      
+      const isStudy = info.name.toLowerCase().includes("du học") ||
+        info.name.toLowerCase().includes("học") ||
+        info.name.toLowerCase().includes("school") ||
+        info.name.toLowerCase().includes("college") ||
+        info.name.toLowerCase().includes("trại hè") ||
+        info.name.toLowerCase().includes("camp") ||
+        info.name.toLowerCase().includes("study");
+
       // Map quốc gia code/tên về visaCode chuẩn
       let fallbackVisaCode = "";
       if (["CA", "CANADA"].includes(c)) {
@@ -1260,8 +1260,9 @@ function ProductOverviewPageInner({ currentUser }) {
   const [selectedCountry, setSelectedCountry] = useState(() => pendingSidebarCategory?.country || "Tất cả");
   const [selectedRegion, setSelectedRegion] = useState(() => pendingSidebarCategory?.region || "Tất cả");
   const [selectedStatus, setSelectedStatus] = useState("all");
-    const [selectedVisaType, setSelectedVisaType] = useState(null);
+  const [selectedVisaType, setSelectedVisaType] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [categoryCountryFilters, setCategoryCountryFilters] = useState({});
 
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -1477,7 +1478,7 @@ function ProductOverviewPageInner({ currentUser }) {
       setSelectedCategoryName(detail.name || "Tất cả");
       setSelectedCountry(detail.country || "Tất cả");
       setSelectedRegion(detail.region || "Tất cả");
-            setSelectedVisaType(null);
+      setSelectedVisaType(null);
       if (detail.id) {
         setExpandedCategories(prev => ({ ...prev, [detail.id]: true }));
       }
@@ -2501,14 +2502,48 @@ function ProductOverviewPageInner({ currentUser }) {
   };
 
   const renderCategorySection = (cat) => {
-    const displayPrograms = cat.filteredPrograms || cat.programs || [];
-    if (displayPrograms.length === 0 && !canManageProducts) return null;
+    let basePrograms = cat.filteredPrograms || cat.programs || [];
+    if (basePrograms.length === 0 && !canManageProducts) return null;
+
+    const activeCountry = categoryCountryFilters[cat.id] || "ALL";
+    const uniqueCountries = Array.from(new Set(basePrograms.map(p => resolveCountryName(p.country))))
+      .filter(c => c && c.toLowerCase() !== "all" && c.toLowerCase() !== "tất cả")
+      .sort();
+    const displayPrograms = basePrograms.filter(p => activeCountry === "ALL" || resolveCountryName(p.country) === activeCountry);
 
     const ITEMS_PER_ROW = 3;
     const isExpanded = !!expandedCategories[cat.id];
     const visiblePrograms = isExpanded ? displayPrograms : displayPrograms.slice(0, ITEMS_PER_ROW);
     const hasMore = displayPrograms.length > ITEMS_PER_ROW;
     const hiddenCount = displayPrograms.length - ITEMS_PER_ROW;
+
+    const countryFilterBar = uniqueCountries.length > 0 && (
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-2 w-full scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
+        <button
+          onClick={() => setCategoryCountryFilters(prev => ({ ...prev, [cat.id]: "ALL" }))}
+          className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 border ${activeCountry === "ALL"
+              ? "bg-cyan-900 text-white border-cyan-900 shadow-md"
+              : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-cyan-300"
+            }`}
+        >
+          Tất cả
+        </button>
+        {uniqueCountries.map(country => (
+          <button
+            key={country}
+            onClick={() => setCategoryCountryFilters(prev => ({ ...prev, [cat.id]: country }))}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 border flex items-center gap-1.5 ${activeCountry === country
+                ? "bg-cyan-900 text-white border-cyan-900 shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-cyan-300"
+              }`}
+          >
+            <i className="fa fa-earth-americas text-[9px] opacity-70"></i>
+            {country}
+          </button>
+        ))}
+      </div>
+    );
 
     const renderProductGrid = (programsToRender) => (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2699,6 +2734,7 @@ function ProductOverviewPageInner({ currentUser }) {
                     Đang hiển thị: {VISA_TYPES.find(t => t.id === selectedVisaType)?.name}
                   </span>
                 </div>
+                {countryFilterBar}
                 {renderProductGrid(visiblePrograms)}
                 {renderShowMoreBtn(hasMore, hiddenCount)}
               </div>
@@ -2756,6 +2792,9 @@ function ProductOverviewPageInner({ currentUser }) {
           )}
         </div>
 
+        {/* Filter Bar */}
+        {countryFilterBar}
+
         {/* Product list */}
         {displayPrograms.length > 0 ? (
           <div className="relative z-0">
@@ -2764,7 +2803,7 @@ function ProductOverviewPageInner({ currentUser }) {
           </div>
         ) : (
           <div className="text-center py-6 text-slate-400 app-dark:text-slate-500! text-xs">
-            Danh mục này chưa có sản phẩm nào.
+            {basePrograms.length > 0 ? `Chưa có sản phẩm nào thuộc ${activeCountry}.` : "Danh mục này chưa có sản phẩm nào."}
           </div>
         )}
       </div>
@@ -3174,7 +3213,7 @@ function ProductOverviewPageInner({ currentUser }) {
 
               {/* ── HERO BANNER — bố cục màu gradient xịn đè hình ── */}
               <div className="relative overflow-hidden" style={{ minHeight: "280px", background: bgGradient }}>
-                
+
                 {/* Decorative background overlay */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
 
@@ -3227,7 +3266,7 @@ function ProductOverviewPageInner({ currentUser }) {
                           </span>
                         )}
                       </div>
-                      
+
                       <h2 className="text-2xl md:text-3.5xl font-extrabold text-white m-0 leading-tight tracking-tight">
                         {selectedProduct.name}
                       </h2>
@@ -3265,7 +3304,7 @@ function ProductOverviewPageInner({ currentUser }) {
 
                   {/* Cột phải: ảnh banner phẳng, đổ bóng sâu (4/10) */}
                   <div className="lg:col-span-4 flex items-center justify-center lg:justify-end overflow-hidden relative">
-                    
+
                     {/* Nút Chỉnh sửa — góc phải trên banner */}
                     {canManageProducts && (
                       <button
@@ -3469,7 +3508,7 @@ function ProductOverviewPageInner({ currentUser }) {
                             {parsedSteps.length} bước
                           </span>
                         </h4>
-                        
+
                         <div className="flex flex-col relative pl-6 border-l-2 border-slate-100 app-dark:border-white/8! space-y-6">
                           {parsedSteps.map((step, i) => (
                             <div key={i} className="relative">
@@ -3664,8 +3703,8 @@ function ProductOverviewPageInner({ currentUser }) {
                                 key={index}
                                 type="button"
                                 className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${formCategory.coverImageUrl === url
-                                    ? 'border-cyan-500 ring-2 ring-cyan-500/20'
-                                    : 'border-slate-200 hover:border-cyan-300'
+                                  ? 'border-cyan-500 ring-2 ring-cyan-500/20'
+                                  : 'border-slate-200 hover:border-cyan-300'
                                   }`}
                                 onClick={() => {
                                   setFormCategory(prev => ({ ...prev, coverImageUrl: url }));
@@ -4449,9 +4488,8 @@ function ProductOverviewPageInner({ currentUser }) {
                     <label className="block font-semibold text-xs text-slate-500 mb-1.5">Họ tên khách hàng <span className="text-red-500">*</span></label>
                     <input
                       type="text"
-                      className={`w-full bg-slate-50 border rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all disabled:opacity-50 ${
-                        interestInvalidFields.includes("customerName") ? "border-red-500 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200"
-                      }`}
+                      className={`w-full bg-slate-50 border rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all disabled:opacity-50 ${interestInvalidFields.includes("customerName") ? "border-red-500 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200"
+                        }`}
                       placeholder="Ví dụ: Nguyễn Văn A"
                       value={interestForm.customerName}
                       onChange={(e) => {
@@ -4470,9 +4508,8 @@ function ProductOverviewPageInner({ currentUser }) {
                       <label className="block font-semibold text-xs text-slate-500 mb-1.5">Số điện thoại <span className="text-red-500">*</span></label>
                       <input
                         type="text"
-                        className={`w-full bg-slate-50 border rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all disabled:opacity-50 ${
-                          interestInvalidFields.includes("phone") ? "border-red-500 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200"
-                        }`}
+                        className={`w-full bg-slate-50 border rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all disabled:opacity-50 ${interestInvalidFields.includes("phone") ? "border-red-500 focus:ring-red-500/10 focus:border-red-500" : "border-slate-200"
+                          }`}
                         placeholder="Ví dụ: 0987654321"
                         value={interestForm.phone}
                         onChange={(e) => {
@@ -4533,9 +4570,8 @@ function ProductOverviewPageInner({ currentUser }) {
                       {/* Mặt trước */}
                       <div className="flex flex-col gap-1">
                         <div
-                          className={`relative h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden bg-slate-50 ${
-                            interestInvalidFields.includes("cccdFront") ? "border-red-500" : "border-slate-200 hover:border-cyan-900/45"
-                          }`}
+                          className={`relative h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden bg-slate-50 ${interestInvalidFields.includes("cccdFront") ? "border-red-500" : "border-slate-200 hover:border-cyan-900/45"
+                            }`}
                           onClick={() => document.getElementById("interest-cccd-front-input").click()}
                         >
                           {interestCccdFrontPreview ? (
@@ -4589,9 +4625,8 @@ function ProductOverviewPageInner({ currentUser }) {
                       {/* Mặt sau */}
                       <div className="flex flex-col gap-1">
                         <div
-                          className={`relative h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden bg-slate-50 ${
-                            interestInvalidFields.includes("cccdBack") ? "border-red-500" : "border-slate-200 hover:border-cyan-900/45"
-                          }`}
+                          className={`relative h-24 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer overflow-hidden bg-slate-50 ${interestInvalidFields.includes("cccdBack") ? "border-red-500" : "border-slate-200 hover:border-cyan-900/45"
+                            }`}
                           onClick={() => document.getElementById("interest-cccd-back-input").click()}
                         >
                           {interestCccdBackPreview ? (
@@ -4689,7 +4724,7 @@ function ProductOverviewPageInner({ currentUser }) {
                   </h5>
                   <p className="text-[11px] text-slate-405 m-0 mt-0.5">Dữ liệu được điền tự động từ form đăng ký quan tâm</p>
                 </div>
-                
+
                 <div className="flex items-center bg-slate-200/65 rounded-lg p-0.5 self-start md:self-auto">
                   <button
                     type="button"
@@ -4973,8 +5008,8 @@ function ProductOverviewPageInner({ currentUser }) {
                           <tbody>
                             <tr>
                               <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
-                                {["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(userRole) 
-                                  ? cleanVietnameseText(currentUserName) 
+                                {["admin", "bangiamdoc", "truongbophan", "nhansu"].includes(userRole)
+                                  ? cleanVietnameseText(currentUserName)
                                   : "—"}
                               </td>
                               <td className="border border-slate-300 p-2 text-cyan-950 font-medium">
