@@ -525,7 +525,7 @@ export function SchoolSearchPage() {
       </div>
 
       {/* Search Bar & Filter Toggle Button Header */}
-      <div className="card border-0 shadow-sm mb-3" style={{ borderRadius: "12px" }}>
+      <div id="school-search-bar-card" className="card border-0 shadow-sm mb-3" style={{ borderRadius: "12px" }}>
         <div className="card-body p-3">
           <div className="d-flex flex-column flex-md-row gap-2 align-items-center">
             {/* Search Input */}
@@ -549,6 +549,7 @@ export function SchoolSearchPage() {
 
             {/* Filter Panel Toggle Button */}
             <button
+              id="school-filter-toggle-btn"
               type="button"
               className={`btn btn-md d-inline-flex align-items-center gap-2 px-3 py-2 text-nowrap transition-all ${isFilterPanelOpen ? "btn-primary shadow-sm" : "btn-outline-primary"}`}
               onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
@@ -752,7 +753,7 @@ export function SchoolSearchPage() {
       )}
 
       {/* Bảng dữ liệu trường học - toàn bộ chiều rộng (không còn chia cột với bộ lọc) */}
-      <section className="card border-0 shadow-sm w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
+      <section id="school-results-table" className="card border-0 shadow-sm w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
           <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
             <h6 className="fw-bold text-body-emphasis mb-0">Bảng dữ liệu trường học ({activeCountry !== "all" ? activeCountry : "Tất cả các nước"})</h6>
             <div className="d-flex align-items-center gap-2">

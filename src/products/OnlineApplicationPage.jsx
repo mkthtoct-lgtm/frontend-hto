@@ -407,7 +407,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
         </div>
       ) : (
         /* FORM BODY */
-        <div className={`rounded-2xl border p-4 sm:p-5 md:p-6 flex flex-col justify-between shadow-sm relative ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
+        <div id="nophoso-form-body" className={`rounded-2xl border p-4 sm:p-5 md:p-6 flex flex-col justify-between shadow-sm relative ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}>
           {isSubmitting && (
             <div className="absolute inset-0 bg-white/70 dark:bg-black/60 backdrop-blur-[2px] rounded-2xl z-20 flex flex-col items-center justify-center">
               <div className="w-12 h-12 border-4 border-[#0b6fb3] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -427,7 +427,7 @@ export function OnlineApplicationPage({ currentUser, onNavigate }) {
             )}
 
             {/* PHẦN 1: CHỌN CHƯƠNG TRÌNH */}
-            <div className="space-y-5 text-left">
+            <div id="nophoso-category-section" className="space-y-5 text-left">
               <div>
                 <h3 className={`text-lg font-bold mb-1 ${isDark ? "text-white" : "text-[#0f172a]"}`}>Chọn Chương trình đăng ký</h3>
                 <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>

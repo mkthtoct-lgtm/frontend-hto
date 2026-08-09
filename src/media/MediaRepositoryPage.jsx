@@ -59,7 +59,7 @@ export const MediaRepositoryPage = () => {
           </div>
           
           <div className="d-flex gap-2">
-            <div className="input-group input-group-sm" style={{ width: "250px" }}>
+            <div id="media-search-box" className="input-group input-group-sm" style={{ width: "250px" }}>
               <span className="input-group-text bg-transparent border-end-0 border-slate-200 app-dark:border-slate-600!">
                 <i className="fa fa-search text-slate-400"></i>
               </span>
@@ -75,7 +75,7 @@ export const MediaRepositoryPage = () => {
         </div>
 
         {/* Triple View Tabs */}
-        <div className="d-flex gap-3 border-bottom border-slate-200 app-dark:border-slate-700!">
+        <div id="media-tabs" className="d-flex gap-3 border-bottom border-slate-200 app-dark:border-slate-700!">
           <button
             className={`pb-2 px-1 bg-transparent border-0 fw-bold transition-colors ${activeTab === "visa_proof" ? "text-cyan-600 app-dark:text-cyan-400! border-bottom border-2 border-cyan-600" : "text-slate-500 hover:text-slate-700"}`}
             onClick={() => { setActiveTab("visa_proof"); setSelectedCountry("ALL"); }}
@@ -98,7 +98,7 @@ export const MediaRepositoryPage = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-grow-1 overflow-auto bg-white app-dark:bg-[#1e293b]! rounded-2xl p-4 shadow-xs border border-slate-200 app-dark:border-slate-700!">
+      <div id="media-content-area" className="flex-grow-1 overflow-auto bg-white app-dark:bg-[#1e293b]! rounded-2xl p-4 shadow-xs border border-slate-200 app-dark:border-slate-700!">
         
         {/* Filter Bar (Country) */}
         {uniqueCountries.length > 0 && (

@@ -53,6 +53,7 @@ export function DaoTaoPage({ onNavigate }) {
       
       {/* Hero Banner Section */}
       <div 
+        id="daotao-hero-section"
         className="rounded-4 mb-5 position-relative overflow-hidden shadow-sm"
         style={{
           background: "linear-gradient(135deg, #0d6efd 0%, #0098f0 100%)",
@@ -103,7 +104,7 @@ export function DaoTaoPage({ onNavigate }) {
         </div>
       </div>
 
-      <div className="row g-4">
+      <div id="daotao-courses-grid" className="row g-4">
         {mockCourses.map(course => (
           <div className="col-12 col-md-6 col-xl-4" key={course.id}>
             <div 

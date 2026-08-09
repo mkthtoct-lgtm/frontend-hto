@@ -238,6 +238,7 @@ export const SurveyManagementPage = ({ currentUser }) => {
           </p>
         </div>
         <button
+          id="survey-add-btn"
           className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-750 app-dark:bg-sky-500 app-dark:shadow-none"
           type="button"
           onClick={() => openModal()}
@@ -281,7 +282,7 @@ export const SurveyManagementPage = ({ currentUser }) => {
       </section>
 
       {/* TABLE LIST SECTION */}
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(30,64,175,0.06)] app-dark:border-slate-700 app-dark:bg-slate-900">
+      <section id="survey-table-section" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(30,64,175,0.06)] app-dark:border-slate-700 app-dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead className="bg-slate-50 text-xs font-black uppercase text-slate-500 app-dark:bg-slate-950">

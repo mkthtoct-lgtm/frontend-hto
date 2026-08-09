@@ -427,7 +427,7 @@ export const RoleManagementPage = ({ currentUser }) => {
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý vai trò & quyền hạn</h4>
           <p className="text-body-secondary small mb-0">Thiết lập danh sách vai trò của hệ thống HTO và gán các quyền phân hệ tương ứng.</p>
         </div>
-        <button className="btn btn-primary d-flex align-items-center gap-2" onClick={handleOpenCreateModal} disabled={actionLoading}>
+        <button id="roles-add-btn" className="btn btn-primary d-flex align-items-center gap-2" onClick={handleOpenCreateModal} disabled={actionLoading}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -454,7 +454,7 @@ export const RoleManagementPage = ({ currentUser }) => {
       </div>
 
       {/* Table of Roles */}
-      <div className="card border-0 shadow-sm table-card">
+      <div id="roles-table-card" className="card border-0 shadow-sm table-card">
         <div className="table-responsive">
           <table className="table custom-table align-middle mb-0">
             <thead>

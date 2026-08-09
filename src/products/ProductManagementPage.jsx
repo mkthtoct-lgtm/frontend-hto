@@ -847,12 +847,14 @@ export function ProductManagementPageContent({ currentUser }) {
           </div>
           <div className="flex gap-2">
             <button
+              id="product-mgmt-new-category-btn"
               onClick={handleOpenNewCategory}
               className="border border-cyan-900 hover:bg-cyan-50 text-cyan-900 app-dark:border-cyan-400 app-dark:text-cyan-400 text-xs font-semibold px-4 py-2 rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
             >
               + Danh mục mới
             </button>
             <button
+              id="product-mgmt-new-product-btn"
               onClick={handleOpenNewProduct}
               className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-semibold px-4 py-2 flex items-center gap-2 shadow-sm rounded-xl force-rounded-xl transition-all duration-200 cursor-pointer"
             >
@@ -862,7 +864,7 @@ export function ProductManagementPageContent({ currentUser }) {
         </div>
 
         {/* SEARCH AND FILTERS */}
-        <div className="app-dark:!bg-[#1e1e1e] app-dark:!border-slate-800 rounded-2xl p-2 mb-2 flex flex-col md:flex-row gap-3">
+        <div id="product-mgmt-search-filters" className="app-dark:!bg-[#1e1e1e] app-dark:!border-slate-800 rounded-2xl p-2 mb-2 flex flex-col md:flex-row gap-3">
           <div className="flex-1 flex gap-2 w-full">
             <div className="flex-1 relative">
               <input

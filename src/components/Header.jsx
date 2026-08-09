@@ -272,7 +272,7 @@ const notifyNotificationsChanged = (detail = {}) => {
   );
 };
 
-export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout }) => {
+export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout, onShowCurrentPageGuide }) => {
   const profileExtras = user?.id ? readProfileExtras(user.id) : {};
   const displayName = user?.fullName || user?.name || "Nguoi dung";
   const displayEmail = user?.email || "";
@@ -468,6 +468,22 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
           />
           <div className="d-none d-md-block bg-body-secondary" style={{ width: "1px", height: "24px" }}></div>
           <div className="d-flex align-items-center gap-sm-1 gap-0 px-lg-2 px-sm-2 px-1">
+            <a
+              href="#"
+              className="btn btn-icon btn-action-gray"
+              aria-label="Xem hướng dẫn cho trang này"
+              title="Xem hướng dẫn cho trang này"
+              onClick={(e) => {
+                e.preventDefault();
+                onShowCurrentPageGuide?.();
+              }}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                <path d="M9.5 7h7M9.5 10.5h7M9.5 14h4" />
+              </svg>
+            </a>
             <div className="position-relative text-end">
               <a
                 href="#"
