@@ -1928,7 +1928,7 @@ function App() {
           <ChecklistPage currentUser={user} />
         ) : currentPage === "sop" ? (
           <SOPPage currentUser={user} />
-        ) : currentPage === "documentSearch" ? (
+        ) : currentPage === "documentSearch" || currentPage === "thongtintracuu" ? (
           <DocumentSearchPage currentUser={user} />
         ) : currentPage === "leadForm" ? (
           <LeadFormPage currentUser={user} />
@@ -1963,7 +1963,7 @@ function App() {
           <NewsEventsPage currentUser={user} />
         ) : currentPage === "dashboard" ? (
           <HomePage theme={theme} onNavigate={handleNavigate} currentUser={user} />
-        ) : currentPage === "productOverview" || ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu"].includes(currentPage) || currentPage.startsWith("product:") ? (
+        ) : currentPage === "productOverview" || ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "banggia"].includes(currentPage) || currentPage.startsWith("product:") ? (
           <ProductOverviewPage currentUser={user} />
         ) : currentPage === "productManagement" ? (
           <ProductManagementPage currentUser={user} />
