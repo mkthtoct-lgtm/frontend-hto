@@ -1778,6 +1778,19 @@ export const Sidebar = ({
                   Gửi lead khách hàng
                 </a>
               </li>
+              <li className="menu-item mb-1">
+                <a
+                  className="menu-link d-block px-3 py-2 rounded-2 text-body-secondary"
+                  style={{ textDecoration: "none", fontSize: "13px" }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onNavigate?.("hotro", { activeTab: "guide" });
+                  }}
+                >
+                  📘 Hướng dẫn sử dụng Portal
+                </a>
+              </li>
             </ul>
           </li>
 

@@ -46,7 +46,7 @@ import "driver.js/dist/driver.css";
 
 // ─── Cấu hình tour hướng dẫn riêng biệt cho từng trang ────────────────────────
 // Mỗi entry: { anchorId, steps[] } - anchorId là id phần tử đầu tiên dùng để kiểm tra DOM đã sẵn sàng
-const PAGE_TOURS = {
+export const PAGE_TOURS = {
   // Trang Sản Phẩm
   products: {
     anchorId: "products-filter-section",
@@ -125,8 +125,11 @@ const PAGE_TOURS = {
     ],
   },
 
-  // Trang Hỗ Trợ / Gửi Lead
-  hotro: {
+  // Trang Gửi Lead khách hàng
+  // [Sửa lỗi] Trước đây tour này bị gắn nhầm khoá "hotro" dù toàn bộ nội dung
+  // (4 bước) đều nhắm vào các phần tử của trang Gửi Lead (#lead-form-*), nên
+  // trang Hỗ trợ (FAQ/Ticket) thực tế chưa từng có tour riêng. Đã tách đúng.
+  leadForm: {
     anchorId: "lead-form-completion-card",
     steps: [
       {
@@ -157,8 +160,31 @@ const PAGE_TOURS = {
         element: "#lead-form-submit-btn",
         popover: {
           title: "Gửi Lead Cho Khách Hàng",
-          description: "Sau khi điền đủ thông tin, bấm đây để gửi lead sang CRM. Hệ thống sẽ thông báo kết quả ngay lập tức.",
+          description: "Sau khi điền đủ thông tin, bấm đây để gửi lead sang CRM. Hệ thống sẽ thông báo kết quả ngay lập tức. Nếu trùng khách hàng đã gửi gần đây, hệ thống sẽ tự cảnh báo cho Quản lý - đây là điều bình thường.",
           side: "top", align: "end",
+        },
+      },
+    ],
+  },
+
+  // Trang Hỗ Trợ (FAQ & Ticket) - tour thật sự dành cho trang này
+  hotro: {
+    anchorId: "hotro-tabs-nav",
+    steps: [
+      {
+        element: "#hotro-tabs-nav",
+        popover: {
+          title: "3 Khu Vực Hỗ Trợ",
+          description: "\"Trung tâm trợ giúp (FAQ)\" để tự tra cứu câu trả lời nhanh, \"Gửi Ticket hỗ trợ\" khi cần đội kỹ thuật xử lý, và \"Lịch sử hỗ trợ\" để theo dõi các Ticket đã gửi.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#hotro-faq-search",
+        popover: {
+          title: "Tìm Câu Trả Lời Nhanh",
+          description: "Gõ từ khoá hoặc chọn danh mục ở cột bên trái - phần lớn thắc mắc thường gặp (tài khoản, Lead, hoa hồng, CRM...) đã có sẵn câu trả lời tại đây.",
+          side: "bottom", align: "center",
         },
       },
     ],
@@ -483,20 +509,307 @@ const PAGE_TOURS = {
       },
     ],
   },
+
+  // ══════════════════════════════════════════════════════════════════════
+  // CÁC TOUR BỔ SUNG - dành cho những trang trước đây CHƯA có hướng dẫn
+  // ══════════════════════════════════════════════════════════════════════
+
+  // Trang chủ (Dashboard)
+  dashboard: {
+    anchorId: "home-hero-section",
+    steps: [
+      {
+        element: "#home-hero-section",
+        popover: {
+          title: "Chào mừng đến với Portal HTO! 👋",
+          description: "Đây là Trang chủ - nơi giới thiệu tổng quan về HT Ocean Group. Dùng thanh điều hướng bên trái để di chuyển tới bất kỳ phân hệ nào bạn cần.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#home-stats-section",
+        popover: {
+          title: "Số Liệu Nổi Bật",
+          description: "Các con số ấn tượng về quy mô và thành tích của HTO - hữu ích khi cần trích dẫn tư vấn khách hàng.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#home-services-section",
+        popover: {
+          title: "Dịch Vụ Cốt Lõi",
+          description: "Tổng quan các nhóm dịch vụ chính: Du học, Định cư, Visa, Đào tạo ngôn ngữ. Bấm vào từng dịch vụ để xem chi tiết.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#home-process-section",
+        popover: {
+          title: "Quy Trình Làm Việc",
+          description: "Các bước cơ bản trong quy trình tư vấn - chăm sóc khách hàng của HTO, từ tiếp nhận đến hoàn tất hồ sơ.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Tra cứu thị trường du học (Trường học)
+  schoolSearch: {
+    anchorId: "school-search-bar-card",
+    steps: [
+      {
+        element: "#school-search-bar-card",
+        popover: {
+          title: "Tìm Kiếm Nhanh",
+          description: "Gõ tên trường, chuyên ngành hoặc khu vực để tìm nhanh trong toàn bộ cơ sở dữ liệu trường học.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#school-filter-toggle-btn",
+        popover: {
+          title: "Bộ Lọc Chuyên Sâu (kể cả theo Ngân sách)",
+          description: "Bấm để mở bảng lọc nằm ngang: Quốc gia, Chương trình, Khu vực, Hệ tuyển sinh và <strong>khoảng Học phí</strong> - nhập đúng ngân sách khách hàng để lọc nhanh các trường phù hợp.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#school-results-table",
+        popover: {
+          title: "Bảng Kết Quả",
+          description: "Bấm vào 1 dòng bất kỳ để xem chi tiết đầy đủ thông tin trường học đó trong hộp thoại popup.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Cài đặt hệ thống (4 tab: Chatbot AI, Hoa hồng, CRM Automation, Marketing Automation)
+  systemSettings: {
+    anchorId: "settings-tab-chat",
+    steps: [
+      {
+        element: "#settings-tab-chat",
+        popover: {
+          title: "Tab 1: Chatbot AI",
+          description: "Bật/tắt Chatbot, nhập API Key, chọn model, chỉnh lời chào, kiến thức nền công ty và giọng điệu chăm sóc khách hàng.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#settings-tab-commission",
+        popover: {
+          title: "Tab 2: Chính Sách Hoa Hồng",
+          description: "Thiết lập tỷ lệ % hoa hồng cho từng hạng Cộng tác viên/Đại lý.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#settings-tab-automation",
+        popover: {
+          title: "Tab 3: CRM Automation",
+          description: "Bật/tắt các quy tắc tự động: phân công nhân sự, phát hiện Lead trùng, nhắc nhở chăm sóc, tự động đóng Lead quá hạn, nhắc đối soát hoa hồng, gợi ý thăng hạng CTV. Có nút \"Chạy kiểm tra ngay\" để xem kết quả tức thì.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#settings-tab-marketing",
+        popover: {
+          title: "Tab 4: Marketing Automation",
+          description: "Bật/tắt các chiến dịch tự động chăm sóc khách hàng: email nuôi dưỡng Lead, cảm ơn sau chốt deal, tái kết nối khách cũ, bản tin tự động.",
+          side: "bottom", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Kho Media (Minh chứng Visa & Video/Content PR)
+  mediaRepository: {
+    anchorId: "media-tabs",
+    steps: [
+      {
+        element: "#media-tabs",
+        popover: {
+          title: "3 Kho Tư Liệu",
+          description: "\"Kết quả Visa\" lưu ảnh minh chứng đậu Visa theo quốc gia, \"Thư viện Video\" và \"Ấn phẩm & Tài liệu\" phục vụ truyền thông/PR.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#media-search-box",
+        popover: {
+          title: "Tìm Kiếm & Lọc Theo Quốc Gia",
+          description: "Gõ từ khoá hoặc dùng thanh lọc quốc gia ngay bên dưới để nhanh chóng tìm đúng tư liệu cần dùng khi tư vấn khách hàng.",
+          side: "left", align: "center",
+        },
+      },
+      {
+        element: "#media-content-area",
+        popover: {
+          title: "Xem Chi Tiết Tư Liệu",
+          description: "Bấm vào 1 ảnh/video để xem phóng to. Với tài liệu PDF, dùng nút \"Tải tài liệu\" để tải về máy.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang cá nhân (Profile)
+  profile: {
+    anchorId: "profile-header-section",
+    steps: [
+      {
+        element: "#profile-header-section",
+        popover: {
+          title: "Thông Tin Cá Nhân",
+          description: "Xem/cập nhật ảnh đại diện, banner và thông tin cơ bản của bạn. Một số trường chỉ Admin mới chỉnh sửa được.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#profile-security-section",
+        popover: {
+          title: "Bảo Mật Tài Khoản",
+          description: "Bấm \"Gửi yêu cầu đổi mật khẩu\" - hệ thống sẽ gửi email xác nhận về địa chỉ email đang đăng nhập để hoàn tất đổi mật khẩu.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Quản lý Vai trò & Phân quyền
+  roles: {
+    anchorId: "roles-table-card",
+    steps: [
+      {
+        element: "#roles-add-btn",
+        popover: {
+          title: "Thêm Vai Trò Mới",
+          description: "Tạo 1 vai trò mới và gán tập quyền phù hợp cho vai trò đó.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#roles-table-card",
+        popover: {
+          title: "Danh Sách Vai Trò",
+          description: "Bấm vào 1 vai trò để xem/chỉnh sửa tập quyền. Lưu ý: thay đổi quyền của 1 vai trò sẽ ảnh hưởng TẤT CẢ tài khoản đang mang vai trò đó.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Quản lý Khảo sát (link khảo sát Zalo Mini App)
+  surveyManagement: {
+    anchorId: "survey-table-section",
+    steps: [
+      {
+        element: "#survey-add-btn",
+        popover: {
+          title: "Thêm Khảo Sát Mới",
+          description: "Tạo mới 1 đường dẫn khảo sát Zalo Mini App để phân phối mã QR/link cho Cộng tác viên.",
+          side: "bottom", align: "end",
+        },
+      },
+      {
+        element: "#survey-table-section",
+        popover: {
+          title: "Danh Sách Khảo Sát",
+          description: "Theo dõi trạng thái từng khảo sát. Dữ liệu phản hồi được tự động đồng bộ lên Google Sheet đã liên kết.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Quản lý sản phẩm (Admin)
+  productManagement: {
+    anchorId: "product-mgmt-search-filters",
+    steps: [
+      {
+        element: "#product-mgmt-new-category-btn",
+        popover: {
+          title: "Tạo Danh Mục Mới",
+          description: "Thêm 1 danh mục sản phẩm mới (vd: thêm 1 quốc gia du học mới vào hệ thống).",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#product-mgmt-new-product-btn",
+        popover: {
+          title: "Thêm Sản Phẩm/Chương Trình",
+          description: "Thêm 1 chương trình/gói dịch vụ cụ thể vào danh mục đã chọn: mô tả, chi phí, tài liệu đính kèm.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#product-mgmt-search-filters",
+        popover: {
+          title: "Tìm Kiếm & Lọc",
+          description: "Thay đổi tại đây sẽ cập nhật NGAY LẬP TỨC lên trang \"Tổng quan sản phẩm\" mà toàn bộ nhân viên/CTV đang xem - kiểm tra kỹ trước khi lưu.",
+          side: "bottom", align: "center",
+        },
+      },
+    ],
+  },
+
+  // Trang Đào tạo ngôn ngữ + Nộp hồ sơ online (gộp chung 1 tourKey, mỗi trang
+  // chỉ hiện các bước có phần tử tương ứng tồn tại trên trang đó)
+  trainingAndOnline: {
+    anchorId: "daotao-hero-section",
+    steps: [
+      {
+        element: "#daotao-hero-section",
+        popover: {
+          title: "Đào Tạo Ngôn Ngữ",
+          description: "Giới thiệu nhanh về các chương trình đào tạo ngoại ngữ chuẩn bị hồ sơ du học của HTO/Hallo Sài Gòn.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#daotao-courses-grid",
+        popover: {
+          title: "Danh Sách Khóa Học",
+          description: "Xem chi tiết từng khóa: ngôn ngữ, cấp độ, lịch học, học phí - dùng để tư vấn khách hàng kết hợp gói du học.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#nophoso-category-section",
+        popover: {
+          title: "Chọn Chương Trình Đăng Ký",
+          description: "Chọn đúng nhóm dịch vụ và chương trình khách hàng muốn đăng ký để bắt đầu nộp hồ sơ online.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#nophoso-form-body",
+        popover: {
+          title: "Form Nộp Hồ Sơ",
+          description: "Điền đầy đủ thông tin khách hàng và tải lên giấy tờ cần thiết. Kiểm tra kỹ trước khi bấm Nộp - hồ sơ sẽ được chuyển tới bộ phận xử lý phù hợp.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
 };
 
 // Map currentPage sang key trong PAGE_TOURS
-const getPageTourKey = (page) => {
+export const getPageTourKey = (page) => {
   const MAP = {
     products: "products",
     productOverview: "products",
     nghiepvu: "nghiepvu",
     checklist: "nghiepvu",
     sop: "nghiepvu",
+    doisoatdeal: "nghiepvu",
     hotro: "hotro",
-    leadForm: "hotro",
-    news: "news",
-    newsManagement: "news",
+    // [Sửa lỗi] Khoá cũ "news"/"newsManagement" không khớp với currentPage
+    // thực tế của ứng dụng ("tintuc"/"newsEventsManage") nên tour Tin tức
+    // trước đây KHÔNG BAO GIỜ tự chạy được. Đã sửa lại cho đúng.
+    tintuc: "news",
+    newsEventsManage: "news",
     notifications: "notifications",
     documents: "documents",
     documentSearch: "documents",
@@ -507,6 +820,18 @@ const getPageTourKey = (page) => {
     users: "users",
     auditLogs: "auditLogs",
     departments: "departments",
+    // ─── Bổ sung các trang trước đây CHƯA có tour hướng dẫn ───────────────
+    dashboard: "dashboard",
+    leadForm: "leadForm",
+    schoolSearch: "schoolSearch",
+    systemSettings: "systemSettings",
+    "media-repository": "mediaRepository",
+    roles: "roles",
+    profile: "profile",
+    surveyManagement: "surveyManagement",
+    productManagement: "productManagement",
+    daotao: "trainingAndOnline",
+    nophosoonline: "trainingAndOnline",
   };
   return MAP[page] || null;
 };
@@ -1234,6 +1559,78 @@ function App() {
     return () => window.removeEventListener("app:navigate", handler);
   }, [handleNavigate]);
 
+  // [Khu vực lưu trữ tài liệu hướng dẫn] Điều hướng tới trang tương ứng rồi
+  // phát lại tour pop-up của trang đó theo yêu cầu - dùng cho nút "Xem hướng
+  // dẫn trực tiếp trên trang" ở trang Hướng dẫn sử dụng Portal, và nút
+  // hướng dẫn nhanh ở Header. Khác với tour tự động khi vào trang lần đầu,
+  // phát lại thủ công KHÔNG đánh dấu "đã xem" và có thể xem lại bao nhiêu
+  // lần tuỳ ý.
+  const handleReplayTour = useCallback((pageKey) => {
+    // [Trường hợp đặc biệt] Tour "hotro" nhắm vào tab FAQ của trang Hỗ trợ,
+    // khác với tab "Hướng dẫn sử dụng Portal" (nơi nút này có thể được bấm) -
+    // cần chuyển đúng sang tab FAQ trước thì mới tìm thấy phần tử neo.
+    if (pageKey === "hotro") {
+      handleNavigate("hotro", { activeTab: "faq" });
+    } else {
+      handleNavigate(pageKey);
+    }
+    const tourKey = getPageTourKey(pageKey);
+    if (!tourKey) return;
+    // Đợi 1 nhịp để trang đích (vừa điều hướng tới) kịp render xong DOM
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("hto:replay-tour", { detail: { tourKey } }));
+    }, 500);
+  }, [handleNavigate]);
+
+  // Lắng nghe sự kiện phát lại tour thủ công (bỏ qua trạng thái "đã xem")
+  useEffect(() => {
+    const handleReplayTourEvent = (event) => {
+      const tourKey = event?.detail?.tourKey;
+      if (!tourKey) return;
+      const tourConfig = PAGE_TOURS[tourKey];
+      if (!tourConfig) return;
+
+      const availableSteps = tourConfig.steps.filter((step) => {
+        const selector = step.element;
+        return selector ? document.querySelector(selector) !== null : true;
+      });
+
+      if (availableSteps.length === 0) {
+        return;
+      }
+
+      const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        doneBtnText: "Đã hiểu!",
+        nextBtnText: "Tiếp theo",
+        prevBtnText: "Trước đó",
+        allowClose: true,
+        steps: availableSteps,
+      });
+
+      driverObj.drive();
+    };
+
+    window.addEventListener("hto:replay-tour", handleReplayTourEvent);
+    return () => window.removeEventListener("hto:replay-tour", handleReplayTourEvent);
+  }, []);
+
+  // [Icon Hướng dẫn trên Header] Chạy THẲNG tour pop-up của đúng trang đang
+  // xem, không điều hướng qua trang Hướng dẫn sử dụng Portal trung gian nữa.
+  // Chỉ khi trang hiện tại chưa có tour riêng mới đưa người dùng tới trang
+  // Hướng dẫn tổng hợp để tự tra cứu (dự phòng, không để bấm mà không có gì xảy ra).
+  const handleShowCurrentPageGuide = useCallback(() => {
+    const tourKey = getPageTourKey(currentPage);
+    if (!tourKey) {
+      handleNavigate("hotro", { activeTab: "guide" });
+      return;
+    }
+    // Dùng chung handleReplayTour để tự động xử lý trường hợp đặc biệt của
+    // tour "hotro" (cần đảm bảo đang ở đúng tab FAQ, không phải tab Hướng dẫn).
+    handleReplayTour(currentPage);
+  }, [currentPage, handleNavigate, handleReplayTour]);
+
   // Đóng sidebar khi click/chạm ra ngoài (trên mobile/tablet)
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -1490,6 +1887,7 @@ function App() {
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 
         onLogout={handleLogout}
+        onShowCurrentPageGuide={handleShowCurrentPageGuide}
       />
 
       <Sidebar
@@ -1550,7 +1948,7 @@ function App() {
             selectedNotificationId={selectedNotificationId}
           />
         ) : currentPage === "hotro" ? (
-          <SupportPage currentUser={user} initialTab={supportInitialTab} />
+          <SupportPage currentUser={user} initialTab={supportInitialTab} onNavigate={handleNavigate} onReplayTour={handleReplayTour} />
         ) : currentPage === "documents" ? (
           <DocumentsPage currentUser={user} />
         ) : currentPage === "nghiepvu" ? (

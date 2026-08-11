@@ -701,7 +701,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       )}
 
       {/* 1. HERO SECTION */}
-      <div className="row align-items-center mb-5 g-4 pt-2 section-hero animate-entrance">
+      <div id="home-hero-section" className="row align-items-center mb-5 g-4 pt-2 section-hero animate-entrance">
         <div className="col-12 col-md-7 col-lg-7 order-2 order-md-1">
           <div className="pe-xl-4 text-start">
             <h1 className="mb-3 text-uppercase" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: "1.15", color: headingTextColor }}>
@@ -817,7 +817,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       </div>
 
       {/* 2. STATS SECTION */}
-      <div className="row mb-5 g-3 section-stats animate-entrance">
+      <div id="home-stats-section" className="row mb-5 g-3 section-stats animate-entrance">
         {[
           { value: "5+", label: "NĂM ĐỒNG HÀNH" },
           { value: "5", label: "NHÓM DỊCH VỤ" },
@@ -936,7 +936,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       </div>
 
       {/* 3. DỊCH VỤ & CHƯƠNG TRÌNH */}
-      <div className="mb-5 text-start section-services animate-entrance">
+      <div id="home-services-section" className="mb-5 text-start section-services animate-entrance">
         <div className="d-flex justify-content-between align-items-end mb-2 pb-2" style={{ borderBottom: `1px solid ${borderColor}` }}>
           <h3 className="fw-bold mb-0 text-uppercase" style={{ fontSize: "1.2rem", letterSpacing: "0.5px", color: headingTextColor }}>
             DỊCH VỤ & CHƯƠNG TRÌNH
@@ -1135,7 +1135,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       </div>
 
       {/* 5. QUY TRÌNH ĐỒNG HÀNH */}
-      <div className="mb-4 text-center section-process animate-entrance">
+      <div id="home-process-section" className="mb-4 text-center section-process animate-entrance">
         <h3 className="fw-bold mb-2 text-uppercase" style={{ fontSize: "1.35rem", letterSpacing: "0.5px", color: headingTextColor }}>
           QUY TRÌNH ĐỒNG HÀNH
         </h3>

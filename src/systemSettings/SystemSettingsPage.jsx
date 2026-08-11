@@ -525,6 +525,7 @@ export function SystemSettingsPage({ currentUser }) {
       {/* Tabs list */}
       <div className="flex gap-2 mb-4 border-b border-slate-200 pb-1">
         <button
+          id="settings-tab-chat"
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl transition-all ${activeTab === "chat"
             ? "border-b-2 border-cyan-900 text-cyan-900 bg-cyan-50/50"
             : "text-slate-500 hover:text-slate-800"
@@ -537,6 +538,7 @@ export function SystemSettingsPage({ currentUser }) {
           Chatbot AI Settings
         </button>
         <button
+          id="settings-tab-commission"
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl transition-all ${activeTab === "commission"
             ? "border-b-2 border-cyan-900 text-cyan-900 bg-cyan-50/50"
             : "text-slate-500 hover:text-slate-800"
@@ -549,6 +551,7 @@ export function SystemSettingsPage({ currentUser }) {
           Chính sách Hoa hồng Deal
         </button>
         <button
+          id="settings-tab-automation"
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl transition-all ${activeTab === "automation"
             ? "border-b-2 border-cyan-900 text-cyan-900 bg-cyan-50/50"
             : "text-slate-500 hover:text-slate-800"
@@ -561,6 +564,7 @@ export function SystemSettingsPage({ currentUser }) {
           CRM Automation
         </button>
         <button
+          id="settings-tab-marketing"
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl transition-all ${activeTab === "marketing"
             ? "border-b-2 border-cyan-900 text-cyan-900 bg-cyan-50/50"
             : "text-slate-500 hover:text-slate-800"

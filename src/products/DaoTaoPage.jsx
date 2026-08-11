@@ -146,6 +146,7 @@ export function DaoTaoPage({ onNavigate }) {
       
       {/* Hero Banner Section */}
       <div 
+        id="daotao-hero-section"
         className="rounded-4 mb-5 position-relative overflow-hidden shadow-sm"
         style={{
           background: "linear-gradient(135deg, #0d6efd 0%, #0098f0 100%)",

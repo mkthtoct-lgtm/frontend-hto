@@ -1104,7 +1104,7 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
 
   return (
     <div className="profile-page mx-auto w-full max-w-[1280px] bg-[#f8fbff] px-3 py-4 text-slate-900 app-dark:bg-[#151515] app-dark:text-slate-100 sm:px-4">
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(30,64,175,0.08)] app-dark:border-slate-700 app-dark:bg-slate-900">
+        <section id="profile-header-section" className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(30,64,175,0.08)] app-dark:border-slate-700 app-dark:bg-slate-900">
         <div className="relative h-[150px] overflow-hidden  sm:h-[180px]">
           
           <img
@@ -1502,7 +1502,7 @@ export const ProfilePage = ({ currentUser, onUserUpdate }) => {
           </div>
         </section>
 
-            <section className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(30,64,175,0.07)] app-dark:border-slate-700 app-dark:bg-slate-900">
+            <section id="profile-security-section" className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-[0_10px_28px_rgba(30,64,175,0.07)] app-dark:border-slate-700 app-dark:bg-slate-900">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-black text-slate-950">Bảo mật tài khoản</h2>
             <button className="text-slate-500" type="button" onClick={() => setIsSettingsOpen(true)}>

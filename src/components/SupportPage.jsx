@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { UserGuidePage } from "../userGuide/UserGuidePage";
 
 const FAQ_CATEGORIES = [
   { id: "all", label: "Tất cả câu hỏi" },
@@ -201,7 +202,7 @@ const INITIAL_TICKETS = [
   }
 ];
 
-export function SupportPage({ currentUser, initialTab = "faq" }) {
+export function SupportPage({ currentUser, initialTab = "faq", onNavigate, onReplayTour }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [faqCategory, setFaqCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -340,7 +341,7 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
       {/* Tabs list */}
       <div className="card border-0 mb-4" style={{ borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
         <div className="card-body p-2">
-          <ul className="nav nav-pills gap-1 flex-wrap border-0">
+          <ul id="hotro-tabs-nav" className="nav nav-pills gap-1 flex-wrap border-0">
             <li className="nav-item">
               <button
                 className={`nav-link border-0 px-4 py-2 fw-medium ${activeTab === "faq" ? "active bg-primary text-white" : "text-body-secondary bg-transparent"}`}
@@ -377,9 +378,24 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
                 </span>
               </button>
             </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link border-0 px-4 py-2 fw-medium ${activeTab === "guide" ? "active bg-primary text-white" : "text-body-secondary bg-transparent"}`}
+                type="button"
+                onClick={() => setActiveTab("guide")}
+                style={{ borderRadius: "8px" }}
+              >
+                📘 Hướng dẫn sử dụng Portal
+              </button>
+            </li>
           </ul>
         </div>
       </div>
+
+      {/* Guide Hub Tab Content */}
+      {activeTab === "guide" && (
+        <UserGuidePage onNavigate={onNavigate} onReplayTour={onReplayTour} />
+      )}
 
       {/* FAQ Tab Content */}
       {activeTab === "faq" && (
@@ -408,7 +424,7 @@ export function SupportPage({ currentUser, initialTab = "faq" }) {
           </div>
 
           <div style={{ flex: 1, padding: "20px", backgroundColor: "#fdfdfd", minHeight: "500px" }}>
-            <div style={{ marginBottom: "20px", padding: "12px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#fff" }}>
+            <div id="hotro-faq-search" style={{ marginBottom: "20px", padding: "12px", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#fff" }}>
               <input
                 type="text"
                 placeholder="Tìm kiếm câu hỏi hoặc nội dung hỗ trợ..."
