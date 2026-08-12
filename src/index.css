@@ -938,7 +938,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
   margin: 0 !important;
-  margin-left: -4px !important; /* Move logo further left */
+  margin-left: -12px !important; /* Move logo further left */
 }
 .app-menubar.sidebar-mini .navbar-brand-logo img {
   width: 28px !important;
@@ -946,7 +946,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 }
 body .app-menubar.sidebar-mini .app-toggler {
   position: absolute !important;
-  right: -12px !important; /* Move toggler further right */
+  right: -20px !important; /* Move toggler further right */
   top: 18px !important;
   width: 24px !important;
   height: 24px !important;
