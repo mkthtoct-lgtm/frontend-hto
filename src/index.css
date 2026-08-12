@@ -1063,3 +1063,72 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important; /* Giữ nguyên bóng lúc thường, không chớp thêm */
   -webkit-tap-highlight-color: transparent !important;
 }
+
+/* ============================================================= */
+/* AGGRESSIVE SIDEBAR MINI FIXES (64px, Layout, Ghosting) */
+/* ============================================================= */
+
+/* 1. Thu hẹp Sidebar & Wrapper */
+.app-menubar.sidebar-mini {
+  width: 64px !important;
+}
+.app-wrapper.sidebar-mini-active {
+  margin-left: 64px !important;
+}
+
+/* 2. Sửa lỗi Logo đè Nút Toggler */
+.app-menubar.sidebar-mini .app-navbar-brand {
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 15px 0 !important;
+  gap: 15px !important;
+}
+/* Ẩn chữ logo, chỉ để lại icon */
+.app-menubar.sidebar-mini .navbar-brand-mini span,
+.app-menubar.sidebar-mini .navbar-brand-full {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+}
+/* Ép nút Toggler nằm dưới logo, hủy bỏ position absolute của media query phía trên */
+body .app-menubar.sidebar-mini .app-toggler {
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  margin: 0 auto !important;
+  transform: rotate(180deg) !important;
+}
+
+/* 3. Căn giữa tuyệt đối Icon Menu (Xóa lệch padding/margin cũ) */
+body .app-menubar.sidebar-mini .menu-link,
+body .app-menubar.sidebar-mini .menu-link:active,
+body .app-menubar.sidebar-mini .menu-link:focus,
+body .app-menubar.sidebar-mini .menu-item.active > .menu-link {
+  padding: 0 !important;
+  margin: 0 auto 8px auto !important;
+  width: 48px !important;
+  height: 48px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+/* Xóa margin thừa của icon wrapper */
+.app-menubar.sidebar-mini .menu-icon,
+.app-menubar.sidebar-mini .menu-link > div,
+.app-menubar.sidebar-mini .menu-link > span {
+  margin: 0 !important;
+  justify-content: center !important;
+}
+
+/* 4. Kill Ghosting & Tap Highlights toàn cục Sidebar */
+.app-menubar a,
+.app-menubar button,
+.app-menubar .menu-link {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  outline: none !important;
+}
