@@ -914,10 +914,10 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 
 /* Sidebar Mini Mode Overrides - Bulletproof */
 .app-menubar.sidebar-mini {
-  width: 80px !important;
+  width: 70px !important;
 }
 .app-wrapper.sidebar-mini-active {
-  margin-left: 80px !important;
+  margin-left: 70px !important;
 }
 
 .app-menubar.sidebar-mini .app-navbar-brand {
@@ -935,7 +935,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   overflow: hidden !important;
 }
 .app-menubar.sidebar-mini .app-toggler {
-  right: 25px !important;
+  right: 15px !important;
   transform: rotate(180deg) !important;
 }
 .app-menubar.sidebar-mini .menu-heading::before {
@@ -986,10 +986,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   }
 }
 
-/* Đẩy nhẹ nút ra khi thu nhỏ để không đè lên logo bị cắt */
-.app-menubar.sidebar-mini .app-toggler {
-  right: -15px !important;
-}
+/* Đẩy nhẹ nút ra khi thu nhỏ (đã xóa) */
 
 /* Nâng Sidebar lên trên Header để nút Toggler không bị padding vô hình của Header đè */
 .app-menubar {
@@ -1004,10 +1001,14 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   box-shadow: none !important;
   outline: none !important;
   background: transparent !important;
-  padding: 12px 0 !important;
-  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  margin: 0 auto 8px auto !important;
+  padding: 0 !important;
   display: flex !important;
-  width: 100% !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
 }
 
 /* Ensure the active background only wraps the icon perfectly (like a square/circle) */
@@ -1031,6 +1032,14 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   margin-right: 0 !important;
   margin-left: 0 !important;
   justify-content: center !important;
+}
+
+/* Kill Mobile Tap Ghosting globally */
+.app-menubar a,
+.app-menubar button,
+.menu-link {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* ============================================================= */
