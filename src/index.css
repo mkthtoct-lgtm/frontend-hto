@@ -919,6 +919,8 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 /* 1. NARROW SIDEBAR (64px) */
 .app-menubar.sidebar-mini {
   width: 64px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 .app-wrapper.sidebar-mini-active {
   margin-left: 64px !important;
@@ -926,21 +928,21 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 
 /* 2. FIX LOGO & TOGGLER OVERLAP (Using 'order' to swap DOM position) */
 .app-menubar.sidebar-mini .app-navbar-brand {
+  order: 1 !important; /* Force logo container to Top */
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  padding: 16px 0 !important;
+  padding: 16px 0 0 0 !important;
   gap: 16px !important;
   height: auto !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
-  order: 1 !important; /* Force logo to Top */
   margin: 0 !important;
 }
 body .app-menubar.sidebar-mini .app-toggler {
-  order: 2 !important; /* Force toggler Below logo */
+  order: 2 !important; /* Force toggler Below logo container */
   position: static !important;
-  margin: 0 !important;
+  margin: 16px auto !important; /* Add spacing and center */
   transform: rotate(180deg) !important;
   display: flex !important;
   justify-content: center !important;
@@ -948,6 +950,11 @@ body .app-menubar.sidebar-mini .app-toggler {
 }
 .app-menubar.sidebar-mini .navbar-brand-mini span {
   display: none !important;
+}
+.app-menubar.sidebar-mini .app-navbar {
+  order: 3 !important; /* Force menu to Bottom */
+  flex: 1 1 auto !important;
+  width: 100% !important;
 }
 
 /* 3. ABSOLUTE ICON CENTERING (Center the parents too) */
