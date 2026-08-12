@@ -995,3 +995,40 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 .app-menubar {
   z-index: 1005 !important;
 }
+
+/* Fix Ghosting/Shadow and Background spills in Sidebar Mini */
+.app-menubar.sidebar-mini .menu-link,
+.app-menubar.sidebar-mini .menu-link:active,
+.app-menubar.sidebar-mini .menu-link:focus,
+.app-menubar.sidebar-mini .menu-item.active > .menu-link {
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 12px 0 !important;
+  justify-content: center !important;
+  display: flex !important;
+  width: 100% !important;
+}
+
+/* Ensure the active background only wraps the icon perfectly (like a square/circle) */
+.app-menubar.sidebar-mini .menu-item.active > .menu-link .menu-icon,
+.app-menubar.sidebar-mini .menu-item.active > .menu-link > div,
+.app-menubar.sidebar-mini .menu-item.active > .menu-link > span {
+  background-color: var(--bs-primary-bg-subtle, #e2f1fb) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Icon Wrapper Alignment Reset */
+.app-menubar.sidebar-mini .menu-icon,
+.app-menubar.sidebar-mini .menu-link > div,
+.app-menubar.sidebar-mini .menu-link > span {
+  margin: 0 !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  justify-content: center !important;
+}
