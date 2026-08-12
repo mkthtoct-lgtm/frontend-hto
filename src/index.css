@@ -975,7 +975,7 @@ body .app-menubar.sidebar-mini .app-toggler {
 .app-menubar.sidebar-mini .app-footer .btn {
   padding: 12px 0 !important;
 }
-.app-menubar.sidebar-mini .app-footer .fi-rs-interrogation {
+.app-menubar.sidebar-mini .app-footer svg {
   margin: 0 !important;
 }
 
