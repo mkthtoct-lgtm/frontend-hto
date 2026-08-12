@@ -104,19 +104,50 @@ export function DaoTaoPage({ onNavigate }) {
     }
 
     try {
+      let newCourse = null;
       if (editData) {
-        await authFetch(`${API_BASE_URL}/api/v1/products/${editData._id}`, {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/products/${editData._id}`, {
           method: "PUT",
           body: data
         });
+        if (res.ok) {
+           const json = await res.json();
+           newCourse = json.data || json;
+        }
         alert("Cập nhật thành công!");
       } else {
-        await authFetch(`${API_BASE_URL}/api/v1/products`, {
+        const res = await authFetch(`${API_BASE_URL}/api/v1/products`, {
           method: "POST",
           body: data
         });
+        if (res.ok) {
+           const json = await res.json();
+           newCourse = json.data || json;
+        }
         alert("Thêm mới khóa học thành công!");
       }
+
+      // Fallback local state update
+      if (!newCourse || !newCourse._id) {
+         newCourse = {
+            _id: editData ? editData._id : `temp-${Date.now()}`,
+            name: formData.name,
+            description: formData.description,
+            purpose: "dao_tao",
+            visaCode: formData.target,
+            shortCode: formData.duration,
+            serviceFee: formData.fee,
+            image: formData.image ? URL.createObjectURL(formData.image) : null,
+         };
+      }
+
+      setCourses(prev => {
+         if (editData) {
+            return prev.map(c => c._id === editData._id ? { ...c, ...newCourse } : c);
+         }
+         return [...prev, newCourse];
+      });
+
       handleCloseAdminModal();
       fetchCourses();
     } catch (err) {
@@ -142,7 +173,7 @@ export function DaoTaoPage({ onNavigate }) {
   };
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
+    <div className="container-fluid py-4 bg-body-tertiary" style={{ minHeight: "100vh" }}>
       
       {/* Hero Banner Section */}
       <div 
@@ -190,7 +221,7 @@ export function DaoTaoPage({ onNavigate }) {
       {/* Courses List Section */}
       <div className="mb-4 d-flex justify-content-between align-items-end">
         <div>
-          <h3 className="fw-bold text-dark mb-1">Khóa Học Nổi Bật</h3>
+          <h3 className="fw-bold text-body-emphasis mb-1">Khóa Học Nổi Bật</h3>
           <p className="text-body-secondary mb-0">Lựa chọn chương trình đào tạo phù hợp với mục tiêu của học viên.</p>
         </div>
         <button className="btn btn-primary shadow-sm" onClick={() => handleOpenAdminModal()}>
@@ -203,7 +234,7 @@ export function DaoTaoPage({ onNavigate }) {
           <div className="spinner-border text-primary" role="status"></div>
         </div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-5 bg-white rounded-4 shadow-sm">
+        <div className="text-center py-5 bg-body border rounded-4 shadow-sm">
           <i className="fa fa-book-open text-muted fs-1 mb-3"></i>
           <h5 className="text-muted">Chưa có khóa học nào.</h5>
           <p className="text-muted small">Hãy bấm "Thêm Khóa Học" để tạo mới.</p>
@@ -236,27 +267,27 @@ export function DaoTaoPage({ onNavigate }) {
                   </div>
                 </div>
                 <div className="card-body p-4 d-flex flex-column">
-                  <h5 className="fw-bold mb-3 text-dark">{course.name}</h5>
+                  <h5 className="fw-bold mb-3 text-body-emphasis">{course.name}</h5>
                   <p className="text-body-secondary mb-4" style={{ fontSize: "14px", flexGrow: 1 }}>
                     {course.description}
                   </p>
                   
                   <div className="d-flex flex-column gap-2 mb-4">
-                    <div className="d-flex align-items-center text-dark" style={{ fontSize: "14px" }}>
+                    <div className="d-flex align-items-center text-body-emphasis" style={{ fontSize: "14px" }}>
                       <div className="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: "32px", height: "32px" }}>
                         <i className="fa fa-bullseye"></i>
                       </div>
                       <div><span className="text-body-secondary">Mục tiêu:</span> <strong>{course.visaCode || "Chưa xác định"}</strong></div>
                     </div>
                     
-                    <div className="d-flex align-items-center text-dark" style={{ fontSize: "14px" }}>
+                    <div className="d-flex align-items-center text-body-emphasis" style={{ fontSize: "14px" }}>
                       <div className="bg-info-subtle text-info rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: "32px", height: "32px" }}>
                         <i className="fa fa-clock"></i>
                       </div>
                       <div><span className="text-body-secondary">Thời gian:</span> <strong>{course.shortCode || "Chưa xác định"}</strong></div>
                     </div>
                     
-                    <div className="d-flex align-items-center text-dark" style={{ fontSize: "14px" }}>
+                    <div className="d-flex align-items-center text-body-emphasis" style={{ fontSize: "14px" }}>
                       <div className="bg-warning-subtle text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: "32px", height: "32px" }}>
                         <i className="fa fa-money-bill"></i>
                       </div>
@@ -352,16 +383,16 @@ export function DaoTaoPage({ onNavigate }) {
                 
                 <form onSubmit={(e) => { e.preventDefault(); alert("Đã gửi đăng ký thành công!"); setIsModalOpen(false); }}>
                   <div className="mb-3">
-                    <label className="form-label fw-medium text-dark">Họ và tên <span className="text-danger">*</span></label>
-                    <input type="text" className="form-control form-control-lg bg-light border-0" required placeholder="Nhập họ tên của bạn" />
+                    <label className="form-label fw-medium text-body-emphasis">Họ và tên <span className="text-danger">*</span></label>
+                    <input type="text" className="form-control form-control-lg bg-body text-body-emphasis" required placeholder="Nhập họ tên của bạn" />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label fw-medium text-dark">Số điện thoại <span className="text-danger">*</span></label>
-                    <input type="tel" className="form-control form-control-lg bg-light border-0" required placeholder="Nhập số điện thoại" />
+                    <label className="form-label fw-medium text-body-emphasis">Số điện thoại <span className="text-danger">*</span></label>
+                    <input type="tel" className="form-control form-control-lg bg-body text-body-emphasis" required placeholder="Nhập số điện thoại" />
                   </div>
                   <div className="mb-4">
-                    <label className="form-label fw-medium text-dark">Ghi chú thêm</label>
-                    <textarea className="form-control bg-light border-0" rows="3" placeholder="Ví dụ: Mong muốn học buổi tối..." />
+                    <label className="form-label fw-medium text-body-emphasis">Ghi chú thêm</label>
+                    <textarea className="form-control bg-body text-body-emphasis" rows="3" placeholder="Ví dụ: Mong muốn học buổi tối..." />
                   </div>
                   <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold shadow-sm rounded-3">
                     Gửi Yêu Cầu Tư Vấn
