@@ -932,13 +932,12 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: flex-start !important; /* Logo sang bên trái */
-  padding: 16px 0 !important;
+  justify-content: flex-start !important; /* Logo sát lề trái */
+  padding: 16px 4px !important; /* Lề trái 4px */
   height: auto !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
   margin: 0 !important;
-  margin-left: 8px !important; /* Căn lề trái cho logo */
 }
 .app-menubar.sidebar-mini .navbar-brand-logo img {
   width: 32px !important;
@@ -946,7 +945,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 }
 body .app-menubar.sidebar-mini .app-toggler {
   position: absolute !important;
-  right: -10px !important; /* Nút < ra ngoài rìa (một nửa nằm ngoài viền) */
+  right: 4px !important; /* Đưa nút < vào hẳn bên trong */
   top: 22px !important;
   width: 20px !important;
   height: 20px !important;
@@ -955,7 +954,7 @@ body .app-menubar.sidebar-mini .app-toggler {
   justify-content: center !important;
   align-items: center !important;
   transform: none !important;
-  z-index: 1050 !important; /* Đảm bảo nút luôn nổi lên trên cùng */
+  z-index: 1050 !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
