@@ -914,15 +914,18 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 
 /* Sidebar Mini Mode Overrides - Bulletproof */
 .app-menubar.sidebar-mini {
-  width: 70px !important;
+  width: 64px !important;
 }
 .app-wrapper.sidebar-mini-active {
-  margin-left: 70px !important;
+  margin-left: 64px !important;
 }
 
 .app-menubar.sidebar-mini .app-navbar-brand {
+  flex-direction: column !important;
   justify-content: center !important;
-  padding: 20px 0 !important;
+  align-items: center !important;
+  padding: 10px 0 !important;
+  gap: 15px !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-mini,
 .app-menubar.sidebar-mini .menu-label,
@@ -935,8 +938,9 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   overflow: hidden !important;
 }
 .app-menubar.sidebar-mini .app-toggler {
-  right: 15px !important;
+  position: static !important;
   transform: rotate(180deg) !important;
+  margin: 0 auto !important;
 }
 .app-menubar.sidebar-mini .menu-heading::before {
   content: "\f425" !important;
@@ -961,6 +965,7 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 
 /* Ẩn chữ Logo đầy đủ và các mũi tên Dropdown bị sót */
 .app-menubar.sidebar-mini .navbar-brand-full,
+.app-menubar.sidebar-mini .navbar-brand-mini span,
 .app-menubar.sidebar-mini .menu-item span[style*="cursor: pointer"] {
   display: none !important;
   opacity: 0 !important;
@@ -985,8 +990,6 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
     box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
   }
 }
-
-/* Đẩy nhẹ nút ra khi thu nhỏ (đã xóa) */
 
 /* Nâng Sidebar lên trên Header để nút Toggler không bị padding vô hình của Header đè */
 .app-menubar {
