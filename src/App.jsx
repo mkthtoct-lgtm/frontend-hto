@@ -1884,7 +1884,10 @@ function App() {
   const deptRoute = getDeptRouteInfo();
 
   return (
-    <div className="page-layout bg-body-tertiary d-flex flex-column min-vh-100">
+    <div 
+      className="page-layout bg-body-tertiary d-flex flex-column min-vh-100"
+      data-app-sidebar={isSidebarMini ? "mini" : "full"}
+    >
       <Header
         user={user}
         onNavigate={handleNavigate}

@@ -16225,8 +16225,7 @@ strong {
   top: 0;
   z-index: 9;
   background-color: var(--app-header-bg);
-  transition-duration: 0.3s;
-  transition-property: width, left;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   height: 100vh;
 }
 
@@ -16314,16 +16313,52 @@ strong {
 }
 
 [data-app-sidebar=mini] .app-navbar-brand {
-  visibility: hidden;
+  /* Do NOT hide the whole brand container, otherwise the logo icon vanishes too */
+  justify-content: center;
+  padding: 20px 0;
+}
+
+/* Swagger Tooltips for Mini Sidebar */
+[data-app-sidebar=mini] .app-navbar .menu-item {
+  position: relative;
+}
+
+[data-app-sidebar=mini] .app-navbar .menu-item > .menu-link:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1e293b;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1050;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: none;
   opacity: 0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  animation: fadeInTooltip 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) forwards 0.1s;
+}
+
+@keyframes fadeInTooltip {
+  from {
+    opacity: 0;
+    left: 60px;
+  }
+  to {
+    opacity: 1;
+    left: 75px;
+  }
 }
 
 .app-wrapper {
   margin-left: var(--app-sidebar-width);
   min-height: calc(100vh - var(--app-header-height) - var(--footer-height, 50px));
   margin-top: var(--app-header-height);
-  transition-duration: 0.3s;
-  transition-property: margin-left;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   padding-top: 30px;
   padding-bottom: 15px;
   padding-left: 22px;
