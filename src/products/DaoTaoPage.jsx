@@ -54,7 +54,7 @@ export function DaoTaoPage({ onNavigate }) {
 
   const getImageUrl = (url) => {
     if (!url) return "https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=500&q=80";
-    if (url.startsWith('http')) return url;
+    if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
     return `${API_BASE_URL}${url}`;
   };
 
