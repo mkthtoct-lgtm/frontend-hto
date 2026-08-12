@@ -932,25 +932,24 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  padding: 16px 4px !important; /* Left and right padding 4px */
+  justify-content: center !important; /* Center the logo */
+  padding: 16px 0 !important;
   height: auto !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
   margin: 0 !important;
-  /* margin-left is implicitly 0 */
 }
 .app-menubar.sidebar-mini .navbar-brand-logo img {
-  width: 28px !important;
-  height: 28px !important;
+  width: 32px !important; /* Logo to một chút */
+  height: 32px !important;
 }
 body .app-menubar.sidebar-mini .app-toggler {
   position: absolute !important;
-  right: 4px !important; /* Push 4px from the right edge */
-  top: 18px !important;
-  width: 24px !important;
-  height: 24px !important;
-  font-size: 14px !important;
+  right: -6px !important; /* Push slightly out to make room for centered logo */
+  top: 22px !important; /* Vertically center with the 32px logo */
+  width: 20px !important; /* Nút < nhỏ một chút */
+  height: 20px !important;
+  font-size: 10px !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
