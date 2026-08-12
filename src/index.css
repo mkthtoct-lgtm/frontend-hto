@@ -1019,6 +1019,24 @@ body .app-menubar .app-toggler:active {
   align-items: center !important;
   border-radius: 12px !important;
 }
+
+/* Prevent the mobile backdrop from showing up on desktop when toggling sidebar-mini */
+@media (min-width: 1200px) {
+  .sidebar-mobile-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Make toggler color match brand text */
+body .app-menubar .app-toggler {
+  color: #003366 !important;
+}
+[data-bs-theme="dark"] body .app-menubar .app-toggler {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
 /* Kill ALL residual margins (like Bootstrap me-3) inside the link */
 .app-menubar.sidebar-mini .menu-link > div,
 .app-menubar.sidebar-mini .menu-link > svg,
