@@ -933,14 +933,21 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   height: auto !important;
   padding: 15px 0 20px 0 !important;
   gap: 15px !important;
+  width: 100% !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-mini span {
   display: none !important;
 }
 body .app-menubar.sidebar-mini .app-toggler {
   position: static !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   transform: rotate(180deg) !important;
+  display: flex !important;
+}
+
+/* 2.5 FIX UL PADDING MISALIGNMENT */
+.app-menubar.sidebar-mini .menubar {
+  padding: 0 !important;
 }
 
 /* 3. HIDE ALL TEXT & ARROWS COMPLETELY */
