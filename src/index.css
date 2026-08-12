@@ -943,12 +943,11 @@ body .app-menubar.sidebar-mini .app-toggler {
   order: 2 !important; /* Force toggler Below logo container */
   position: static !important;
   margin: 16px auto !important; /* Add spacing and center */
-  transform: rotate(180deg) !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
 }
-.app-menubar.sidebar-mini .navbar-brand-mini span {
+.app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
 }
 .app-menubar.sidebar-mini .app-navbar {
