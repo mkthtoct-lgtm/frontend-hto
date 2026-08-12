@@ -1922,7 +1922,7 @@ function App() {
       <div className="sidebar-mobile-backdrop" onClick={handleCloseMobileSidebar} />
 
       <main
-        className={`app-wrapper${
+        className={`app-wrapper flex-grow-1 ${isSidebarMini ? "sidebar-mini-active" : ""} ${
           currentPage === "notifications" ? " notifications-wrapper" : ""
         }`}
       >

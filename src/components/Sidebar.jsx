@@ -124,6 +124,7 @@ export const Sidebar = ({
   onNavigate,
   currentPage,
   onToggleSidebar,
+  isSidebarMini,
 }) => {
   const [openMenu, setOpenMenu] = useState(() =>
     ["tintuc", "newsEventsManage"].includes(currentPage)
@@ -673,7 +674,7 @@ export const Sidebar = ({
   const hasProductDetailPermission = canViewProductDetails(currentUser);
 
   return (
-    <aside className="app-menubar" id="menubar">
+    <aside className={`app-menubar ${isSidebarMini ? "sidebar-mini" : ""}`} id="menubar">
       <button className="app-toggler" type="button" onClick={onToggleSidebar}>
         <i className="fi fi-br-angle-small-left"></i>
       </button>
