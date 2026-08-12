@@ -1032,3 +1032,25 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   margin-left: 0 !important;
   justify-content: center !important;
 }
+
+/* ============================================================= */
+/* FIX TRIỆT ĐỂ BÓNG MỜ KHI BẤM NÚT TOGGLER (<) */
+/* ============================================================= */
+
+/* Ép nút Toggler trong suốt hoàn toàn, không có viền, không có bóng mờ */
+.app-menubar .app-toggler {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Khóa chặt trạng thái khi Click/Focus để không hiện bóng mờ */
+.app-menubar .app-toggler:focus,
+.app-menubar .app-toggler:active,
+.app-menubar .app-toggler:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
