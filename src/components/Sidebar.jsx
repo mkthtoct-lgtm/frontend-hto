@@ -1,32 +1,32 @@
-﻿import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 
 const ADMIN_ROLE_ID = "69fc5af582ef85451120772a";
 
-// Key dÃ¹ng chung vá»›i ProductOverviewPage.jsx Ä‘á»ƒ truyá»n danh má»¥c Ä‘Æ°á»£c chá»n khi Ä‘iá»u hÆ°á»›ng
+// Key dùng chung với ProductOverviewPage.jsx để truyền danh mục được chọn khi điều hướng
 const SIDEBAR_CATEGORY_STORAGE_KEY = "hto_selected_product_category";
-// Sá»± kiá»‡n dÃ¹ng Ä‘á»ƒ bÃ¡o cho ProductOverviewPage (náº¿u Ä‘Ã£ mount sáºµn) cáº­p nháº­t ngay khi Ä‘á»•i danh má»¥c
+// Sự kiện dùng để báo cho ProductOverviewPage (nếu đã mount sẵn) cập nhật ngay khi đổi danh mục
 const SIDEBAR_CATEGORY_EVENT = "hto:select-product-category";
 
 const COUNTRY_CODE_MAP = {
   AF: "Afghanistan", AL: "Albania", DZ: "Algeria", AR: "Argentina",
-  AU: "Ãšc", AT: "Ão", BE: "Bá»‰", BR: "Brazil", KH: "Campuchia",
-  CA: "Canada", CL: "Chile", CN: "Trung Quá»‘c", CO: "Colombia",
-  HR: "Croatia", CZ: "Cá»™ng hÃ²a SÃ©c", DK: "Äan Máº¡ch", EG: "Ai Cáº­p",
-  FI: "Pháº§n Lan", FR: "PhÃ¡p", DE: "Äá»©c", GH: "Ghana", GR: "Hy Láº¡p",
-  HK: "Há»“ng KÃ´ng", HU: "Hungary", IN: "áº¤n Äá»™", ID: "Indonesia",
-  IR: "Iran", IQ: "Iraq", IE: "Ireland", IL: "Israel", IT: "Ã",
-  JP: "Nháº­t Báº£n", JO: "Jordan", KZ: "Kazakhstan", KE: "Kenya",
-  KR: "HÃ n Quá»‘c", KW: "Kuwait", LA: "LÃ o", LB: "Lebanon",
+  AU: "Úc", AT: "Áo", BE: "Bỉ", BR: "Brazil", KH: "Campuchia",
+  CA: "Canada", CL: "Chile", CN: "Trung Quốc", CO: "Colombia",
+  HR: "Croatia", CZ: "Cộng hòa Séc", DK: "Đan Mạch", EG: "Ai Cập",
+  FI: "Phần Lan", FR: "Pháp", DE: "Đức", GH: "Ghana", GR: "Hy Lạp",
+  HK: "Hồng Kông", HU: "Hungary", IN: "Ấn Độ", ID: "Indonesia",
+  IR: "Iran", IQ: "Iraq", IE: "Ireland", IL: "Israel", IT: "Ý",
+  JP: "Nhật Bản", JO: "Jordan", KZ: "Kazakhstan", KE: "Kenya",
+  KR: "Hàn Quốc", KW: "Kuwait", LA: "Lào", LB: "Lebanon",
   MY: "Malaysia", MX: "Mexico", MA: "Morocco", MM: "Myanmar",
-  NL: "HÃ  Lan", NZ: "New Zealand", NG: "Nigeria", NO: "Na Uy",
-  PK: "Pakistan", PH: "Philippines", PL: "Ba Lan", PT: "Bá»“ ÄÃ o Nha",
-  QA: "Qatar", RO: "Romania", RU: "Nga", SA: "áº¢ Ráº­p XÃª Ãšt",
-  SG: "Singapore", ZA: "Nam Phi", ES: "TÃ¢y Ban Nha", LK: "Sri Lanka",
-  SE: "Thá»¥y Äiá»ƒn", CH: "Thá»¥y SÄ©", TW: "ÄÃ i Loan", TH: "ThÃ¡i Lan",
-  TR: "Thá»• NhÄ© Ká»³", UA: "Ukraine", AE: "UAE", GB: "Anh Quá»‘c",
-  US: "Má»¹", VN: "Viá»‡t Nam", YE: "Yemen",
+  NL: "Hà Lan", NZ: "New Zealand", NG: "Nigeria", NO: "Na Uy",
+  PK: "Pakistan", PH: "Philippines", PL: "Ba Lan", PT: "Bồ Đào Nha",
+  QA: "Qatar", RO: "Romania", RU: "Nga", SA: "Ả Rập Xê Út",
+  SG: "Singapore", ZA: "Nam Phi", ES: "Tây Ban Nha", LK: "Sri Lanka",
+  SE: "Thụy Điển", CH: "Thụy Sĩ", TW: "Đài Loan", TH: "Thái Lan",
+  TR: "Thổ Nhĩ Kỳ", UA: "Ukraine", AE: "UAE", GB: "Anh Quốc",
+  US: "Mỹ", VN: "Việt Nam", YE: "Yemen",
 };
 
 const resolveCountryName = (value) => {
@@ -50,7 +50,7 @@ const normalizeRoleKey = (roleValue) => {
   return String(roleValue || "")
     .trim()
     .toLowerCase()
-    .replace(/Ä‘/g, "d")
+    .replace(/đ/g, "d")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
@@ -85,12 +85,12 @@ const canManageNewsEvents = (user) => {
   return ["admin", "bangiamdoc", "truongbophan"].includes(roleKey);
 };
 
-// KIá»‚M TRA QUYá»€N XEM CHI TIáº¾T Sáº¢N PHáº¨M (cho phÃ©p táº¥t cáº£ ngÆ°á»i dÃ¹ng xem)
+// KIỂM TRA QUYỀN XEM CHI TIẾT SẢN PHẨM (cho phép tất cả người dùng xem)
 const canViewProductDetails = (user) => {
   return true;
 };
 
-// KIá»‚M TRA QUYá»€N Háº N Äá»˜NG Cá»¦A USER
+// KIỂM TRA QUYỀN HẠN ĐỘNG CỦA USER
 const hasPermission = (user, requiredPermission) => {
   const roleKey = getUserRoleKey(user);
   if (roleKey === "admin") return true;
@@ -113,7 +113,7 @@ const normalizeApiCategoryList = (payload) => {
   return list
     .map((cat) => ({
       id: String(cat?._id?.$oid || cat?._id || cat?.id || ""),
-      name: cat?.name || "Danh má»¥c chÆ°a Ä‘áº·t tÃªn",
+      name: cat?.name || "Danh mục chưa đặt tên",
       status: cat?.status || "active",
     }))
     .filter((cat) => cat.id && cat.name);
@@ -133,7 +133,7 @@ export const Sidebar = ({
   );
 
   // ==========================================
-  // DANH Má»¤C Sáº¢N PHáº¨M Tá»ª API
+  // DANH MỤC SẢN PHẨM TỪ API
   // ==========================================
   const [productCategories, setProductCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -162,40 +162,40 @@ export const Sidebar = ({
     onNavigate?.("dashboard");
   };
 
-  // Láº¯ng nghe sá»± kiá»‡n chá»n danh má»¥c (tá»« bá»™ lá»c MegaMenu)
+  // Lắng nghe sự kiện chọn danh mục (từ bộ lọc MegaMenu)
   useEffect(() => {
     const handleCategorySelect = (event) => {
       const detail = event?.detail || {};
-      if (detail.fromSidebar) return; // Bá» qua náº¿u sá»± kiá»‡n phÃ¡t ra tá»« chÃ­nh sidebar
+      if (detail.fromSidebar) return; // Bỏ qua nếu sự kiện phát ra từ chính sidebar
 
       if (detail.id) {
         setSelectedCategoryId(detail.id);
-        setSelectedCountryName(detail.country && detail.country !== "Táº¥t cáº£" ? detail.country : null);
+        setSelectedCountryName(detail.country && detail.country !== "Tất cả" ? detail.country : null);
         setExpandedProductCatId(detail.id);
-        setSelectedRegionName(detail.region && detail.region !== "Táº¥t cáº£" ? detail.region : null);
+        setSelectedRegionName(detail.region && detail.region !== "Tất cả" ? detail.region : null);
       } else {
-        if (detail.name === "Táº¥t cáº£") {
+        if (detail.name === "Tất cả") {
           setSelectedCategoryId(null);
           setSelectedCountryName(null);
-          setSelectedRegionName(detail.region && detail.region !== "Táº¥t cáº£" ? detail.region : null);
+          setSelectedRegionName(detail.region && detail.region !== "Tất cả" ? detail.region : null);
         } else {
           // Find category by name
           const cat = productCategories.find(c => c.name === detail.name);
           if (cat) {
             setSelectedCategoryId(cat.id);
-            setSelectedCountryName(detail.country && detail.country !== "Táº¥t cáº£" ? detail.country : null);
+            setSelectedCountryName(detail.country && detail.country !== "Tất cả" ? detail.country : null);
             setExpandedProductCatId(cat.id);
-            setSelectedRegionName(detail.region && detail.region !== "Táº¥t cáº£" ? detail.region : null);
+            setSelectedRegionName(detail.region && detail.region !== "Tất cả" ? detail.region : null);
           } else {
             setSelectedCategoryId(null);
             setSelectedCountryName(null);
-            setSelectedRegionName(detail.region && detail.region !== "Táº¥t cáº£" ? detail.region : null);
+            setSelectedRegionName(detail.region && detail.region !== "Tất cả" ? detail.region : null);
           }
         }
       }
 
-      // Tá»± Ä‘á»™ng má»Ÿ rá»™ng nhÃ³m tÆ°Æ¡ng á»©ng
-      const serviceNames = ["visa", "Ä‘á»‹nh cÆ°", "dinh cu"];
+      // Tự động mở rộng nhóm tương ứng
+      const serviceNames = ["visa", "định cư", "dinh cu"];
       const isService = (detail.name && serviceNames.some(n => detail.name.toLowerCase().includes(n))) || currentPage === "nophosoonline";
       if (isService) {
         setIsServicesExpanded(true);
@@ -209,7 +209,7 @@ export const Sidebar = ({
       window.removeEventListener(SIDEBAR_CATEGORY_EVENT, handleCategorySelect);
   }, [productCategories, currentPage]);
 
-  // Fetch danh má»¥c tá»« API vÃ  trÃ­ch xuáº¥t danh sÃ¡ch quá»‘c gia
+  // Fetch danh mục từ API và trích xuất danh sách quốc gia
   useEffect(() => {
     let isMounted = true;
 
@@ -265,32 +265,32 @@ export const Sidebar = ({
 
               return { ...cat, countries, products: activeProds };
             } catch (err) {
-              console.warn(`[Sidebar] Lá»—i táº£i sáº£n pháº©m cho danh má»¥c ${cat.name}:`, err.message);
+              console.warn(`[Sidebar] Lỗi tải sản phẩm cho danh mục ${cat.name}:`, err.message);
               return { ...cat, countries: [], products: [] };
             }
           })
         );
 
-        // Di chuyá»ƒn sáº£n pháº©m "Dá»‹ch vá»¥ Visa" (Nháº­t Báº£n) tá»« danh má»¥c "Dá»‹ch vá»¥" sang danh má»¥c "Visa"
-        const catDichVu = categoriesWithCountries.find(c => c.name.toLowerCase() === "dá»‹ch vá»¥" || c.name.toLowerCase() === "dich vu");
+        // Di chuyển sản phẩm "Dịch vụ Visa" (Nhật Bản) từ danh mục "Dịch vụ" sang danh mục "Visa"
+        const catDichVu = categoriesWithCountries.find(c => c.name.toLowerCase() === "dịch vụ" || c.name.toLowerCase() === "dich vu");
         const catVisa = categoriesWithCountries.find(c => c.name.toLowerCase() === "visa");
 
         if (catDichVu && catVisa) {
           const visaJapanProds = catDichVu.products.filter(p => {
             const nameLower = (p.name || "").toLowerCase();
-            return nameLower.includes("visa") && resolveCountryName(p.country) === "Nháº­t Báº£n";
+            return nameLower.includes("visa") && resolveCountryName(p.country) === "Nhật Bản";
           });
 
           if (visaJapanProds.length > 0) {
-            // Cáº­p nháº­t categoryId cho cÃ¡c sáº£n pháº©m di chuyá»ƒn
+            // Cập nhật categoryId cho các sản phẩm di chuyển
             visaJapanProds.forEach(p => {
               p.categoryId = catVisa.id;
               p.categoryName = catVisa.name;
             });
 
-            // XÃ³a khá»i Dá»‹ch vá»¥
+            // Xóa khỏi Dịch vụ
             catDichVu.products = catDichVu.products.filter(p => !visaJapanProds.includes(p));
-            // Cáº­p nháº­t láº¡i countries cá»§a Dá»‹ch vá»¥
+            // Cập nhật lại countries của Dịch vụ
             const seenDichVu = new Set();
             catDichVu.countries = [];
             catDichVu.products.forEach(p => {
@@ -300,9 +300,9 @@ export const Sidebar = ({
               }
             });
 
-            // ThÃªm vÃ o Visa
+            // Thêm vào Visa
             catVisa.products = [...catVisa.products, ...visaJapanProds];
-            // Cáº­p nháº­t láº¡i countries cá»§a Visa
+            // Cập nhật lại countries của Visa
             const seenVisa = new Set(catVisa.countries);
             visaJapanProds.forEach(p => {
               if (p.country && !seenVisa.has(p.country)) {
@@ -310,7 +310,7 @@ export const Sidebar = ({
                 catVisa.countries.push(p.country);
               }
             });
-            // Sáº¯p xáº¿p láº¡i countries cá»§a Visa
+            // Sắp xếp lại countries của Visa
             catVisa.countries.sort((a, b) => resolveCountryName(a).localeCompare(resolveCountryName(b), "vi"));
           }
         }
@@ -318,7 +318,7 @@ export const Sidebar = ({
         if (isMounted) setProductCategories(categoriesWithCountries);
       } catch (err) {
         console.warn(
-          "[Sidebar] KhÃ´ng táº£i Ä‘Æ°á»£c danh má»¥c sáº£n pháº©m, sá»­ dá»¥ng Mock Data dá»± phÃ²ng:",
+          "[Sidebar] Không tải được danh mục sản phẩm, sử dụng Mock Data dự phòng:",
           err.message,
         );
         
@@ -326,28 +326,28 @@ export const Sidebar = ({
         const mockCategoriesNormalized = [
           {
             id: "cat-1",
-            name: "Du há»c hÃ¨",
+            name: "Du học hè",
             countries: ["Singapore"],
             products: [
               {
                 id: "prog-1-1",
-                name: "Du há»c hÃ¨ Singapore",
+                name: "Du học hè Singapore",
                 country: "Singapore",
-                region: "ChÃ¢u Ã",
+                region: "Châu Á",
                 status: "active"
               }
             ]
           },
           {
             id: "cat-2",
-            name: "Du há»c nghá»",
-            countries: ["Äá»©c"],
+            name: "Du học nghề",
+            countries: ["Đức"],
             products: [
               {
                 id: "prog-voc-1",
-                name: "Du há»c nghá» Äá»©c",
-                country: "Äá»©c",
-                region: "ChÃ¢u Ã‚u",
+                name: "Du học nghề Đức",
+                country: "Đức",
+                region: "Châu Âu",
                 status: "active"
               }
             ]
@@ -355,41 +355,41 @@ export const Sidebar = ({
           {
             id: "cat-3",
             name: "Visa",
-            countries: ["Ãšc"],
+            countries: ["Úc"],
             products: [
               {
                 id: "prog-visa-1",
-                name: "Dá»‹ch vá»¥ xin Visa Ãšc trá»n gÃ³i",
-                country: "Ãšc",
-                region: "ChÃ¢u Äáº¡i DÆ°Æ¡ng",
+                name: "Dịch vụ xin Visa Úc trọn gói",
+                country: "Úc",
+                region: "Châu Đại Dương",
                 status: "active"
               }
             ]
           },
           {
             id: "cat-4",
-            name: "Äá»‹nh cÆ°",
+            name: "Định cư",
             countries: ["Canada"],
             products: [
               {
                 id: "prog-settle-1",
-                name: "Äá»‹nh cÆ° Ä‘áº§u tÆ° Canada",
+                name: "Định cư đầu tư Canada",
                 country: "Canada",
-                region: "ChÃ¢u Má»¹",
+                region: "Châu Mỹ",
                 status: "active"
               }
             ]
           },
           {
             id: "cat-5",
-            name: "ÄÃ o táº¡o ngÃ´n ngá»¯",
-            countries: ["Äá»©c"],
+            name: "Đào tạo ngôn ngữ",
+            countries: ["Đức"],
             products: [
               {
                 id: "prog-lang-1",
-                name: "KhÃ³a há»c tiáº¿ng Äá»©c B1",
-                country: "Äá»©c",
-                region: "ChÃ¢u Ã‚u",
+                name: "Khóa học tiếng Đức B1",
+                country: "Đức",
+                region: "Châu Âu",
                 status: "active"
               }
             ]
@@ -408,28 +408,28 @@ export const Sidebar = ({
     };
   }, []);
 
-  // PhÃ¢n chia danh má»¥c thÃ nh cÃ¡c nhÃ³m cho Tuyá»ƒn Sinh Du Há»c vÃ  Dá»‹ch Vá»¥
+  // Phân chia danh mục thành các nhóm cho Tuyển Sinh Du Học và Dịch Vụ
   const categorizedMenu = useMemo(() => {
-    const trainingKeywords = ["Ä‘Ã o táº¡o ngÃ´n ngá»¯", "dao tao ngon ngu", "ngÃ´n ngá»¯", "ngon ngu", "ngoáº¡i ngá»¯", "tiáº¿ng"];
-    const continentKeywords = ["chÃ¢u má»¹", "chÃ¢u Ã¢u", "chÃ¢u Ã¡", "chÃ¢u Ä‘áº¡i dÆ°Æ¡ng", "chau my", "chau au", "chau a", "chau dai duong"];
-    const vocationalKeywords = ["du há»c nghá»", "du hoc nghe", "nghá»", "nghe", "tts quá»‘c táº¿", "tts quoc te"];
-    const summerKeywords = ["du há»c hÃ¨", "du hoc he", "hÃ¨", "he", "tráº¡i hÃ¨", "trai he"];
+    const trainingKeywords = ["đào tạo ngôn ngữ", "dao tao ngon ngu", "ngôn ngữ", "ngon ngu", "ngoại ngữ", "tiếng"];
+    const continentKeywords = ["châu mỹ", "châu âu", "châu á", "châu đại dương", "chau my", "chau au", "chau a", "chau dai duong"];
+    const vocationalKeywords = ["du học nghề", "du hoc nghe", "nghề", "nghe", "tts quốc tế", "tts quoc te"];
+    const summerKeywords = ["du học hè", "du hoc he", "hè", "he", "trại hè", "trai he"];
 
     const result = {
       tuyenSinh: {
-        ttsQuocTe: null, // Danh má»¥c Du há»c nghá»
-        duHocHe: null,   // Danh má»¥c Du há»c hÃ¨
-        continents: []   // CÃ¡c danh má»¥c chÃ¢u lá»¥c (ChÃ¢u Má»¹, ChÃ¢u Ã‚u...)
+        ttsQuocTe: null, // Danh mục Du học nghề
+        duHocHe: null,   // Danh mục Du học hè
+        continents: []   // Các danh mục châu lục (Châu Mỹ, Châu Âu...)
       },
-      daoTao: null,      // Danh má»¥c ÄÃ o táº¡o ngÃ´n ngá»¯
-      dichVu: []         // CÃ¡c danh má»¥c Dá»‹ch vá»¥ (Visa, Äá»‹nh cÆ°...)
+      daoTao: null,      // Danh mục Đào tạo ngôn ngữ
+      dichVu: []         // Các danh mục Dịch vụ (Visa, Định cư...)
     };
 
     productCategories.forEach(cat => {
       const nameLower = cat.name.toLowerCase();
       
-      // Bá» qua danh má»¥c Dá»‹ch vá»¥ rá»—ng (vÃ¬ sáº£n pháº©m cá»§a nÃ³ Ä‘Ã£ Ä‘Æ°á»£c chuyá»ƒn sang Visa)
-      if (nameLower === "dá»‹ch vá»¥" || nameLower === "dich vu") {
+      // Bỏ qua danh mục Dịch vụ rỗng (vì sản phẩm của nó đã được chuyển sang Visa)
+      if (nameLower === "dịch vụ" || nameLower === "dich vu") {
         return;
       }
 
@@ -446,8 +446,8 @@ export const Sidebar = ({
       }
     });
 
-    // Sáº¯p xáº¿p thá»© tá»± cÃ¡c ChÃ¢u lá»¥c
-    const order = ["chÃ¢u má»¹", "chÃ¢u Ã¢u", "chÃ¢u Ã¡", "chÃ¢u Ä‘áº¡i dÆ°Æ¡ng"];
+    // Sắp xếp thứ tự các Châu lục
+    const order = ["châu mỹ", "châu âu", "châu á", "châu đại dương"];
     result.tuyenSinh.continents.sort((a, b) => {
       const idxA = order.findIndex(o => a.name.toLowerCase().includes(o));
       const idxB = order.findIndex(o => b.name.toLowerCase().includes(o));
@@ -484,20 +484,20 @@ export const Sidebar = ({
           }
         }
 
-        // --- Bá»” SUNG PHÃ’NG BAN áº¨N MÃ€ USER THUá»˜C Vá»€ ---
+        // --- BỔ SUNG PHÒNG BAN ẨN MÀ USER THUỘC VỀ ---
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
           "6a2928bd198af598139ab42a": "laptop M4",
-          "6a389e5cd30baf58a6859c5e": "cá»™ng tÃ¡c viÃªn",
-          "6a389e7bd30baf58a6859cf3": "Äáº¡i sá»© thÆ°Æ¡ng hiá»‡u",
-          "6a1d026bd982af7420184420": "Tuyá»ƒn Sinh du há»c hÃ¨",
-          "6a1d03fc6d7314acd051155a": "Tuyá»ƒn sinh du há»c Má»¹",
-          "6a1d04686d7314acd051155c": "Nghiá»‡p vá»¥",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
           "6a1d047a6d7314acd051155d": "Telesale & CSKH",
           "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
           "6a1d04996d7314acd051155f": "Kinh doanh",
-          "6a1d04a86d7314acd0511560": "Tá»•ng Há»£p",
-          "6a1e3941e43b5d5e028e9e9d": "Tuyá»ƒn sinh"
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
         if (currentUser?.departmentId && currentUser?.departmentName) {
           KNOWN_HIDDEN_DEPTS[currentUser.departmentId] = currentUser.departmentName;
@@ -505,28 +505,28 @@ export const Sidebar = ({
 
         userDeptIds.forEach(id => {
           if (id && !normalized.some(d => String(d.id) === String(id))) {
-            const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `PhÃ²ng ban áº©n (${id.substring(id.length - 4)})`;
+            const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `Phòng ban ẩn (${id.substring(id.length - 4)})`;
             normalized.push({ id, name: hiddenName });
           }
         });
 
         if (isMounted) setDepartments(normalized);
       } catch (err) {
-        console.warn("[Sidebar] KhÃ´ng táº£i Ä‘Æ°á»£c danh má»¥c phÃ²ng ban:", err.message);
+        console.warn("[Sidebar] Không tải được danh mục phòng ban:", err.message);
 
         const userDeptIds = currentUser?.departmentIds || (currentUser?.departmentId ? [currentUser.departmentId] : []);
         const KNOWN_HIDDEN_DEPTS = {
           "6a2928bd198af598139ab42a": "laptop M4",
-          "6a389e5cd30baf58a6859c5e": "cá»™ng tÃ¡c viÃªn",
-          "6a389e7bd30baf58a6859cf3": "Äáº¡i sá»© thÆ°Æ¡ng hiá»‡u",
-          "6a1d026bd982af7420184420": "Tuyá»ƒn Sinh du há»c hÃ¨",
-          "6a1d03fc6d7314acd051155a": "Tuyá»ƒn sinh du há»c Má»¹",
-          "6a1d04686d7314acd051155c": "Nghiá»‡p vá»¥",
+          "6a389e5cd30baf58a6859c5e": "cộng tác viên",
+          "6a389e7bd30baf58a6859cf3": "Đại sứ thương hiệu",
+          "6a1d026bd982af7420184420": "Tuyển Sinh du học hè",
+          "6a1d03fc6d7314acd051155a": "Tuyển sinh du học Mỹ",
+          "6a1d04686d7314acd051155c": "Nghiệp vụ",
           "6a1d047a6d7314acd051155d": "Telesale & CSKH",
           "6a1d048b6d7314acd051155e": "IT & Marketing & Social",
           "6a1d04996d7314acd051155f": "Kinh doanh",
-          "6a1d04a86d7314acd0511560": "Tá»•ng Há»£p",
-          "6a1e3941e43b5d5e028e9e9d": "Tuyá»ƒn sinh"
+          "6a1d04a86d7314acd0511560": "Tổng Hợp",
+          "6a1e3941e43b5d5e028e9e9d": "Tuyển sinh"
         };
         if (currentUser?.departmentId && currentUser?.departmentName) {
           KNOWN_HIDDEN_DEPTS[currentUser.departmentId] = currentUser.departmentName;
@@ -534,7 +534,7 @@ export const Sidebar = ({
         const fallback = [];
         userDeptIds.forEach(id => {
           if (id) {
-            const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `PhÃ²ng ban áº©n (${id.substring(id.length - 4)})`;
+            const hiddenName = KNOWN_HIDDEN_DEPTS[id] || `Phòng ban ẩn (${id.substring(id.length - 4)})`;
             fallback.push({ id, name: hiddenName });
           }
         });
@@ -548,7 +548,7 @@ export const Sidebar = ({
     return () => { isMounted = false; };
   }, [currentUser]);
 
-  // Xá»­ lÃ½ click vÃ o danh má»¥c
+  // Xử lý click vào danh mục
   const handleToggleCategory = (categoryId) => {
     setSelectedCategoryId(categoryId);
     setSelectedCountryName(null);
@@ -560,8 +560,8 @@ export const Sidebar = ({
       const detail = {
         id: category.id,
         name: category.name,
-        country: "Táº¥t cáº£",
-        region: "Táº¥t cáº£",
+        country: "Tất cả",
+        region: "Tất cả",
         fromSidebar: true,
       };
       try {
@@ -570,7 +570,7 @@ export const Sidebar = ({
           JSON.stringify(detail),
         );
       } catch {
-        // bá» qua
+        // bỏ qua
       }
       window.dispatchEvent(new CustomEvent(SIDEBAR_CATEGORY_EVENT, { detail }));
     }
@@ -589,7 +589,7 @@ export const Sidebar = ({
         id: category.id,
         name: category.name,
         country: country,
-        region: "Táº¥t cáº£",
+        region: "Tất cả",
         fromSidebar: true,
       };
       try {
@@ -598,7 +598,7 @@ export const Sidebar = ({
           JSON.stringify(detail),
         );
       } catch {
-        // bá» qua
+        // bỏ qua
       }
       window.dispatchEvent(new CustomEvent(SIDEBAR_CATEGORY_EVENT, { detail }));
     }
@@ -614,8 +614,8 @@ export const Sidebar = ({
 
     const detail = {
       id: null,
-      name: "Táº¥t cáº£",
-      country: "Táº¥t cáº£",
+      name: "Tất cả",
+      country: "Tất cả",
       region: region,
       fromSidebar: true,
     };
@@ -625,7 +625,7 @@ export const Sidebar = ({
         JSON.stringify(detail),
       );
     } catch {
-      // bá» qua
+      // bỏ qua
     }
     window.dispatchEvent(new CustomEvent(SIDEBAR_CATEGORY_EVENT, { detail }));
     onNavigate?.("productOverview");
@@ -638,7 +638,7 @@ export const Sidebar = ({
 
     const detail = {
       id: null,
-      name: "Táº¥t cáº£",
+      name: "Tất cả",
       country: country,
       region: region,
       fromSidebar: true,
@@ -649,21 +649,21 @@ export const Sidebar = ({
         JSON.stringify(detail),
       );
     } catch {
-      // bá» qua
+      // bỏ qua
     }
     window.dispatchEvent(new CustomEvent(SIDEBAR_CATEGORY_EVENT, { detail }));
     onNavigate?.("productOverview");
   };
 
   const handleGoToProductOverview = () => {
-    const detail = { id: null, name: "Táº¥t cáº£", country: "Táº¥t cáº£", fromSidebar: true };
+    const detail = { id: null, name: "Tất cả", country: "Tất cả", fromSidebar: true };
     try {
       sessionStorage.setItem(
         SIDEBAR_CATEGORY_STORAGE_KEY,
         JSON.stringify(detail),
       );
     } catch {
-      // bá» qua
+      // bỏ qua
     }
     window.dispatchEvent(new CustomEvent(SIDEBAR_CATEGORY_EVENT, { detail }));
     setSelectedCategoryId(null);
@@ -752,7 +752,7 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                Trang chá»§
+                Trang chủ
               </span>
             </a>
           </li>
@@ -789,12 +789,12 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                Dashboard thá»‘ng kÃª
+                Dashboard thống kê
               </span>
             </a>
           </li>
 
-          {/* --- 1C. Tá»”NG Sáº¢N PHáº¨M --- */}
+          {/* --- 1C. TỔNG SẢN PHẨM --- */}
           {hasProductDetailPermission && (
             <li className="menu-item mb-2">
               <a
@@ -834,7 +834,7 @@ export const Sidebar = ({
                   className="menu-label"
                   style={{ flex: 1, fontSize: "14px" }}
                 >
-                  Tá»•ng sáº£n pháº©m
+                  Tổng sản phẩm
                 </span>
 
                 <span
@@ -842,7 +842,7 @@ export const Sidebar = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setOpenMenu(openMenu === "sanpham" ? "" : "sanpham"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                    setOpenMenu(openMenu === "sanpham" ? "" : "sanpham");
                   }}
                 >
                   <svg
@@ -880,12 +880,12 @@ export const Sidebar = ({
                     className="d-block px-3 py-2 text-body-secondary"
                     style={{ fontSize: "13px" }}
                   >
-                    Äang táº£i danh má»¥c...
+                    Đang tải danh mục...
                   </span>
                 </li>
               ) : (
                 <>
-                  {/* --- A. TUYá»‚N SINH DU Há»ŒC (Dropdown Group) --- */}
+                  {/* --- A. TUYỂN SINH DU HỌC (Dropdown Group) --- */}
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
@@ -899,7 +899,7 @@ export const Sidebar = ({
                           setIsTuyensinhExpanded(!isTuyensinhExpanded);
                         }}
                       >
-                        Tuyá»ƒn Sinh Du Há»c
+                        Tuyển Sinh Du Học
                       </a>
                       <span
                         className="d-flex align-items-center justify-content-center text-body-secondary"
@@ -936,7 +936,7 @@ export const Sidebar = ({
                           listStyleType: "none"
                         }}
                       >
-                        {/* 1. TTS Quá»‘c Táº¿ (Du há»c nghá») */}
+                        {/* 1. TTS Quốc Tế (Du học nghề) */}
                         {categorizedMenu.tuyenSinh.ttsQuocTe && (() => {
                           const cat = categorizedMenu.tuyenSinh.ttsQuocTe;
                           const isCatSelected = selectedCategoryId === cat.id && currentPage === "productOverview";
@@ -957,7 +957,7 @@ export const Sidebar = ({
                                     handleToggleCategory(cat.id);
                                   }}
                                 >
-                                  TTS Quá»‘c Táº¿
+                                  TTS Quốc Tế
                                 </a>
                                 {hasCountries && (
                                   <span
@@ -1002,7 +1002,7 @@ export const Sidebar = ({
                                             handleSelectCountry(cat.id, country);
                                           }}
                                         >
-                                          â€¢ {resolvedName}
+                                          • {resolvedName}
                                         </a>
                                       </li>
                                     );
@@ -1013,7 +1013,7 @@ export const Sidebar = ({
                           );
                         })()}
 
-                        {/* 2. Du Há»c HÃ¨ */}
+                        {/* 2. Du Học Hè */}
                         {categorizedMenu.tuyenSinh.duHocHe && (() => {
                           const cat = categorizedMenu.tuyenSinh.duHocHe;
                           const isCatSelected = selectedCategoryId === cat.id && currentPage === "productOverview";
@@ -1034,7 +1034,7 @@ export const Sidebar = ({
                                     handleToggleCategory(cat.id);
                                   }}
                                 >
-                                  Du Há»c HÃ¨
+                                  Du Học Hè
                                 </a>
                                 {hasCountries && (
                                   <span
@@ -1079,7 +1079,7 @@ export const Sidebar = ({
                                             handleSelectCountry(cat.id, country);
                                           }}
                                         >
-                                          â€¢ {resolvedName}
+                                          • {resolvedName}
                                         </a>
                                       </li>
                                     );
@@ -1090,7 +1090,7 @@ export const Sidebar = ({
                           );
                         })()}
 
-                        {/* 3. CÃ¡c ChÃ¢u Lá»¥c (ChÃ¢u Má»¹, ChÃ¢u Ã‚u, ChÃ¢u Ã, ChÃ¢u Äáº¡i DÆ°Æ¡ng) */}
+                        {/* 3. Các Châu Lục (Châu Mỹ, Châu Âu, Châu Á, Châu Đại Dương) */}
                         {categorizedMenu.tuyenSinh.continents.filter(cat => Array.isArray(cat.countries) && cat.countries.length > 0).map(cat => {
                           const isCatSelected = selectedCategoryId === cat.id && currentPage === "productOverview";
                           const hasCountries = Array.isArray(cat.countries) && cat.countries.length > 0;
@@ -1155,7 +1155,7 @@ export const Sidebar = ({
                                             handleSelectCountry(cat.id, country);
                                           }}
                                         >
-                                          â€¢ {resolvedName}
+                                          • {resolvedName}
                                         </a>
                                       </li>
                                     );
@@ -1169,7 +1169,7 @@ export const Sidebar = ({
                     )}
                   </li>
 
-                  {/* --- B. ÄÃ€O Táº O NGÃ”N NGá»® (Single Dropdown/Link if exists) --- */}
+                  {/* --- B. ĐÀO TẠO NGÔN NGỮ (Single Dropdown/Link if exists) --- */}
                   {categorizedMenu.daoTao && (() => {
                     const cat = categorizedMenu.daoTao;
                     const isCatSelected = selectedCategoryId === cat.id && currentPage === "productOverview";
@@ -1190,7 +1190,7 @@ export const Sidebar = ({
                               handleToggleCategory(cat.id);
                             }}
                           >
-                            ÄÃ o táº¡o ngÃ´n ngá»¯
+                            Đào tạo ngôn ngữ
                           </a>
                           {hasCountries && (
                             <span
@@ -1243,7 +1243,7 @@ export const Sidebar = ({
                                       handleSelectCountry(cat.id, country);
                                     }}
                                   >
-                                    â€¢ {resolvedName}
+                                    • {resolvedName}
                                   </a>
                                 </li>
                               );
@@ -1254,7 +1254,7 @@ export const Sidebar = ({
                     );
                   })()}
 
-                  {/* --- C. Dá»ŠCH Vá»¤ (Dropdown Group) --- */}
+                  {/* --- C. DỊCH VỤ (Dropdown Group) --- */}
                   <li className="menu-item mb-2" style={{ listStyleType: "none" }}>
                     <div className="d-flex align-items-center justify-content-between rounded-2 hover-bg-light" style={{ transition: "all 0.2s" }}>
                       <a
@@ -1268,7 +1268,7 @@ export const Sidebar = ({
                           setIsServicesExpanded(!isServicesExpanded);
                         }}
                       >
-                        Dá»‹ch vá»¥
+                        Dịch vụ
                       </a>
                       <span
                         className="d-flex align-items-center justify-content-center text-body-secondary"
@@ -1305,7 +1305,7 @@ export const Sidebar = ({
                           listStyleType: "none"
                         }}
                       >
-                        {/* 1. Visa, Äá»‹nh cÆ°... */}
+                        {/* 1. Visa, Định cư... */}
                         {categorizedMenu.dichVu.filter(cat => Array.isArray(cat.products) && cat.products.length > 0).map(cat => {
                           const isCatSelected = selectedCategoryId === cat.id && currentPage === "productOverview";
                           const hasCountries = Array.isArray(cat.countries) && cat.countries.length > 0;
@@ -1370,7 +1370,7 @@ export const Sidebar = ({
                                             handleSelectCountry(cat.id, country);
                                           }}
                                         >
-                                          â€¢ {resolvedName}
+                                          • {resolvedName}
                                         </a>
                                       </li>
                                     );
@@ -1381,7 +1381,7 @@ export const Sidebar = ({
                           );
                         })}
 
-                        {/* 2. Ná»™p há»“ sÆ¡ online */}
+                        {/* 2. Nộp hồ sơ online */}
                         <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
                           <a
                             className={`menu-link d-block px-3 py-1.5 rounded-2 ${
@@ -1394,7 +1394,7 @@ export const Sidebar = ({
                               onNavigate?.("nophosoonline");
                             }}
                           >
-                            Ná»™p há»“ sÆ¡ online
+                            Nộp hồ sơ online
                           </a>
                         </li>
 
@@ -1413,7 +1413,7 @@ export const Sidebar = ({
                         onNavigate?.("daotao");
                       }}
                     >
-                      ÄÃ o táº¡o
+                      Đào tạo
                     </a>
                   </li>
                   <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
@@ -1428,7 +1428,7 @@ export const Sidebar = ({
                         onNavigate?.("banggia");
                       }}
                     >
-                      Báº£ng giÃ¡
+                      Bảng giá
                     </a>
                   </li>
                   <li className="menu-item mb-1" style={{ listStyleType: "none" }}>
@@ -1443,7 +1443,7 @@ export const Sidebar = ({
                         onNavigate?.("thongtintracuu");
                       }}
                     >
-                      ThÃ´ng tin tra cá»©u
+                      Thông tin tra cứu
                     </a>
                   </li>
                 </>
@@ -1452,7 +1452,7 @@ export const Sidebar = ({
           </li>
         )}
 
-          {/* --- 3. NGHIá»†P Vá»¤ --- */}
+          {/* --- 3. NGHIỆP VỤ --- */}
           <li className="menu-item mb-2 mt-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["nghiepvu", "checklist", "sop", "doisoatdeal"].includes(currentPage) || (typeof currentPage === "string" && currentPage.startsWith("dept-")) ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -1461,7 +1461,7 @@ export const Sidebar = ({
               style={{ textDecoration: "none" }}
               onClick={(e) => {
                 e.preventDefault();
-                setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
               }}
             >
               <div
@@ -1487,14 +1487,14 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                Nghiá»‡p vá»¥
+                Nghiệp vụ
               </span>
               <span
                 style={{ cursor: "pointer", padding: "4px" }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                  setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
                 }}
               >
                 <svg
@@ -1538,7 +1538,7 @@ export const Sidebar = ({
                   return (
                     <li className="menu-item mb-1">
                       <span className="d-block px-3 py-2 text-body-secondary" style={{ fontSize: "13px" }}>
-                        Äang táº£i phÃ²ng ban...
+                        Đang tải phòng ban...
                       </span>
                     </li>
                   );
@@ -1548,7 +1548,7 @@ export const Sidebar = ({
                   return (
                     <li className="menu-item mb-1">
                       <span className="d-block px-3 py-2 text-body-secondary" style={{ fontSize: "13px" }}>
-                        KhÃ´ng cÃ³ phÃ²ng ban nghiá»‡p vá»¥
+                        Không có phòng ban nghiệp vụ
                       </span>
                     </li>
                   );
@@ -1608,7 +1608,7 @@ export const Sidebar = ({
                               onNavigate?.(`dept-sop:${dept.id}`);
                             }}
                           >
-                            â€¢ Ná»™i dung chung
+                            • Nội dung chung
                           </a>
                         </li>
                         <li className="mb-1" style={{ listStyleType: "none" }}>
@@ -1621,7 +1621,7 @@ export const Sidebar = ({
                               onNavigate?.(`dept-docs:${dept.id}`);
                             }}
                           >
-                            â€¢ TÃ i liá»‡u phÃ²ng ban
+                            • Tài liệu phòng ban
                           </a>
                         </li>
                         <li className="mb-1" style={{ listStyleType: "none" }}>
@@ -1634,7 +1634,7 @@ export const Sidebar = ({
                               onNavigate?.(`dept-jds:${dept.id}`);
                             }}
                           >
-                            â€¢ JD cÃ´ng viá»‡c
+                            • JD công việc
                           </a>
                         </li>
                       </ul>
@@ -1643,7 +1643,7 @@ export const Sidebar = ({
                 });
               })()}
 
-              {/* Tra cá»©u trÆ°á»ng du há»c */}
+              {/* Tra cứu trường du học */}
               <li className="menu-item mb-1 border-top pt-1 mt-1" style={{ listStyleType: "none" }}>
                 <a
                   className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "schoolSearch" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
@@ -1654,11 +1654,11 @@ export const Sidebar = ({
                     onNavigate?.("schoolSearch");
                   }}
                 >
-                  Tra cá»©u trÆ°á»ng du há»c
+                  Tra cứu trường du học
                 </a>
               </li>
 
-              {/* Váº«n giá»¯ trang Äá»‘i soÃ¡t Deal cho káº¿ toÃ¡n vÃ  quáº£n trá»‹ náº¿u cáº§n */}
+              {/* Vẫn giữ trang Đối soát Deal cho kế toán và quản trị nếu cần */}
               {(["admin", "bangiamdoc", "truongbophan", "congtacvien", "daily", "staff"].includes(getUserRoleKey(currentUser)) ||
                 currentUser?.permissions?.includes("*") ||
                 currentUser?.permissions?.includes("settings:manage") ||
@@ -1675,14 +1675,14 @@ export const Sidebar = ({
                       onNavigate?.("doisoatdeal");
                     }}
                   >
-                    Äá»‘i soÃ¡t Deal
+                    Đối soát Deal
                   </a>
                 </li>
               )}
             </ul>
           </li>
 
-          {/* --- 4. Há»– TRá»¢ --- */}
+          {/* --- 4. HỖ TRỢ --- */}
           <li className="menu-item mb-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${["hotro", "leadForm"].includes(currentPage) ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -1717,14 +1717,14 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                Há»— trá»£
+                Hỗ trợ
               </span>
               <span
                 style={{ cursor: "pointer", padding: "4px" }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setOpenMenu(openMenu === "hotro" ? "" : "hotro"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                  setOpenMenu(openMenu === "hotro" ? "" : "hotro");
                 }}
               >
                 <svg
@@ -1763,7 +1763,7 @@ export const Sidebar = ({
                     onNavigate?.("hotro", { activeTab: "ticket" });
                   }}
                 >
-                  Táº¡o Ticket
+                  Tạo Ticket
                 </a>
               </li>
               <li className="menu-item mb-1">
@@ -1776,7 +1776,7 @@ export const Sidebar = ({
                     onNavigate?.("leadForm");
                   }}
                 >
-                  Gá»­i lead khÃ¡ch hÃ ng
+                  Gửi lead khách hàng
                 </a>
               </li>
               <li className="menu-item mb-1">
@@ -1789,13 +1789,13 @@ export const Sidebar = ({
                     onNavigate?.("hotro", { activeTab: "guide" });
                   }}
                 >
-                  ðŸ“˜ HÆ°á»›ng dáº«n sá»­ dá»¥ng Portal
+                  📘 Hướng dẫn sử dụng Portal
                 </a>
               </li>
             </ul>
           </li>
 
-          {/* --- 5. TIN Tá»¨C & Sá»° KIá»†N --- */}
+          {/* --- 5. TIN TỨC & SỰ KIỆN --- */}
           <li className="menu-item mb-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${isNewsPage ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -1805,7 +1805,7 @@ export const Sidebar = ({
               onClick={(e) => {
                 e.preventDefault();
                 if (canManageNews) {
-                  setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                  setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents");
                 } else {
                   onNavigate?.("tintuc");
                 }
@@ -1835,7 +1835,7 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                Tin tá»©c & Sá»± kiá»‡n
+                Tin tức & Sự kiện
               </span>
               {canManageNews && (
                 <span
@@ -1848,7 +1848,7 @@ export const Sidebar = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                    setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents");
                   }}
                 >
                   <svg
@@ -1892,7 +1892,7 @@ export const Sidebar = ({
                       onNavigate?.("tintuc");
                     }}
                   >
-                    ChuyÃªn trang tin
+                    Chuyên trang tin
                   </a>
                 </li>
                 <li className="menu-item mb-1">
@@ -1905,7 +1905,7 @@ export const Sidebar = ({
                       onNavigate?.("newsEventsManage");
                     }}
                   >
-                    Quáº£n lÃ½ bÃ i viáº¿t
+                    Quản lý bài viết
                   </a>
                 </li>
               </ul>
@@ -1951,7 +1951,7 @@ export const Sidebar = ({
             </a>
           </li>
 
-          {/* --- 7. TÃ€I LIá»†U & BIá»‚U MáºªU --- */}
+          {/* --- 7. TÀI LIỆU & BIỂU MẪU --- */}
           <li className="menu-item mb-2">
             <a
               className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "notifications" ? "text-primary fw-bold" : "text-body-secondary"}`}
@@ -1984,7 +1984,7 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                ThÃ´ng bÃ¡o ná»™i bá»™
+                Thông báo nội bộ
               </span>
             </a>
           </li>
@@ -2025,14 +2025,14 @@ export const Sidebar = ({
                 className="menu-label"
                 style={{ flex: 1, fontSize: "14px" }}
               >
-                TÃ i liá»‡u & Biá»ƒu máº«u
+                Tài liệu & Biểu mẫu
               </span>
               <span
                 style={{ cursor: "pointer", padding: "4px" }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setOpenMenu(openMenu === "documents" ? "" : "documents"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                  setOpenMenu(openMenu === "documents" ? "" : "documents");
                 }}
               >
                 <svg
@@ -2074,13 +2074,13 @@ export const Sidebar = ({
                     onNavigate?.("documentSearch");
                   }}
                 >
-                  TÃ¬m kiáº¿m tÃ i liá»‡u
+                  Tìm kiếm tài liệu
                 </a>
               </li>
             </ul>
           </li>
 
-          {/* --- 8A. AI Ná»˜I Bá»˜ --- */}
+          {/* --- 8A. AI NỘI BỘ --- */}
           {canViewAIManagement(currentUser) && (
             <li className="menu-item mb-2">
               <a
@@ -2090,7 +2090,7 @@ export const Sidebar = ({
                 style={{ textDecoration: "none" }}
                 onClick={(e) => {
                   e.preventDefault();
-                  setOpenMenu(openMenu === "ai" ? "" : "ai"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                  setOpenMenu(openMenu === "ai" ? "" : "ai");
                 }}
               >
                 <div
@@ -2116,14 +2116,14 @@ export const Sidebar = ({
                   className="menu-label"
                   style={{ flex: 1, fontSize: "14px" }}
                 >
-                  AI ná»™i bá»™
+                  AI nội bộ
                 </span>
                 <span
                   style={{ cursor: "pointer", padding: "4px" }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setOpenMenu(openMenu === "ai" ? "" : "ai"); if (isSidebarMini && onToggleSidebar) onToggleSidebar();
+                    setOpenMenu(openMenu === "ai" ? "" : "ai");
                   }}
                 >
                   <svg
@@ -2158,7 +2158,7 @@ export const Sidebar = ({
                         onNavigate?.("aiConfig");
                       }}
                     >
-                      Cáº¥u hÃ¬nh AI
+                      Cấu hình AI
                     </a>
                   </li>
                 )}
@@ -2173,7 +2173,7 @@ export const Sidebar = ({
                       onNavigate?.("aiPending");
                     }}
                   >
-                    CÃ¢u há»i AI pending
+                    Câu hỏi AI pending
                   </a>
                 </li>
 
@@ -2188,7 +2188,7 @@ export const Sidebar = ({
                         onNavigate?.("aiHistory");
                       }}
                     >
-                      Thá»‘ng kÃª lá»‹ch sá»­ AI
+                      Thống kê lịch sử AI
                     </a>
                   </li>
                 )}
@@ -2196,7 +2196,7 @@ export const Sidebar = ({
             </li>
           )}
 
-          {/* --- 8. QUáº¢N LÃ TÃ€I KHOáº¢N --- */}
+          {/* --- 8. QUẢN LÝ TÀI KHOẢN --- */}
 
           {(["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) ||
             currentUser?.permissions?.includes("users:read") ||
@@ -2236,13 +2236,13 @@ export const Sidebar = ({
                   className="menu-label"
                   style={{ flex: 1, fontSize: "14px" }}
                 >
-                  Quáº£n lÃ½ tÃ i khoáº£n
+                  Quản lý tài khoản
                 </span>
               </a>
             </li>
           )}
 
-          {/* --- 8B. QUáº¢N LÃ VAI TRÃ’ --- */}
+          {/* --- 8B. QUẢN LÝ VAI TRÒ --- */}
           {(["admin", "bangiamdoc"].includes(getUserRoleKey(currentUser)) ||
             currentUser?.permissions?.includes("roles:read") ||
             currentUser?.permissions?.includes("roles:write") ||
@@ -2279,13 +2279,13 @@ export const Sidebar = ({
                   className="menu-label"
                   style={{ flex: 1, fontSize: "14px" }}
                 >
-                  Quáº£n lÃ½ vai trÃ²
+                  Quản lý vai trò
                 </span>
               </a>
             </li>
           )}
 
-          {/* --- 7B. QUáº¢N LÃ Sáº¢N PHáº¨M --- */}
+          {/* --- 7B. QUẢN LÝ SẢN PHẨM --- */}
           {(["admin", "bangiamdoc", "truongbophan"].includes(getUserRoleKey(currentUser)) ||
             currentUser?.permissions?.includes("products:write") ||
             currentUser?.permissions?.includes("*")
@@ -2324,7 +2324,7 @@ export const Sidebar = ({
                   className="menu-label"
                   style={{ flex: 1, fontSize: "14px" }}
                 >
-                  Quáº£n lÃ½ sáº£n pháº©m
+                  Quản lý sản phẩm
                 </span>
               </a>
             </li>
@@ -2365,7 +2365,7 @@ export const Sidebar = ({
                     className="menu-label"
                     style={{ flex: 1, fontSize: "14px" }}
                   >
-                    PhÃ²ng ban
+                    Phòng ban
                   </span>
                 </a>
               </li>
@@ -2406,7 +2406,7 @@ export const Sidebar = ({
                     className="menu-label"
                     style={{ flex: 1, fontSize: "14px" }}
                   >
-                    Lá»‹ch sá»­ thao tÃ¡c
+                    Lịch sử thao tác
                   </span>
                 </a>
               </li>
@@ -2443,7 +2443,7 @@ export const Sidebar = ({
                     className="menu-label"
                     style={{ flex: 1, fontSize: "14px" }}
                   >
-                    Cáº¥u hÃ¬nh há»‡ thá»‘ng
+                    Cấu hình hệ thống
                   </span>
                 </a>
               </li>
@@ -2480,7 +2480,7 @@ export const Sidebar = ({
                     className="menu-label"
                     style={{ flex: 1, fontSize: "14px" }}
                   >
-                    Quáº£n lÃ½ kháº£o sÃ¡t
+                    Quản lý khảo sát
                   </span>
                 </a>
               </li>
@@ -2488,7 +2488,7 @@ export const Sidebar = ({
           )}
 
           {/* ========================================================================= */}
-          {/* TOÃ€N Bá»˜ CÃC ÄOáº N COMMENT CÅ¨ GIá»® NGUYÃŠN BÃŠN DÆ¯á»šI (ÄÃƒ FIX Lá»–I /) */}
+          {/* TOÀN BỘ CÁC ĐOẠN COMMENT CŨ GIỮ NGUYÊN BÊN DƯỚI (ĐÃ FIX LỖI /) */}
           {/* ========================================================================= */}
 
           {/* <li className="menu-item">
@@ -2662,4 +2662,3 @@ export const Sidebar = ({
     </aside>
   );
 };
-
