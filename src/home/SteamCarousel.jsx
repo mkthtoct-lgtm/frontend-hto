@@ -136,7 +136,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
           </h2>
           <button
             className="flex items-center gap-1.5 font-semibold transition-colors bg-transparent border-none p-0 cursor-pointer"
-            onClick={(e) => onNavigate && onNavigate(e, "tintuc")}
+            onClick={(e) => onNavigate && onNavigate('tintuc')}
             style={{
               color: isDark ? "#94a3b8" : "#64748b",
               fontSize: "15px",
@@ -179,7 +179,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
                 className={`rounded-2xl overflow-hidden ${isActive ? 'cursor-pointer' : 'cursor-default'}`}
                 onClick={(e) => {
                   if (isActive && onNavigate) {
-                    onNavigate(e, 'tintuc');
+                    onNavigate('tintuc', { articleId: item.id });
                   }
                 }}
               >
@@ -258,7 +258,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
                     </div>
                     <button 
                       className="flex items-center justify-center gap-1 bg-[#0b6fb3] hover:bg-[#074b80] text-white px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all font-semibold text-sm w-full md:w-auto"
-                      onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate(e, 'tintuc'); }}
+                      onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('tintuc', { articleId: item.id }); }}
                     >
                       Đọc tiếp <ChevronRight size={16} />
                     </button>

@@ -1055,6 +1055,7 @@ function App() {
   const publicSurveyMatch = window.location.pathname.match(/^\/survey\/([a-f\d]{24})\/?$/i);
   const [currentPage, setCurrentPage] = useState(() => getStoredPage());
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
+  const [selectedNewsId, setSelectedNewsId] = useState(null);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [supportInitialTab, setSupportInitialTab] = useState("faq");
   const [isLoading, setIsLoading] = useState(true);
@@ -1562,6 +1563,9 @@ function App() {
     setSelectedNotificationId(
       page === "notifications" ? options.notificationId || null : null,
     );
+    setSelectedNewsId(
+      page === "tintuc" ? options.articleId || null : null,
+    );
     if (page === "hotro") {
       setSupportInitialTab(options.activeTab || "faq");
     }
@@ -1982,7 +1986,7 @@ function App() {
         ) : currentPage === "newsEventsManage" ? (
           <NewsEventsManagementPage currentUser={user} />
         ) : currentPage === "tintuc" ? (
-          <NewsEventsPage currentUser={user} />
+          <NewsEventsPage currentUser={user} initialArticleId={selectedNewsId} />
         ) : currentPage === "dashboard" ? (
           <HomePage theme={theme} onNavigate={handleNavigate} currentUser={user} />
         ) : currentPage === "productOverview" || ["sanpham", "duhocduc", "dinhcu", "visa", "daotaongonngu", "banggia"].includes(currentPage) || currentPage.startsWith("product:") ? (
