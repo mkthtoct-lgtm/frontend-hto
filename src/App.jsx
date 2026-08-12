@@ -1496,16 +1496,18 @@ function App() {
   }, [user]);
 
   const handleToggleSidebar = (e) => {
+    e?.preventDefault();
     const togglerBtn = e?.currentTarget;
     togglerBtn?.classList?.toggle("active");
 
-    if (window.innerWidth >= 1191) {
-      const currentValue =
-        document.documentElement.getAttribute("data-app-sidebar");
-      const nextValue = currentValue === "full" ? "mini" : "full";
-      document.documentElement.setAttribute("data-app-sidebar", nextValue);
-      return;
-    }
+    const currentValue = document.documentElement.getAttribute("data-app-sidebar");
+    const nextValue = currentValue === "mini" ? "full" : "mini";
+    
+    // Áp dụng cho cả thẻ HTML và BODY để đảm bảo CSS nhận được
+    document.documentElement.setAttribute("data-app-sidebar", nextValue);
+    document.body.setAttribute("data-app-sidebar", nextValue);
+
+    console.log("Toggled sidebar state to:", nextValue, "Current width:", window.innerWidth);
 
     const menubar = document.getElementById("menubar");
     if (menubar) {
