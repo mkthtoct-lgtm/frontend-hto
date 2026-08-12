@@ -912,7 +912,11 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   z-index: 1000 !important;
 }
 
-/* Sidebar Mini Mode Overrides - Bulletproof */
+/* ============================================================= */
+/* SIDEBAR MINI FIXES - EXACTLY AS REQUESTED                     */
+/* ============================================================= */
+
+/* 1. NARROWER SIDEBAR */
 .app-menubar.sidebar-mini {
   width: 64px !important;
 }
@@ -920,56 +924,69 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   margin-left: 64px !important;
 }
 
+/* 2. FIX LOGO & TOGGLER OVERLAP */
 .app-menubar.sidebar-mini .app-navbar-brand {
+  display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  padding: 10px 0 !important;
+  height: auto !important;
+  padding: 15px 0 20px 0 !important;
   gap: 15px !important;
 }
-.app-menubar.sidebar-mini .navbar-brand-mini,
-.app-menubar.sidebar-mini .menu-label,
-.app-menubar.sidebar-mini .badge,
-.app-menubar.sidebar-mini .menu-inner,
-.app-menubar.sidebar-mini .nav-text {
+.app-menubar.sidebar-mini .navbar-brand-mini span {
   display: none !important;
-  opacity: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
 }
-.app-menubar.sidebar-mini .app-toggler {
+body .app-menubar.sidebar-mini .app-toggler {
   position: static !important;
+  margin: 0 !important;
   transform: rotate(180deg) !important;
-  margin: 0 auto !important;
-}
-.app-menubar.sidebar-mini .menu-heading::before {
-  content: "\f425" !important;
-  font-family: uicons-solid-rounded !important;
-  font-size: 11px !important;
-  color: var(--bs-primary) !important;
-  text-align: center !important;
-  display: block !important;
-}
-.app-menubar.sidebar-mini .menu-item > a {
-  justify-content: center !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-.app-menubar.sidebar-mini .menu-item .menu-icon {
-  margin-right: 0 !important;
-  transform: scale(1.1) !important;
-}
-.app-menubar.sidebar-mini .menu-arrow > .menu-link::after {
-  display: none !important;
 }
 
-/* Ẩn chữ Logo đầy đủ và các mũi tên Dropdown bị sót */
-.app-menubar.sidebar-mini .navbar-brand-full,
-.app-menubar.sidebar-mini .navbar-brand-mini span,
-.app-menubar.sidebar-mini .menu-item span[style*="cursor: pointer"] {
+/* 3. HIDE ALL TEXT & ARROWS COMPLETELY */
+.app-menubar.sidebar-mini .menu-label,
+.app-menubar.sidebar-mini .menu-link > span,
+.app-menubar.sidebar-mini .menu-inner,
+.app-menubar.sidebar-mini .badge,
+.app-menubar.sidebar-mini .nav-text,
+.app-menubar.sidebar-mini .navbar-brand-full {
   display: none !important;
   opacity: 0 !important;
   width: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* 4. ABSOLUTE ICON CENTERING */
+.app-menubar.sidebar-mini .menu-link {
+  padding: 0 !important;
+  margin: 0 auto 8px auto !important;
+  width: 48px !important;
+  height: 48px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+}
+/* Kill the Bootstrap margin on the icon wrapper */
+.app-menubar.sidebar-mini .menu-link > div,
+.app-menubar.sidebar-mini .menu-icon {
+  margin: 0 !important;
+}
+
+/* 5. KILL TAP GHOSTING & WEIRD BORDERS */
+.app-menubar a,
+.app-menubar button,
+.app-menubar .menu-link,
+.app-menubar a:focus,
+.app-menubar button:focus,
+.app-menubar .menu-link:focus,
+.app-menubar a:active,
+.app-menubar button:active,
+.app-menubar .menu-link:active {
+  -webkit-tap-highlight-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Ép nút Toggler hiện hình trên Desktop */
@@ -987,148 +1004,10 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
     height: 30px !important;
     align-items: center !important;
     justify-content: center !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
   }
 }
 
-/* Nâng Sidebar lên trên Header để nút Toggler không bị padding vô hình của Header đè */
+/* Nâng Sidebar lên trên Header */
 .app-menubar {
   z-index: 1005 !important;
-}
-
-/* Fix Ghosting/Shadow and Background spills in Sidebar Mini */
-.app-menubar.sidebar-mini .menu-link,
-.app-menubar.sidebar-mini .menu-link:active,
-.app-menubar.sidebar-mini .menu-link:focus,
-.app-menubar.sidebar-mini .menu-item.active > .menu-link {
-  box-shadow: none !important;
-  outline: none !important;
-  background: transparent !important;
-  width: 48px !important;
-  height: 48px !important;
-  margin: 0 auto 8px auto !important;
-  padding: 0 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  border-radius: 12px !important;
-}
-
-/* Ensure the active background only wraps the icon perfectly (like a square/circle) */
-.app-menubar.sidebar-mini .menu-item.active > .menu-link .menu-icon,
-.app-menubar.sidebar-mini .menu-item.active > .menu-link > div,
-.app-menubar.sidebar-mini .menu-item.active > .menu-link > span {
-  background-color: var(--bs-primary-bg-subtle, #e2f1fb) !important;
-  border-radius: 8px !important;
-  padding: 8px !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Icon Wrapper Alignment Reset */
-.app-menubar.sidebar-mini .menu-icon,
-.app-menubar.sidebar-mini .menu-link > div,
-.app-menubar.sidebar-mini .menu-link > span {
-  margin: 0 !important;
-  margin-right: 0 !important;
-  margin-left: 0 !important;
-  justify-content: center !important;
-}
-
-/* Kill Mobile Tap Ghosting globally */
-.app-menubar a,
-.app-menubar button,
-.menu-link {
-  -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
-}
-
-/* ============================================================= */
-/* FIX TRIỆT ĐỂ BÓNG MỜ KHI BẤM NÚT TOGGLER (<) */
-/* ============================================================= */
-
-/* Đảm bảo nút Toggler giữ nguyên thiết kế ban đầu (tròn, nổi bật) */
-.app-menubar .app-toggler {
-  border: none !important;
-  outline: none !important;
-}
-
-/* KHÓA CHẶT TRẠNG THÁI CLICK/FOCUS ĐỂ KHÔNG BỊ BÓNG MỜ/CHỚP ĐEN */
-.app-menubar .app-toggler:focus,
-.app-menubar .app-toggler:active,
-.app-menubar .app-toggler:focus-visible {
-  outline: none !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important; /* Giữ nguyên bóng lúc thường, không chớp thêm */
-  -webkit-tap-highlight-color: transparent !important;
-}
-
-/* ============================================================= */
-/* AGGRESSIVE SIDEBAR MINI FIXES (64px, Layout, Ghosting) */
-/* ============================================================= */
-
-/* 1. Thu hẹp Sidebar & Wrapper */
-.app-menubar.sidebar-mini {
-  width: 64px !important;
-}
-.app-wrapper.sidebar-mini-active {
-  margin-left: 64px !important;
-}
-
-/* 2. Sửa lỗi Logo đè Nút Toggler */
-.app-menubar.sidebar-mini .app-navbar-brand {
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 15px 0 !important;
-  gap: 15px !important;
-}
-/* Ẩn chữ logo, chỉ để lại icon */
-.app-menubar.sidebar-mini .navbar-brand-mini span,
-.app-menubar.sidebar-mini .navbar-brand-full {
-  display: none !important;
-  opacity: 0 !important;
-  width: 0 !important;
-}
-/* Ép nút Toggler nằm dưới logo, hủy bỏ position absolute của media query phía trên */
-body .app-menubar.sidebar-mini .app-toggler {
-  position: static !important;
-  right: auto !important;
-  top: auto !important;
-  margin: 0 auto !important;
-  transform: rotate(180deg) !important;
-}
-
-/* 3. Căn giữa tuyệt đối Icon Menu (Xóa lệch padding/margin cũ) */
-body .app-menubar.sidebar-mini .menu-link,
-body .app-menubar.sidebar-mini .menu-link:active,
-body .app-menubar.sidebar-mini .menu-link:focus,
-body .app-menubar.sidebar-mini .menu-item.active > .menu-link {
-  padding: 0 !important;
-  margin: 0 auto 8px auto !important;
-  width: 48px !important;
-  height: 48px !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  border-radius: 12px !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-/* Xóa margin thừa của icon wrapper */
-.app-menubar.sidebar-mini .menu-icon,
-.app-menubar.sidebar-mini .menu-link > div,
-.app-menubar.sidebar-mini .menu-link > span {
-  margin: 0 !important;
-  justify-content: center !important;
-}
-
-/* 4. Kill Ghosting & Tap Highlights toàn cục Sidebar */
-.app-menubar a,
-.app-menubar button,
-.app-menubar .menu-link {
-  -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
-  outline: none !important;
 }
