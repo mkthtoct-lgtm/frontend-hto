@@ -959,6 +959,15 @@ body .app-menubar.sidebar-mini .app-toggler {
 .app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
 }
+
+/* Brand Text Colors */
+.brand-name-text {
+  color: #003366; /* Light mode color */
+}
+[data-bs-theme="dark"] .brand-name-text {
+  color: #ffffff; /* Dark mode color */
+}
+
 .app-menubar.sidebar-mini .app-navbar {
   order: 3 !important;
   flex: 1 1 auto !important;

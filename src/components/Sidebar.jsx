@@ -704,10 +704,10 @@ export const Sidebar = ({
           }}
         >
           <span
+            className="brand-name-text"
             style={{
               fontSize: "13px",
               fontWeight: "bold",
-              color: "#003366",
               display: "inline-block",
               lineHeight: "20px",
             }}
