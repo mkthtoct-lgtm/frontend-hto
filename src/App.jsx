@@ -1057,6 +1057,8 @@ function App() {
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [supportInitialTab, setSupportInitialTab] = useState("faq");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarMini, setIsSidebarMini] = useState(false);
   const [user, setUser] = useState(() => getStoredUser());
   const [isNotificationMenuOpen] = useState(false);
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
@@ -1500,14 +1502,7 @@ function App() {
     const togglerBtn = e?.currentTarget;
     togglerBtn?.classList?.toggle("active");
 
-    const currentValue = document.documentElement.getAttribute("data-app-sidebar");
-    const nextValue = currentValue === "mini" ? "full" : "mini";
-    
-    // Áp dụng cho cả thẻ HTML và BODY để đảm bảo CSS nhận được
-    document.documentElement.setAttribute("data-app-sidebar", nextValue);
-    document.body.setAttribute("data-app-sidebar", nextValue);
-
-    console.log("Toggled sidebar state to:", nextValue, "Current width:", window.innerWidth);
+    setIsSidebarMini(prev => !prev);
 
     const menubar = document.getElementById("menubar");
     if (menubar) {
@@ -1519,6 +1514,13 @@ function App() {
       }
     }
   };
+
+  useEffect(() => {
+    const nextValue = isSidebarMini ? "mini" : "full";
+    document.documentElement.setAttribute("data-app-sidebar", nextValue);
+    document.body.setAttribute("data-app-sidebar", nextValue);
+    console.log("State updated sidebar to:", nextValue);
+  }, [isSidebarMini]);
 
   const handleCloseMobileSidebar = useCallback(() => {
     const menubar = document.getElementById("menubar");
