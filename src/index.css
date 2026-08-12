@@ -913,10 +913,10 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 }
 
 /* ============================================================= */
-/* SIDEBAR MINI FIXES - EXACTLY AS REQUESTED                     */
+/* ULTIMATE SIDEBAR MINI FIXES (64px, Layout, Ghosting)          */
 /* ============================================================= */
 
-/* 1. NARROWER SIDEBAR */
+/* 1. NARROW SIDEBAR (64px) */
 .app-menubar.sidebar-mini {
   width: 64px !important;
 }
@@ -924,33 +924,63 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   margin-left: 64px !important;
 }
 
-/* 2. FIX LOGO & TOGGLER OVERLAP */
+/* 2. FIX LOGO & TOGGLER OVERLAP (Using 'order' to swap DOM position) */
 .app-menubar.sidebar-mini .app-navbar-brand {
   display: flex !important;
   flex-direction: column !important;
+  align-items: center !important;
+  padding: 16px 0 !important;
+  gap: 16px !important;
+  height: auto !important;
+}
+.app-menubar.sidebar-mini .navbar-brand-logo {
+  order: 1 !important; /* Force logo to Top */
+  margin: 0 !important;
+}
+body .app-menubar.sidebar-mini .app-toggler {
+  order: 2 !important; /* Force toggler Below logo */
+  position: static !important;
+  margin: 0 !important;
+  transform: rotate(180deg) !important;
+  display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  height: auto !important;
-  padding: 15px 0 20px 0 !important;
-  gap: 15px !important;
-  width: 100% !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-mini span {
   display: none !important;
 }
-body .app-menubar.sidebar-mini .app-toggler {
-  position: static !important;
-  margin: 0 auto !important;
-  transform: rotate(180deg) !important;
-  display: flex !important;
-}
 
-/* 2.5 FIX UL PADDING MISALIGNMENT */
+/* 3. ABSOLUTE ICON CENTERING (Center the parents too) */
 .app-menubar.sidebar-mini .menubar {
   padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important; /* Force list to center */
+}
+.app-menubar.sidebar-mini .menu-item {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin-bottom: 4px !important;
+}
+.app-menubar.sidebar-mini .menu-link {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+}
+/* Kill ALL residual margins (like Bootstrap me-3) inside the link */
+.app-menubar.sidebar-mini .menu-link > div,
+.app-menubar.sidebar-mini .menu-link > svg,
+.app-menubar.sidebar-mini .menu-icon {
+  margin: 0 !important;
 }
 
-/* 3. HIDE ALL TEXT & ARROWS COMPLETELY */
+/* 4. HIDE TEXT & ARROWS */
 .app-menubar.sidebar-mini .menu-label,
 .app-menubar.sidebar-mini .menu-link > span,
 .app-menubar.sidebar-mini .menu-inner,
@@ -964,34 +994,12 @@ body .app-menubar.sidebar-mini .app-toggler {
   overflow: hidden !important;
 }
 
-/* 4. ABSOLUTE ICON CENTERING */
-.app-menubar.sidebar-mini .menu-link {
-  padding: 0 !important;
-  margin: 0 auto 8px auto !important;
-  width: 48px !important;
-  height: 48px !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  border-radius: 12px !important;
-}
-/* Kill the Bootstrap margin on the icon wrapper */
-.app-menubar.sidebar-mini .menu-link > div,
-.app-menubar.sidebar-mini .menu-icon {
-  margin: 0 !important;
-}
-
-/* 5. KILL TAP GHOSTING & WEIRD BORDERS */
-.app-menubar a,
-.app-menubar button,
-.app-menubar .menu-link,
-.app-menubar a:focus,
-.app-menubar button:focus,
-.app-menubar .menu-link:focus,
-.app-menubar a:active,
-.app-menubar button:active,
-.app-menubar .menu-link:active {
+/* 5. KILL MOBILE GHOSTING & WEIRD SHADOWS */
+.app-menubar *,
+.app-menubar.sidebar-mini .menu-link:active,
+.app-menubar.sidebar-mini .menu-link:focus {
   -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
