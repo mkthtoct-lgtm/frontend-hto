@@ -926,34 +926,56 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   margin-left: 64px !important;
 }
 
-/* 2. FIX LOGO & TOGGLER OVERLAP (Using 'order' to swap DOM position) */
+/* 2. FIX LOGO & TOGGLER OVERLAP */
 .app-menubar.sidebar-mini .app-navbar-brand {
-  order: 1 !important; /* Force logo container to Top */
+  order: 1 !important;
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   align-items: center !important;
-  padding: 16px 0 0 0 !important;
-  gap: 16px !important;
+  justify-content: flex-start !important;
+  padding: 16px 4px 16px 12px !important;
   height: auto !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
   margin: 0 !important;
 }
+.app-menubar.sidebar-mini .navbar-brand-logo img {
+  width: 32px !important;
+  height: 32px !important;
+}
 body .app-menubar.sidebar-mini .app-toggler {
-  order: 2 !important; /* Force toggler Below logo container */
-  position: static !important;
-  margin: 16px auto !important; /* Add spacing and center */
+  position: absolute !important;
+  right: 4px !important;
+  top: 18px !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 14px !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
+  transform: none !important; /* Keep as < */
 }
 .app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
 }
 .app-menubar.sidebar-mini .app-navbar {
-  order: 3 !important; /* Force menu to Bottom */
+  order: 3 !important;
   flex: 1 1 auto !important;
   width: 100% !important;
+}
+/* Force Help bar to bottom */
+.app-menubar.sidebar-mini .app-footer {
+  order: 4 !important;
+  width: 100% !important;
+}
+.app-menubar.sidebar-mini .app-footer .nav-text {
+  display: none !important;
+}
+.app-menubar.sidebar-mini .app-footer .btn {
+  padding: 12px 0 !important;
+}
+.app-menubar.sidebar-mini .app-footer .fi-rs-interrogation {
+  margin: 0 !important;
 }
 
 /* 3. ABSOLUTE ICON CENTERING (Center the parents too) */
