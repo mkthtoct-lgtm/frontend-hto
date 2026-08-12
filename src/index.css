@@ -932,28 +932,30 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: center !important; /* Center the logo */
+  justify-content: flex-start !important; /* Logo sang bên trái */
   padding: 16px 0 !important;
   height: auto !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-logo {
   margin: 0 !important;
+  margin-left: 8px !important; /* Căn lề trái cho logo */
 }
 .app-menubar.sidebar-mini .navbar-brand-logo img {
-  width: 32px !important; /* Logo to một chút */
+  width: 32px !important;
   height: 32px !important;
 }
 body .app-menubar.sidebar-mini .app-toggler {
   position: absolute !important;
-  right: -6px !important; /* Push slightly out to make room for centered logo */
-  top: 22px !important; /* Vertically center with the 32px logo */
-  width: 20px !important; /* Nút < nhỏ một chút */
+  right: -10px !important; /* Nút < ra ngoài rìa (một nửa nằm ngoài viền) */
+  top: 22px !important;
+  width: 20px !important;
   height: 20px !important;
   font-size: 10px !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  transform: none !important; /* Keep as < */
+  transform: none !important;
+  z-index: 1050 !important; /* Đảm bảo nút luôn nổi lên trên cùng */
 }
 .app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
