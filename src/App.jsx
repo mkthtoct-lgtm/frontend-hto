@@ -1916,6 +1916,7 @@ function App() {
         onNavigate={handleNavigate}
         currentPage={currentPage}
         onToggleSidebar={handleToggleSidebar}
+        isSidebarMini={isSidebarMini}
       />
 
       {/* Backdrop overlay for mobile menu */}
