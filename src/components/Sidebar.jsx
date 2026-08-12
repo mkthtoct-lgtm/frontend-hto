@@ -843,7 +843,6 @@ export const Sidebar = ({
                     e.preventDefault();
                     e.stopPropagation();
                     setOpenMenu(openMenu === "sanpham" ? "" : "sanpham");
-                    if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                   }}
                 >
                   <svg
@@ -1463,7 +1462,6 @@ export const Sidebar = ({
               onClick={(e) => {
                 e.preventDefault();
                 setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
-                if (isSidebarMini && onToggleSidebar) onToggleSidebar();
               }}
             >
               <div
@@ -1497,7 +1495,6 @@ export const Sidebar = ({
                   e.preventDefault();
                   e.stopPropagation();
                   setOpenMenu(openMenu === "nghiepvu" ? "" : "nghiepvu");
-                  if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                 }}
               >
                 <svg
@@ -1728,7 +1725,6 @@ export const Sidebar = ({
                   e.preventDefault();
                   e.stopPropagation();
                   setOpenMenu(openMenu === "hotro" ? "" : "hotro");
-                  if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                 }}
               >
                 <svg
@@ -1810,7 +1806,6 @@ export const Sidebar = ({
                 e.preventDefault();
                 if (canManageNews) {
                   setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents");
-                  if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                 } else {
                   onNavigate?.("tintuc");
                 }
@@ -1854,7 +1849,6 @@ export const Sidebar = ({
                     e.preventDefault();
                     e.stopPropagation();
                     setOpenMenu(openMenu === "newsEvents" ? "" : "newsEvents");
-                    if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                   }}
                 >
                   <svg
@@ -2039,7 +2033,6 @@ export const Sidebar = ({
                   e.preventDefault();
                   e.stopPropagation();
                   setOpenMenu(openMenu === "documents" ? "" : "documents");
-                  if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                 }}
               >
                 <svg
@@ -2098,7 +2091,6 @@ export const Sidebar = ({
                 onClick={(e) => {
                   e.preventDefault();
                   setOpenMenu(openMenu === "ai" ? "" : "ai");
-                  if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                 }}
               >
                 <div
@@ -2132,7 +2124,6 @@ export const Sidebar = ({
                     e.preventDefault();
                     e.stopPropagation();
                     setOpenMenu(openMenu === "ai" ? "" : "ai");
-                    if (isSidebarMini && onToggleSidebar) onToggleSidebar();
                   }}
                 >
                   <svg
