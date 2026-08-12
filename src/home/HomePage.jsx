@@ -4,6 +4,7 @@ import { fetchNewsPosts } from "../newsEvents/newsEventsApi";
 import { getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { beginLeadSubmission, finishLeadSubmission, markLeadReadyForReconciliation, normalizeLeadPhone } from "../utils/leadSubmission";
+import { SteamCarousel } from "./SteamCarousel";
 
 const fallbackCategories = [
   { id: "cat-du-hoc", name: "Du học nghề Đức" },
@@ -55,6 +56,9 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
   // Dynamic news/events loading state
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [newsList, setNewsList] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [activeNewsTab, setActiveNewsTab] = useState("Tất cả");
 
   // Interactive States
   const [showModal, setShowModal] = useState(false);
@@ -206,14 +210,38 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
             setEvents(defaultMockEvents);
           }
         }
+
+        const newsItems = data.filter(
+          (item) =>
+            String(item.type).toLowerCase() !== "event" &&
+            String(item.postType).toLowerCase() !== "event" &&
+            !item.isEvent
+        );
+        if (newsItems.length > 0) {
+          setNewsList(newsItems.slice(0, 4));
+        } else {
+          setNewsList([
+            { id: "mock-news-1", title: "Cập nhật chính sách Visa du học Đức mới nhất 2026: Những điều cần lưu ý", category: "Visa", date: "2026-08-12", image: "assets/images/banner-second.jpg", summary: "Đại sứ quán Đức vừa công bố các thay đổi mới nhất về yêu cầu chứng minh tài chính và quy trình phỏng vấn APS, áp dụng từ kỳ đông 2026. Tìm hiểu ngay để chuẩn bị hồ sơ tốt nhất." },
+            { id: "mock-news-2", title: "Danh sách học bổng toàn phần các trường Đại học Công lập Đức", category: "Học bổng", date: "2026-08-10", image: "assets/images/hito_2.png", summary: "Tổng hợp các chương trình học bổng trị giá lên đến 100% học phí dành riêng cho sinh viên Việt Nam." },
+            { id: "mock-news-3", title: "Hội thảo hướng dẫn hồ sơ Visa du học nghề Đức", category: "Sự kiện", date: "2026-08-08", image: "assets/images/hito_3.png", summary: "Sự kiện trực tuyến giải đáp mọi thắc mắc về quy trình cấp Visa nghề." },
+            { id: "mock-news-4", title: "Cơ hội nhận bổng trị giá 5.000 EUR từ quỹ HT Ocean", category: "Học bổng", date: "2026-08-05", image: "assets/images/hito_4.png", summary: "Chương trình hỗ trợ tài chính đặc biệt dành cho sinh viên xuất sắc." }
+          ]);
+        }
       } catch (err) {
         console.error("Error loading events for homepage:", err);
         if (active) {
           setEvents(defaultMockEvents);
+          setNewsList([
+            { id: "mock-news-1", title: "Cập nhật chính sách Visa du học Đức mới nhất 2026: Những điều cần lưu ý", category: "Visa", date: "2026-08-12", image: "assets/images/banner-second.jpg", summary: "Đại sứ quán Đức vừa công bố các thay đổi mới nhất về yêu cầu chứng minh tài chính và quy trình phỏng vấn APS, áp dụng từ kỳ đông 2026. Tìm hiểu ngay để chuẩn bị hồ sơ tốt nhất." },
+            { id: "mock-news-2", title: "Danh sách học bổng toàn phần các trường Đại học Công lập Đức", category: "Học bổng", date: "2026-08-10", image: "assets/images/hito_2.png", summary: "Tổng hợp các chương trình học bổng trị giá lên đến 100% học phí dành riêng cho sinh viên Việt Nam." },
+            { id: "mock-news-3", title: "Hội thảo hướng dẫn hồ sơ Visa du học nghề Đức", category: "Sự kiện", date: "2026-08-08", image: "assets/images/hito_3.png", summary: "Sự kiện trực tuyến giải đáp mọi thắc mắc về quy trình cấp Visa nghề." },
+            { id: "mock-news-4", title: "Cơ hội nhận bổng trị giá 5.000 EUR từ quỹ HT Ocean", category: "Học bổng", date: "2026-08-05", image: "assets/images/hito_4.png", summary: "Chương trình hỗ trợ tài chính đặc biệt dành cho sinh viên xuất sắc." }
+          ]);
         }
       } finally {
         if (active) {
           setLoadingEvents(false);
+          setLoadingNews(false);
         }
       }
     };
@@ -592,7 +620,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
   ];
 
   return (
-    <div className="container-fluid pt-3 pb-4 px-2 px-md-3 px-lg-4" style={{ maxWidth: "1600px", overflowX: "hidden" }}>
+    <div className="container-fluid pt-3 pb-4 px-2 px-md-3 px-lg-4" style={{ maxWidth: "1600px" }}>
       {/* Dynamic Style Sheet */}
       <style>{`
         @keyframes fadeInUp {
@@ -844,6 +872,9 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
           </div>
         ))}
       </div>
+
+      {/* 2A. STEAM CAROUSEL (NỔI BẬT & ĐỀ XUẤT) */}
+      <SteamCarousel onNavigate={onNavigate} theme={theme} />
 
       {/* 2B. GIỚI THIỆU HTO GROUP */}
       <div className="row mb-5 g-4 text-start section-about animate-entrance">

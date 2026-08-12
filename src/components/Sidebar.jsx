@@ -124,6 +124,7 @@ export const Sidebar = ({
   onNavigate,
   currentPage,
   onToggleSidebar,
+  isSidebarMini,
 }) => {
   const [openMenu, setOpenMenu] = useState(() =>
     ["tintuc", "newsEventsManage"].includes(currentPage)
@@ -673,7 +674,7 @@ export const Sidebar = ({
   const hasProductDetailPermission = canViewProductDetails(currentUser);
 
   return (
-    <aside className="app-menubar" id="menubar">
+    <aside className={`app-menubar ${isSidebarMini ? "sidebar-mini" : ""}`} id="menubar">
       <button className="app-toggler" type="button" onClick={onToggleSidebar}>
         <i className="fi fi-br-angle-small-left"></i>
       </button>
@@ -703,10 +704,10 @@ export const Sidebar = ({
           }}
         >
           <span
+            className="brand-name-text"
             style={{
               fontSize: "13px",
               fontWeight: "bold",
-              color: "#003366",
               display: "inline-block",
               lineHeight: "20px",
             }}
@@ -2654,7 +2655,14 @@ export const Sidebar = ({
           className="btn btn-outline-light btn-shadow btn-app-nav w-100 d-flex align-items-center justify-content-center bg-transparent border"
           style={{ textDecoration: "none" }}
         >
-          <i className="fi fi-rs-interrogation text-primary me-2"></i>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary me-2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
+            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
+            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
+            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
+          </svg>
           <span className="nav-text">Help and Support</span>
         </button>
       </div>

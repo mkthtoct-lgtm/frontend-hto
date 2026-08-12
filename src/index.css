@@ -911,3 +911,182 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 .app-header {
   z-index: 1000 !important;
 }
+
+/* ============================================================= */
+/* ULTIMATE SIDEBAR MINI FIXES (64px, Layout, Ghosting)          */
+/* ============================================================= */
+
+/* 1. NARROW SIDEBAR (64px) */
+.app-menubar.sidebar-mini {
+  width: 64px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.app-wrapper.sidebar-mini-active {
+  margin-left: 64px !important;
+}
+
+/* 2. FIX LOGO & TOGGLER OVERLAP */
+.app-menubar.sidebar-mini .app-navbar-brand {
+  order: 1 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important; /* Logo sát lề trái */
+  padding: 16px 4px !important; /* Lề trái 4px */
+  height: auto !important;
+}
+.app-menubar.sidebar-mini .navbar-brand-logo {
+  margin: 0 !important;
+}
+.app-menubar.sidebar-mini .navbar-brand-logo img {
+  width: 32px !important;
+  height: 32px !important;
+}
+body .app-menubar.sidebar-mini .app-toggler {
+  position: absolute !important;
+  right: 4px !important; /* Đưa nút < vào hẳn bên trong */
+  top: 22px !important;
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 10px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transform: none !important;
+  z-index: 1050 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+body .app-menubar .app-toggler:focus,
+body .app-menubar .app-toggler:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.app-menubar.sidebar-mini .navbar-brand-mini {
+  display: none !important;
+}
+
+/* Brand Text Colors */
+.brand-name-text {
+  color: #003366; /* Light mode color */
+}
+[data-bs-theme="dark"] .brand-name-text {
+  color: #ffffff; /* Dark mode color */
+}
+
+.app-menubar.sidebar-mini .app-navbar {
+  order: 3 !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+}
+/* Force Help bar to bottom */
+.app-menubar.sidebar-mini .app-footer {
+  order: 4 !important;
+  width: 100% !important;
+}
+.app-menubar.sidebar-mini .app-footer .nav-text {
+  display: none !important;
+}
+.app-menubar.sidebar-mini .app-footer .btn {
+  padding: 12px 0 !important;
+}
+.app-menubar.sidebar-mini .app-footer svg {
+  margin: 0 !important;
+}
+
+/* 3. ABSOLUTE ICON CENTERING (Center the parents too) */
+.app-menubar.sidebar-mini .menubar {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important; /* Force list to center */
+}
+.app-menubar.sidebar-mini .menu-item {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin-bottom: 4px !important;
+}
+.app-menubar.sidebar-mini .menu-link {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 12px !important;
+}
+
+/* Prevent the mobile backdrop from showing up on desktop when toggling sidebar-mini */
+@media (min-width: 1200px) {
+  .sidebar-mobile-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Make toggler color match brand text */
+body .app-menubar .app-toggler {
+  color: #003366 !important;
+}
+[data-bs-theme="dark"] body .app-menubar .app-toggler {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+/* Kill ALL residual margins (like Bootstrap me-3) inside the link */
+.app-menubar.sidebar-mini .menu-link > div,
+.app-menubar.sidebar-mini .menu-link > svg,
+.app-menubar.sidebar-mini .menu-icon {
+  margin: 0 !important;
+}
+
+/* 4. HIDE TEXT & ARROWS */
+.app-menubar.sidebar-mini .menu-label,
+.app-menubar.sidebar-mini .menu-link > span,
+.app-menubar.sidebar-mini .menu-inner,
+.app-menubar.sidebar-mini .badge,
+.app-menubar.sidebar-mini .nav-text,
+.app-menubar.sidebar-mini .navbar-brand-full {
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* 5. KILL MOBILE GHOSTING & WEIRD SHADOWS */
+.app-menubar *,
+.app-menubar.sidebar-mini .menu-link:active,
+.app-menubar.sidebar-mini .menu-link:focus {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ép nút Toggler hiện hình trên Desktop */
+@media (min-width: 992px) {
+  .app-menubar .app-toggler {
+    display: flex !important;
+    position: absolute !important;
+    right: 15px !important;
+    top: 15px !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    background-color: var(--bs-body-bg) !important;
+    border-radius: 50% !important;
+    width: 30px !important;
+    height: 30px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* Nâng Sidebar lên trên Header */
+.app-menubar {
+  z-index: 1005 !important;
+}

@@ -1057,6 +1057,8 @@ function App() {
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [supportInitialTab, setSupportInitialTab] = useState("faq");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarMini, setIsSidebarMini] = useState(false);
   const [user, setUser] = useState(() => getStoredUser());
   const [isNotificationMenuOpen] = useState(false);
   const [authMode, setAuthMode] = useState(() => getAuthModeFromLocation()); // 'login', 'register', 'forgot', 'reset-password'
@@ -1496,16 +1498,11 @@ function App() {
   }, [user]);
 
   const handleToggleSidebar = (e) => {
+    e?.preventDefault();
     const togglerBtn = e?.currentTarget;
     togglerBtn?.classList?.toggle("active");
 
-    if (window.innerWidth >= 1191) {
-      const currentValue =
-        document.documentElement.getAttribute("data-app-sidebar");
-      const nextValue = currentValue === "full" ? "mini" : "full";
-      document.documentElement.setAttribute("data-app-sidebar", nextValue);
-      return;
-    }
+    setIsSidebarMini(prev => !prev);
 
     const menubar = document.getElementById("menubar");
     if (menubar) {
@@ -1517,6 +1514,27 @@ function App() {
       }
     }
   };
+
+  useEffect(() => {
+    const nextValue = isSidebarMini ? "mini" : "full";
+    document.documentElement.setAttribute("data-app-sidebar", nextValue);
+    document.body.setAttribute("data-app-sidebar", nextValue);
+    
+    // Nâng cấp Swagger: Tự động gán data-tooltip cho các menu-link khi thu gọn
+    const menuLinks = document.querySelectorAll(".app-menubar .menu-link");
+    menuLinks.forEach(link => {
+      if (isSidebarMini) {
+        const label = link.querySelector(".nav-text") || link.querySelector("span:not(.menu-icon)");
+        if (label && label.textContent) {
+          link.setAttribute("data-tooltip", label.textContent.trim());
+        }
+      } else {
+        link.removeAttribute("data-tooltip");
+      }
+    });
+
+    console.log("State updated sidebar to:", nextValue);
+  }, [isSidebarMini]);
 
   const handleCloseMobileSidebar = useCallback(() => {
     const menubar = document.getElementById("menubar");
@@ -1880,7 +1898,10 @@ function App() {
   const deptRoute = getDeptRouteInfo();
 
   return (
-    <div className="page-layout bg-body-tertiary d-flex flex-column min-vh-100">
+    <div 
+      className="page-layout bg-body-tertiary d-flex flex-column min-vh-100"
+      data-app-sidebar={isSidebarMini ? "mini" : "full"}
+    >
       <Header
         user={user}
         onNavigate={handleNavigate}
@@ -1895,13 +1916,14 @@ function App() {
         onNavigate={handleNavigate}
         currentPage={currentPage}
         onToggleSidebar={handleToggleSidebar}
+        isSidebarMini={isSidebarMini}
       />
 
       {/* Backdrop overlay for mobile menu */}
       <div className="sidebar-mobile-backdrop" onClick={handleCloseMobileSidebar} />
 
       <main
-        className={`app-wrapper${
+        className={`app-wrapper flex-grow-1 ${isSidebarMini ? "sidebar-mini-active" : ""} ${
           currentPage === "notifications" ? " notifications-wrapper" : ""
         }`}
       >
