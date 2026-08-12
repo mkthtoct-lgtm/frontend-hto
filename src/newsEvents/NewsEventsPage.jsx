@@ -14,11 +14,11 @@ const handleImageFallback = (event) => {
   event.currentTarget.src = DEFAULT_NEWS_IMAGE;
 };
 
-export const NewsEventsPage = () => {
+export const NewsEventsPage = ({ currentUser, initialArticleId }) => {
   const [articles, setArticles] = useState([]);
   const [activeType, setActiveType] = useState("all");
-  const [selectedId, setSelectedId] = useState(null);
-  const [viewMode, setViewMode] = useState("list");
+  const [selectedId, setSelectedId] = useState(initialArticleId || null);
+  const [viewMode, setViewMode] = useState(initialArticleId ? "detail" : "list");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
@@ -40,6 +40,16 @@ export const NewsEventsPage = () => {
   useEffect(() => {
     void Promise.resolve().then(loadArticles);
   }, [loadArticles]);
+
+  useEffect(() => {
+    if (initialArticleId) {
+      setSelectedId(initialArticleId);
+      setViewMode("detail");
+    } else {
+      setSelectedId(null);
+      setViewMode("list");
+    }
+  }, [initialArticleId]);
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();

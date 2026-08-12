@@ -7,74 +7,12 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-// Simulated API Call
-const fetchFeaturedNews = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 'news-1',
-          title: 'Cập nhật chính sách Visa du học Đức mới nhất 2026',
-          category: 'Visa',
-          date: '12/08/2026',
-          slug: '/tin-tuc/visa-duc-2026',
-          tags: ['#Visa', '#DuHocDuc', '#ChinhSachMoi'],
-          mainImage: 'assets/images/banner-second.jpg',
-          gallery: [
-            'assets/images/hito_2.png',
-            'assets/images/hito_3.png',
-            'assets/images/hito_4.png',
-            'assets/images/Artboard1.png'
-          ]
-        },
-        {
-          id: 'news-2',
-          title: 'Danh sách học bổng toàn phần các trường Đại học Công lập Đức',
-          category: 'Học bổng',
-          date: '10/08/2026',
-          slug: '/tin-tuc/hoc-bong-toan-phan',
-          tags: ['#HocBong', '#DaiHocCongLap', '#HTO'],
-          mainImage: 'assets/images/hito_2.png',
-          gallery: [
-            'assets/images/banner-second.jpg',
-            'assets/images/hito_3.png',
-            'assets/images/hito_4.png',
-            'assets/images/Artboard1.png'
-          ]
-        },
-        {
-          id: 'news-3',
-          title: 'Hội thảo hướng dẫn hồ sơ Visa du học nghề Đức',
-          category: 'Sự kiện',
-          date: '08/08/2026',
-          slug: '/su-kien/hoi-thao-visa-nghe',
-          tags: ['#SuKien', '#VisaNghe', '#HoiThao'],
-          mainImage: 'assets/images/hito_3.png',
-          gallery: [
-            'assets/images/hito_2.png',
-            'assets/images/banner-second.jpg',
-            'assets/images/hito_4.png',
-            'assets/images/Artboard1.png'
-          ]
-        },
-        {
-          id: 'news-4',
-          title: 'Cơ hội nhận bổng trị giá 5.000 EUR từ quỹ HT Ocean',
-          category: 'Học bổng',
-          date: '05/08/2026',
-          slug: '/tin-tuc/hoc-bong-hto',
-          tags: ['#HocBong', '#HoTro', '#HTOGroup'],
-          mainImage: 'assets/images/hito_4.png',
-          gallery: [
-            'assets/images/hito_3.png',
-            'assets/images/hito_2.png',
-            'assets/images/banner-second.jpg',
-            'assets/images/Artboard1.png'
-          ]
-        }
-      ]);
-    }, 1500); // simulate network latency
-  });
+import { fetchNewsPosts } from '../newsEvents/newsEventsApi';
+
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr || "-";
+  return date.toLocaleDateString("vi-VN");
 };
 
 export const SteamCarousel = ({ onNavigate, theme }) => {
@@ -87,9 +25,25 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
     const loadNews = async () => {
       setLoading(true);
       try {
-        const data = await fetchFeaturedNews();
+        const data = await fetchNewsPosts();
         if (mounted) {
-          setNews(data);
+          // Format data to match carousel structure
+          const formattedData = data.slice(0, 5).map((article) => ({
+            id: article.id,
+            title: article.title,
+            category: article.category || 'Tin tức',
+            date: formatDate(article.date),
+            slug: `/tin-tuc/${article.id}`,
+            tags: ['#TinTuc', '#HTO'], // Default tags since API doesn't return them
+            mainImage: article.image || 'assets/images/banner-second.jpg',
+            gallery: [
+              article.image || 'assets/images/hito_2.png',
+              'assets/images/hito_3.png',
+              'assets/images/hito_4.png',
+              'assets/images/Artboard1.png'
+            ]
+          }));
+          setNews(formattedData);
         }
       } catch (error) {
         console.error('Failed to fetch featured news:', error);
@@ -182,7 +136,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
           </h2>
           <button
             className="flex items-center gap-1.5 font-semibold transition-colors bg-transparent border-none p-0 cursor-pointer"
-            onClick={(e) => onNavigate && onNavigate(e, "tintuc")}
+            onClick={(e) => onNavigate && onNavigate('tintuc')}
             style={{
               color: isDark ? "#94a3b8" : "#64748b",
               fontSize: "15px",
@@ -225,7 +179,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
                 className={`rounded-2xl overflow-hidden ${isActive ? 'cursor-pointer' : 'cursor-default'}`}
                 onClick={(e) => {
                   if (isActive && onNavigate) {
-                    onNavigate(e, 'tintuc');
+                    onNavigate('tintuc', { articleId: item.id });
                   }
                 }}
               >
@@ -304,7 +258,7 @@ export const SteamCarousel = ({ onNavigate, theme }) => {
                     </div>
                     <button 
                       className="flex items-center justify-center gap-1 bg-[#0b6fb3] hover:bg-[#074b80] text-white px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all font-semibold text-sm w-full md:w-auto"
-                      onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate(e, 'tintuc'); }}
+                      onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('tintuc', { articleId: item.id }); }}
                     >
                       Đọc tiếp <ChevronRight size={16} />
                     </button>
