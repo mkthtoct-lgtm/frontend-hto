@@ -955,6 +955,14 @@ body .app-menubar.sidebar-mini .app-toggler {
   align-items: center !important;
   transform: none !important;
   z-index: 1050 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+body .app-menubar .app-toggler:focus,
+body .app-menubar .app-toggler:active {
+  outline: none !important;
+  box-shadow: none !important;
 }
 .app-menubar.sidebar-mini .navbar-brand-mini {
   display: none !important;
