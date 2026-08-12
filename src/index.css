@@ -990,6 +990,8 @@ html.mobile-sidebar-open .sidebar-mobile-backdrop {
 .app-menubar.sidebar-mini .app-toggler {
   right: -15px !important;
 }
-. a p p - m e n u b a r  
-   z - i n d e x :   1 0 0 5   ! i m p o r t a n t ;    
- 
+
+/* Nâng Sidebar lên trên Header để nút Toggler không bị padding vô hình của Header đè */
+.app-menubar {
+  z-index: 1005 !important;
+}
