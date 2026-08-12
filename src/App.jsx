@@ -1519,6 +1519,20 @@ function App() {
     const nextValue = isSidebarMini ? "mini" : "full";
     document.documentElement.setAttribute("data-app-sidebar", nextValue);
     document.body.setAttribute("data-app-sidebar", nextValue);
+    
+    // Nâng cấp Swagger: Tự động gán data-tooltip cho các menu-link khi thu gọn
+    const menuLinks = document.querySelectorAll(".app-menubar .menu-link");
+    menuLinks.forEach(link => {
+      if (isSidebarMini) {
+        const label = link.querySelector(".nav-text") || link.querySelector("span:not(.menu-icon)");
+        if (label && label.textContent) {
+          link.setAttribute("data-tooltip", label.textContent.trim());
+        }
+      } else {
+        link.removeAttribute("data-tooltip");
+      }
+    });
+
     console.log("State updated sidebar to:", nextValue);
   }, [isSidebarMini]);
 
