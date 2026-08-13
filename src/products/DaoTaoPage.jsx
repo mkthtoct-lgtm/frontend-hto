@@ -28,7 +28,8 @@ export function DaoTaoPage({ onNavigate }) {
       const res = await authFetch(`${API_BASE_URL}/products?limit=100`);
       if (res.ok) {
         const data = await res.json();
-        const allProducts = data.data.products || [];
+        // Handle both possible backend structures to be safe
+        const allProducts = data?.data?.products || data?.data || data?.products || data || [];
         const trainingCourses = allProducts.filter(p => p.purpose === 'dao_tao');
         setCourses(trainingCourses);
       }
@@ -50,13 +51,31 @@ export function DaoTaoPage({ onNavigate }) {
 
   const formatCurrency = (amount) => {
     if (!amount) return "Đang cập nhật...";
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    // Safely parse to number to avoid RangeError in Intl.NumberFormat
+    const num = Number(amount);
+    if (isNaN(num)) return amount;
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
   };
+
+  const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
   const getImageUrl = (url) => {
     if (!url) return "https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=500&q=80";
+    
+    // Fix existing Google Drive URLs (from /view)
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)\/view/);
+    if (driveMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
+    }
+    
+    // Migrate old uc?export=view URLs to thumbnail API to bypass CORP restrictions
+    const driveUcMatch = url.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
+    if (driveUcMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveUcMatch[1]}&sz=w1000`;
+    }
+    
     if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) return url;
-    return `${API_BASE_URL}${url}`;
+    return `${STATIC_BASE_URL}${url}`;
   };
 
   // --- ADMIN FUNCTIONS ---
@@ -108,10 +127,17 @@ export function DaoTaoPage({ onNavigate }) {
       let newCourse = null;
       if (editData) {
         const res = await authFetch(`${API_BASE_URL}/products/${editData._id}`, {
-          method: "PUT",
+          method: "PATCH",
           body: data
         });
-        const json = await res.json();
+        
+        let json;
+        try {
+          json = await res.json();
+        } catch (parseError) {
+          throw new Error(`Lỗi từ máy chủ: Không thể đọc phản hồi (Status ${res.status}).`);
+        }
+
         if (res.ok) {
            newCourse = json.data || json;
            alert("Cập nhật thành công!");
@@ -123,7 +149,14 @@ export function DaoTaoPage({ onNavigate }) {
           method: "POST",
           body: data
         });
-        const json = await res.json();
+        
+        let json;
+        try {
+          json = await res.json();
+        } catch (parseError) {
+          throw new Error(`Lỗi từ máy chủ: Không thể đọc phản hồi (Status ${res.status}). Vui lòng kiểm tra lại cấu hình API_BASE_URL.`);
+        }
+
         if (res.ok) {
            newCourse = json.data || json;
            alert("Thêm mới khóa học thành công!");
@@ -151,14 +184,20 @@ export function DaoTaoPage({ onNavigate }) {
     e.stopPropagation();
     if (window.confirm("Bạn có chắc chắn muốn xóa khóa học này?")) {
       try {
-        await authFetch(`${API_BASE_URL}/api/v1/products/${id}`, {
+        const res = await authFetch(`${API_BASE_URL}/products/${id}`, {
           method: "DELETE"
         });
+        
+        if (!res.ok) {
+           const errText = await res.text();
+           throw new Error(`Lỗi máy chủ (Status: ${res.status}): ${errText}`);
+        }
+
         alert("Đã xóa khóa học!");
         fetchCourses();
       } catch (err) {
         console.error(err);
-        alert("Có lỗi xảy ra khi xóa.");
+        alert("Có lỗi xảy ra khi xóa: " + err.message);
       }
     }
   };
@@ -231,7 +270,7 @@ export function DaoTaoPage({ onNavigate }) {
           <p className="text-muted small">Hãy bấm "Thêm Khóa Học" để tạo mới.</p>
         </div>
       ) : (
-        <div className="row g-4">
+        <div id="daotao-courses-grid" className="row g-4">
           {courses.map(course => (
             <div className="col-12 col-md-6 col-xl-4" key={course._id}>
               <div 
@@ -357,26 +396,11 @@ export function DaoTaoPage({ onNavigate }) {
             className="position-fixed top-50 start-50 translate-middle w-100"
             style={{ maxWidth: "500px", zIndex: 1050, padding: "0 15px" }}
           >
-            <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-              <div className="card-header bg-primary text-white p-4 border-0 d-flex justify-content-between align-items-center">
-                <h5 className="mb-0 fw-bold">Đăng Ký Tư Vấn Khóa Học</h5>
-                <button 
-                  type="button" 
-                  className="btn-close btn-close-white" 
-                  onClick={() => setIsModalOpen(false)}
-                />
-              </div>
-              <div className="card-body p-4">
-                <div className="alert alert-primary mb-4 border-0 bg-primary-subtle rounded-3">
-                  <strong className="d-block mb-1">Khóa học đang chọn:</strong>
-                  <div className="text-primary fw-bold">{selectedCourse.name}</div>
-                </div>
-                
-                <CourseConsultationForm 
-                  courseId={selectedCourse._id} 
-                  onCloseModal={() => setIsModalOpen(false)} 
-                />
-              </div>
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden bg-body">
+              <CourseConsultationForm 
+                course={selectedCourse} 
+                onCloseModal={() => setIsModalOpen(false)} 
+              />
             </div>
           </div>
         </>

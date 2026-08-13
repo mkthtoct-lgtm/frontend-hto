@@ -73,15 +73,24 @@ export const MediaRepositoryPage = () => {
     setSelectedMedia(null);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
-  
   const getImageUrl = (url) => {
-    if (!url) return "";
-    if (url.startsWith('http')) return url;
+    if (!url) return '';
+    
+    // Fix existing Google Drive URLs (from /view)
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)\/view/);
+    if (driveMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w1000`;
+    }
+
+    // Migrate old uc?export=view URLs to thumbnail API to bypass CORP restrictions
+    const driveUcMatch = url.match(/drive\.google\.com\/uc\?export=view&id=([^&]+)/);
+    if (driveUcMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveUcMatch[1]}&sz=w1000`;
+    }
+    
+    if (url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:')) {
+      return url;
+    }
     return `${API_BASE_URL}${url}`;
   };
 

@@ -40,6 +40,7 @@ import { SystemSettingsPage } from "./systemSettings/SystemSettingsPage";
 import { SchoolSearchPage } from "./components/SchoolSearchPage";
 import { SurveyManagementPage } from "./SurveyManagement/SurveyManagementPage";
 import { PublicSurveyPage } from "./SurveyManagement/PublicSurveyPage";
+import { CrmLeadsPage } from "./crm/CrmLeadsPage";
 import { API_BASE_URL } from "./config/api";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
@@ -832,6 +833,7 @@ export const getPageTourKey = (page) => {
     productManagement: "productManagement",
     daotao: "trainingAndOnline",
     nophosoonline: "trainingAndOnline",
+    crmLeads: "crmLeads",
   };
   return MAP[page] || null;
 };
@@ -2003,6 +2005,8 @@ function App() {
           <DaoTaoPage onNavigate={handleNavigate} />
         ) : currentPage === "media-repository" ? (
           <MediaRepositoryPage />
+        ) : currentPage === "crmLeads" ? (
+          <CrmLeadsPage currentUser={user} theme={theme} />
         ) : (
           <div className="container-fluid pt-3 pb-1" style={{ maxWidth: "1600px" }}>
             {/* --- ROW 1: BANNER --- */}
