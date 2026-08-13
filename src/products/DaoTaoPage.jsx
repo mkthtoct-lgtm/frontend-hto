@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch } from '../auth/session';
 import { API_BASE_URL } from '../config/api';
+import CourseConsultationForm from './CourseConsultationForm';
 
 export function DaoTaoPage({ onNavigate }) {
   const [courses, setCourses] = useState([]);
@@ -381,23 +382,10 @@ export function DaoTaoPage({ onNavigate }) {
                   <div className="text-primary fw-bold">{selectedCourse.name}</div>
                 </div>
                 
-                <form onSubmit={(e) => { e.preventDefault(); alert("Đã gửi đăng ký thành công!"); setIsModalOpen(false); }}>
-                  <div className="mb-3">
-                    <label className="form-label fw-medium text-body-emphasis">Họ và tên <span className="text-danger">*</span></label>
-                    <input type="text" className="form-control form-control-lg bg-body text-body-emphasis" required placeholder="Nhập họ tên của bạn" />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label fw-medium text-body-emphasis">Số điện thoại <span className="text-danger">*</span></label>
-                    <input type="tel" className="form-control form-control-lg bg-body text-body-emphasis" required placeholder="Nhập số điện thoại" />
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label fw-medium text-body-emphasis">Ghi chú thêm</label>
-                    <textarea className="form-control bg-body text-body-emphasis" rows="3" placeholder="Ví dụ: Mong muốn học buổi tối..." />
-                  </div>
-                  <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold shadow-sm rounded-3">
-                    Gửi Yêu Cầu Tư Vấn
-                  </button>
-                </form>
+                <CourseConsultationForm 
+                  courseId={selectedCourse._id} 
+                  onCloseModal={() => setIsModalOpen(false)} 
+                />
               </div>
             </div>
           </div>
