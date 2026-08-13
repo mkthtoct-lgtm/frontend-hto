@@ -111,35 +111,25 @@ export function DaoTaoPage({ onNavigate }) {
           method: "PUT",
           body: data
         });
+        const json = await res.json();
         if (res.ok) {
-           const json = await res.json();
            newCourse = json.data || json;
+           alert("Cập nhật thành công!");
+        } else {
+           throw new Error(json.message || "Lỗi cập nhật khóa học từ máy chủ");
         }
-        alert("Cập nhật thành công!");
       } else {
         const res = await authFetch(`${API_BASE_URL}/api/v1/products`, {
           method: "POST",
           body: data
         });
+        const json = await res.json();
         if (res.ok) {
-           const json = await res.json();
            newCourse = json.data || json;
+           alert("Thêm mới khóa học thành công!");
+        } else {
+           throw new Error(json.message || "Lỗi thêm khóa học từ máy chủ");
         }
-        alert("Thêm mới khóa học thành công!");
-      }
-
-      // Fallback local state update
-      if (!newCourse || !newCourse._id) {
-         newCourse = {
-            _id: editData ? editData._id : `temp-${Date.now()}`,
-            name: formData.name,
-            description: formData.description,
-            purpose: "dao_tao",
-            visaCode: formData.target,
-            shortCode: formData.duration,
-            serviceFee: formData.fee,
-            image: formData.image ? URL.createObjectURL(formData.image) : null,
-         };
       }
 
       setCourses(prev => {
