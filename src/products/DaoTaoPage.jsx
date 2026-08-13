@@ -25,7 +25,7 @@ export function DaoTaoPage({ onNavigate }) {
     try {
       setLoading(true);
       // Giả định dùng trường purpose = 'dao_tao' để phân biệt khóa học
-      const res = await authFetch(`${API_BASE_URL}/api/v1/products?limit=100`);
+      const res = await authFetch(`${API_BASE_URL}/products?limit=100`);
       if (res.ok) {
         const data = await res.json();
         const allProducts = data.data.products || [];
@@ -107,7 +107,7 @@ export function DaoTaoPage({ onNavigate }) {
     try {
       let newCourse = null;
       if (editData) {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/products/${editData._id}`, {
+        const res = await authFetch(`${API_BASE_URL}/products/${editData._id}`, {
           method: "PUT",
           body: data
         });
@@ -119,7 +119,7 @@ export function DaoTaoPage({ onNavigate }) {
            throw new Error(json.message || "Lỗi cập nhật khóa học từ máy chủ");
         }
       } else {
-        const res = await authFetch(`${API_BASE_URL}/api/v1/products`, {
+        const res = await authFetch(`${API_BASE_URL}/products`, {
           method: "POST",
           body: data
         });
