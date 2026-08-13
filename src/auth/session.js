@@ -33,8 +33,9 @@ export const expireStoredSession = () => {
   }, 0);
 };
 
-export const authFetch = async (input, init) => {
-  const response = await fetch(input, init);
+export const authFetch = async (input, init = {}) => {
+  const headers = { ...getAuthHeaders(), ...init.headers };
+  const response = await fetch(input, { ...init, headers });
 
   if (response.status === 401) {
     expireStoredSession();
