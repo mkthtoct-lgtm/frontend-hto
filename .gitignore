@@ -25,3 +25,7 @@ ProductOverviewDemo.local.jsx
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Variables
+.env
+.env.*
