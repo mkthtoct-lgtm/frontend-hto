@@ -33,7 +33,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
   const [proofNote, setProofNote] = useState('');
   const [proofFile, setProofFile] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
-  
+
   // Reassign Modal State
   const [showReassignModal, setShowReassignModal] = useState(false);
   const [reassignActionType, setReassignActionType] = useState('RELEASE');
@@ -75,14 +75,14 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
       const formData = new FormData();
       formData.append('proofFile', proofFile);
       if (proofNote) formData.append('note', proofNote);
-      
+
       const res = await authFetch(`${API_BASE_URL}/course-leads/${localLead._id}/submit-proof`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: formData
       });
       const result = await res.json();
-      
+
       if (res.ok && result.success) {
         setLocalLead(result.data);
         onRefresh();
@@ -108,7 +108,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
     const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
     return permissions.includes("*") || permissions.includes(requiredPermission);
   };
-  
+
   const canArchive = hasPermission(currentUser, 'crm.course_leads.archive');
   const canRestore = hasPermission(currentUser, 'crm.course_leads.restore');
   const canDelete = hasPermission(currentUser, 'crm.course_leads.permanent_delete');
@@ -128,7 +128,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
       else if (action === 'PROCESS') endpoint = 'process';
       else if (action === 'APPROVE') endpoint = 'approve';
       else if (action === 'REJECT') endpoint = 'reject';
-      
+
       const res = await authFetch(`${API_BASE_URL}/course-leads/${localLead._id}/${endpoint}`, {
         method: 'PATCH',
         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
@@ -150,15 +150,15 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
         }
       } else {
         if (res.status === 403) {
-           Swal.fire('Từ chối truy cập', 'Bạn không có quyền thao tác.', 'error');
+          Swal.fire('Từ chối truy cập', 'Bạn không có quyền thao tác.', 'error');
         } else if (res.status === 404) {
-           Swal.fire('Lỗi', 'Không tìm thấy Lead.', 'error');
+          Swal.fire('Lỗi', 'Không tìm thấy Lead.', 'error');
         } else if (res.status === 409) {
-           Swal.fire('Không thể thực hiện', result.message || 'Trạng thái không hợp lệ', 'warning');
+          Swal.fire('Không thể thực hiện', result.message || 'Trạng thái không hợp lệ', 'warning');
         } else if (res.status === 500) {
-           Swal.fire('Lỗi', 'Lỗi máy chủ.', 'error');
+          Swal.fire('Lỗi', 'Lỗi máy chủ.', 'error');
         } else {
-           Swal.fire('Lỗi', result.message || 'Có lỗi xảy ra', 'error');
+          Swal.fire('Lỗi', result.message || 'Có lỗi xảy ra', 'error');
         }
       }
     } catch (err) {
@@ -172,7 +172,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
     setReassignActionType('RELEASE');
     setSelectedSaleId('');
     setReassignReason('');
-    
+
     // Fetch eligible sales
     setLoadingSales(true);
     try {
@@ -204,7 +204,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
     });
 
     if (!reason) return;
-    
+
     setSubmitting(true);
     try {
       const res = await authFetch(`${API_BASE_URL}/course-leads/${localLead._id}/archive`, {
@@ -233,9 +233,9 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
       confirmButtonText: 'Khôi phục',
       cancelButtonText: 'Hủy'
     });
-    
+
     if (!confirm.isConfirmed) return;
-    
+
     setSubmitting(true);
     try {
       const res = await authFetch(`${API_BASE_URL}/course-leads/${localLead._id}/restore`, {
@@ -264,9 +264,9 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
       confirmButtonText: 'Xoá vĩnh viễn',
       cancelButtonText: 'Hủy'
     });
-    
+
     if (!step1.isConfirmed) return;
-    
+
     let force = false;
     if (localLead.status === 'COMPLETED' && localLead.proofStatus === 'APPROVED') {
       const step2 = await Swal.fire({
@@ -329,7 +329,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
       <style>{modalStyles}</style>
       <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '12px', overflow: 'hidden' }}>
-          
+
           {/* HEADER (Sticky) */}
           <div className="modal-header bg-body-tertiary border-bottom d-flex flex-column align-items-start z-1">
             <div className="w-100 d-flex justify-content-between align-items-center mb-1">
@@ -343,7 +343,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
 
           {/* BODY (Scrollable) */}
           <div className="modal-body p-4 bg-body" style={{ overflowY: 'auto' }}>
-            
+
             <div className="row g-4">
               {/* CUSTOMER INFORMATION */}
               <div className="col-12 col-md-6 d-flex flex-column">
@@ -357,7 +357,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                       <div className="fw-bold text-body-emphasis" style={{ fontSize: '15px' }}>{localLead.customerName}</div>
                     </div>
                     <div className="mb-3">
-                      <div className="text-body-secondary mb-1" style={{ fontSize: '12px' }}>Số điện thoại:</div>
+                      <div className="text-body-secondary mb-1" style={{ fontSize: '12px' }}>Số Điện Thoại:</div>
                       <div className="fw-medium text-body-emphasis" style={{ fontSize: '14px' }}>{localLead.phoneNumber}</div>
                     </div>
                     <div className="mb-3">
@@ -408,7 +408,7 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                             </div>
                           </div>
                           <div className="mb-2">
-                            <div className="text-body-secondary mb-1" style={{ fontSize: '12px' }}>SĐT:</div>
+                            <div className="text-body-secondary mb-1" style={{ fontSize: '12px' }}>Số Điện Thoại:</div>
                             <div className="fw-medium text-body-emphasis" style={{ fontSize: '14px' }}>
                               {localLead.assignedTo.phone || 'Chưa cập nhật'}
                             </div>
@@ -439,24 +439,24 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                         {localLead.history.map((h, i) => (
                           <div key={h._id || i} className="timeline-item mb-4 position-relative ps-4">
                             <span className="position-absolute bg-primary rounded-circle" style={{ width: '12px', height: '12px', left: '-7px', top: '4px', border: '2px solid var(--bs-body-bg)' }}></span>
-                            
+
                             <div className="d-flex flex-wrap align-items-baseline mb-1">
                               <span className="fw-bold text-body-emphasis me-2" style={{ fontSize: '14px' }}>
-                                {(h.toStatus === 'NEW' && (h.fromStatus === 'ASSIGNED' || h.fromStatus === 'PROCESSING')) ? 'Trả Lead' : 
-                                 (h.toStatus === 'ASSIGNED' && h.fromStatus === 'NEW') ? 'Nhận Lead' :
-                                 (h.toStatus === 'ASSIGNED' && (h.fromStatus === 'ASSIGNED' || h.fromStatus === 'PROCESSING')) ? 'Chuyển Lead' : 
-                                 h.toStatus === 'PROCESSING' ? 'Bắt đầu tư vấn' : 
-                                 h.toStatus === 'COMPLETED_PENDING_PROOF' ? 'Gửi minh chứng' : 'Cập nhật'}
+                                {(h.toStatus === 'NEW' && (h.fromStatus === 'ASSIGNED' || h.fromStatus === 'PROCESSING')) ? 'Trả Lead' :
+                                  (h.toStatus === 'ASSIGNED' && h.fromStatus === 'NEW') ? 'Nhận Lead' :
+                                    (h.toStatus === 'ASSIGNED' && (h.fromStatus === 'ASSIGNED' || h.fromStatus === 'PROCESSING')) ? 'Chuyển Lead' :
+                                      h.toStatus === 'PROCESSING' ? 'Bắt đầu tư vấn' :
+                                        h.toStatus === 'COMPLETED_PENDING_PROOF' ? 'Gửi minh chứng' : 'Cập nhật'}
                               </span>
                               <span className="text-body-secondary" style={{ fontSize: '12px' }}>
                                 ● {new Date(h.createdAt).toLocaleString('vi-VN')}
                               </span>
                             </div>
-                            
+
                             <div className="text-primary mb-1" style={{ fontSize: '13px', fontWeight: '500' }}>
                               {h.changedBy?.fullName || h.changedBy?.email || 'Hệ thống'}
                             </div>
-                            
+
                             {h.reason && (
                               <div className="mt-2 p-2 bg-body rounded text-body-secondary border" style={{ fontSize: '13px' }}>
                                 <strong>Lý do: </strong>{h.reason}
@@ -483,14 +483,14 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                   </h6>
                   <div className="card border-0 bg-body-tertiary shadow-sm" style={{ borderRadius: '10px' }}>
                     <div className="card-body p-4">
-                      
+
                       {/* Trạng thái duyệt KPI */}
                       <div className="mb-3 d-flex align-items-center">
                         <span className="me-2 text-body-secondary" style={{ fontSize: '13px' }}>Trạng thái KPI:</span>
                         {localLead.proofStatus === 'APPROVED' ? <span className="badge bg-success">Đã duyệt</span> :
-                         localLead.proofStatus === 'REJECTED' ? <span className="badge bg-danger">Từ chối</span> :
-                         localLead.proofStatus === 'PENDING' ? <span className="badge bg-warning text-dark">Chờ duyệt</span> :
-                         <span className="badge bg-secondary">Chưa nộp</span>}
+                          localLead.proofStatus === 'REJECTED' ? <span className="badge bg-danger">Từ chối</span> :
+                            localLead.proofStatus === 'PENDING' ? <span className="badge bg-warning text-dark">Chờ duyệt</span> :
+                              <span className="badge bg-secondary">Chưa nộp</span>}
                       </div>
 
                       {/* Hiển thị link đã nộp nếu có */}
@@ -513,26 +513,26 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                           <p className="fw-bold text-body-emphasis mb-2" style={{ fontSize: '14px' }}>Nộp / Cập nhật minh chứng mới</p>
                           <div className="row g-2">
                             <div className="col-12 col-md-6">
-                              <input 
-                                type="file" 
-                                className="form-control form-control-sm" 
+                              <input
+                                type="file"
+                                className="form-control form-control-sm"
                                 accept="image/jpeg, image/png, image/webp"
-                                onChange={e => setProofFile(e.target.files[0])} 
+                                onChange={e => setProofFile(e.target.files[0])}
                               />
                             </div>
                             <div className="col-12 col-md-6">
-                              <input 
+                              <input
                                 type="text"
-                                className="form-control form-control-sm" 
-                                placeholder="Ghi chú minh chứng (Số tiền đã cọc, tình trạng...)" 
-                                value={proofNote} 
-                                onChange={e => setProofNote(e.target.value)} 
+                                className="form-control form-control-sm"
+                                placeholder="Ghi chú minh chứng (Số tiền đã cọc, tình trạng...)"
+                                value={proofNote}
+                                onChange={e => setProofNote(e.target.value)}
                               />
                             </div>
                             <div className="col-12">
-                              <button 
-                                className="btn btn-success btn-sm fw-medium" 
-                                disabled={submitting || !proofFile} 
+                              <button
+                                className="btn btn-success btn-sm fw-medium"
+                                disabled={submitting || !proofFile}
                                 onClick={handleSubmitProof}
                               >
                                 <i className="fa fa-upload me-1"></i> Nộp minh chứng
@@ -548,25 +548,25 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                           <p className="fw-bold text-body-emphasis mb-2" style={{ fontSize: '14px' }}>Quản lý (Leader) duyệt KPI</p>
                           <div className="row g-2 align-items-center">
                             <div className="col-12 col-md-8">
-                              <input 
-                                type="text" 
-                                className="form-control form-control-sm" 
-                                placeholder="Lý do từ chối (nếu có)" 
-                                value={rejectReason} 
-                                onChange={e => setRejectReason(e.target.value)} 
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Lý do từ chối (nếu có)"
+                                value={rejectReason}
+                                onChange={e => setRejectReason(e.target.value)}
                               />
                             </div>
                             <div className="col-12 col-md-4 d-flex justify-content-end gap-2">
-                              <button 
-                                className="btn btn-danger btn-sm fw-medium" 
-                                disabled={submitting || !rejectReason} 
+                              <button
+                                className="btn btn-danger btn-sm fw-medium"
+                                disabled={submitting || !rejectReason}
                                 onClick={() => handleAction('REJECT', { note: rejectReason })}
                               >
                                 Từ chối
                               </button>
-                              <button 
-                                className="btn btn-success btn-sm fw-medium" 
-                                disabled={submitting} 
+                              <button
+                                className="btn btn-success btn-sm fw-medium"
+                                disabled={submitting}
                                 onClick={() => handleAction('APPROVE', { note: 'Leader duyệt KPI' })}
                               >
                                 Duyệt KPI
@@ -582,22 +582,22 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
               )}
             </div>
           </div>
-          
+
           {/* ACTION FOOTER */}
           <div className="modal-footer bg-body-tertiary border-top d-flex flex-wrap flex-lg-nowrap justify-content-between align-items-center py-3 gap-2" style={{ borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-            
+
             {/* Administrative Actions */}
             <div className="d-flex flex-wrap flex-lg-nowrap gap-2">
               <button type="button" className="btn btn-secondary fw-medium border px-3" onClick={onClose} disabled={submitting}>
                 Đóng
               </button>
-              
+
               {!localLead.isArchived && canArchive && (
                 <button type="button" className="btn btn-outline-secondary fw-medium" onClick={handleArchive} disabled={submitting}>
                   🗄 Lưu trữ
                 </button>
               )}
-              
+
               {localLead.isArchived && canRestore && (
                 <button type="button" className="btn btn-outline-success fw-medium" onClick={handleRestore} disabled={submitting}>
                   <i className="fa fa-undo me-1"></i> Khôi phục
@@ -610,13 +610,13 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                 </button>
               )}
             </div>
-            
+
             {/* Workflow Actions */}
             <div className="d-flex flex-wrap flex-lg-nowrap gap-2">
               {localLead.status === 'NEW' && canAssign && (
-                <button 
-                  className="btn btn-primary btn-workflow fw-medium px-4 shadow-sm d-inline-flex align-items-center" 
-                  disabled={submitting} 
+                <button
+                  className="btn btn-primary btn-workflow fw-medium px-4 shadow-sm d-inline-flex align-items-center"
+                  disabled={submitting}
                   onClick={() => handleAction('ASSIGN')}
                 >
                   <i className="fa fa-user me-2"></i> Nhận tư vấn
@@ -628,18 +628,18 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                   {hasActionPower && (
                     <>
                       {canReassign && (
-                        <button 
-                          className="btn btn-outline-secondary btn-workflow fw-medium px-4 d-inline-flex align-items-center" 
-                          disabled={submitting} 
+                        <button
+                          className="btn btn-outline-secondary btn-workflow fw-medium px-4 d-inline-flex align-items-center"
+                          disabled={submitting}
                           onClick={openReassignModal}
                         >
                           <i className="fa fa-reply me-2"></i> Trả / Chuyển
                         </button>
                       )}
                       {canProcess && (
-                        <button 
-                          className="btn btn-warning btn-workflow fw-medium px-4 shadow-sm d-inline-flex align-items-center" 
-                          disabled={submitting} 
+                        <button
+                          className="btn btn-warning btn-workflow fw-medium px-4 shadow-sm d-inline-flex align-items-center"
+                          disabled={submitting}
                           onClick={() => handleAction('PROCESS', { note: 'Bắt đầu liên hệ tư vấn' })}
                         >
                           <i className="fa fa-play me-2"></i> Bắt đầu tư vấn
@@ -647,8 +647,8 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                       )}
                     </>
                   )}
-                  <div 
-                    className="d-flex align-items-center bg-secondary bg-opacity-10 text-secondary-emphasis fw-medium px-4 rounded border border-secondary" 
+                  <div
+                    className="d-flex align-items-center bg-secondary bg-opacity-10 text-secondary-emphasis fw-medium px-4 rounded border border-secondary"
                     style={{ height: '38px', cursor: 'default' }}
                   >
                     <i className="fa fa-user-check me-2"></i> Đã phân công
@@ -659,16 +659,16 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
               {localLead.status === 'PROCESSING' && (
                 <>
                   {canReassign && hasActionPower && (
-                    <button 
-                      className="btn btn-outline-secondary btn-workflow fw-medium px-4 d-inline-flex align-items-center" 
-                      disabled={submitting} 
+                    <button
+                      className="btn btn-outline-secondary btn-workflow fw-medium px-4 d-inline-flex align-items-center"
+                      disabled={submitting}
                       onClick={openReassignModal}
                     >
                       <i className="fa fa-reply me-2"></i> Trả / Chuyển
                     </button>
                   )}
-                  <div 
-                    className="d-flex align-items-center bg-info bg-opacity-10 text-info fw-medium px-4 rounded border border-info" 
+                  <div
+                    className="d-flex align-items-center bg-info bg-opacity-10 text-info fw-medium px-4 rounded border border-info"
                     style={{ height: '38px', cursor: 'default' }}
                   >
                     <i className="fa fa-circle me-2 status-pulse" style={{ fontSize: '10px' }}></i> Đang tư vấn
@@ -677,8 +677,8 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
               )}
 
               {localLead.status === 'COMPLETED_PENDING_PROOF' && (
-                <div 
-                  className="d-flex align-items-center bg-warning bg-opacity-10 text-warning-emphasis fw-medium px-4 rounded border border-warning" 
+                <div
+                  className="d-flex align-items-center bg-warning bg-opacity-10 text-warning-emphasis fw-medium px-4 rounded border border-warning"
                   style={{ height: '38px', cursor: 'default' }}
                 >
                   <i className="fa fa-hourglass-half me-2"></i> Chờ duyệt
@@ -686,8 +686,8 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
               )}
 
               {localLead.status === 'COMPLETED' && (
-                <div 
-                  className="d-flex align-items-center bg-success bg-opacity-10 text-success fw-medium px-4 rounded border border-success" 
+                <div
+                  className="d-flex align-items-center bg-success bg-opacity-10 text-success fw-medium px-4 rounded border border-success"
                   style={{ height: '38px', cursor: 'default' }}
                 >
                   <i className="fa fa-check me-2"></i> Hoàn thành
@@ -712,10 +712,10 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                   <label className="form-label fw-medium text-body-emphasis" style={{ fontSize: '14px' }}>Tùy chọn xử lý</label>
                   <div className="d-flex gap-3">
                     <div className="form-check">
-                      <input 
-                        className="form-check-input" 
-                        type="radio" 
-                        id="radioRelease" 
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        id="radioRelease"
                         name="reassignType"
                         checked={reassignActionType === 'RELEASE'}
                         onChange={() => setReassignActionType('RELEASE')}
@@ -725,10 +725,10 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                       </label>
                     </div>
                     <div className="form-check">
-                      <input 
-                        className="form-check-input" 
-                        type="radio" 
-                        id="radioReassign" 
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        id="radioReassign"
                         name="reassignType"
                         checked={reassignActionType === 'REASSIGN'}
                         onChange={() => setReassignActionType('REASSIGN')}
@@ -746,8 +746,8 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                     {loadingSales ? (
                       <div className="text-body-secondary" style={{ fontSize: '13px' }}>Đang tải danh sách...</div>
                     ) : (
-                      <select 
-                        className="form-select" 
+                      <select
+                        className="form-select"
                         value={selectedSaleId}
                         onChange={(e) => setSelectedSaleId(e.target.value)}
                       >
@@ -764,9 +764,9 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
 
                 <div className="mb-3">
                   <label className="form-label fw-medium text-body-emphasis" style={{ fontSize: '14px' }}>Lý do (Bắt buộc)</label>
-                  <textarea 
-                    className="form-control" 
-                    rows="3" 
+                  <textarea
+                    className="form-control"
+                    rows="3"
                     placeholder="Nhập lý do trả/chuyển Lead (Case khó, sai thông tin...)"
                     value={reassignReason}
                     onChange={(e) => setReassignReason(e.target.value)}
@@ -774,18 +774,18 @@ export const LeadDetailModal = ({ lead, onClose, onRefresh, currentUser }) => {
                 </div>
               </div>
               <div className="modal-footer border-top d-flex gap-2">
-                <button 
-                  className="btn btn-secondary fw-medium px-4" 
+                <button
+                  className="btn btn-secondary fw-medium px-4"
                   onClick={() => setShowReassignModal(false)}
                   disabled={submitting}
                 >
                   Hủy
                 </button>
-                <button 
+                <button
                   className="btn btn-primary fw-medium px-4"
                   disabled={submitting || !reassignReason.trim() || (reassignActionType === 'REASSIGN' && !selectedSaleId)}
-                  onClick={() => handleAction('REASSIGN', { 
-                    actionType: reassignActionType, 
+                  onClick={() => handleAction('REASSIGN', {
+                    actionType: reassignActionType,
                     targetUserId: selectedSaleId,
                     reason: reassignReason.trim()
                   })}
