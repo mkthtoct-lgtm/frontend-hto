@@ -3,7 +3,21 @@ import { authFetch } from '../auth/session';
 import { API_BASE_URL } from '../config/api';
 import CourseConsultationForm from './CourseConsultationForm';
 
-export function DaoTaoPage({ onNavigate }) {
+export function DaoTaoPage({ onNavigate, currentUser }) {
+  const hasPermission = (user, requiredPermission) => {
+    const roleKey = String(user?.role?.name || user?.roleName || user?.role || "")
+      .trim().toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    if (roleKey === "admin" || user?.roleId === "69fc5af582ef85451120772a") return true;
+
+    const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+    return permissions.includes("*") || permissions.includes(requiredPermission);
+  };
+  
+  const canCreate = hasPermission(currentUser, 'dao_tao.create');
+  const canUpdate = hasPermission(currentUser, 'dao_tao.update');
+  const canDelete = hasPermission(currentUser, 'dao_tao.delete');
+  const canUploadImage = hasPermission(currentUser, 'dao_tao.upload_image');
+
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -59,7 +73,15 @@ export function DaoTaoPage({ onNavigate }) {
 
   const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
-  const getImageUrl = (url) => {
+  const getImageUrl = (product) => {
+    if (!product) return "https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=500&q=80";
+
+    // Mới: Sử dụng Proxy URL nếu có imageFileId
+    if (product.imageFileId) {
+      return `${API_BASE_URL}/drive/${product.imageFileId}`;
+    }
+
+    const url = product.image;
     if (!url) return "https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=500&q=80";
     
     // Fix existing Google Drive URLs (from /view)
@@ -254,9 +276,11 @@ export function DaoTaoPage({ onNavigate }) {
           <h3 className="fw-bold text-body-emphasis mb-1">Khóa Học Nổi Bật</h3>
           <p className="text-body-secondary mb-0">Lựa chọn chương trình đào tạo phù hợp với mục tiêu của học viên.</p>
         </div>
-        <button className="btn btn-primary shadow-sm" onClick={() => handleOpenAdminModal()}>
-          <i className="fa fa-plus me-2"></i>Thêm Khóa Học
-        </button>
+        {canCreate && (
+          <button className="btn btn-primary shadow-sm" onClick={() => handleOpenAdminModal()}>
+            <i className="fa fa-plus me-2"></i>Thêm Khóa Học
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -267,7 +291,9 @@ export function DaoTaoPage({ onNavigate }) {
         <div className="text-center py-5 bg-body border rounded-4 shadow-sm">
           <i className="fa fa-book-open text-muted fs-1 mb-3"></i>
           <h5 className="text-muted">Chưa có khóa học nào.</h5>
-          <p className="text-muted small">Hãy bấm "Thêm Khóa Học" để tạo mới.</p>
+          <p className="text-muted small">
+            {canCreate ? 'Hãy bấm "Thêm Khóa Học" để tạo mới.' : 'Danh sách khóa học trống.'}
+          </p>
         </div>
       ) : (
         <div id="daotao-courses-grid" className="row g-4">
@@ -277,17 +303,23 @@ export function DaoTaoPage({ onNavigate }) {
                 className="card h-100 border-0 rounded-4 overflow-hidden position-relative group"
                 style={{ boxShadow: "0 10px 30px rgba(0,0,0,0.05)", transition: "transform 0.3s ease, box-shadow 0.3s ease" }}
               >
-                <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
-                  <button className="btn btn-light btn-sm rounded-circle shadow-sm me-2" onClick={(e) => { e.stopPropagation(); handleOpenAdminModal(course); }}>
-                    <i className="fa fa-edit text-primary"></i>
-                  </button>
-                  <button className="btn btn-light btn-sm rounded-circle shadow-sm" onClick={(e) => handleDeleteCourse(e, course._id)}>
-                    <i className="fa fa-trash text-danger"></i>
-                  </button>
-                </div>
+                {(canUpdate || canDelete) && (
+                  <div className="position-absolute top-0 end-0 m-2" style={{ zIndex: 10 }}>
+                    {canUpdate && (
+                      <button className="btn btn-light btn-sm rounded-circle shadow-sm me-2" onClick={(e) => { e.stopPropagation(); handleOpenAdminModal(course); }}>
+                        <i className="fa fa-edit text-primary"></i>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button className="btn btn-light btn-sm rounded-circle shadow-sm" onClick={(e) => handleDeleteCourse(e, course._id)}>
+                        <i className="fa fa-trash text-danger"></i>
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="position-relative" style={{ height: "200px" }}>
                   <img 
-                    src={getImageUrl(course.image)} 
+                    src={getImageUrl(course)} 
                     alt={course.name} 
                     className="w-100 h-100 object-fit-cover" 
                     style={{ objectPosition: "center" }}
@@ -369,10 +401,17 @@ export function DaoTaoPage({ onNavigate }) {
                     <label className="form-label">Học phí (VNĐ)</label>
                     <input type="number" className="form-control" value={formData.fee} onChange={e => setFormData({...formData, fee: e.target.value})} />
                   </div>
-                  <div className="mb-3">
-                    <label className="form-label">Ảnh bìa (Upload)</label>
-                    <input type="file" className="form-control" accept="image/*" onChange={e => setFormData({...formData, image: e.target.files[0]})} />
-                  </div>
+                  {canUploadImage ? (
+                    <div className="mb-3">
+                      <label className="form-label">Ảnh bìa (Upload)</label>
+                      <input type="file" className="form-control" accept="image/*" onChange={e => setFormData({...formData, image: e.target.files[0]})} />
+                    </div>
+                  ) : (
+                    <div className="mb-3">
+                      <label className="form-label text-muted">Ảnh bìa (Upload)</label>
+                      <p className="small text-danger mb-0">Bạn không có quyền tải ảnh lên hệ thống.</p>
+                    </div>
+                  )}
                   <div className="text-end">
                     <button type="button" className="btn btn-secondary me-2" onClick={handleCloseAdminModal}>Hủy</button>
                     <button type="submit" className="btn btn-primary">Lưu lại</button>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authFetch, getAuthHeaders } from '../auth/session';
 import { API_BASE_URL } from '../config/api';
 import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadDetailModal } from './LeadDetailModal';
+import Swal from 'sweetalert2';
 
 export const CrmLeadsPage = ({ currentUser, theme }) => {
   const [leads, setLeads] = useState([]);
@@ -14,8 +15,19 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const selectAllRef = useRef(null);
   
-  const isLeader = currentUser?.role === 'admin' || currentUser?.role === 'bangiamdoc' || currentUser?.role === 'truongbophan';
+  const hasPermission = (user, requiredPermission) => {
+    const roleKey = String(user?.role?.name || user?.roleName || user?.role || "")
+      .trim().toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    if (roleKey === "admin" || user?.roleId === "69fc5af582ef85451120772a") return true;
+
+    const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+    return permissions.includes("*") || permissions.includes(requiredPermission);
+  };
+  
+  const canArchive = hasPermission(currentUser, 'crm.course_leads.archive');
+  const canDelete = hasPermission(currentUser, 'crm.course_leads.permanent_delete');
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -45,6 +57,12 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, showArchived]);
 
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = selectedIds.length > 0 && selectedIds.length < leads.length;
+    }
+  }, [selectedIds, leads]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchLeads();
@@ -68,7 +86,19 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
   };
 
   const handleBulkArchive = async () => {
-    if (!window.confirm(`Bạn có chắc muốn Archive ${selectedIds.length} Lead đã chọn?`)) return;
+    const result = await Swal.fire({
+      title: 'Lưu trữ Lead',
+      text: `Bạn có chắc muốn Archive ${selectedIds.length} Lead đã chọn?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ffc107',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy'
+    });
+    
+    if (!result.isConfirmed) return;
+
     try {
       const res = await authFetch(`${API_BASE_URL}/course-leads/bulk/archive`, {
         method: 'PATCH',
@@ -76,34 +106,109 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
         body: JSON.stringify({ ids: selectedIds, reason: 'Archive hàng loạt' })
       });
       if (res.ok) {
+        Swal.fire('Thành công', 'Đã Archive Lead thành công', 'success');
         setSelectedIds([]);
         fetchLeads();
       }
     } catch (err) {
       console.error(err);
+      Swal.fire('Lỗi', 'Không thể Archive', 'error');
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    const result = await Swal.fire({
+      title: 'Khôi phục Lead',
+      text: `Bạn có chắc muốn khôi phục ${selectedIds.length} Lead đã chọn?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Khôi phục',
+      cancelButtonText: 'Hủy'
+    });
+    
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await authFetch(`${API_BASE_URL}/course-leads/bulk/restore`, {
+        method: 'PATCH',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds })
+      });
+      if (res.ok) {
+        Swal.fire('Thành công', 'Đã Khôi phục Lead thành công', 'success');
+        setSelectedIds([]);
+        fetchLeads();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Lỗi', 'Không thể Khôi phục', 'error');
     }
   };
 
   const handleBulkPermanentDelete = async () => {
-    if (!window.confirm(`Bạn có chắc muốn XOÁ VĨNH VIỄN ${selectedIds.length} Lead đã chọn? Dữ liệu không thể khôi phục.`)) return;
-    if (!window.confirm(`Xác nhận lần cuối: Bạn THẬT SỰ muốn xoá ${selectedIds.length} Lead này?`)) return;
+    // Bước 1
+    const step1 = await Swal.fire({
+      title: `Xóa vĩnh viễn ${selectedIds.length} Lead?`,
+      text: "Dữ liệu sau khi xóa sẽ không thể khôi phục.",
+      icon: 'error',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Xóa vĩnh viễn',
+      cancelButtonText: 'Hủy'
+    });
+    if (!step1.isConfirmed) return;
+
+    // Bước 2
+    const step2 = await Swal.fire({
+      title: 'Xác nhận lần cuối',
+      text: `Bạn thật sự muốn xóa ${selectedIds.length} Lead này?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Xác nhận xóa',
+      cancelButtonText: 'Hủy'
+    });
+    if (!step2.isConfirmed) return;
     
     try {
       const res = await authFetch(`${API_BASE_URL}/course-leads/bulk/permanent`, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ ids: selectedIds, force: true })
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedIds })
       });
       const data = await res.json();
+      
       if (res.ok && data.success) {
-        alert(data.message || 'Xóa vĩnh viễn thành công');
+        Swal.fire(
+          'Thành công!',
+          `Đã xóa thành công ${data.deletedCount} Lead.`,
+          'success'
+        );
+        setSelectedIds([]);
+        fetchLeads();
+      } else if (res.ok && !data.success) {
+        // Có lỗi (như vướng KPI)
+        let msg = `Đã xóa ${data.deletedCount} Lead.<br/>`;
+        if (data.failedCount > 0) {
+          msg += `<b>${data.failedCount} Lead không thể xóa</b> vì đã được duyệt KPI hoặc lỗi.`;
+        }
+        Swal.fire({
+          title: 'Kết quả xóa',
+          html: msg,
+          icon: 'warning'
+        });
         setSelectedIds([]);
         fetchLeads();
       } else {
-        alert(data.message || 'Có lỗi xảy ra');
+        Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra từ máy chủ', 'error');
       }
     } catch (err) {
       console.error(err);
+      Swal.fire('Lỗi', 'Đã xảy ra sự cố mạng', 'error');
     }
   };
 
@@ -119,7 +224,7 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
         <div>
           <h4 className="fw-bold mb-1 text-body-emphasis">Quản lý Course Leads</h4>
           <p className="text-body-secondary mb-0" style={{ fontSize: '14px' }}>
-            {isLeader ? 'Quản lý toàn bộ yêu cầu tư vấn khóa học' : 'Danh sách khách hàng bạn đang tư vấn'}
+            {canDelete ? 'Quản lý toàn bộ yêu cầu tư vấn khóa học' : 'Danh sách khách hàng bạn đang tư vấn'}
           </p>
         </div>
         <button className="btn btn-primary d-flex align-items-center gap-2" onClick={fetchLeads}>
@@ -208,10 +313,17 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
             <div className="bg-warning-subtle py-2 px-3 d-flex align-items-center justify-content-between border-bottom">
               <span className="fw-medium text-warning-emphasis">Đã chọn {selectedIds.length} Lead</span>
               <div className="d-flex gap-2">
-                <button className="btn btn-sm btn-warning fw-bold text-dark" onClick={handleBulkArchive}>
-                  <i className="fa fa-archive me-1"></i> Archive
-                </button>
-                {currentUser?.role === 'admin' && (
+                {!showArchived && canArchive && (
+                  <button className="btn btn-sm btn-warning fw-bold text-dark" onClick={handleBulkArchive}>
+                    <i className="fa fa-archive me-1"></i> Archive
+                  </button>
+                )}
+                {showArchived && canArchive && (
+                  <button className="btn btn-sm btn-success fw-bold text-light" onClick={handleBulkRestore}>
+                    <i className="fa fa-undo me-1"></i> Khôi phục
+                  </button>
+                )}
+                {canDelete && (
                   <button className="btn btn-sm btn-danger fw-bold" onClick={handleBulkPermanentDelete}>
                     <i className="fa fa-trash me-1"></i> Xóa vĩnh viễn
                   </button>
@@ -227,10 +339,12 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
             <table className="table table-hover align-middle mb-0" style={{ fontSize: '14px' }}>
               <thead className="table-light">
                 <tr>
-                  <th className="ps-3 py-3" style={{ width: '40px' }}>
+                  <th className="ps-3 py-3" style={{ width: '50px' }}>
                     <input 
                       type="checkbox" 
                       className="form-check-input" 
+                      style={{ width: '20px', height: '20px', cursor: 'pointer', border: '2px solid #adb5bd' }}
+                      ref={selectAllRef}
                       checked={selectedIds.length === leads.length && leads.length > 0} 
                       onChange={toggleSelectAll} 
                     />
@@ -250,6 +364,7 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
                       <input 
                         type="checkbox" 
                         className="form-check-input" 
+                        style={{ width: '20px', height: '20px', cursor: 'pointer', border: '2px solid #adb5bd' }}
                         checked={selectedIds.includes(lead._id)} 
                         onChange={(e) => toggleSelectOne(e, lead._id)} 
                       />

@@ -2002,7 +2002,7 @@ function App() {
         ) : currentPage === "nophosoonline" ? (
           <OnlineApplicationPage currentUser={user} onNavigate={handleNavigate} />
         ) : currentPage === "daotao" ? (
-          <DaoTaoPage onNavigate={handleNavigate} />
+          <DaoTaoPage onNavigate={handleNavigate} currentUser={user} />
         ) : currentPage === "media-repository" ? (
           <MediaRepositoryPage />
         ) : currentPage === "crmLeads" ? (

@@ -42,18 +42,29 @@ const FEATURE_PERMISSION_GROUPS = [
   },
   {
     id: "products",
-    title: "Quản lý Sản phẩm dịch vụ",
+    title: "Quản lý Sản phẩm & Đào Tạo",
     permissions: [
-      { id: "products:read", label: "Xem danh mục sản phẩm & giá" },
-      { id: "products:write", label: "Thêm/Sửa/Xóa sản phẩm" }
+      { id: "dao_tao.view", label: "Xem danh mục khóa học & giá" },
+      { id: "dao_tao.create", label: "Thêm khóa học mới" },
+      { id: "dao_tao.update", label: "Cập nhật thông tin khóa học" },
+      { id: "dao_tao.delete", label: "Xóa khóa học" },
+      { id: "dao_tao.upload_image", label: "Upload ảnh khóa học lên Drive" }
     ]
   },
   {
     id: "leads",
-    title: "Khách hàng & Hợp đồng",
+    title: "CRM Course Leads",
     permissions: [
-      { id: "leads:read", label: "Xem danh sách khách hàng quan tâm" },
-      { id: "leads:write", label: "Tạo mới & cập nhật trạng thái khách" }
+      { id: "crm.course_leads.view", label: "Xem Module CRM" },
+      { id: "crm.course_leads.view_detail", label: "Xem chi tiết Lead" },
+      { id: "crm.course_leads.assign", label: "Nhận / Phân công Lead" },
+      { id: "crm.course_leads.process", label: "Xử lý Lead" },
+      { id: "crm.course_leads.submit_proof", label: "Nộp minh chứng" },
+      { id: "crm.course_leads.review_proof", label: "Duyệt minh chứng (Approve/Reject)" },
+      { id: "crm.course_leads.archive", label: "Lưu trữ Lead (Archive)" },
+      { id: "crm.course_leads.restore", label: "Phục hồi Lead (Restore)" },
+      { id: "crm.course_leads.permanent_delete", label: "Xóa vĩnh viễn Lead" },
+      { id: "crm.course_leads.view_audit", label: "Xem lịch sử thay đổi (Audit)" }
     ]
   },
   {
