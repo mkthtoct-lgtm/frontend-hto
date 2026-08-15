@@ -112,14 +112,25 @@ export const MOCK_MEDIA_DATA = [
 ];
 
 export const MEDIA_COUNTRY_MAP = {
-  ALL: "Tất cả",
+  ALL: "Tất cả / Không xác định",
+  VN: "Việt Nam",
+  JP: "Nhật Bản",
+  KR: "Hàn Quốc",
+  CN: "Trung Quốc",
+  TW: "Đài Loan",
+  HK: "Hồng Kông",
+  MO: "Ma Cao",
+  SG: "Singapore",
+  MY: "Malaysia",
+  TH: "Thái Lan",
+  ID: "Indonesia",
+  PH: "Philippines",
+  IN: "Ấn Độ",
+  AE: "UAE",
   CA: "Canada",
   US: "Mỹ",
   AU: "Úc",
-  JP: "Nhật Bản",
-  KR: "Hàn Quốc",
   GB: "Anh Quốc",
   FR: "Pháp (Schengen)",
-  SG: "Singapore",
-  TW: "Đài Loan",
+  DE: "Đức"
 };

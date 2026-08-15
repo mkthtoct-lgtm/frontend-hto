@@ -85,9 +85,9 @@ const canManageNewsEvents = (user) => {
   return ["admin", "bangiamdoc", "truongbophan"].includes(roleKey);
 };
 
-// KIỂM TRA QUYỀN XEM CHI TIẾT SẢN PHẨM (cho phép tất cả người dùng xem)
+// KIỂM TRA QUYỀN XEM CHI TIẾT SẢN PHẨM (Đào Tạo & Dịch vụ)
 const canViewProductDetails = (user) => {
-  return true;
+  return hasPermission(user, "dao_tao.view");
 };
 
 // KIỂM TRA QUYỀN HẠN ĐỘNG CỦA USER
@@ -793,6 +793,33 @@ export const Sidebar = ({
               </span>
             </a>
           </li>
+
+          {hasPermission(currentUser, "crm.course_leads.view") && (
+            <li className="menu-item mb-2">
+              <a
+                className={`menu-link d-flex align-items-center px-2 py-2 rounded-2 ${currentPage === "crmLeads" ? "text-primary fw-bold bg-primary-subtle" : "text-body-secondary"}`}
+                href="#"
+                style={{ textDecoration: "none" }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate?.("crmLeads");
+                }}
+              >
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-body-secondary me-3 flex-shrink-0"
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <span className="menu-label" style={{ flex: 1, fontSize: "14px" }}>CRM / Course Leads</span>
+              </a>
+            </li>
+          )}
 
           {/* --- 1C. TỔNG SẢN PHẨM --- */}
           {hasProductDetailPermission && (

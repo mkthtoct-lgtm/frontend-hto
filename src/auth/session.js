@@ -35,6 +35,11 @@ export const expireStoredSession = () => {
 
 export const authFetch = async (input, init = {}) => {
   const headers = { ...getAuthHeaders(), ...init.headers };
+  
+  if (init.body && typeof init.body === 'string' && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(input, { ...init, headers });
 
   if (response.status === 401) {
