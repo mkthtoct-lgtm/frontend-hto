@@ -2004,7 +2004,7 @@ function App() {
         ) : currentPage === "daotao" ? (
           <DaoTaoPage onNavigate={handleNavigate} currentUser={user} />
         ) : currentPage === "media-repository" ? (
-          <MediaRepositoryPage />
+          <MediaRepositoryPage currentUser={user} />
         ) : currentPage === "crmLeads" ? (
           <CrmLeadsPage currentUser={user} theme={theme} />
         ) : (
