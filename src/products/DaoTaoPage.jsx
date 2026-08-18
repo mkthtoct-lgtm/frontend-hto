@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authFetch } from '../auth/session';
 import { API_BASE_URL } from '../config/api';
 import CourseConsultationForm from './CourseConsultationForm';
+import { TrainingBanner } from './TrainingBanner';
 
 export function DaoTaoPage({ onNavigate, currentUser }) {
   const hasPermission = (user, requiredPermission) => {
@@ -228,47 +229,7 @@ export function DaoTaoPage({ onNavigate, currentUser }) {
     <div className="container-fluid py-4 bg-body-tertiary" style={{ minHeight: "100vh" }}>
       
       {/* Hero Banner Section */}
-      <div 
-        id="daotao-hero-section"
-        className="rounded-4 mb-5 position-relative overflow-hidden shadow-sm"
-        style={{
-          background: "linear-gradient(135deg, #0d6efd 0%, #0098f0 100%)",
-          color: "white",
-          padding: "4rem 2rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        }}
-      >
-        <div style={{ maxWidth: "600px", zIndex: 2 }}>
-          <h1 className="fw-bold mb-3 display-5" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
-            Chinh phục ngoại ngữ <br/> <span className="text-warning">Mở lối thành công</span>
-          </h1>
-          <p className="lead mb-4" style={{ opacity: 0.9 }}>
-            Chương trình đào tạo chuẩn quốc tế, lộ trình cá nhân hóa giúp học viên đạt mục tiêu chứng chỉ nhanh nhất để chinh phục giấc mơ du học.
-          </p>
-          <div className="d-flex gap-4">
-            <div className="text-center">
-              <h2 className="fw-bold mb-0">500+</h2>
-              <small style={{ opacity: 0.8 }}>Học viên mỗi năm</small>
-            </div>
-            <div className="text-center">
-              <h2 className="fw-bold mb-0">98%</h2>
-              <small style={{ opacity: 0.8 }}>Tỷ lệ đỗ Visa</small>
-            </div>
-            <div className="text-center">
-              <h2 className="fw-bold mb-0">20+</h2>
-              <small style={{ opacity: 0.8 }}>Giáo viên bản xứ</small>
-            </div>
-          </div>
-        </div>
-        
-        {/* Decorative elements */}
-        <div 
-          className="position-absolute end-0 top-0 h-100 d-none d-lg-block"
-          style={{ width: "40%", background: "url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80') center/cover", opacity: 0.4, mixBlendMode: "overlay" }}
-        />
-      </div>
+      <TrainingBanner />
 
       {/* Courses List Section */}
       <div className="mb-4 d-flex justify-content-between align-items-end">

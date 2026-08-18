@@ -347,17 +347,6 @@ const initThemeSwitcher = () => {
 	  } else {
 		$('.theme-btn').removeClass('active');
 	  }
-
-	  // 🔹 Click handler
-	  $('.theme-btn').on('click', function () {
-		$(this).toggleClass('active');
-
-		let currentTheme = document.documentElement.getAttribute('data-bs-theme');
-		let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-		setTheme(newTheme);
-		setStoredTheme(newTheme);
-	  });
 	});
 };
 

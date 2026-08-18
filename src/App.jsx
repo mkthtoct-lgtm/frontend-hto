@@ -1102,7 +1102,11 @@ function App() {
     void syncUserProfile();
   }, [handleUserUpdate]);
   const [theme, setTheme] = useState(() => {
-    const storedTheme = window.localStorage.getItem("app-theme");
+    const getCookie = (name) => {
+      const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+      return match ? match[2] : null;
+    };
+    const storedTheme = window.localStorage.getItem("app-theme") || window.localStorage.getItem("theme") || getCookie("theme");
 
     if (storedTheme === "light" || storedTheme === "dark") {
       return storedTheme;
@@ -1126,6 +1130,9 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-bs-theme", theme);
     window.localStorage.setItem("app-theme", theme);
+    window.localStorage.setItem("theme", theme);
+    const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+    document.cookie = `theme=${theme}; expires=${expires}; path=/`;
   }, [theme]);
 
   useEffect(() => {
@@ -1550,11 +1557,6 @@ function App() {
     document.documentElement.classList.remove("mobile-sidebar-open");
   }, []);
 
-  const handleToggleTheme = (e) => {
-    e?.preventDefault?.();
-    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
-  };
-
   const handleNavigate = useCallback((page, options = {}) => {
     if (page === "qna") {
       setIsAiChatOpen(true);
@@ -1638,6 +1640,46 @@ function App() {
 
     window.addEventListener("hto:replay-tour", handleReplayTourEvent);
     return () => window.removeEventListener("hto:replay-tour", handleReplayTourEvent);
+  }, []);
+
+  const handleToggleTheme = useCallback((e) => {
+    if (e?.preventDefault) e.preventDefault();
+
+    // 1. Chèn style tạm thời để chặn mọi CSS transition khi đang đổi theme
+    const css = document.createElement("style");
+    css.appendChild(
+      document.createTextNode(
+        `*, *::before, *::after {
+           -webkit-transition: none !important;
+           -moz-transition: none !important;
+           -o-transition: none !important;
+           -ms-transition: none !important;
+           transition: none !important;
+        }`
+      )
+    );
+    document.head.appendChild(css);
+
+    // 2. Đổi theme và đồng bộ dữ liệu
+    setTheme((prevTheme) => {
+      const nextTheme = prevTheme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-bs-theme", nextTheme);
+      window.localStorage.setItem("app-theme", nextTheme);
+      window.localStorage.setItem("theme", nextTheme);
+      const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+      document.cookie = `theme=${nextTheme}; expires=${expires}; path=/`;
+      return nextTheme;
+    });
+
+    // Force computed style calculation (flush reflow)
+    window.getComputedStyle(css).opacity;
+
+    // 3. Kích hoạt lại transition sau khi DOM đã đổi màu xong
+    setTimeout(() => {
+      if (document.head.contains(css)) {
+        document.head.removeChild(css);
+      }
+    }, 50);
   }, []);
 
   // [Icon Hướng dẫn trên Header] Chạy THẲNG tour pop-up của đúng trang đang
@@ -1910,6 +1952,7 @@ function App() {
     >
       <Header
         user={user}
+        currentTheme={theme}
         onNavigate={handleNavigate}
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 

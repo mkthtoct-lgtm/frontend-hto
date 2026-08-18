@@ -272,7 +272,7 @@ const notifyNotificationsChanged = (detail = {}) => {
   );
 };
 
-export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLogout, onShowCurrentPageGuide }) => {
+export const Header = ({ user, currentTheme, onNavigate, onToggleSidebar, onToggleTheme, onLogout, onShowCurrentPageGuide }) => {
   const profileExtras = user?.id ? readProfileExtras(user.id) : {};
   const displayName = user?.fullName || user?.name || "Nguoi dung";
   const displayEmail = user?.email || "";
@@ -606,8 +606,13 @@ export const Header = ({ user, onNavigate, onToggleSidebar, onToggleTheme, onLog
 
             <a
               href="#"
-              className="btn btn-md btn-icon btn-action-gray theme-btn"
-              onClick={onToggleTheme}
+              className={`btn btn-md btn-icon btn-action-gray theme-btn ${currentTheme === "dark" ? "active" : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                onToggleTheme?.(e);
+              }}
+              title={currentTheme === "dark" ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+              aria-label={currentTheme === "dark" ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
             >
               <i className="icon-sun-medium icon-light"></i>
               <i className="icon-moon icon-dark"></i>

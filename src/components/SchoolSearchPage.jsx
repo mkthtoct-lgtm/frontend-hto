@@ -1,6 +1,234 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
+
+// 1. BỘ ÁNH XẠ THỊ TRƯỜNG / CHÂU LỤC TOÀN DIỆN & CHÍNH XÁC
+const getContinentFromSchool = (school) => {
+  if (!school) return "Châu Á";
+  const name = String(school["Tên trường"] || school.name || "").trim();
+  const country = String(school["Quốc gia"] || school["Quốc gia "] || school.country || "").trim();
+  const region = String(school["Khu vực"] || school["Khu vực "] || school.region || "").trim();
+  const address = String(school["Địa chỉ"] || school.address || "").trim();
+  const program = String(school["Chương trình"] || school.program || "").trim();
+  const system = String(school["Hệ tuyển sinh"] || school.system || school.admissionSystem || "").trim();
+
+  const fullText = `${country} ${name} ${address} ${region} ${program} ${system}`.toLowerCase();
+
+  // 1. Ưu tiên kiểm tra danh mục đặc thù TTS Quốc Tế & Du học nghề / Trại hè
+  if (
+    fullText.includes("tts") ||
+    fullText.includes("thực tập sinh") ||
+    fullText.includes("du học nghề") ||
+    fullText.includes("trại hè") ||
+    fullText.includes("summer camp") ||
+    fullText.includes("summer school") ||
+    fullText.includes("vocational") ||
+    fullText.includes("internship")
+  ) {
+    return "TTS Quốc Tế";
+  }
+
+  // 2. Phân loại theo Quốc gia cụ thể
+  const countryLower = country.toLowerCase();
+  if (
+    countryLower.includes("đài loan") ||
+    countryLower.includes("hàn quốc") ||
+    countryLower.includes("nhật bản") ||
+    countryLower.includes("nhật") ||
+    countryLower.includes("trung quốc") ||
+    countryLower.includes("singapore") ||
+    countryLower.includes("thái lan") ||
+    countryLower.includes("malaysia") ||
+    countryLower.includes("philippines") ||
+    countryLower.includes("indonesia") ||
+    countryLower.includes("ấn độ") ||
+    countryLower.includes("taiwan") ||
+    countryLower.includes("korea") ||
+    countryLower.includes("japan") ||
+    countryLower.includes("china")
+  ) {
+    return "Châu Á";
+  }
+
+  if (
+    countryLower.includes("đức") ||
+    countryLower.includes("anh") ||
+    countryLower.includes("pháp") ||
+    countryLower.includes("ba lan") ||
+    countryLower.includes("hà lan") ||
+    countryLower.includes("phần lan") ||
+    countryLower.includes("thụy sĩ") ||
+    countryLower.includes("thụy điển") ||
+    countryLower.includes("na uy") ||
+    countryLower.includes("đan mạch") ||
+    countryLower.includes("áo") ||
+    countryLower.includes("ý") ||
+    countryLower.includes("tây ban nha") ||
+    countryLower.includes("hungary") ||
+    countryLower.includes("séc") ||
+    countryLower.includes("bỉ") ||
+    countryLower.includes("ireland") ||
+    countryLower.includes("germany") ||
+    countryLower.includes("uk") ||
+    countryLower.includes("poland") ||
+    countryLower.includes("france") ||
+    countryLower.includes("italy") ||
+    countryLower.includes("spain") ||
+    countryLower.includes("austria")
+  ) {
+    return "Châu Âu";
+  }
+
+  if (
+    countryLower.includes("mỹ") ||
+    countryLower.includes("hoa kỳ") ||
+    countryLower.includes("canada") ||
+    countryLower.includes("usa") ||
+    countryLower.includes("us")
+  ) {
+    return "Châu Mỹ";
+  }
+
+  if (
+    countryLower.includes("úc") ||
+    countryLower.includes("australia") ||
+    countryLower.includes("new zealand") ||
+    countryLower.includes("nz")
+  ) {
+    return "Châu Đại Dương";
+  }
+
+  // 3. Phân loại dự phòng theo Địa chỉ, Khu vực, Tên trường hoặc Đơn vị tiền tệ
+  if (
+    fullText.includes("đài bắc") ||
+    fullText.includes("đài nam") ||
+    fullText.includes("đài trung") ||
+    fullText.includes("cao hùng") ||
+    fullText.includes("tân bắc") ||
+    fullText.includes("đào viên") ||
+    fullText.includes("tân trúc") ||
+    fullText.includes("seoul") ||
+    fullText.includes("busan") ||
+    fullText.includes("incheon") ||
+    fullText.includes("daegu") ||
+    fullText.includes("gwangju") ||
+    fullText.includes("daejeon") ||
+    fullText.includes("ulsan") ||
+    fullText.includes("tokyo") ||
+    fullText.includes("osaka") ||
+    fullText.includes("kyoto") ||
+    fullText.includes("beijing") ||
+    fullText.includes("shanghai") ||
+    fullText.includes("twd") ||
+    fullText.includes("đài tệ") ||
+    fullText.includes("krw") ||
+    fullText.includes("won") ||
+    fullText.includes("jpy") ||
+    fullText.includes("yen")
+  ) {
+    return "Châu Á";
+  }
+
+  if (
+    fullText.includes("berlin") ||
+    fullText.includes("munich") ||
+    fullText.includes("frankfurt") ||
+    fullText.includes("hamburg") ||
+    fullText.includes("london") ||
+    fullText.includes("paris") ||
+    fullText.includes("warsaw") ||
+    fullText.includes("amsterdam") ||
+    fullText.includes("helsinki") ||
+    fullText.includes("zurich") ||
+    fullText.includes("vienna") ||
+    fullText.includes("rome") ||
+    fullText.includes("madrid") ||
+    fullText.includes("eur") ||
+    fullText.includes("euro") ||
+    fullText.includes("gbp") ||
+    fullText.includes("pln")
+  ) {
+    return "Châu Âu";
+  }
+
+  if (
+    fullText.includes("california") ||
+    fullText.includes("new york") ||
+    fullText.includes("texas") ||
+    fullText.includes("washington") ||
+    fullText.includes("toronto") ||
+    fullText.includes("vancouver") ||
+    fullText.includes("montreal") ||
+    fullText.includes("usd") ||
+    fullText.includes("cad")
+  ) {
+    return "Châu Mỹ";
+  }
+
+  if (
+    fullText.includes("sydney") ||
+    fullText.includes("melbourne") ||
+    fullText.includes("brisbane") ||
+    fullText.includes("perth") ||
+    fullText.includes("adelaide") ||
+    fullText.includes("auckland") ||
+    fullText.includes("wellington") ||
+    fullText.includes("aud") ||
+    fullText.includes("nzd")
+  ) {
+    return "Châu Đại Dương";
+  }
+
+  return "Châu Á";
+};
+
+// Helper xác định icon cho từng cột bảng
+const getHeaderIcon = (header) => {
+  const h = (header || "").toLowerCase();
+  if (h === "stt" || h === "#") return "fa-hashtag";
+  if (h.includes("tên trường") || h.includes("ten truong")) return "fa-university";
+  if (h.includes("khu vực") || h.includes("khu vuc")) return "fa-location-dot";
+  if (h.includes("địa chỉ") || h.includes("dia chi")) return "fa-map-pin";
+  if (h.includes("chuyên ngành") || h.includes("chuyen nganh")) return "fa-book-open";
+  if (h.includes("website")) return "fa-globe";
+  if (h.includes("hệ tuyển") || h.includes("he tuyen")) return "fa-graduation-cap";
+  if (h.includes("hạn báo") || h.includes("han bao")) return "fa-calendar-check";
+  if (h.includes("hạn nộp") || h.includes("han nop")) return "fa-clock";
+  if (h.includes("điều kiện") || h.includes("dieu kien")) return "fa-file-lines";
+  if (h.includes("học phí") && h.includes("tiếng")) return "fa-money-bill-wave";
+  if (h.includes("học phí")) return "fa-coins";
+  if (h.includes("ký túc") || h.includes("ktx")) return "fa-hotel";
+  if (h.includes("học bổng") || h.includes("hoc bong")) return "fa-award";
+  if (h.includes("ảnh") || h.includes("image") || h.includes("file")) return "fa-image";
+  return "fa-circle-info";
+};
+
+// Helper cấu hình độ rộng và căn chỉnh từng cột với tỷ lệ vàng mặc định chuẩn
+const getColumnConfig = (header, customWidths = {}) => {
+  const h = (header || "").toLowerCase();
+  let baseConfig = { width: 130, align: "left" };
+
+  if (h === "stt" || h === "#") baseConfig = { width: 50, align: "center" };
+  else if (h.includes("tên trường") || h.includes("ten truong")) baseConfig = { width: 185, align: "left" };
+  else if (h.includes("khu vực") || h.includes("region")) baseConfig = { width: 135, align: "center" };
+  else if (h.includes("địa chỉ") || h.includes("dia chi")) baseConfig = { width: 155, align: "left" };
+  else if (h.includes("chuyên ngành") || h.includes("chuyen nganh")) baseConfig = { width: 160, align: "left" };
+  else if (h.includes("website") || h.includes("web")) baseConfig = { width: 95, align: "center" };
+  else if (h.includes("hệ") || h.includes("system")) baseConfig = { width: 110, align: "center" };
+  else if (h.includes("hạn báo") || h.includes("hạn nộp") || h.includes("han")) baseConfig = { width: 105, align: "center" };
+  else if (h.includes("điều kiện") || h.includes("dieu kien")) baseConfig = { width: 165, align: "left" };
+  else if (h.includes("học phí") || h.includes("hoc phi")) baseConfig = { width: 135, align: "left" };
+  else if (h.includes("ký túc") || h.includes("ktx")) baseConfig = { width: 120, align: "left" };
+  else if (h.includes("học bổng") || h.includes("hoc bong")) baseConfig = { width: 135, align: "left" };
+  else if (h.includes("ảnh") || h.includes("image") || h.includes("file")) baseConfig = { width: 100, align: "center" };
+
+  const effectiveWidth = customWidths[header] ? Number(customWidths[header]) : baseConfig.width;
+  return {
+    width: `${effectiveWidth}px`,
+    minWidth: `${effectiveWidth}px`,
+    align: baseConfig.align,
+  };
+};
 
 // Helper function to highlight matching search term keywords
 function highlightText(text, search) {
@@ -12,7 +240,9 @@ function highlightText(text, search) {
     <>
       {parts.map((part, index) =>
         part.toLowerCase() === search.toLowerCase() ? (
-          <mark key={index} className="bg-warning-subtle text-warning-emphasis p-0 rounded-1">{part}</mark>
+          <mark key={index} className="bg-warning text-dark px-1 py-0 rounded font-semibold">
+            {part}
+          </mark>
         ) : (
           part
         )
@@ -21,52 +251,94 @@ function highlightText(text, search) {
   );
 }
 
-export function SchoolSearchPage() {
+export const SchoolSearchPage = memo(function SchoolSearchPage() {
   const [headers, setHeaders] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [regionFilter, setRegionFilter] = useState("all");
-  const [systemFilter, setSystemFilter] = useState("all");
-  const [selectedSchool, setSelectedSchool] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
 
-  // Dynamic Country and Program structure
+  // Trạng thái Ẩn / Hiện Bộ lọc
+  const [isFilterVisible, setIsFilterVisible] = useState(true);
+
+  // Cấp 1: Thị trường / Châu lục (mặc định 'all')
+  const [selectedContinent, setSelectedContinent] = useState("all");
+
+  // Cấp 2: Quốc gia & Chương trình (mặc định 'all')
   const [countries, setCountries] = useState([]);
-  const [activeCountry, setActiveCountry] = useState("all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
   const [programs, setPrograms] = useState([]);
-  const [activeProgram, setActiveProgram] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("all");
 
-  // Filter lists fetched dynamically from DB
-  const [regionOptions, setRegionOptions] = useState([]);
-  const [systemOptions, setSystemOptions] = useState([]);
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  // Cấp 3: Thuộc tính & Hệ đào tạo (mặc định 'all')
+  const [selectedRegion, setSelectedRegion] = useState("all");
+  const [selectedSystem, setSelectedSystem] = useState("all");
+  const [selectedMajor, setSelectedMajor] = useState("all");
+  const [selectedIntake, setSelectedIntake] = useState("all");
 
-  // [Bộ lọc Giá sản phẩm / Ngân sách] Khoảng học phí khách hàng mong muốn tra cứu
+  // Ngân sách / Học phí
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
 
-  // Active filters count
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (activeCountry !== "all") count++;
-    if (activeProgram !== "all") count++;
-    if (regionFilter !== "all") count++;
-    if (systemFilter !== "all") count++;
-    if (budgetMin !== "" || budgetMax !== "") count++;
-    return count;
-  }, [activeCountry, activeProgram, regionFilter, systemFilter, budgetMin, budgetMax]);
+  // UI state
+  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [tableDensity, setTableDensity] = useState("normal"); // 'compact' | 'normal' | 'spacious'
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 
-  const resetAllFilters = () => {
-    setActiveCountry("all");
-    setActiveProgram("all");
-    setRegionFilter("all");
-    setSystemFilter("all");
-    setSearchTerm("");
-    setBudgetMin("");
-    setBudgetMax("");
+  // Quản lý độ rộng cột có thể kéo thả tùy chỉnh theo ý nhân viên
+  const [columnWidths, setColumnWidths] = useState(() => {
+    try {
+      const saved = localStorage.getItem("school_table_custom_widths");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleResizeStart = useCallback((header, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.pageX;
+    const cfg = getColumnConfig(header, columnWidths);
+    const startWidth = parseInt(cfg.width, 10) || 150;
+
+    const handleMouseMove = (moveEvent) => {
+      const diff = moveEvent.pageX - startX;
+      const newWidth = Math.max(50, startWidth + diff);
+      setColumnWidths(prev => {
+        const next = { ...prev, [header]: newWidth };
+        try {
+          localStorage.setItem("school_table_custom_widths", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }, [columnWidths]);
+
+  const handleResetColumnWidths = () => {
+    setColumnWidths({});
+    try {
+      localStorage.removeItem("school_table_custom_widths");
+    } catch {}
   };
+
+  // Dynamic filter options from DB
+  const [regionOptions, setRegionOptions] = useState([]);
+  const [systemOptions, setSystemOptions] = useState([]);
 
   // Auth User check
   const currentUser = useMemo(() => {
@@ -104,16 +376,18 @@ export function SchoolSearchPage() {
   const [syncingId, setSyncingId] = useState(null);
   const [newSource, setNewSource] = useState({ name: "", country: "", program: "", spreadsheetId: "", gid: "" });
 
-  // Fetch filters
-  const fetchFilterOptions = async (country = activeCountry, program = activeProgram) => {
+  // 1. Fetch filter options dynamically
+  const fetchFilterOptions = async (country = selectedCountry, program = selectedProgram) => {
     try {
-      const regionRes = await authFetch(`${API_BASE_URL}/schools/regions?country=${country}&program=${program}`, { headers: getAuthHeaders() });
+      const c = (country || "").toLowerCase() === "all" ? "all" : country;
+      const p = (program || "").toLowerCase() === "all" ? "all" : program;
+      const regionRes = await authFetch(`${API_BASE_URL}/schools/regions?country=${encodeURIComponent(c)}&program=${encodeURIComponent(p)}`, { headers: getAuthHeaders() });
       const regionJson = await regionRes.json().catch(() => null);
       if (regionRes.ok && regionJson?.success) {
         setRegionOptions(regionJson.data || []);
       }
 
-      const systemRes = await authFetch(`${API_BASE_URL}/schools/systems?country=${country}&program=${program}`, { headers: getAuthHeaders() });
+      const systemRes = await authFetch(`${API_BASE_URL}/schools/systems?country=${encodeURIComponent(c)}&program=${encodeURIComponent(p)}`, { headers: getAuthHeaders() });
       const systemJson = await systemRes.json().catch(() => null);
       if (systemRes.ok && systemJson?.success) {
         setSystemOptions(systemJson.data || []);
@@ -123,7 +397,7 @@ export function SchoolSearchPage() {
     }
   };
 
-  // Fetch Countries & initial programs
+  // 2. Fetch Countries & initial programs
   const fetchCountriesAndPrograms = async () => {
     try {
       const res = await authFetch(`${API_BASE_URL}/schools/countries`, { headers: getAuthHeaders() });
@@ -132,7 +406,8 @@ export function SchoolSearchPage() {
         setCountries(json.data || []);
       }
 
-      const progRes = await authFetch(`${API_BASE_URL}/schools/programs?country=${activeCountry}`, { headers: getAuthHeaders() });
+      const c = (selectedCountry || "").toLowerCase() === "all" ? "all" : selectedCountry;
+      const progRes = await authFetch(`${API_BASE_URL}/schools/programs?country=${encodeURIComponent(c)}`, { headers: getAuthHeaders() });
       const progJson = await progRes.json().catch(() => null);
       if (progRes.ok && progJson?.success) {
         setPrograms(progJson.data || []);
@@ -142,12 +417,14 @@ export function SchoolSearchPage() {
     }
   };
 
-  // Fetch Schools
-  const fetchSchools = async (country = activeCountry, program = activeProgram) => {
+  // 3. Fetch Schools
+  const fetchSchools = async (country = selectedCountry, program = selectedProgram) => {
     setLoading(true);
     setError("");
     try {
-      const url = `${API_BASE_URL}/schools?country=${country}&program=${program}&search=${encodeURIComponent(searchTerm)}`;
+      const c = (country || "").toLowerCase() === "all" ? "all" : country;
+      const p = (program || "").toLowerCase() === "all" ? "all" : program;
+      const url = `${API_BASE_URL}/schools?country=${encodeURIComponent(c)}&program=${encodeURIComponent(p)}&limit=1000&search=${encodeURIComponent(searchTerm)}`;
       const response = await authFetch(url, { headers: getAuthHeaders() });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) {
@@ -165,19 +442,78 @@ export function SchoolSearchPage() {
 
   useEffect(() => {
     fetchCountriesAndPrograms();
-    fetchSchools(activeCountry, activeProgram);
-    fetchFilterOptions(activeCountry, activeProgram);
+    fetchSchools(selectedCountry, selectedProgram);
+    fetchFilterOptions(selectedCountry, selectedProgram);
   }, []);
 
-  const handleCountryChange = async (e) => {
-    const countryVal = e.target.value;
-    setActiveCountry(countryVal);
-    setRegionFilter("all");
-    setSystemFilter("all");
+  // Danh sách các tab Thị trường Cấp 1
+  const continentTabs = [
+    { id: "all", label: "Tất cả thị trường", icon: "fa-globe-americas" },
+    { id: "Châu Á", label: "Châu Á", icon: "fa-compass" },
+    { id: "Châu Âu", label: "Châu Âu", icon: "fa-landmark" },
+    { id: "Châu Mỹ", label: "Châu Mỹ", icon: "fa-flag" },
+    { id: "Châu Đại Dương", label: "Châu Đại Dương", icon: "fa-sun" },
+    { id: "TTS Quốc Tế", label: "TTS Quốc Tế", icon: "fa-plane-departure" },
+  ];
 
-    // Load sub-programs
+  // Trích xuất động danh sách Quốc gia & Chuyên ngành từ dữ liệu
+  const dynamicOptions = useMemo(() => {
+    const countrySet = new Set(countries);
+    const systemSet = new Set(systemOptions);
+    const majorSet = new Set();
+    const regionSet = new Set(regionOptions);
+
+    records.forEach(r => {
+      const c = r["Quốc gia"] || r["Quốc gia "] || r.country;
+      if (c) countrySet.add(String(c).trim());
+
+      const s = r["Hệ tuyển sinh"] || r["Hệ tuyển sinh "] || r.system;
+      if (s) systemSet.add(String(s).trim());
+
+      const reg = r["Khu vực"] || r["Khu vực "] || r.region;
+      if (reg) regionSet.add(String(reg).trim());
+
+      const mVal = String(r["Chuyên ngành"] || r["Chuyên ngành "] || r.major || "").trim();
+      if (mVal) {
+        mVal.split(/[,;\n]/).forEach(m => {
+          const clean = m.trim();
+          if (clean && clean.length > 2 && clean.length < 50) {
+            majorSet.add(clean);
+          }
+        });
+      }
+    });
+
+    return {
+      countries: Array.from(countrySet).filter(Boolean),
+      systems: Array.from(systemSet).filter(Boolean),
+      majors: Array.from(majorSet).sort((a, b) => a.localeCompare(b, "vi")),
+      regions: Array.from(regionSet).filter(Boolean),
+    };
+  }, [records, countries, systemOptions, regionOptions]);
+
+  // Trích xuất danh sách Kỳ nhập học / Hạn nộp
+  const availableIntakes = useMemo(() => {
+    return [
+      { id: "all", label: "Tất cả kỳ nhập học" },
+      { id: "xuan", label: "Kỳ Mùa Xuân (T2 - T4)", keyword: "xuân" },
+      { id: "thu", label: "Kỳ Mùa Thu (T9 - T11)", keyword: "thu" },
+      { id: "he", label: "Kỳ Mùa Hè (T6 - T7)", keyword: "hè" },
+      { id: "dong", label: "Kỳ Mùa Đông (T12 - T1)", keyword: "đông" },
+    ];
+  }, []);
+
+  // Xử lý đổi Quốc gia
+  const handleCountryChange = async (countryVal) => {
+    setSelectedCountry(countryVal);
+    setSelectedRegion("all");
+    setSelectedSystem("all");
+    setSelectedMajor("all");
+    setSelectedIntake("all");
+
     try {
-      const progRes = await authFetch(`${API_BASE_URL}/schools/programs?country=${countryVal}`, { headers: getAuthHeaders() });
+      const c = countryVal.toLowerCase() === "all" ? "all" : countryVal;
+      const progRes = await authFetch(`${API_BASE_URL}/schools/programs?country=${encodeURIComponent(c)}`, { headers: getAuthHeaders() });
       const progJson = await progRes.json().catch(() => null);
       if (progRes.ok && progJson?.success) {
         setPrograms(progJson.data || []);
@@ -186,30 +522,17 @@ export function SchoolSearchPage() {
       console.error(err);
     }
 
-    setActiveProgram("all");
+    setSelectedProgram("all");
     fetchSchools(countryVal, "all");
     fetchFilterOptions(countryVal, "all");
   };
 
-  const handleProgramChange = (programVal) => {
-    setActiveProgram(programVal);
-    setRegionFilter("all");
-    setSystemFilter("all");
-    fetchSchools(activeCountry, programVal);
-    fetchFilterOptions(activeCountry, programVal);
-  };
-
-  // [Bộ lọc Giá sản phẩm / Ngân sách] Dữ liệu trường học được đồng bộ động từ
-  // nhiều nguồn Google Sheets khác nhau (mỗi quốc gia/chương trình có thể có
-  // tên cột và đơn vị tiền tệ khác nhau), nên thay vì hard-code 1 cột học phí
-  // cụ thể, ta tự động nhận diện MỌI cột có chứa từ "học phí" trong tiêu đề.
+  // Nhận diện các cột Học phí
   const tuitionHeaders = useMemo(
     () => headers.filter((h) => h !== "_id" && /học phí/i.test(h)),
     [headers]
   );
 
-  // Trích đơn vị tiền tệ hiển thị trong ngoặc ở cuối tên cột, vd:
-  // "Học phí chuyên ngành (TWD)" -> "TWD", để hiển thị minh bạch cho người dùng.
   const tuitionCurrencyLabel = useMemo(() => {
     const units = new Set();
     tuitionHeaders.forEach((h) => {
@@ -219,8 +542,6 @@ export function SchoolSearchPage() {
     return Array.from(units).join(" / ");
   }, [tuitionHeaders]);
 
-  // Chuyển 1 chuỗi học phí thô (có thể lẫn dấu phẩy/chấm ngăn cách hàng nghìn
-  // hoặc chữ đơn vị tiền tệ) thành số nguyên để so sánh khoảng ngân sách.
   const parseTuitionValue = (raw) => {
     if (raw === undefined || raw === null) return null;
     const digitsOnly = String(raw).replace(/[^\d.,]/g, "").replace(/[.,]/g, "");
@@ -229,9 +550,6 @@ export function SchoolSearchPage() {
     return Number.isFinite(numeric) ? numeric : null;
   };
 
-  // Học phí đại diện của 1 trường = giá trị CAO NHẤT trong các cột học phí có
-  // dữ liệu (thường là học phí chuyên ngành - phần tốn kém nhất), dùng để so
-  // khớp với khoảng ngân sách khách hàng nhập.
   const getRecordTuition = (record) => {
     let max = null;
     for (const h of tuitionHeaders) {
@@ -241,36 +559,96 @@ export function SchoolSearchPage() {
     return max;
   };
 
-  // Client-side filtering
+  // Đếm số lượng bộ lọc đang hoạt động
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedContinent !== "all") count++;
+    if (selectedCountry !== "all") count++;
+    if (selectedProgram !== "all") count++;
+    if (selectedRegion !== "all") count++;
+    if (selectedSystem !== "all") count++;
+    if (selectedMajor !== "all") count++;
+    if (selectedIntake !== "all") count++;
+    if (budgetMin !== "" || budgetMax !== "") count++;
+    if (searchTerm) count++;
+    return count;
+  }, [selectedContinent, selectedCountry, selectedProgram, selectedRegion, selectedSystem, selectedMajor, selectedIntake, budgetMin, budgetMax, searchTerm]);
+
+  const handleResetFilters = () => {
+    setSelectedContinent("all");
+    setSelectedCountry("all");
+    setSelectedProgram("all");
+    setSelectedRegion("all");
+    setSelectedSystem("all");
+    setSelectedMajor("all");
+    setSelectedIntake("all");
+    setSearchTerm("");
+    setBudgetMin("");
+    setBudgetMax("");
+    fetchSchools("all", "all");
+    fetchFilterOptions("all", "all");
+  };
+
+  // Bộ lọc dữ liệu hợp nhất (Bảo đảm không 0 kết quả khi chọn Châu lục)
   const filteredRecords = useMemo(() => {
     const minBudget = budgetMin !== "" ? Number(budgetMin) : null;
     const maxBudget = budgetMax !== "" ? Number(budgetMax) : null;
 
     return records.filter(r => {
-      // 1. Region Filter
-      if (regionFilter !== "all") {
-        const region = String(r["Khu vực"] || r["Khu vực "] || "").trim();
-        if (region !== regionFilter) return false;
+      // 1. Lọc Cấp 1: Thị trường / Châu lục qua mapper thông minh
+      if (selectedContinent && selectedContinent.toLowerCase() !== "all") {
+        const schoolContinent = getContinentFromSchool(r);
+        if (schoolContinent.toLowerCase() !== selectedContinent.toLowerCase()) return false;
       }
 
-      // 2. System Filter
-      if (systemFilter !== "all") {
-        const system = String(r["Hệ tuyển sinh"] || r["Hệ tuyển sinh "] || "").trim();
-        if (system !== systemFilter) return false;
+      // 2. Lọc Cấp 2: Quốc gia
+      if (selectedCountry && selectedCountry.toLowerCase() !== "all") {
+        const countryVal = String(r["Quốc gia"] || r["Quốc gia "] || r.country || "").trim();
+        if (countryVal && countryVal.toLowerCase() !== selectedCountry.toLowerCase() && !countryVal.toLowerCase().includes(selectedCountry.toLowerCase())) {
+          return false;
+        }
       }
 
-      // 3. Budget (Giá sản phẩm) Filter
+      // 3. Lọc Cấp 2: Hệ tuyển sinh
+      if (selectedSystem && selectedSystem.toLowerCase() !== "all") {
+        const systemVal = String(r["Hệ tuyển sinh"] || r["Hệ tuyển sinh "] || r.system || "").toLowerCase();
+        if (!systemVal.includes(selectedSystem.toLowerCase())) return false;
+      }
+
+      // 4. Lọc Cấp 2: Chuyên ngành
+      if (selectedMajor && selectedMajor.toLowerCase() !== "all") {
+        const majorVal = String(r["Chuyên ngành"] || r["Chuyên ngành "] || r.major || "").toLowerCase();
+        if (!majorVal.includes(selectedMajor.toLowerCase())) return false;
+      }
+
+      // 5. Lọc Cấp 3: Khu vực
+      if (selectedRegion && selectedRegion.toLowerCase() !== "all") {
+        const regionVal = String(r["Khu vực"] || r["Khu vực "] || r.region || "").trim();
+        if (regionVal.toLowerCase() !== selectedRegion.toLowerCase()) return false;
+      }
+
+      // 6. Lọc Cấp 3: Kỳ nhập học
+      if (selectedIntake && selectedIntake.toLowerCase() !== "all") {
+        const intakeObj = availableIntakes.find(i => i.id === selectedIntake);
+        if (intakeObj && intakeObj.keyword) {
+          const deadlineReg = String(r["Hạn báo danh"] || r["Hạn nộp hồ sơ"] || r["Kỳ tuyển sinh"] || r.deadline || "").toLowerCase();
+          if (!deadlineReg.includes(intakeObj.keyword)) return false;
+        }
+      }
+
+      // 7. Lọc Ngân sách / Học phí
       if (minBudget !== null || maxBudget !== null) {
         const tuition = getRecordTuition(r);
-        if (tuition === null) return false; // Không có dữ liệu học phí -> không thể xác nhận phù hợp ngân sách
+        if (tuition === null) return false;
         if (minBudget !== null && tuition < minBudget) return false;
         if (maxBudget !== null && tuition > maxBudget) return false;
       }
 
       return true;
     });
-  }, [records, regionFilter, systemFilter, budgetMin, budgetMax, tuitionHeaders]);
+  }, [records, selectedContinent, selectedCountry, selectedSystem, selectedMajor, selectedRegion, selectedIntake, budgetMin, budgetMax, tuitionHeaders, availableIntakes]);
 
+  // Export to CSV
   const handleExportCsv = () => {
     if (filteredRecords.length === 0 || headers.length === 0) return;
 
@@ -319,23 +697,22 @@ export function SchoolSearchPage() {
     setActiveTab("overview");
   };
 
-  // ──── CRUD SCHOOL FUNCTIONS ───────────────────────────────────────────────
+  // CRUD Functions
   const openSchoolModal = (school = null) => {
     if (school) {
-      // Map row headers back to form fields
       setEditingSchool(school);
       setSchoolForm({
-        name: school["Tên trường"] || "",
-        country: activeCountry !== "all" ? activeCountry : (school["Quốc gia"] || ""),
-        program: activeProgram !== "all" ? activeProgram : (school["Chương trình"] || ""),
-        region: school["Khu vực"] || "",
-        address: school["Địa chỉ"] || "",
-        majors: school["Chuyên ngành"] || "",
-        website: school["Website"] || "",
-        admissionSystem: school["Hệ tuyển sinh"] || "",
-        deadlineRegister: school["Hạn báo danh"] || "",
+        name: school["Tên trường"] || school.name || "",
+        country: selectedCountry !== "all" ? selectedCountry : (school["Quốc gia"] || school.country || ""),
+        program: selectedProgram !== "all" ? selectedProgram : (school["Chương trình"] || school.program || ""),
+        region: school["Khu vực"] || school.region || "",
+        address: school["Địa chỉ"] || school.address || "",
+        majors: school["Chuyên ngành"] || school.major || "",
+        website: school["Website"] || school.website || "",
+        admissionSystem: school["Hệ tuyển sinh"] || school.system || "",
+        deadlineRegister: school["Hạn báo danh"] || school.deadline || "",
         deadlineDocument: school["Hạn nộp hồ sơ"] || "",
-        requirements: school["Điều kiện tuyển sinh"] || "",
+        requirements: school["Điều kiện tuyển sinh"] || school.requirements || "",
         tuitionLanguage: school["Học phí học tiếng (1+4) TWD"] || "",
         tuitionMajor: school["Học phí chuyên ngành (TWD)"] || "",
         dormitory: school["Ký túc xá (đài tệ)"] || "",
@@ -346,7 +723,7 @@ export function SchoolSearchPage() {
     } else {
       setEditingSchool(null);
       setSchoolForm({
-        name: "", country: activeCountry !== "all" ? activeCountry : "", program: activeProgram !== "all" ? activeProgram : "",
+        name: "", country: selectedCountry !== "all" ? selectedCountry : "", program: selectedProgram !== "all" ? selectedProgram : "",
         region: "", address: "", majors: "", website: "", admissionSystem: "", deadlineRegister: "", deadlineDocument: "",
         requirements: "", tuitionLanguage: "", tuitionMajor: "", dormitory: "", scholarship: "", imageUrl: "", stt: 0
       });
@@ -398,7 +775,7 @@ export function SchoolSearchPage() {
     }
   };
 
-  // ──── SOURCES MANAGEMENT FUNCTIONS ────────────────────────────────────────
+  // Sources management
   const fetchSources = async () => {
     setSourcesLoading(true);
     try {
@@ -448,7 +825,7 @@ export function SchoolSearchPage() {
         fetchSources();
       } else {
         const json = await res.json().catch(() => null);
-        alert(json?.message || "Không thể tạo nguồn đồng bộ.");
+        alert(json?.message || "Lỗi khi thêm liên kết Sheet.");
       }
     } catch (err) {
       console.error(err);
@@ -456,7 +833,7 @@ export function SchoolSearchPage() {
   };
 
   const handleDeleteSource = async (id) => {
-    if (!window.confirm("Xóa nguồn đồng bộ này sẽ xóa tất cả trường học đã được kéo từ Sheet này về. Bạn chắc chắn muốn tiếp tục?")) return;
+    if (!window.confirm("Bạn có chắc muốn xóa nguồn Google Sheet này?")) return;
     try {
       const res = await authFetch(`${API_BASE_URL}/schools/sources/${id}`, {
         method: "DELETE",
@@ -464,7 +841,6 @@ export function SchoolSearchPage() {
       });
       if (res.ok) {
         fetchSources();
-        fetchSchools();
       }
     } catch (err) {
       console.error(err);
@@ -479,10 +855,14 @@ export function SchoolSearchPage() {
         headers: getAuthHeaders()
       });
       const json = await res.json().catch(() => null);
-      alert(json?.message || "Đồng bộ hoàn thành.");
-      fetchSources();
-      fetchSchools();
-      fetchCountriesAndPrograms();
+      if (res.ok && json?.success) {
+        alert(`Đồng bộ thành công ${json.data?.totalSynced || 0} trường!`);
+        fetchSources();
+        fetchSchools();
+        fetchCountriesAndPrograms();
+      } else {
+        alert(json?.message || "Đồng bộ thất bại. Vui lòng kiểm tra lại quyền truy cập Sheet.");
+      }
     } catch (err) {
       console.error(err);
       alert("Lỗi kết nối khi đồng bộ.");
@@ -492,389 +872,1106 @@ export function SchoolSearchPage() {
   };
 
   return (
-    <div className="container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
-      {/* Page Header */}
-      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
-        <div>
-          <h4 className="fw-bold text-body-emphasis mb-1">Tra cứu Trường Du học</h4>
-          <p className="text-body-secondary small mb-0">Tra cứu nhanh thông tin tuyển sinh, học phí, học bổng được đồng bộ từ Google Sheets và lưu trữ hệ thống</p>
-        </div>
+    <div className="d-flex flex-column h-100 p-3 gap-3 bg-slate-50 app-dark:bg-[#0b1120]! overflow-hidden transition-colors duration-300">
+      {/* ── STYLES CHỐNG ĐÈ CHỮ CHO THEAD Ở CẢ LIGHT VÀ DARK MODE ── */}
+      <style>{`
+        /* ── TABLE THEAD & STICKY ACTION COLUMN DESIGN ── */
+        .school-sticky-thead th {
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          background-color: #f8fafc !important;
+          color: #1e293b !important;
+          border-bottom: 2px solid #06b6d4 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+          letter-spacing: 0.03em;
+        }
+        html.app-dark .school-sticky-thead th,
+        body.app-dark .school-sticky-thead th,
+        [data-bs-theme="dark"] .school-sticky-thead th,
+        .app-dark .school-sticky-thead th {
+          background-color: #1e293b !important;
+          color: #f8fafc !important;
+          border-bottom: 2px solid #06b6d4 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+        }
 
-        <div className="d-flex flex-wrap gap-2">
-          {isAdmin && (
-            <>
-              <button className="btn btn-sm btn-primary d-inline-flex align-items-center shadow-sm" type="button" onClick={() => openSchoolModal()}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="me-1"><path d="M12 5v14M5 12h14" /></svg>
-                Thêm trường
-              </button>
-              <button className="btn btn-sm btn-outline-primary d-inline-flex align-items-center" type="button" onClick={handleOpenSourcesModal}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="me-1"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg>
-                Quản lý Google Sheets nguồn
-              </button>
-            </>
-          )}
-          <button className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center" type="button" onClick={() => fetchSchools()} disabled={loading}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="me-1"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg>
-            Làm mới
-          </button>
-          <button className="btn btn-sm btn-success d-inline-flex align-items-center" type="button" onClick={handleExportCsv} disabled={loading || filteredRecords.length === 0}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="me-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
-            Tải file Excel (CSV)
-          </button>
-        </div>
-      </div>
+        /* Tay cầm kéo chỉnh độ rộng cột (Column Resizer) với vạch phân cách tinh tế */
+        .school-col-resizer {
+          position: absolute;
+          right: 0;
+          top: 15%;
+          bottom: 15%;
+          width: 10px;
+          cursor: col-resize;
+          user-select: none;
+          touch-action: none;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .school-col-resizer::after {
+          content: "";
+          display: block;
+          width: 2px;
+          height: 100%;
+          background-color: #cbd5e1;
+          border-radius: 2px;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .school-col-resizer:hover::after,
+        .school-col-resizer:active::after {
+          width: 4px;
+          background: linear-gradient(180deg, #06b6d4 0%, #3b82f6 100%) !important;
+          box-shadow: 0 0 10px rgba(6, 182, 212, 0.8) !important;
+        }
+        html.app-dark .school-col-resizer::after,
+        body.app-dark .school-col-resizer::after,
+        [data-bs-theme="dark"] .school-col-resizer::after,
+        .app-dark .school-col-resizer::after {
+          background-color: #475569;
+        }
+        html.app-dark .school-col-resizer:hover::after,
+        body.app-dark .school-col-resizer:hover::after,
+        [data-bs-theme="dark"] .school-col-resizer:hover::after,
+        .app-dark .school-col-resizer:hover::after {
+          background: linear-gradient(180deg, #22d3ee 0%, #38bdf8 100%) !important;
+          box-shadow: 0 0 10px rgba(34, 211, 238, 0.8) !important;
+        }
 
-      {/* Search Bar & Filter Toggle Button Header */}
-      <div id="school-search-bar-card" className="card border-0 shadow-sm mb-3" style={{ borderRadius: "12px" }}>
-        <div className="card-body p-3">
-          <div className="d-flex flex-column flex-md-row gap-2 align-items-center">
-            {/* Search Input */}
-            <div className="position-relative flex-grow-1 w-100">
-              <input
-                type="text"
-                placeholder="Tìm kiếm nhanh tên trường, chuyên ngành, địa chỉ, khu vực..."
-                className="form-control bg-body border-1 ps-5 py-2"
-                style={{ fontSize: "14px" }}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && fetchSchools()}
-              />
-              <span className="position-absolute start-0 top-50 translate-middle-y ms-3 text-body-secondary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+        .school-sticky-action-col {
+          position: sticky !important;
+          right: 0 !important;
+          z-index: 15 !important;
+          background-color: #ffffff !important;
+          box-shadow: -6px 0 14px rgba(0, 0, 0, 0.08) !important;
+          min-width: 120px !important;
+          width: 120px !important;
+        }
+        .table-row-item:hover .school-sticky-action-col {
+          background-color: #f8fafc !important;
+        }
+        .table-row-item.table-row-selected .school-sticky-action-col {
+          background-color: #ecfeff !important;
+        }
+        html.app-dark .school-sticky-action-col,
+        body.app-dark .school-sticky-action-col,
+        [data-bs-theme="dark"] .school-sticky-action-col,
+        .app-dark .school-sticky-action-col {
+          background-color: #0f172a !important;
+          box-shadow: -6px 0 14px rgba(0, 0, 0, 0.5) !important;
+        }
+        html.app-dark .table-row-item:hover .school-sticky-action-col,
+        .app-dark .table-row-item:hover .school-sticky-action-col {
+          background-color: #1e293b !important;
+        }
+        html.app-dark .table-row-item.table-row-selected .school-sticky-action-col,
+        .app-dark .table-row-item.table-row-selected .school-sticky-action-col {
+          background-color: #083344 !important;
+        }
+
+        /* ── BẢNG MÀU STT DỊU MẮT, DỄ NHÌN, KHÔNG CHÓI ── */
+        .badge-stt-gentle {
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+          color: #334155 !important;
+          border: 1px solid #cbd5e1 !important;
+          font-weight: 800 !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        html.app-dark .badge-stt-gentle,
+        body.app-dark .badge-stt-gentle,
+        [data-bs-theme="dark"] .badge-stt-gentle,
+        .app-dark .badge-stt-gentle {
+          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+          color: #94a3b8 !important;
+          border: 1px solid #334155 !important;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ── BẢNG MÀU HẠN BÁO DANH & HẠN NỘP HỒ SƠ ĐỎ ĐẬM SANG TRỌNG ── */
+        .badge-deadline-crimson {
+          background-color: rgba(225, 29, 72, 0.12) !important;
+          color: #9f1239 !important;
+          border: 1px solid #e11d48 !important;
+          font-weight: 800 !important;
+        }
+        html.app-dark .badge-deadline-crimson,
+        body.app-dark .badge-deadline-crimson,
+        [data-bs-theme="dark"] .badge-deadline-crimson,
+        .app-dark .badge-deadline-crimson {
+          background-color: rgba(225, 29, 72, 0.25) !important;
+          color: #fb7185 !important;
+          border: 1px solid rgba(244, 63, 94, 0.7) !important;
+        }
+
+        /* ── NÚT THAO TÁC ĐỒNG BỘ TINH TẾ (CHẾ ĐỘ SÁNG & TỐI) ── */
+        .btn-action-view {
+          background-color: #f1f5f9;
+          color: #0284c7;
+          border: 1px solid #cbd5e1;
+        }
+        .btn-action-view:hover {
+          background-color: #0284c7 !important;
+          color: #ffffff !important;
+          border-color: #0284c7 !important;
+        }
+        html.app-dark .btn-action-view,
+        body.app-dark .btn-action-view,
+        [data-bs-theme="dark"] .btn-action-view,
+        .app-dark .btn-action-view {
+          background-color: #1e293b !important;
+          color: #38bdf8 !important;
+          border: 1px solid #334155 !important;
+        }
+
+        .btn-action-edit {
+          background-color: #f1f5f9;
+          color: #d97706;
+          border: 1px solid #cbd5e1;
+        }
+        .btn-action-edit:hover {
+          background-color: #d97706 !important;
+          color: #ffffff !important;
+          border-color: #d97706 !important;
+        }
+        html.app-dark .btn-action-edit,
+        body.app-dark .btn-action-edit,
+        [data-bs-theme="dark"] .btn-action-edit,
+        .app-dark .btn-action-edit {
+          background-color: #1e293b !important;
+          color: #fbbf24 !important;
+          border: 1px solid #334155 !important;
+        }
+
+        .btn-action-delete {
+          background-color: #f1f5f9;
+          color: #e11d48;
+          border: 1px solid #cbd5e1;
+        }
+        .btn-action-delete:hover {
+          background-color: #e11d48 !important;
+          color: #ffffff !important;
+          border-color: #e11d48 !important;
+        }
+        html.app-dark .btn-action-delete,
+        body.app-dark .btn-action-delete,
+        [data-bs-theme="dark"] .btn-action-delete,
+        .app-dark .btn-action-delete {
+          background-color: #1e293b !important;
+          color: #f87171 !important;
+          border: 1px solid #334155 !important;
+        }
+
+        /* ── BẢNG MÀU GRADIENT ĐA SẮC CAO CẤP CHO BADGE & ACTION BUTTONS ── */
+        .badge-tuyensinh-chromatic {
+          background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 35%, #8b5cf6 70%, #ec4899 100%) !important;
+          box-shadow: 0 3px 12px rgba(59, 130, 246, 0.4) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .badge-livedata-chromatic {
+          background: linear-gradient(135deg, #f59e0b 0%, #ef4444 30%, #ec4899 65%, #8b5cf6 100%) !important;
+          box-shadow: 0 3px 12px rgba(236, 72, 153, 0.4) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .btn-export-chromatic {
+          background: linear-gradient(135deg, #059669 0%, #10b981 25%, #06b6d4 55%, #3b82f6 80%, #6366f1 100%) !important;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.45) !important;
+          color: #ffffff !important;
+          border: none !important;
+          font-weight: 800 !important;
+        }
+        .btn-export-chromatic:hover {
+          transform: translateY(-2px) scale(1.04);
+          box-shadow: 0 6px 22px rgba(16, 185, 129, 0.6) !important;
+          color: #ffffff !important;
+        }
+        .btn-export-chromatic:active {
+          transform: scale(0.96);
+        }
+        /* ── BẢNG MÀU KHU VỰC CHUẨN XANH #25A18E ── */
+        .badge-region-teal {
+          background-color: rgba(37, 161, 142, 0.12) !important;
+          color: #0b685b !important;
+          border: 1px solid #25a18e !important;
+          font-weight: 800 !important;
+        }
+        html.app-dark .badge-region-teal,
+        body.app-dark .badge-region-teal,
+        [data-bs-theme="dark"] .badge-region-teal,
+        .app-dark .badge-region-teal {
+          background-color: rgba(37, 161, 142, 0.25) !important;
+          color: #38dec5 !important;
+          border: 1px solid rgba(37, 161, 142, 0.7) !important;
+        }
+
+        /* ── BẢNG MÀU HỆ TUYỂN SINH CHUẨN XANH #18A5A7 ── */
+        .badge-system-teal {
+          background-color: rgba(24, 165, 167, 0.12) !important;
+          color: #0b686a !important;
+          border: 1px solid #18a5a7 !important;
+          font-weight: 800 !important;
+        }
+        html.app-dark .badge-system-teal,
+        body.app-dark .badge-system-teal,
+        [data-bs-theme="dark"] .badge-system-teal,
+        .app-dark .badge-system-teal {
+          background-color: rgba(24, 165, 167, 0.25) !important;
+          color: #3bf2f5 !important;
+          border: 1px solid rgba(24, 165, 167, 0.7) !important;
+        }
+
+        /* ── BẢNG MÀU HỌC BỔNG ĐA SẮC SANG TRỌNG #291850 ── */
+        .badge-scholarship-chromatic {
+          background: linear-gradient(135deg, #291850 0%, #4c1d95 35%, #7c3aed 70%, #c026d3 100%) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.25) !important;
+          box-shadow: 0 2px 8px rgba(41, 24, 80, 0.35) !important;
+          font-weight: 800 !important;
+        }
+        .badge-scholarship-chromatic i {
+          color: #fde047 !important;
+        }
+        html.app-dark .badge-scholarship-chromatic,
+        body.app-dark .badge-scholarship-chromatic,
+        [data-bs-theme="dark"] .badge-scholarship-chromatic,
+        .app-dark .badge-scholarship-chromatic {
+          background: linear-gradient(135deg, #291850 0%, #4c1d95 40%, #7e22ce 75%, #a21caf 100%) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(192, 38, 211, 0.5) !important;
+          box-shadow: 0 2px 8px rgba(126, 34, 206, 0.4) !important;
+        }
+      `}</style>
+
+      {/* ── 1. HEADER CHÍNH & CỤM NÚT GRADIENT CAO CẤP ── */}
+      <div className="card border-0 rounded-3xl p-4 shadow-sm bg-white app-dark:bg-[#0f172a]! border border-slate-200 app-dark:border-slate-800! transition-all">
+        <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+          
+          <div>
+            <div className="d-flex align-items-center gap-2 mb-1.5">
+              <span
+                className="badge badge-tuyensinh-chromatic px-3 py-1.5 rounded-xl text-[11px] font-black tracking-wide uppercase d-inline-flex align-items-center gap-1.5 transition-all hover:scale-105"
+              >
+                <i className="fa fa-graduation-cap"></i>
+                <span>Tuyển sinh Du học</span>
               </span>
-              <button className="btn btn-sm btn-primary position-absolute end-0 top-50 translate-middle-y me-1 px-3" type="button" onClick={() => fetchSchools()}>
-                Tìm kiếm
-              </button>
+              <span
+                className="badge badge-livedata-chromatic px-2.5 py-1.5 rounded-xl text-[11px] font-black tracking-wide d-inline-flex align-items-center gap-1.5 transition-all hover:scale-105"
+              >
+                <span className="d-inline-block rounded-circle bg-white" style={{ width: "6px", height: "6px", boxShadow: "0 0 6px #ffffff" }}></span>
+                <i className="fa fa-rotate fa-spin" style={{ animationDuration: "4s", fontSize: "10px" }}></i>
+                <span>Live Data Sync</span>
+              </span>
             </div>
 
-            {/* Filter Panel Toggle Button */}
+            <h4 className="fw-black tracking-tight mb-1 text-slate-900 app-dark:text-white!">
+              <span className="bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Tra Cứu Trường Du Học Toàn Cầu
+              </span>
+            </h4>
+            <p className="text-slate-600 app-dark:text-slate-400! text-xs mb-0 font-medium">
+              Hệ thống tra cứu chỉ tiêu tuyển sinh, học phí, học bổng và kỳ nhập học các thị trường quốc tế
+            </p>
+          </div>
+
+          {/* Cụm Nút Gradient Hành Động */}
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            
+            {/* Nút Ẩn/Hiện Bộ lọc (Indigo-Violet-Pink Gradient) */}
             <button
-              id="school-filter-toggle-btn"
               type="button"
-              className={`btn btn-md d-inline-flex align-items-center gap-2 px-3 py-2 text-nowrap transition-all ${isFilterPanelOpen ? "btn-primary shadow-sm" : "btn-outline-primary"}`}
-              onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-              title="Mở/Đóng bảng bộ lọc"
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              className={`btn btn-sm px-3.5 py-2 rounded-xl text-xs font-bold text-white d-flex align-items-center gap-2 border-0 shadow-md transition-all hover:scale-105 active:scale-95 ${
+                isFilterVisible ? "scale-105 ring-2 ring-indigo-400/50" : ""
+              }`}
+              style={{
+                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)",
+                boxShadow: "0 4px 14px rgba(139, 92, 246, 0.35)",
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-              <span>Bộ lọc</span>
+              <i className={`fa fa-filter text-xs transition-transform duration-300 ${isFilterVisible ? "rotate-180 text-amber-200" : "text-white"}`}></i>
+              <span>{isFilterVisible ? "Ẩn bộ lọc" : "Hiện bộ lọc"}</span>
               {activeFilterCount > 0 && (
-                <span className={`badge rounded-pill ${isFilterPanelOpen ? "bg-white text-primary" : "bg-primary text-white"}`}>
-                  {activeFilterCount}
+                <span
+                  className="d-inline-flex align-items-center justify-content-center text-center select-none"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    color: "#4338ca",
+                    fontWeight: "900",
+                    fontSize: "11px",
+                    minWidth: "20px",
+                    height: "20px",
+                    borderRadius: "9999px",
+                    padding: "0 5px",
+                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
+                    verticalAlign: "middle",
+                    flexShrink: 0,
+                  }}
+                  title={`Đang áp dụng ${activeFilterCount} bộ lọc`}
+                >
+                  <span style={{ lineHeight: "1", display: "inline-block", textAlign: "center" }}>
+                    {activeFilterCount}
+                  </span>
                 </span>
               )}
             </button>
-          </div>
 
-          {/* Active Filter Chips Summary */}
-          {(activeFilterCount > 0 || searchTerm) && (
-            <div className="d-flex flex-wrap align-items-center gap-1.5 mt-2.5 pt-2 border-top">
-              <span className="small text-body-secondary me-1 fw-semibold" style={{ fontSize: "12px" }}>Đang lọc:</span>
-              {activeCountry !== "all" && (
-                <span className="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
-                  Quốc gia: <strong>{activeCountry}</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}></button>
-                </span>
-              )}
-              {activeProgram !== "all" && (
-                <span className="badge bg-info-subtle text-info-emphasis border border-info-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
-                  Chương trình: <strong>{activeProgram}</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => handleProgramChange("all")}></button>
-                </span>
-              )}
-              {regionFilter !== "all" && (
-                <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
-                  Khu vực: <strong>{regionFilter}</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setRegionFilter("all")}></button>
-                </span>
-              )}
-              {systemFilter !== "all" && (
-                <span className="badge bg-success-subtle text-success-emphasis border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-2">
-                  Hệ: <strong>{systemFilter}</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setSystemFilter("all")}></button>
-                </span>
-              )}
-              {(budgetMin !== "" || budgetMax !== "") && (
-                <span className="badge bg-teal-subtle text-teal-emphasis border d-inline-flex align-items-center gap-1 py-1 px-2" style={{ backgroundColor: "rgba(13,148,136,0.12)", color: "#0d9488", borderColor: "rgba(13,148,136,0.35)" }}>
-                  Học phí: <strong>{budgetMin !== "" ? Number(budgetMin).toLocaleString("vi-VN") : "0"} - {budgetMax !== "" ? Number(budgetMax).toLocaleString("vi-VN") : "∞"}</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => { setBudgetMin(""); setBudgetMax(""); }}></button>
-                </span>
-              )}
-              {searchTerm && (
-                <span className="badge bg-secondary-subtle text-body-secondary border d-inline-flex align-items-center gap-1 py-1 px-2">
-                  Từ khóa: <strong>"{searchTerm}"</strong>
-                  <button type="button" className="btn-close ms-1" style={{ fontSize: "8px" }} onClick={() => setSearchTerm("")}></button>
-                </span>
-              )}
+            {/* Nút + Thêm trường (Sunset Crimson Gradient) */}
+            {isAdmin && (
               <button
                 type="button"
-                className="btn btn-link btn-xs text-danger text-decoration-none ms-auto fw-semibold p-0"
-                style={{ fontSize: "12px" }}
-                onClick={resetAllFilters}
+                onClick={() => openSchoolModal()}
+                className="btn btn-sm px-3.5 py-2 rounded-xl text-xs font-bold text-white d-flex align-items-center gap-1.5 border-0 shadow-md transition-all hover:scale-105 active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #fb923c 100%)",
+                  boxShadow: "0 4px 14px rgba(244, 63, 94, 0.35)",
+                }}
               >
-                Xóa tất cả bộ lọc
+                <i className="fa fa-plus text-xs"></i>
+                <span>Thêm trường</span>
               </button>
-            </div>
-          )}
+            )}
+
+            {/* Nút Quản lý Sheets nguồn (Ocean Cyan Gradient) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleOpenSourcesModal}
+                className="btn btn-sm px-3.5 py-2 rounded-xl text-xs font-bold text-white d-flex align-items-center gap-1.5 border-0 shadow-md transition-all hover:scale-105 active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg, #0284c7 0%, #0d9488 100%)",
+                  boxShadow: "0 4px 14px rgba(2, 132, 199, 0.35)",
+                }}
+              >
+                <i className="fa fa-table text-xs"></i>
+                <span>Quản lý Sheets nguồn</span>
+              </button>
+            )}
+
+            {/* Nút Xuất Excel / CSV (Đa sắc Emerald-Teal-Cyan-Blue-Indigo Gradient) */}
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={loading || filteredRecords.length === 0}
+              className="btn btn-sm btn-export-chromatic px-3.5 py-2 rounded-xl text-xs d-flex align-items-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+            >
+              <i className="fa fa-file-excel text-xs text-white"></i>
+              <span className="text-white">Xuất Excel / CSV</span>
+            </button>
+
+            {/* Nút Làm mới (Đưa về phía bên phải cùng) */}
+            <button
+              type="button"
+              onClick={() => fetchSchools()}
+              disabled={loading}
+              className="btn btn-sm px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200 app-dark:bg-slate-800! app-dark:border-slate-700! app-dark:text-slate-200! transition-all hover:scale-105 active:scale-95 shadow-sm"
+              title="Làm mới dữ liệu từ máy chủ"
+            >
+              <i className={`fa fa-sync-alt text-xs ${loading ? "fa-spin" : ""}`}></i>
+              <span className="ms-1.5">Làm mới</span>
+            </button>
+
+          </div>
         </div>
       </div>
 
-      {/* ============================================================
-          BỘ LỌC NGANG - ĐẶT Ở VỊ TRÍ TRUNG TÂM PHÍA TRÊN (TOP CENTER)
-          Thay thế cho bộ lọc dạng cột dọc/drawer trượt bên phải trước đây,
-          giúp người dùng nhìn thấy toàn bộ tiêu chí lọc trong 1 hàng ngang,
-          không phải cuộn dọc hay bị che khuất nội dung bảng - tránh rối mắt.
-         ============================================================ */}
-      {isFilterPanelOpen && (
-        <div className="card border-0 shadow-sm mb-3 mx-auto" style={{ borderRadius: "12px", maxWidth: "1400px" }}>
-          <div className="card-header bg-body-tertiary border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-            <h6 className="fw-bold text-body-emphasis mb-0 d-flex align-items-center gap-2 text-center" style={{ fontSize: "15px" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-              Bộ lọc chuyên sâu
-            </h6>
-            <button
-              type="button"
-              className="btn-close border-0 bg-transparent text-body-secondary fs-6"
-              onClick={() => setIsFilterPanelOpen(false)}
-              title="Thu gọn bộ lọc"
-            ></button>
+      {/* ── 2. KHU VỰC BỘ LỌC 3 CẤP (CÓ THỂ ẨN / HIỆN) ── */}
+      {isFilterVisible && (
+        <div className="card border-0 rounded-3xl p-3.5 shadow-sm bg-white app-dark:bg-[#0f172a]! border border-slate-200 app-dark:border-slate-800! transition-all duration-300">
+          
+          {/* CẤP 1: QUICK SWITCHER THỊ TRƯỜNG / CHÂU LỤC */}
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-3 border-bottom border-slate-200 app-dark:border-slate-800!">
+            <div className="d-flex flex-wrap gap-2">
+              {continentTabs.map(tab => {
+                const isActive = selectedContinent.toLowerCase() === tab.id.toLowerCase();
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedContinent(tab.id);
+                      setSelectedCountry("all"); // Reset lọc quốc gia khi chuyển châu lục
+                    }}
+                    className={`btn btn-sm px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 d-flex align-items-center gap-1.5 border ${
+                      isActive
+                        ? "text-white border-transparent shadow-md scale-105"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200 app-dark:bg-slate-900/80! app-dark:border-slate-800! app-dark:text-slate-300! app-dark:hover:bg-slate-800!"
+                    }`}
+                    style={
+                      isActive
+                        ? {
+                            background: "linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%)",
+                            boxShadow: "0 4px 12px rgba(37, 99, 235, 0.35)",
+                          }
+                        : {}
+                    }
+                  >
+                    <i className={`fa ${tab.icon} text-xs`}></i>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="text-slate-600 app-dark:text-slate-400! text-xs font-bold">
+              Khả dụng: <strong className="text-cyan-600 app-dark:text-cyan-400! font-black">{filteredRecords.length}</strong> / {records.length} trường
+            </span>
           </div>
 
-          <div className="card-body p-4">
-            <div className="row g-3 justify-content-center">
-              {/* Tiêu chí 1: Quốc gia */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                  <span>1. Quốc gia</span>
-                  {activeCountry !== "all" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleCountryChange({ target: { value: "all" } })}>Bỏ chọn</span>
-                  )}
-                </label>
-                <select className="form-select form-select-sm border-1" value={activeCountry} onChange={handleCountryChange}>
-                  <option value="all">Tất cả quốc gia</option>
-                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+          {/* CẤP 2 & 3: FORM BỘ LỌC CHI TIẾT */}
+          <div className="row g-2 align-items-center">
+            
+            {/* Ô & Nút Tìm kiếm Capsule Hiện Đại */}
+            <div className="col-12 col-lg-3">
+              <div className="d-flex align-items-center bg-slate-100 app-dark:bg-slate-900/90! border border-slate-300 app-dark:border-slate-700/90! rounded-xl p-1 shadow-sm focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/30 transition-all">
+                <div className="d-flex align-items-center justify-content-center ps-2.5 pe-1.5 text-cyan-600 app-dark:text-cyan-400!">
+                  <i className="fa fa-search text-xs"></i>
+                </div>
+                <input
+                  type="text"
+                  className="form-control form-control-sm border-0 bg-transparent text-slate-900 app-dark:text-slate-100! font-semibold text-xs shadow-none p-0 focus:outline-none flex-grow-1"
+                  placeholder="Tìm tên trường, ngành, khu vực, GPA..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && fetchSchools()}
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm("");
+                      fetchSchools();
+                    }}
+                    className="btn btn-link btn-sm p-0 px-1.5 text-slate-400 hover:text-rose-500 app-dark:hover:text-rose-400! text-xs text-decoration-none"
+                    title="Xóa nội dung tìm kiếm"
+                  >
+                    <i className="fa fa-times-circle"></i>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fetchSchools()}
+                  className="btn btn-sm px-2.5 py-1 rounded-lg text-[11px] font-extrabold text-white border-0 shadow-sm transition-all hover:scale-105 active:scale-95 ms-1 d-flex align-items-center gap-1"
+                  style={{
+                    background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
+                    boxShadow: "0 2px 6px rgba(37, 99, 235, 0.35)",
+                  }}
+                  title="Tìm kiếm ngay"
+                >
+                  <i className="fa fa-arrow-right text-[10px]"></i>
+                  <span>Tìm</span>
+                </button>
               </div>
+            </div>
 
-              {/* Tiêu chí 2: Chương trình du học */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                  <span>2. Chương trình</span>
-                  {activeProgram !== "all" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => handleProgramChange("all")}>Bỏ chọn</span>
-                  )}
-                </label>
-                <select className="form-select form-select-sm border-1" value={activeProgram} onChange={(e) => handleProgramChange(e.target.value)}>
-                  <option value="all">Tất cả chương trình</option>
-                  {programs.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
+            {/* Lọc Quốc Gia */}
+            <div className="col-6 col-lg-2">
+              <select
+                className="form-select form-select-sm py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900! app-dark:text-slate-200! app-dark:border-slate-700!"
+                value={selectedCountry}
+                onChange={(e) => handleCountryChange(e.target.value)}
+              >
+                <option value="all">🌍 Tất cả quốc gia ({dynamicOptions.countries.length})</option>
+                {dynamicOptions.countries.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Tiêu chí 3: Khu vực */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                  <span>3. Khu vực</span>
-                  {regionFilter !== "all" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setRegionFilter("all")}>Bỏ chọn</span>
-                  )}
-                </label>
-                <select className="form-select form-select-sm border-1" value={regionFilter} onChange={(e) => setRegionFilter(e.target.value)}>
-                  <option value="all">Tất cả Khu vực</option>
-                  {regionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              </div>
+            {/* Lọc Hệ Tuyển Sinh */}
+            <div className="col-6 col-lg-2">
+              <select
+                className="form-select form-select-sm py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900! app-dark:text-slate-200! app-dark:border-slate-700!"
+                value={selectedSystem}
+                onChange={(e) => setSelectedSystem(e.target.value)}
+              >
+                <option value="all">🎓 Hệ tuyển sinh</option>
+                {dynamicOptions.systems.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Tiêu chí 4: Hệ tuyển sinh */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold text-primary mb-1.5 d-flex align-items-center justify-content-between">
-                  <span>4. Hệ tuyển sinh</span>
-                  {systemFilter !== "all" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setSystemFilter("all")}>Bỏ chọn</span>
-                  )}
-                </label>
-                <select className="form-select form-select-sm border-1" value={systemFilter} onChange={(e) => setSystemFilter(e.target.value)}>
-                  <option value="all">Tất cả Hệ tuyển sinh</option>
-                  {systemOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-              </div>
+            {/* Lọc Chuyên Ngành */}
+            <div className="col-6 col-lg-2">
+              <select
+                className="form-select form-select-sm py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900! app-dark:text-slate-200! app-dark:border-slate-700!"
+                value={selectedMajor}
+                onChange={(e) => setSelectedMajor(e.target.value)}
+              >
+                <option value="all">📚 Chuyên ngành</option>
+                {dynamicOptions.majors.slice(0, 50).map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Tiêu chí 5: Giá sản phẩm (Học phí) - Từ */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold text-teal-700 mb-1.5 d-flex align-items-center justify-content-between" style={{ color: "#0d9488" }}>
-                  <span>5. Học phí từ</span>
-                  {budgetMin !== "" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setBudgetMin("")}>Bỏ chọn</span>
-                  )}
-                </label>
+            {/* Lọc Khu Vực */}
+            <div className="col-6 col-lg-2">
+              <select
+                className="form-select form-select-sm py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900! app-dark:text-slate-200! app-dark:border-slate-700!"
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+              >
+                <option value="all">📍 Tất cả khu vực ({dynamicOptions.regions.length})</option>
+                {dynamicOptions.regions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nút Đặt lại */}
+            <div className="col-12 col-lg-1 text-end">
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn btn-sm w-100 py-2 rounded-xl text-xs font-bold border border-slate-300 bg-slate-100 text-slate-800 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 app-dark:bg-slate-900! app-dark:text-slate-300! app-dark:border-slate-700! app-dark:hover:bg-rose-950! app-dark:hover:text-rose-400! transition-all"
+                title="Đặt lại toàn bộ bộ lọc"
+              >
+                <i className="fa fa-redo me-1 text-xs"></i>
+                <span>Đặt lại</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* DÒNG PHỤ CẤP 3: HỌC PHÍ & KỲ NHẬP HỌC */}
+          <div className="row g-2 align-items-center mt-1 pt-2 border-top border-slate-200 app-dark:border-slate-800/60!">
+            <div className="col-6 col-lg-3">
+              <select
+                className="form-select form-select-sm py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900! app-dark:text-slate-200! app-dark:border-slate-700!"
+                value={selectedIntake}
+                onChange={(e) => setSelectedIntake(e.target.value)}
+              >
+                {availableIntakes.map(i => (
+                  <option key={i.id} value={i.id}>{i.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-6 col-lg-3">
+              <div className="d-flex align-items-center gap-1.5">
+                <span className="text-slate-600 app-dark:text-slate-400! text-xs font-bold text-nowrap"><i className="fa fa-money-bill me-1 text-emerald-600"></i>Học phí từ:</span>
                 <input
                   type="number"
                   min="0"
-                  className="form-control form-control-sm border-1"
+                  className="form-control form-control-sm py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900/80! app-dark:text-slate-100! app-dark:border-slate-700/80!"
                   placeholder="0"
                   value={budgetMin}
                   onChange={(e) => setBudgetMin(e.target.value)}
                 />
               </div>
+            </div>
 
-              {/* Tiêu chí 5b: Giá sản phẩm (Học phí) - Đến */}
-              <div className="col-6 col-md-4 col-lg-2">
-                <label className="form-label small fw-bold mb-1.5 d-flex align-items-center justify-content-between" style={{ color: "#0d9488" }}>
-                  <span>Đến {tuitionCurrencyLabel ? `(${tuitionCurrencyLabel})` : ""}</span>
-                  {budgetMax !== "" && (
-                    <span className="text-body-secondary cursor-pointer" style={{ fontSize: "11px" }} onClick={() => setBudgetMax("")}>Bỏ chọn</span>
-                  )}
-                </label>
+            <div className="col-6 col-lg-3">
+              <div className="d-flex align-items-center gap-1.5">
+                <span className="text-slate-600 app-dark:text-slate-400! text-xs font-bold text-nowrap">Đến {tuitionCurrencyLabel ? `(${tuitionCurrencyLabel})` : ""}:</span>
                 <input
                   type="number"
                   min="0"
-                  className="form-control form-control-sm border-1"
-                  placeholder="Không giới hạn"
+                  className="form-control form-control-sm py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-900 border-slate-300 app-dark:bg-slate-900/80! app-dark:text-slate-100! app-dark:border-slate-700/80!"
+                  placeholder="Tối đa"
                   value={budgetMax}
                   onChange={(e) => setBudgetMax(e.target.value)}
                 />
               </div>
             </div>
 
-            {tuitionHeaders.length === 0 && (budgetMin !== "" || budgetMax !== "") && (
-              <div className="alert alert-warning small mt-3 mb-0 py-2 px-3" style={{ fontSize: "12px" }}>
-                Không tìm thấy cột dữ liệu học phí cho lựa chọn Quốc gia/Chương trình hiện tại, nên bộ lọc Ngân sách chưa thể áp dụng.
-              </div>
-            )}
-          </div>
-
-          <div className="card-footer bg-body-tertiary border-top p-3 d-flex align-items-center justify-content-center gap-2">
-            <button type="button" className="btn btn-sm btn-outline-secondary py-1.5 px-3" style={{ fontSize: "12px" }} onClick={resetAllFilters}>
-              Đặt lại tất cả
-            </button>
-            <button type="button" className="btn btn-sm btn-primary py-1.5 px-4 fw-bold shadow-sm" style={{ fontSize: "12px" }} onClick={() => setIsFilterPanelOpen(false)}>
-              Áp dụng ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Bảng dữ liệu trường học - toàn bộ chiều rộng (không còn chia cột với bộ lọc) */}
-      <section id="school-results-table" className="card border-0 shadow-sm w-100 overflow-hidden" style={{ borderRadius: "12px" }}>
-          <div className="card-header bg-transparent border-bottom py-3 px-3 d-flex justify-content-between align-items-center">
-            <h6 className="fw-bold text-body-emphasis mb-0">Bảng dữ liệu trường học ({activeCountry !== "all" ? activeCountry : "Tất cả các nước"})</h6>
-            <div className="d-flex align-items-center gap-2">
-              <span className="badge bg-primary-subtle text-primary px-2.5 py-1">
-                Hiển thị {filteredRecords.length} / {records.length} trường
-              </span>
-              {!isFilterPanelOpen && (
-                <button
-                  type="button"
-                  className="btn btn-xs btn-outline-primary d-inline-flex align-items-center gap-1"
-                  onClick={() => setIsFilterPanelOpen(true)}
-                  title="Mở bảng bộ lọc"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
-                  Bộ lọc
-                </button>
+            <div className="col-6 col-lg-3 text-end">
+              {activeFilterCount > 0 && (
+                <span className="badge bg-cyan-100 text-cyan-800 border border-cyan-300 app-dark:bg-cyan-950/80! app-dark:text-cyan-300! app-dark:border-cyan-700/60! px-2.5 py-1 rounded-pill text-xs font-bold">
+                  Đang lọc {activeFilterCount} tiêu chí
+                </span>
               )}
             </div>
           </div>
-          <div className="card-body p-0">
-            <div className="table-responsive" style={{ maxHeight: "650px", overflowY: "auto" }}>
-              <table className="table table-bordered table-hover align-middle mb-0" style={{ fontSize: "13px" }}>
-                <thead className="table-light sticky-top" style={{ zIndex: 10 }}>
-                  <tr>
-                    {headers.filter(h => h !== "_id").map(h => (
-                      <th key={h} className="text-body-secondary fw-semibold py-3 text-nowrap px-3">{h}</th>
-                    ))}
-                    <th className="text-body-secondary fw-semibold py-3 text-center text-nowrap px-3" style={{ width: "110px" }}>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={headers.length + 1} className="text-center py-5">
-                        <div className="spinner-border spinner-border-sm text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
-                        <span className="ms-2">Đang tải danh sách trường du học...</span>
+
+          {/* ACTIVE FILTER CHIPS */}
+          {activeFilterCount > 0 && (
+            <div className="d-flex flex-wrap align-items-center gap-2 mt-2.5 pt-2.5 border-top border-slate-200 app-dark:border-slate-800/80!">
+              <span className="text-[11px] font-extrabold text-slate-500 app-dark:text-slate-400! uppercase tracking-wider">Đang lọc:</span>
+              
+              {selectedContinent !== "all" && (
+                <span className="badge bg-cyan-100 text-cyan-900 border border-cyan-300 app-dark:bg-cyan-950/80 app-dark:text-cyan-300 app-dark:border-cyan-700 rounded-lg px-2.5 py-1 text-[11px] font-bold d-inline-flex align-items-center gap-1.5">
+                  Thị trường: {selectedContinent}
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSelectedContinent("all")}></i>
+                </span>
+              )}
+
+              {selectedCountry !== "all" && (
+                <span className="badge bg-blue-100 text-blue-900 border border-blue-300 app-dark:bg-blue-950/80 app-dark:text-blue-300 app-dark:border-blue-700 rounded-lg px-2.5 py-1 text-[11px] font-bold d-inline-flex align-items-center gap-1.5">
+                  Quốc gia: {selectedCountry}
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSelectedCountry("all")}></i>
+                </span>
+              )}
+
+              {selectedSystem !== "all" && (
+                <span className="badge badge-system-teal rounded-lg px-2.5 py-1 text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5">
+                  Hệ: {selectedSystem}
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSelectedSystem("all")}></i>
+                </span>
+              )}
+
+              {selectedMajor !== "all" && (
+                <span className="badge bg-purple-100 text-purple-900 border border-purple-300 app-dark:bg-purple-950/80 app-dark:text-purple-300 app-dark:border-purple-700 rounded-lg px-2.5 py-1 text-[11px] font-bold d-inline-flex align-items-center gap-1.5">
+                  Ngành: {selectedMajor}
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSelectedMajor("all")}></i>
+                </span>
+              )}
+
+              {selectedRegion !== "all" && (
+                <span className="badge badge-region-teal rounded-lg px-2.5 py-1 text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5">
+                  Khu vực: {selectedRegion}
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSelectedRegion("all")}></i>
+                </span>
+              )}
+
+              {searchTerm && (
+                <span className="badge bg-slate-200 text-slate-900 border border-slate-400 app-dark:bg-slate-800 app-dark:text-white app-dark:border-slate-600 rounded-lg px-2.5 py-1 text-[11px] font-bold d-inline-flex align-items-center gap-1.5">
+                  Từ khóa: "{searchTerm}"
+                  <i className="fa fa-times cursor-pointer hover:text-rose-600" onClick={() => setSearchTerm("")}></i>
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn btn-link text-[11px] text-rose-600 font-extrabold p-0 ms-2 text-decoration-none hover:underline"
+              >
+                Xóa tất cả
+              </button>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* ── 3. BẢNG DỮ LIỆU TRƯỜNG HỌC (STICKY HEADER ĐẬM ĐẶC 100%, CHỐNG ĐÈ CHỮ) ── */}
+      <div className="card border-0 rounded-3xl shadow-sm bg-white app-dark:bg-[#0f172a]! border border-slate-200 app-dark:border-slate-800! flex-grow-1 overflow-hidden d-flex flex-column transition-colors duration-300">
+        
+        {/* Header danh sách */}
+        <div className="px-4 py-3 border-bottom border-slate-200 app-dark:border-slate-800! d-flex flex-wrap align-items-center justify-content-between gap-2 bg-slate-50 app-dark:bg-slate-900/60!">
+          <div className="d-flex align-items-center gap-2">
+            <h6 className="fw-black text-slate-900 app-dark:text-white! mb-0 text-sm">
+              Danh Sách Trường Du Học
+            </h6>
+            <span
+              className="badge px-3 py-1 rounded-xl text-[11px] font-black text-white shadow-sm border border-white/20 d-inline-flex align-items-center gap-1.5"
+              style={{
+                background: "linear-gradient(135deg, #00A5CF 0%, #0084a8 100%)",
+                boxShadow: "0 2px 8px rgba(0, 165, 207, 0.45)",
+                color: "#ffffff",
+              }}
+            >
+              <i className="fa fa-globe text-[10px]"></i>
+              <span>{selectedContinent === "all" ? "Toàn cầu" : selectedContinent}</span>
+            </span>
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            {/* Nút Hướng dẫn chỉnh cột cho nhân viên */}
+            <button
+              type="button"
+              onClick={() => setIsGuideModalOpen(true)}
+              className="btn btn-xs px-2.5 py-1 rounded-xl text-[11px] font-bold border border-cyan-300 bg-cyan-50/80 text-cyan-800 hover:bg-cyan-100 app-dark:bg-cyan-950/60! app-dark:border-cyan-800! app-dark:text-cyan-300! app-dark:hover:bg-cyan-900/80! transition-all d-flex align-items-center gap-1.5 shadow-xs"
+              title="Xem hướng dẫn tùy chỉnh độ rộng cột và khoảng cách bảng"
+            >
+              <i className="fa fa-circle-question text-cyan-600 app-dark:text-cyan-400!"></i>
+              <span>Hướng dẫn chỉnh cột</span>
+            </button>
+
+            {/* Nút đặt lại độ rộng cột nếu đã kéo chỉnh */}
+            {Object.keys(columnWidths).length > 0 && (
+              <button
+                type="button"
+                onClick={handleResetColumnWidths}
+                className="btn btn-xs px-2 py-1 rounded-lg text-[11px] font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 app-dark:bg-slate-800! app-dark:text-slate-300! app-dark:border-slate-700! app-dark:hover:bg-slate-700! transition-all shadow-xs"
+                title="Khôi phục độ rộng mặc định của tất cả các cột"
+              >
+                <i className="fa fa-arrows-left-right me-1 text-cyan-600 app-dark:text-cyan-400!"></i>
+                <span>Đặt lại cột</span>
+              </button>
+            )}
+
+            {/* Bộ chọn khoảng cách / mật độ hiển thị (Tùy chỉnh khoảng cách thẻ) */}
+            <div className="d-flex align-items-center gap-1.5">
+              <span className="text-slate-500 app-dark:text-slate-400! text-[11px] font-bold d-none d-sm-inline">
+                Khoảng cách:
+              </span>
+              <div className="btn-group btn-group-sm bg-slate-200/80 app-dark:bg-slate-800! p-0.5 rounded-xl border border-slate-300 app-dark:border-slate-700!">
+                <button
+                  type="button"
+                  onClick={() => setTableDensity("compact")}
+                  className={`btn btn-xs px-2 py-0.5 rounded-lg text-[11px] font-bold border-0 transition-all ${
+                    tableDensity === "compact"
+                      ? "bg-white text-cyan-700 app-dark:bg-cyan-600! app-dark:text-white! shadow-xs"
+                      : "text-slate-600 app-dark:text-slate-400!"
+                  }`}
+                  title="Hiển thị gọn gàng"
+                >
+                  Gọn
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTableDensity("normal")}
+                  className={`btn btn-xs px-2 py-0.5 rounded-lg text-[11px] font-bold border-0 transition-all ${
+                    tableDensity === "normal"
+                      ? "bg-white text-cyan-700 app-dark:bg-cyan-600! app-dark:text-white! shadow-xs"
+                      : "text-slate-600 app-dark:text-slate-400!"
+                  }`}
+                  title="Hiển thị vừa vặn tiêu chuẩn"
+                >
+                  Vừa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTableDensity("spacious")}
+                  className={`btn btn-xs px-2 py-0.5 rounded-lg text-[11px] font-bold border-0 transition-all ${
+                    tableDensity === "spacious"
+                      ? "bg-white text-cyan-700 app-dark:bg-cyan-600! app-dark:text-white! shadow-xs"
+                      : "text-slate-600 app-dark:text-slate-400!"
+                  }`}
+                  title="Hiển thị rộng rãi, thoáng mắt"
+                >
+                  Thoáng
+                </button>
+              </div>
+            </div>
+
+            <span className="text-slate-600 app-dark:text-slate-400! text-xs font-bold">
+              Hiển thị <strong className="text-slate-900 app-dark:text-white! font-black">{filteredRecords.length}</strong> / {records.length} trường
+            </span>
+          </div>
+        </div>
+
+        {/* Khung cuộn bảng */}
+        <div className="table-responsive flex-grow-1 overflow-auto" style={{ maxHeight: "660px" }}>
+          <table className="table align-middle mb-0 text-xs">
+            
+            {/* THEAD CỐ ĐỊNH VỚI ICON, TYPOGRAPHY & KHẢ NĂNG KÉO CHỈNH ĐỘ RỘNG CỘT */}
+            <thead className="school-sticky-thead">
+              <tr>
+                {headers.filter(h => h !== "_id").map(h => {
+                  const cfg = getColumnConfig(h, columnWidths);
+                  const icon = getHeaderIcon(h);
+                  return (
+                    <th
+                      key={h}
+                      style={{ width: cfg.width, minWidth: cfg.minWidth, textAlign: cfg.align, position: "relative" }}
+                      className="py-3 px-3 text-nowrap font-black uppercase text-[11px] select-none"
+                    >
+                      <div className={`d-inline-flex align-items-center gap-1.5 ${cfg.align === "center" ? "justify-content-center w-100" : ""}`}>
+                        <i className={`fa ${icon} text-[10px] text-cyan-600 app-dark:text-cyan-400!`}></i>
+                        <span>{h}</span>
+                      </div>
+                      {/* Tay cầm kéo chỉnh độ rộng cột */}
+                      <div
+                        className="school-col-resizer"
+                        onMouseDown={(e) => handleResizeStart(h, e)}
+                        onDoubleClick={() => {
+                          setColumnWidths(prev => {
+                            const next = { ...prev };
+                            delete next[h];
+                            try { localStorage.setItem("school_table_custom_widths", JSON.stringify(next)); } catch {}
+                            return next;
+                          });
+                        }}
+                        title="Kéo sang trái/phải để tùy chỉnh độ rộng cột, Nhấp đúp để đặt lại"
+                      />
+                    </th>
+                  );
+                })}
+                <th
+                  className="py-3 px-3 font-black uppercase text-[11px] text-center text-nowrap school-sticky-thead"
+                  style={{ width: "120px", position: "sticky", right: 0, zIndex: 25 }}
+                >
+                  <div className="d-inline-flex align-items-center justify-content-center gap-1.5 w-100">
+                    <i className="fa fa-bolt text-[10px] text-amber-500"></i>
+                    <span>Thao tác</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+
+            {/* TBODY DỮ LIỆU TƯƠNG PHẢN CAO & ĐƯỢC CHUẨN HÓA GIAO DIỆN */}
+            <tbody className="divide-y divide-slate-100 app-dark:divide-slate-800/80! bg-white app-dark:bg-[#0f172a]!">
+              {loading ? (
+                <tr>
+                  <td colSpan={headers.length + 1} className="text-center py-5">
+                    <div className="spinner-border spinner-border-sm text-cyan-600 me-2" role="status"></div>
+                    <span className="text-slate-600 app-dark:text-slate-400! font-bold">Đang tải dữ liệu trường học từ hệ thống...</span>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={headers.length + 1} className="text-center py-5 text-rose-600 font-bold">
+                    <i className="fa fa-circle-exclamation me-1"></i> {error}
+                  </td>
+                </tr>
+              ) : filteredRecords.length === 0 ? (
+                <tr>
+                  <td colSpan={headers.length + 1} className="text-center py-5">
+                    <div className="py-4 text-center">
+                      <div className="d-inline-flex align-items-center justify-content-center bg-slate-100 app-dark:bg-slate-800! rounded-3xl p-4 mb-3 border border-slate-200 app-dark:border-slate-700!">
+                        <i className="fa fa-graduation-cap display-6 text-slate-400 app-dark:text-slate-400!"></i>
+                      </div>
+                      <div className="fw-black text-slate-800 app-dark:text-slate-100! fs-6 mb-1">
+                        Không tìm thấy trường học phù hợp
+                      </div>
+                      <div className="text-slate-500 app-dark:text-slate-400! text-xs font-semibold mb-3">
+                        Thử chuyển sang tab "Tất cả thị trường" hoặc đặt lại bộ lọc tìm kiếm
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetFilters}
+                        className="btn btn-sm px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-white border-0 shadow-md transition-all"
+                      >
+                        <i className="fa fa-redo me-1.5"></i> Đặt lại tất cả bộ lọc
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredRecords.map((row, rowIdx) => {
+                  const isSelected = selectedSchool && selectedSchool._id === row._id;
+                  return (
+                    <tr
+                      key={row._id || rowIdx}
+                      style={{
+                        cursor: "pointer",
+                        borderLeft: isSelected ? "4px solid #06b6d4" : "4px solid transparent",
+                      }}
+                      onClick={() => handleOpenDetailModal(row)}
+                      className={`table-row-item transition-colors duration-150 ${
+                        isSelected
+                          ? "bg-cyan-50/80 app-dark:bg-cyan-950/40! font-semibold"
+                          : "hover:bg-slate-50 app-dark:hover:bg-slate-800/60!"
+                      }`}
+                    >
+                      {headers.filter(h => h !== "_id").map(h => {
+                        const val = row[h] || "";
+                        const isLink = String(val).startsWith("http");
+                        const isImage = isLink && (
+                          h.toLowerCase().includes("ảnh") || h.toLowerCase().includes("image") || /\.(jpg|jpeg|png|webp|gif|svg)/i.test(val.split("?")[0])
+                        );
+
+                        const isSttCol = h.toLowerCase() === "stt" || h.toLowerCase() === "#";
+                        const isNameCol = h.toLowerCase().includes("tên trường") || h.toLowerCase().includes("ten truong");
+                        const isSystemCol = h.toLowerCase().includes("hệ") || h.toLowerCase().includes("system");
+                        const isRegionCol = h.toLowerCase().includes("khu vực") || h.toLowerCase().includes("region");
+                        const isScholarshipCol = h.toLowerCase().includes("học bổng") || h.toLowerCase().includes("hoc bong");
+                        const isDeadlineCol = h.toLowerCase().includes("hạn") || h.toLowerCase().includes("han");
+                        const isTuitionCol = h.toLowerCase().includes("học phí") || h.toLowerCase().includes("hoc phi") || h.toLowerCase().includes("ký túc") || h.toLowerCase().includes("ktx");
+
+                        const cfg = getColumnConfig(h, columnWidths);
+
+                        const cellPadding =
+                          tableDensity === "compact" ? "px-2 py-1.5" : tableDensity === "spacious" ? "px-4 py-3.5" : "px-3 py-2.5";
+
+                        const isActionOrStt = isSttCol || isImage || isLink;
+
+                        return (
+                          <td
+                            key={h}
+                            className={`${cellPadding} text-truncate`}
+                            style={{
+                              width: cfg.width,
+                              minWidth: cfg.minWidth,
+                              maxWidth: cfg.width,
+                              textAlign: cfg.align,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={typeof val === "string" ? val : ""}
+                          >
+                            {isSttCol ? (
+                              <div className="text-center">
+                                <span className="badge rounded-pill badge-stt-gentle px-3 py-1 text-[11px] text-nowrap">
+                                  #{rowIdx + 1}
+                                </span>
+                              </div>
+                            ) : isImage ? (
+                              <div className="text-center">
+                                <a
+                                  href={val}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="btn btn-xs py-1 px-3 rounded-lg text-[11px] font-bold bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white app-dark:bg-purple-950/70! app-dark:text-purple-300! app-dark:hover:bg-purple-600! border border-purple-200 app-dark:border-purple-800! d-inline-flex align-items-center gap-1.5 shadow-xs transition-all text-nowrap"
+                                >
+                                  <i className="fa fa-image text-[10px]"></i>
+                                  <span>Xem ảnh</span>
+                                </a>
+                              </div>
+                            ) : isLink ? (
+                              <div className="text-center">
+                                <a
+                                  href={val}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="btn btn-xs py-1 px-3 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white app-dark:bg-blue-950/70! app-dark:text-blue-300! app-dark:hover:bg-blue-600! border border-blue-200 app-dark:border-blue-800! d-inline-flex align-items-center gap-1.5 shadow-xs transition-all text-nowrap"
+                                >
+                                  <i className="fa fa-globe text-[10px]"></i>
+                                  <span>Truy cập</span>
+                                </a>
+                              </div>
+                            ) : isNameCol ? (
+                              <div className="d-flex align-items-center gap-2 min-w-0 w-100 overflow-hidden">
+                                <div className="w-7 h-7 rounded-lg bg-cyan-100 app-dark:bg-cyan-950/80! text-cyan-700 app-dark:text-cyan-300! d-flex align-items-center justify-content-center flex-shrink-0 font-black shadow-xs">
+                                  <i className="fa fa-school text-[11px]"></i>
+                                </div>
+                                <span className="font-extrabold text-slate-900 app-dark:text-white! text-xs text-truncate flex-grow-1" title={val}>
+                                  {highlightText(val, searchTerm)}
+                                </span>
+                              </div>
+                            ) : isSystemCol && val ? (
+                              <div className="text-center w-100 overflow-hidden">
+                                <span className="badge badge-system-teal px-3 py-1 rounded-md text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5 shadow-xs max-w-full text-truncate" title={val}>
+                                  <i className="fa fa-graduation-cap text-[10px] flex-shrink-0"></i>
+                                  <span className="text-truncate">{highlightText(val, searchTerm)}</span>
+                                </span>
+                              </div>
+                            ) : isRegionCol && val ? (
+                              <div className="text-center w-100 overflow-hidden">
+                                <span className="badge badge-region-teal px-3 py-1 rounded-md text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5 shadow-xs max-w-full text-truncate" title={val}>
+                                  <i className="fa fa-location-dot text-[9px] flex-shrink-0"></i>
+                                  <span className="text-truncate">{highlightText(val, searchTerm)}</span>
+                                </span>
+                              </div>
+                            ) : isScholarshipCol ? (
+                              val && val.trim() !== "-" && val.trim() !== "0" && val.trim() !== "" ? (
+                                <span className="badge badge-scholarship-chromatic px-3 py-1 rounded-md text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5 shadow-xs max-w-full text-truncate" title={val}>
+                                  <i className="fa fa-award text-[10px] flex-shrink-0"></i>
+                                  <span className="text-truncate">{highlightText(val, searchTerm)}</span>
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 font-mono text-xs">{val || "-"}</span>
+                              )
+                            ) : isDeadlineCol && val ? (
+                              <span className="badge badge-deadline-crimson px-3 py-1 rounded-md text-[11px] font-extrabold d-inline-flex align-items-center gap-1.5 shadow-xs max-w-full text-truncate" title={val}>
+                                <i className="fa fa-calendar-check text-[10px] flex-shrink-0"></i>
+                                <span className="text-truncate">{highlightText(val, searchTerm)}</span>
+                              </span>
+                            ) : isTuitionCol && val ? (
+                              <span className="font-extrabold text-emerald-700 app-dark:text-emerald-400! text-xs font-mono text-truncate d-block w-100" title={val}>
+                                {highlightText(val, searchTerm)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-800 app-dark:text-slate-200! font-medium text-truncate d-block w-100" title={val}>
+                                {highlightText(val, searchTerm)}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td
+                        className={`text-center ${tableDensity === "compact" ? "px-2 py-1.5" : tableDensity === "spacious" ? "px-3 py-3" : "px-2 py-2"} school-sticky-action-col`}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className="d-flex justify-content-center gap-1.5">
+                          <button
+                            className="btn btn-sm btn-action-view p-1.5 px-2 rounded-lg text-xs font-bold transition-all shadow-xs"
+                            type="button"
+                            title="Xem chi tiết"
+                            onClick={() => handleOpenDetailModal(row)}
+                          >
+                            <i className="fa fa-eye"></i>
+                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                className="btn btn-sm btn-action-edit p-1.5 px-2 rounded-lg text-xs font-bold transition-all shadow-xs"
+                                type="button"
+                                title="Sửa"
+                                onClick={() => openSchoolModal(row)}
+                              >
+                                <i className="fa fa-pen"></i>
+                              </button>
+                              <button
+                                className="btn btn-sm btn-action-delete p-1.5 px-2 rounded-lg text-xs font-bold transition-all shadow-xs"
+                                type="button"
+                                title="Xóa"
+                                onClick={(e) => handleSchoolDelete(row._id, e)}
+                              >
+                                <i className="fa fa-trash"></i>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ) : error ? (
-                    <tr><td colSpan={headers.length + 1} className="text-center py-4 text-danger">{error}</td></tr>
-                  ) : filteredRecords.length === 0 ? (
-                    <tr><td colSpan={headers.length + 1} className="text-center py-5 text-body-secondary">Không tìm thấy trường nào phù hợp.</td></tr>
-                  ) : (
-                    filteredRecords.map((row, rowIdx) => (
-                      <tr key={row._id || rowIdx} style={{ cursor: "pointer" }} onClick={() => handleOpenDetailModal(row)}>
-                        {headers.filter(h => h !== "_id").map(h => {
-                          const val = row[h] || "";
-                          const isLink = String(val).startsWith("http");
-                          const isImage = isLink && (
-                            h.toLowerCase().includes("ảnh") || h.toLowerCase().includes("image") || /\.(jpg|jpeg|png|webp|gif|svg)/i.test(val.split("?")[0])
-                          );
-                          return (
-                            <td key={h} className="px-3 py-2 text-truncate" style={{ maxWidth: "220px" }} title={val}>
-                              {isLink ? (
-                                <a href={val} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="fw-semibold">
-                                  {isImage ? "Xem ảnh " : `Mở ${h.trim()}`}
-                                </a>
-                              ) : (
-                                highlightText(val, searchTerm)
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td className="text-center px-2 py-1" onClick={e => e.stopPropagation()}>
-                          <div className="d-flex justify-content-center gap-1">
-                            <button className="btn btn-sm btn-outline-primary p-1" type="button" title="Xem chi tiết" onClick={() => handleOpenDetailModal(row)}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                            </button>
-                            {isAdmin && (
-                              <>
-                                <button className="btn btn-sm btn-outline-warning p-1" type="button" title="Sửa" onClick={() => openSchoolModal(row)}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" /></svg>
-                                </button>
-                                <button className="btn btn-sm btn-outline-danger p-1" type="button" title="Xóa" onClick={(e) => handleSchoolDelete(row._id, e)}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></svg>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-      </section>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* School Detail Modal Dialog */}
+      {/* ── DETAIL MODAL ── */}
       {selectedSchool && (
-        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
-          <div className="flex w-full max-w-[700px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl border border-slate-200" style={{ maxHeight: "calc(100vh - 24px)" }}>
-            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
-              <h5 className="m-0 fw-bold text-body-emphasis d-flex align-items-center gap-2">
-                <span>{selectedSchool["Tên trường"] || "Chi tiết trường học"}</span>
-                {(selectedSchool["Khu vực"] || selectedSchool["Khu vực "]) && (
-                  <span className="badge bg-primary-subtle text-primary border" style={{ fontSize: "11px" }}>
-                    {selectedSchool["Khu vực"] || selectedSchool["Khu vực "]}
-                  </span>
-                )}
-              </h5>
-              <button className="btn btn-sm btn-light border" type="button" onClick={() => setSelectedSchool(null)}>Đóng</button>
+        <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+          <div className="flex w-full max-w-[760px] flex-col overflow-hidden rounded-3xl bg-white app-dark:bg-[#0f172a]! shadow-2xl border border-slate-200 app-dark:border-slate-800!" style={{ maxHeight: "calc(100vh - 40px)" }}>
+            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <div className="d-flex align-items-center gap-2.5">
+                <div className="d-flex align-items-center justify-content-center bg-cyan-600 text-white rounded-2xl p-2" style={{ width: "40px", height: "40px" }}>
+                  <i className="fa fa-graduation-cap"></i>
+                </div>
+                <div>
+                  <h5 className="m-0 font-extrabold text-slate-900 app-dark:text-slate-100!">
+                    {selectedSchool["Tên trường"] || selectedSchool.name || "Chi tiết trường học"}
+                  </h5>
+                  <div className="d-flex align-items-center gap-1.5 mt-1">
+                    {(selectedSchool["Quốc gia"] || selectedCountry !== "all") && (
+                      <span className="badge bg-cyan-600 text-white text-xs font-bold">
+                        {selectedSchool["Quốc gia"] || selectedCountry}
+                      </span>
+                    )}
+                    {(selectedSchool["Khu vực"] || selectedSchool["Khu vực "]) && (
+                      <span className="badge badge-region-teal text-xs font-extrabold">
+                        {selectedSchool["Khu vực"] || selectedSchool["Khu vực "]}
+                      </span>
+                    )}
+                    {(selectedSchool["Hệ tuyển sinh"] || selectedSchool["Hệ tuyển sinh "]) && (
+                      <span className="badge badge-system-teal text-xs font-extrabold">
+                        {selectedSchool["Hệ tuyển sinh"] || selectedSchool["Hệ tuyển sinh "]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button className="btn btn-sm btn-light rounded-circle p-1 border" type="button" onClick={() => setSelectedSchool(null)}>
+                <i className="fa fa-xmark"></i>
+              </button>
             </div>
 
-            <div className="px-4 pt-2 border-bottom bg-light-subtle">
-              <ul className="nav nav-tabs border-0 flex-nowrap overflow-x-auto text-nowrap" style={{ gap: "4px" }}>
+            <div className="px-4 pt-2 border-bottom border-slate-200 app-dark:border-slate-800! bg-slate-50 app-dark:bg-slate-900/40!">
+              <ul className="nav nav-tabs border-0 flex-nowrap overflow-x-auto text-nowrap gap-1">
                 {[
-                  { id: "overview", label: "Tổng quan & Địa chỉ" },
-                  { id: "requirements", label: "Yêu cầu & Hạn nộp" },
-                  { id: "tuition", label: "Học phí & KTX" },
-                  { id: "scholarship", label: "Học bổng" }
+                  { id: "overview", label: "Tổng quan & Địa chỉ", icon: "fa-circle-info" },
+                  { id: "requirements", label: "Yêu cầu & Hạn nộp", icon: "fa-calendar-check" },
+                  { id: "tuition", label: "Học phí & KTX", icon: "fa-receipt" },
+                  { id: "scholarship", label: "Học bổng", icon: "fa-award" }
                 ].map(tab => (
                   <li className="nav-item" key={tab.id}>
                     <button
-                      className={`nav-link border-0 px-3 py-2.5 font-semibold text-sm transition-all ${activeTab === tab.id ? "active text-indigo-600 fw-bold border-bottom border-3 border-indigo-600" : "text-secondary border-bottom border-3 border-transparent"}`}
-                      style={{ borderRadius: "8px 8px 0 0", background: "transparent" }}
+                      className={`nav-link border-0 px-3 py-2.5 font-bold text-xs transition-all d-flex align-items-center gap-1.5 ${
+                        activeTab === tab.id
+                          ? "active text-cyan-700 app-dark:text-cyan-400! border-bottom border-3 border-cyan-500 bg-white app-dark:bg-[#0f172a]!"
+                          : "text-slate-600 app-dark:text-slate-400! bg-transparent"
+                      }`}
+                      style={{ borderRadius: "8px 8px 0 0" }}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
                     >
-                      {tab.label}
+                      <i className={`fa ${tab.icon}`}></i>
+                      <span>{tab.label}</span>
                     </button>
                   </li>
                 ))}
@@ -887,7 +1984,7 @@ export function SchoolSearchPage() {
                   const displayHeaders = headers.filter(h => h !== "_id");
                   const tabHeaders = displayHeaders.filter(h => getTabForHeader(h) === activeTab && selectedSchool[h]);
                   if (tabHeaders.length === 0) {
-                    return <div className="col-12 text-center py-5 text-body-secondary">Không có dữ liệu cho mục này.</div>;
+                    return <div className="col-12 text-center py-5 text-slate-500 font-bold">Không có dữ liệu cho mục này.</div>;
                   }
 
                   return tabHeaders.map(h => {
@@ -901,19 +1998,26 @@ export function SchoolSearchPage() {
 
                     return (
                       <div className={isLargeField ? "col-12" : "col-6"} key={h}>
-                        <span className="text-body-secondary small d-block fw-semibold mb-1">{h}</span>
-                        <div className="bg-body-secondary/30 rounded p-2.5 border border-light">
+                        <span className="text-slate-600 app-dark:text-slate-400! small d-block font-extrabold mb-1 text-xs" style={{ textTransform: "uppercase" }}>{h}</span>
+                        <div className="bg-slate-100 app-dark:bg-slate-900/60! rounded-2xl p-3 border border-slate-200 app-dark:border-slate-800!">
                           {isImage ? (
-                            <div className="text-center bg-white rounded p-3 border my-1 shadow-sm">
-                              <img src={value} alt={h} className="img-fluid rounded border" style={{ maxHeight: "300px", objectFit: "contain" }} />
-                              <div className="d-flex justify-content-center gap-2 mt-2">
-                                <a href={value} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">Mở ảnh gốc</a>
+                            <div className="text-center bg-white app-dark:bg-slate-900! rounded-xl p-3 border my-1 shadow-sm">
+                              <img src={value} alt={h} className="img-fluid rounded border" style={{ maxHeight: "320px", objectFit: "contain" }} />
+                              <div className="d-flex justify-content-center gap-2 mt-3">
+                                <a href={value} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary rounded-xl px-3 text-xs font-bold">
+                                  <i className="fa fa-arrow-up-right-from-square me-1"></i> Mở ảnh gốc
+                                </a>
                               </div>
                             </div>
                           ) : isLink ? (
-                            <a href={value} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">Mở {h.trim()}</a>
+                            <a href={value} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary rounded-xl px-3 d-inline-flex align-items-center gap-1.5 text-xs font-bold">
+                              <i className="fa fa-arrow-up-right-from-square"></i>
+                              <span>Mở {h.trim()}</span>
+                            </a>
                           ) : (
-                            <span className="text-body-emphasis text-break" style={{ whiteSpace: "pre-wrap", fontSize: "13px" }}>{highlightText(value, searchTerm)}</span>
+                            <span className="text-slate-900 app-dark:text-slate-100! text-break text-xs font-semibold" style={{ whiteSpace: "pre-wrap" }}>
+                              {highlightText(value, searchTerm)}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -922,138 +2026,149 @@ export function SchoolSearchPage() {
                 })()}
               </div>
             </div>
-            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
-              <button type="button" className="btn btn-primary" onClick={() => setSelectedSchool(null)}>Hoàn tất</button>
+            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <button type="button" className="btn btn-primary rounded-xl px-4 font-bold text-xs" onClick={() => setSelectedSchool(null)}>
+                Đóng
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CRUD School Modal */}
+      {/* ── CRUD SCHOOL MODAL ── */}
       {isSchoolModalOpen && (
-        <div className="fixed inset-0 z-[1060] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
-          <form className="flex w-full max-w-[800px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl border border-slate-200" style={{ maxHeight: "calc(100vh - 24px)" }} onSubmit={handleSchoolSubmit}>
-            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
-              <h5 className="m-0 fw-bold">{editingSchool ? "Chỉnh sửa thông tin trường" : "Thêm trường du học mới"}</h5>
-              <button className="btn-close" type="button" onClick={() => setIsSchoolModalOpen(false)}></button>
+        <div className="fixed inset-0 z-[1060] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+          <form className="flex w-full max-w-[840px] flex-col overflow-hidden rounded-3xl bg-white app-dark:bg-[#0f172a]! shadow-2xl border border-slate-200 app-dark:border-slate-800!" style={{ maxHeight: "calc(100vh - 40px)" }} onSubmit={handleSchoolSubmit}>
+            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <h5 className="m-0 font-extrabold text-slate-900 app-dark:text-slate-100!">
+                {editingSchool ? "Chỉnh sửa thông tin trường" : "Thêm trường du học mới"}
+              </h5>
+              <button className="btn btn-sm btn-light rounded-circle p-1 border" type="button" onClick={() => setIsSchoolModalOpen(false)}>
+                <i className="fa fa-xmark"></i>
+              </button>
             </div>
 
-            <div className="p-4 overflow-y-auto flex-1 row g-3">
+            <div className="p-4 overflow-y-auto flex-1 row g-3 text-xs">
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold">Tên trường *</label>
-                <input type="text" className="form-control" required value={schoolForm.name} onChange={e => setSchoolForm({ ...schoolForm, name: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Tên trường *</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" required value={schoolForm.name} onChange={e => setSchoolForm({ ...schoolForm, name: e.target.value })} />
               </div>
               <div className="col-6 col-md-3">
-                <label className="form-label fw-semibold">Quốc gia *</label>
-                <input type="text" className="form-control" required placeholder="Ví dụ: Đài Loan, Đức" value={schoolForm.country} onChange={e => setSchoolForm({ ...schoolForm, country: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Quốc gia *</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" required placeholder="Ví dụ: Đài Loan, Đức" value={schoolForm.country} onChange={e => setSchoolForm({ ...schoolForm, country: e.target.value })} />
               </div>
               <div className="col-6 col-md-3">
-                <label className="form-label fw-semibold">Chương trình *</label>
-                <input type="text" className="form-control" required placeholder="Ví dụ: Đại học, THPT" value={schoolForm.program} onChange={e => setSchoolForm({ ...schoolForm, program: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Chương trình *</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" required placeholder="Ví dụ: Đại học, THPT" value={schoolForm.program} onChange={e => setSchoolForm({ ...schoolForm, program: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
-                <label className="form-label fw-semibold">Khu vực</label>
-                <input type="text" className="form-control" value={schoolForm.region} onChange={e => setSchoolForm({ ...schoolForm, region: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Khu vực</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.region} onChange={e => setSchoolForm({ ...schoolForm, region: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
-                <label className="form-label fw-semibold">Hệ tuyển sinh</label>
-                <input type="text" className="form-control" value={schoolForm.admissionSystem} onChange={e => setSchoolForm({ ...schoolForm, admissionSystem: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Hệ tuyển sinh</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.admissionSystem} onChange={e => setSchoolForm({ ...schoolForm, admissionSystem: e.target.value })} />
               </div>
               <div className="col-6 col-md-4">
-                <label className="form-label fw-semibold">Thứ tự hiển thị (STT)</label>
-                <input type="number" className="form-control" value={schoolForm.stt} onChange={e => setSchoolForm({ ...schoolForm, stt: parseInt(e.target.value) || 0 })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Thứ tự hiển thị (STT)</label>
+                <input type="number" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.stt} onChange={e => setSchoolForm({ ...schoolForm, stt: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="col-12">
-                <label className="form-label fw-semibold">Địa chỉ</label>
-                <input type="text" className="form-control" value={schoolForm.address} onChange={e => setSchoolForm({ ...schoolForm, address: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Địa chỉ</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.address} onChange={e => setSchoolForm({ ...schoolForm, address: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold">Chuyên ngành</label>
-                <textarea className="form-control" rows="2" value={schoolForm.majors} onChange={e => setSchoolForm({ ...schoolForm, majors: e.target.value })}></textarea>
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Chuyên ngành</label>
+                <textarea className="form-control form-control-sm rounded-xl font-semibold" rows="2" value={schoolForm.majors} onChange={e => setSchoolForm({ ...schoolForm, majors: e.target.value })}></textarea>
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold">Điều kiện tuyển sinh</label>
-                <textarea className="form-control" rows="2" value={schoolForm.requirements} onChange={e => setSchoolForm({ ...schoolForm, requirements: e.target.value })}></textarea>
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Điều kiện tuyển sinh</label>
+                <textarea className="form-control form-control-sm rounded-xl font-semibold" rows="2" value={schoolForm.requirements} onChange={e => setSchoolForm({ ...schoolForm, requirements: e.target.value })}></textarea>
               </div>
               <div className="col-6">
-                <label className="form-label fw-semibold">Hạn báo danh</label>
-                <input type="text" className="form-control" value={schoolForm.deadlineRegister} onChange={e => setSchoolForm({ ...schoolForm, deadlineRegister: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Hạn báo danh</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.deadlineRegister} onChange={e => setSchoolForm({ ...schoolForm, deadlineRegister: e.target.value })} />
               </div>
               <div className="col-6">
-                <label className="form-label fw-semibold">Hạn nộp hồ sơ</label>
-                <input type="text" className="form-control" value={schoolForm.deadlineDocument} onChange={e => setSchoolForm({ ...schoolForm, deadlineDocument: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Hạn nộp hồ sơ</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.deadlineDocument} onChange={e => setSchoolForm({ ...schoolForm, deadlineDocument: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold">Học phí học tiếng</label>
-                <input type="text" className="form-control" value={schoolForm.tuitionLanguage} onChange={e => setSchoolForm({ ...schoolForm, tuitionLanguage: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Học phí học tiếng</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.tuitionLanguage} onChange={e => setSchoolForm({ ...schoolForm, tuitionLanguage: e.target.value })} />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label fw-semibold">Học phí chuyên ngành</label>
-                <input type="text" className="form-control" value={schoolForm.tuitionMajor} onChange={e => setSchoolForm({ ...schoolForm, tuitionMajor: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Học phí chuyên ngành</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.tuitionMajor} onChange={e => setSchoolForm({ ...schoolForm, tuitionMajor: e.target.value })} />
               </div>
               <div className="col-6">
-                <label className="form-label fw-semibold">Ký túc xá</label>
-                <input type="text" className="form-control" value={schoolForm.dormitory} onChange={e => setSchoolForm({ ...schoolForm, dormitory: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Ký túc xá</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.dormitory} onChange={e => setSchoolForm({ ...schoolForm, dormitory: e.target.value })} />
               </div>
               <div className="col-6">
-                <label className="form-label fw-semibold">Học bổng</label>
-                <input type="text" className="form-control" value={schoolForm.scholarship} onChange={e => setSchoolForm({ ...schoolForm, scholarship: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Học bổng</label>
+                <input type="text" className="form-control form-control-sm rounded-xl font-semibold" value={schoolForm.scholarship} onChange={e => setSchoolForm({ ...schoolForm, scholarship: e.target.value })} />
               </div>
               <div className="col-12">
-                <label className="form-label fw-semibold">Website trường</label>
-                <input type="url" className="form-control font-mono" value={schoolForm.website} onChange={e => setSchoolForm({ ...schoolForm, website: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Website trường</label>
+                <input type="url" className="form-control form-control-sm font-mono rounded-xl" value={schoolForm.website} onChange={e => setSchoolForm({ ...schoolForm, website: e.target.value })} />
               </div>
               <div className="col-12">
-                <label className="form-label fw-semibold">Link ảnh thông báo</label>
-                <input type="url" className="form-control font-mono" value={schoolForm.imageUrl} onChange={e => setSchoolForm({ ...schoolForm, imageUrl: e.target.value })} />
+                <label className="form-label font-bold text-slate-800 app-dark:text-slate-200!">Link ảnh thông báo</label>
+                <input type="url" className="form-control form-control-sm font-mono rounded-xl" value={schoolForm.imageUrl} onChange={e => setSchoolForm({ ...schoolForm, imageUrl: e.target.value })} />
               </div>
             </div>
 
-            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
-              <button type="button" className="btn btn-outline-secondary" onClick={() => setIsSchoolModalOpen(false)}>Hủy</button>
-              <button type="submit" className="btn btn-primary">Lưu lại</button>
+            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <button type="button" className="btn btn-outline-secondary rounded-xl px-3 text-xs font-bold" onClick={() => setIsSchoolModalOpen(false)}>Hủy</button>
+              <button type="submit" className="btn btn-primary rounded-xl px-4 font-bold text-xs">Lưu lại</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Sources Management Modal */}
+      {/* ── GOOGLE SHEETS SOURCES MODAL ── */}
       {isSourcesModalOpen && (
-        <div className="fixed inset-0 z-[1060] flex items-center justify-center bg-black/50 p-3 backdrop-blur-[2px]">
-          <div className="flex w-full max-w-[900px] flex-col overflow-hidden rounded-xl bg-[var(--bs-body-bg)] shadow-xl border border-slate-200" style={{ maxHeight: "calc(100vh - 24px)" }}>
-            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom p-4">
-              <h5 className="m-0 fw-bold">Quản lý các nguồn Google Sheets tuyển sinh</h5>
-              <button className="btn-close" type="button" onClick={() => setIsSourcesModalOpen(false)}></button>
+        <div className="fixed inset-0 z-[1060] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+          <div className="flex w-full max-w-[940px] flex-col overflow-hidden rounded-3xl bg-white app-dark:bg-[#0f172a]! shadow-2xl border border-slate-200 app-dark:border-slate-800!" style={{ maxHeight: "calc(100vh - 40px)" }}>
+            <div className="d-flex flex-shrink-0 justify-content-between align-items-center border-bottom border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <div className="d-flex align-items-center gap-2">
+                <i className="fa fa-table text-emerald-600 fa-lg"></i>
+                <h5 className="m-0 font-extrabold text-slate-900 app-dark:text-slate-100!">Quản lý các nguồn Google Sheets tuyển sinh</h5>
+              </div>
+              <button className="btn btn-sm btn-light rounded-circle p-1 border" type="button" onClick={() => setIsSourcesModalOpen(false)}>
+                <i className="fa fa-xmark"></i>
+              </button>
             </div>
 
             <div className="p-4 overflow-y-auto flex-1">
               {/* Form to Add New Source */}
-              <form onSubmit={handleAddSource} className="row g-2 mb-4 p-3 bg-body-secondary/30 border rounded-3">
-                <h6 className="fw-bold mb-2">Thêm Sheet liên kết mới</h6>
+              <form onSubmit={handleAddSource} className="row g-2 mb-4 p-3 bg-slate-100 app-dark:bg-slate-900/60! border border-slate-200 app-dark:border-slate-800! rounded-2xl">
+                <h6 className="font-extrabold mb-2 text-cyan-700 app-dark:text-cyan-400! text-xs">Thêm Sheet liên kết mới</h6>
                 <div className="col-6 col-md-3">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Tên nguồn (vd: Đức - THPT)" value={newSource.name} onChange={e => setNewSource({ ...newSource, name: e.target.value })} />
+                  <input type="text" className="form-control form-control-sm rounded-xl text-xs font-semibold" required placeholder="Tên nguồn (vd: Đức - THPT)" value={newSource.name} onChange={e => setNewSource({ ...newSource, name: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-2">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Quốc gia" value={newSource.country} onChange={e => setNewSource({ ...newSource, country: e.target.value })} />
+                  <input type="text" className="form-control form-control-sm rounded-xl text-xs font-semibold" required placeholder="Quốc gia" value={newSource.country} onChange={e => setNewSource({ ...newSource, country: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-2">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Chương trình" value={newSource.program} onChange={e => setNewSource({ ...newSource, program: e.target.value })} />
+                  <input type="text" className="form-control form-control-sm rounded-xl text-xs font-semibold" required placeholder="Chương trình" value={newSource.program} onChange={e => setNewSource({ ...newSource, program: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-3">
-                  <input type="text" className="form-control form-control-sm" required placeholder="Google Sheet ID" value={newSource.spreadsheetId} onChange={e => setNewSource({ ...newSource, spreadsheetId: e.target.value })} />
+                  <input type="text" className="form-control form-control-sm rounded-xl text-xs font-semibold" required placeholder="Google Sheet ID" value={newSource.spreadsheetId} onChange={e => setNewSource({ ...newSource, spreadsheetId: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-1">
-                  <input type="text" className="form-control form-control-sm" required placeholder="GID Tab" value={newSource.gid} onChange={e => setNewSource({ ...newSource, gid: e.target.value })} />
+                  <input type="text" className="form-control form-control-sm rounded-xl text-xs font-semibold" required placeholder="GID" value={newSource.gid} onChange={e => setNewSource({ ...newSource, gid: e.target.value })} />
                 </div>
                 <div className="col-6 col-md-1">
-                  <button className="btn btn-sm btn-primary w-100" type="submit">Thêm</button>
+                  <button className="btn btn-sm btn-primary w-100 font-bold rounded-xl text-xs" type="submit">Thêm</button>
                 </div>
               </form>
 
               {/* Sources List */}
-              <h6 className="fw-bold mb-2">Danh sách nguồn đang liên kết</h6>
+              <h6 className="font-extrabold mb-2 text-xs text-slate-800 app-dark:text-slate-200!">Danh sách nguồn đang liên kết</h6>
               <div className="table-responsive">
-                <table className="table table-bordered table-striped align-middle table-sm" style={{ fontSize: "12px" }}>
+                <table className="table table-bordered table-hover align-middle table-sm text-xs">
                   <thead className="table-light">
                     <tr>
                       <th>Tên phân loại</th>
@@ -1067,35 +2182,40 @@ export function SchoolSearchPage() {
                   </thead>
                   <tbody>
                     {sourcesLoading ? (
-                      <tr><td colSpan="7" className="text-center py-3">Đang tải...</td></tr>
+                      <tr><td colSpan="7" className="text-center py-3 font-bold">Đang tải...</td></tr>
                     ) : sources.length === 0 ? (
-                      <tr><td colSpan="7" className="text-center py-3">Chưa cấu hình nguồn nào.</td></tr>
+                      <tr><td colSpan="7" className="text-center py-3 text-slate-500 font-bold">Chưa cấu hình nguồn nào.</td></tr>
                     ) : (
                       sources.map((s) => (
                         <tr key={s._id}>
-                          <td className="fw-bold">{s.name}</td>
-                          <td>{s.country}</td>
+                          <td className="font-extrabold text-cyan-700 app-dark:text-cyan-400!">{s.name}</td>
+                          <td className="font-bold">{s.country}</td>
                           <td>{s.program}</td>
-                          <td className="text-truncate font-mono" style={{ maxWidth: "120px" }} title={s.spreadsheetId}>{s.spreadsheetId}</td>
+                          <td className="text-truncate font-mono" style={{ maxWidth: "140px" }} title={s.spreadsheetId}>{s.spreadsheetId}</td>
                           <td>{s.gid}</td>
                           <td>
                             {s.lastSyncedAt ? (
-                              <span className="text-muted block" style={{ fontSize: "10px" }}>Đã đồng bộ {s.lastSyncCount} trường lúc {new Date(s.lastSyncedAt).toLocaleString("vi-VN")}</span>
+                              <span className="text-slate-600 app-dark:text-slate-400! d-block font-semibold" style={{ fontSize: "11px" }}>
+                                Đã đồng bộ <strong>{s.lastSyncCount}</strong> trường lúc {new Date(s.lastSyncedAt).toLocaleString("vi-VN")}
+                              </span>
                             ) : (
-                              <span className="badge bg-warning">Chưa đồng bộ</span>
+                              <span className="badge bg-amber-100 text-amber-900 border border-amber-300 font-bold">Chưa đồng bộ</span>
                             )}
                           </td>
                           <td className="text-center">
                             <div className="d-flex justify-content-center gap-1">
                               <button
-                                className="btn btn-xs btn-success d-inline-flex align-items-center py-1 px-2"
+                                className="btn btn-xs btn-success d-inline-flex align-items-center gap-1 py-1 px-2.5 rounded-lg font-bold text-xs"
                                 type="button"
                                 disabled={syncingId !== null}
                                 onClick={() => handleSyncSource(s._id)}
                               >
-                                {syncingId === s._id ? "Đang đồng bộ..." : "Đồng bộ"}
+                                <i className={`fa fa-rotate ${syncingId === s._id ? "fa-spin" : ""}`}></i>
+                                <span>{syncingId === s._id ? "Đang đồng bộ..." : "Đồng bộ"}</span>
                               </button>
-                              <button className="btn btn-xs btn-danger" type="button" onClick={() => handleDeleteSource(s._id)}>Xóa</button>
+                              <button className="btn btn-xs btn-outline-danger p-1 rounded-lg text-xs" type="button" title="Xóa" onClick={() => handleDeleteSource(s._id)}>
+                                <i className="fa fa-trash"></i>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1105,12 +2225,122 @@ export function SchoolSearchPage() {
                 </table>
               </div>
             </div>
-            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top p-4">
-              <button type="button" className="btn btn-outline-secondary" onClick={() => setIsSourcesModalOpen(false)}>Hoàn tất</button>
+            <div className="d-flex flex-shrink-0 justify-content-end gap-2 border-top border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <button type="button" className="btn btn-outline-secondary rounded-xl px-4 text-xs font-bold" onClick={() => setIsSourcesModalOpen(false)}>Hoàn tất</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. HƯỚNG DẪN TÙY CHỈNH BẢNG DÀNH CHO NHÂN VIÊN ── */}
+      {isGuideModalOpen && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm">
+          <div className="flex w-full max-w-[620px] flex-col overflow-hidden rounded-3xl bg-white app-dark:bg-[#0f172a]! shadow-2xl border border-slate-200 app-dark:border-slate-800!">
+            
+            {/* Modal Header */}
+            <div className="d-flex justify-content-between align-items-center border-bottom border-slate-200 app-dark:border-slate-800! p-4 bg-gradient-to-r from-cyan-50 to-blue-50 app-dark:from-slate-900 app-dark:to-slate-800">
+              <div className="d-flex align-items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-600 text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-md">
+                  <i className="fa fa-arrows-left-right text-lg"></i>
+                </div>
+                <div>
+                  <h6 className="font-extrabold text-slate-900 app-dark:text-white! mb-0.5 text-base">
+                    Hướng Dẫn Tùy Chỉnh Giao Diện Bảng
+                  </h6>
+                  <p className="text-xs text-slate-500 app-dark:text-slate-400! mb-0 font-medium">
+                    Tối ưu không gian làm việc theo phong cách riêng của bạn
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-sm btn-link text-slate-400 hover:text-slate-700 app-dark:hover:text-white! p-1"
+                onClick={() => setIsGuideModalOpen(false)}
+              >
+                <i className="fa fa-times text-lg"></i>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 overflow-y-auto max-h-[70vh] d-flex flex-column gap-3">
+              
+              {/* Feature 1 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 app-dark:bg-slate-900/60! border border-slate-200 app-dark:border-slate-800! d-flex gap-3 align-items-start">
+                <div className="w-8 h-8 rounded-xl bg-cyan-100 app-dark:bg-cyan-950/80 text-cyan-700 app-dark:text-cyan-300 d-flex align-items-center justify-content-center flex-shrink-0 font-black text-sm">
+                  1
+                </div>
+                <div className="flex-1">
+                  <h6 className="font-extrabold text-slate-900 app-dark:text-white! text-xs mb-1 d-flex align-items-center gap-1.5">
+                    <span>Kéo thả trực tiếp trên mép cột</span>
+                    <span className="badge bg-cyan-100 text-cyan-800 text-[10px] font-bold">Quan trọng</span>
+                  </h6>
+                  <p className="text-xs text-slate-600 app-dark:text-slate-400! mb-0 leading-relaxed">
+                    Rê chuột vào <strong>vạch phân cách xám ở mép phải</strong> của bất kỳ tiêu đề cột nào (con trỏ chuột sẽ đổi thành biểu tượng <strong className="text-cyan-600">↔</strong>). Nhấn giữ và kéo sang trái để thu nhỏ hoặc sang phải để mở rộng theo ý muốn.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 app-dark:bg-slate-900/60! border border-slate-200 app-dark:border-slate-800! d-flex gap-3 align-items-start">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 app-dark:bg-emerald-950/80 text-emerald-700 app-dark:text-emerald-300 d-flex align-items-center justify-content-center flex-shrink-0 font-black text-sm">
+                  2
+                </div>
+                <div className="flex-1">
+                  <h6 className="font-extrabold text-slate-900 app-dark:text-white! text-xs mb-1">
+                    Tự động lưu nhớ cấu hình cá nhân
+                  </h6>
+                  <p className="text-xs text-slate-600 app-dark:text-slate-400! mb-0 leading-relaxed">
+                    Độ rộng các cột bạn đã chỉnh sẽ được <strong>tự động ghi nhớ vào trình duyệt</strong>, các lần truy cập tiếp theo bảng vẫn giữ nguyên kích thước ưa thích của bạn.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 app-dark:bg-slate-900/60! border border-slate-200 app-dark:border-slate-800! d-flex gap-3 align-items-start">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 app-dark:bg-amber-950/80 text-amber-700 app-dark:text-amber-300 d-flex align-items-center justify-content-center flex-shrink-0 font-black text-sm">
+                  3
+                </div>
+                <div className="flex-1">
+                  <h6 className="font-extrabold text-slate-900 app-dark:text-white! text-xs mb-1">
+                    Nhấp đúp hoặc bấm "Đặt lại cột"
+                  </h6>
+                  <p className="text-xs text-slate-600 app-dark:text-slate-400! mb-0 leading-relaxed">
+                    <strong>Nhấp đúp chuột (Double-click)</strong> vào mép cột để hoàn nguyên riêng cột đó, hoặc bấm nút <strong className="text-cyan-700 app-dark:text-cyan-400">[ ↔ Đặt lại cột ]</strong> trên góc phải để khôi phục toàn bộ bảng về kích thước tiêu chuẩn ban đầu.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 app-dark:bg-slate-900/60! border border-slate-200 app-dark:border-slate-800! d-flex gap-3 align-items-start">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 app-dark:bg-purple-950/80 text-purple-700 app-dark:text-purple-300 d-flex align-items-center justify-content-center flex-shrink-0 font-black text-sm">
+                  4
+                </div>
+                <div className="flex-1">
+                  <h6 className="font-extrabold text-slate-900 app-dark:text-white! text-xs mb-1">
+                    Tùy chỉnh khoảng cách hiển thị (Gọn / Vừa / Thoáng)
+                  </h6>
+                  <p className="text-xs text-slate-600 app-dark:text-slate-400! mb-0 leading-relaxed">
+                    Bấm các nút <strong>Gọn</strong> (hiển thị nhiều trường nhất trên 1 màn hình), <strong>Vừa</strong> (chuẩn), hoặc <strong>Thoáng</strong> (khoảng cách rộng rãi, thoáng mắt) ngay trên thanh tiêu đề bảng.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="d-flex justify-content-end gap-2 border-top border-slate-200 app-dark:border-slate-800! p-4 bg-slate-50 app-dark:bg-slate-900/60!">
+              <button
+                type="button"
+                className="btn btn-primary rounded-xl px-4 py-2 font-bold text-xs shadow-md"
+                onClick={() => setIsGuideModalOpen(false)}
+              >
+                <i className="fa fa-check me-1.5"></i> Đã hiểu & Trải nghiệm ngay
+              </button>
+            </div>
+
           </div>
         </div>
       )}
     </div>
   );
-}
+});

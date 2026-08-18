@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, memo } from "react";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import "./SOPPage.css";
 
@@ -203,7 +203,7 @@ const STATUS_META = {
   archived: { label: "Lưu trữ", className: "sop-status-archived" }
 };
 
-export const SOPPage = ({ currentUser, filterDepartmentId }) => {
+export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
   const [sops, setSops] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -589,4 +589,4 @@ export const SOPPage = ({ currentUser, filterDepartmentId }) => {
       </div>
     </div>
   );
-};
+});
