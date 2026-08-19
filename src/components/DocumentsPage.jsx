@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { TailwindDropdown } from "./ui/TailwindDropdown";
@@ -917,7 +917,7 @@ const toggleDocumentCategoryVisibility = async (categoryId) => {
   return normalizeCategory(payload);
 };
 
-export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryName }) => {
+export const DocumentsPage = memo(({ currentUser, filterDepartmentId, forceCategoryName }) => {
   const [freshCurrentUser, setFreshCurrentUser] = useState(null);
   const [categories, setCategories] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -3156,7 +3156,7 @@ export const DocumentsPage = ({ currentUser, filterDepartmentId, forceCategoryNa
       </div>
     </div>
   );
-};
+});
 
 function DocumentActionButtons({
   canDownload,

@@ -1,497 +1,630 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { TailwindDropdown } from "../components/ui/TailwindDropdown";
-import "./DocumentSearchPage.css";
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { API_BASE_URL } from '../config/api';
+import { authFetch } from '../auth/session';
+import { fetchMediaAccessUrl, getFileExtension, formatDate } from '../media/components/mediaUtils.jsx';
+import './DocumentSearchPage.css';
 
-import { API_BASE_URL } from "../config/api";
-const USE_MOCK_WHEN_API_FAIL = true;
-const PAGE_SIZE = 6;
+// Custom Dropdown Menu chống tràn, hỗ trợ Glassmorphism mượt mà cả 2 theme
+const CustomSelect = ({ value, onChange, options, icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-const MOCK_DOCUMENTS = [
-  {
-    id: "doc-001",
-    title: "Biểu mẫu thông tin khách hàng du học Đức",
-    description: "Form thu thập thông tin khách hàng quan tâm chương trình du học Đức.",
-    category: "Biểu mẫu",
-    department: "Tư vấn du học",
-    fileType: "DOCX",
-    status: "active",
-    version: "v1.3",
-    ownerName: "Phòng tư vấn",
-    updatedAt: "2026-05-24",
-    downloadCount: 128,
-    tags: ["du học", "khách hàng", "form"],
-    url: "#"
-  },
-  {
-    id: "doc-002",
-    title: "Checklist hồ sơ visa du học",
-    description: "Danh sách giấy tờ cần kiểm tra trước khi nộp hồ sơ visa.",
-    category: "Checklist",
-    department: "Visa",
-    fileType: "PDF",
-    status: "active",
-    version: "v2.0",
-    ownerName: "Bộ phận Visa",
-    updatedAt: "2026-05-22",
-    downloadCount: 95,
-    tags: ["visa", "checklist", "hồ sơ"],
-    url: "#"
-  },
-  {
-    id: "doc-003",
-    title: "SOP xử lý lead từ website",
-    description: "Quy trình tiếp nhận lead, phân loại, gán tư vấn viên và cập nhật CRM.",
-    category: "SOP",
-    department: "CRM",
-    fileType: "PDF",
-    status: "active",
-    version: "v1.1",
-    ownerName: "Trưởng bộ phận CRM",
-    updatedAt: "2026-05-20",
-    downloadCount: 76,
-    tags: ["lead", "crm", "sop"],
-    url: "#"
-  },
-  {
-    id: "doc-004",
-    title: "Chính sách phân quyền tài khoản nội bộ",
-    description: "Mô tả quyền truy cập theo vai trò Admin, Ban giám đốc, Trưởng bộ phận, Nhân sự.",
-    category: "Chính sách",
-    department: "Hệ thống",
-    fileType: "PDF",
-    status: "active",
-    version: "v1.5",
-    ownerName: "Admin hệ thống",
-    updatedAt: "2026-05-18",
-    downloadCount: 44,
-    tags: ["role", "permission", "security"],
-    url: "#"
-  },
-  {
-    id: "doc-005",
-    title: "Template hợp đồng dịch vụ tư vấn",
-    description: "Mẫu hợp đồng dành cho khách hàng sử dụng dịch vụ tư vấn du học, visa hoặc định cư.",
-    category: "Hợp đồng",
-    department: "Pháp lý",
-    fileType: "DOCX",
-    status: "active",
-    version: "v3.2",
-    ownerName: "Phòng Pháp lý",
-    updatedAt: "2026-05-16",
-    downloadCount: 221,
-    tags: ["hợp đồng", "dịch vụ", "template"],
-    url: "#"
-  },
-  {
-    id: "doc-006",
-    title: "Bảng giá dịch vụ tham khảo",
-    description: "Bảng giá dùng nội bộ cho tư vấn viên khi trao đổi sơ bộ với khách hàng.",
-    category: "Bảng giá",
-    department: "Kinh doanh",
-    fileType: "XLSX",
-    status: "active",
-    version: "v2.4",
-    ownerName: "Phòng Kinh doanh",
-    updatedAt: "2026-05-15",
-    downloadCount: 183,
-    tags: ["bảng giá", "sale", "tư vấn"],
-    url: "#"
-  },
-  {
-    id: "doc-007",
-    title: "Tài liệu đào tạo tư vấn viên mới",
-    description: "Tài liệu onboarding dành cho nhân sự mới trong đội tư vấn.",
-    category: "Đào tạo",
-    department: "Nhân sự",
-    fileType: "PDF",
-    status: "active",
-    version: "v1.0",
-    ownerName: "Phòng Nhân sự",
-    updatedAt: "2026-05-12",
-    downloadCount: 58,
-    tags: ["đào tạo", "onboarding", "tư vấn"],
-    url: "#"
-  },
-  {
-    id: "doc-008",
-    title: "Quy trình xử lý khiếu nại khách hàng",
-    description: "Hướng dẫn phân loại, tiếp nhận và xử lý phản hồi hoặc khiếu nại của khách hàng.",
-    category: "SOP",
-    department: "Chăm sóc khách hàng",
-    fileType: "PDF",
-    status: "draft",
-    version: "v0.9",
-    ownerName: "CSKH",
-    updatedAt: "2026-05-10",
-    downloadCount: 17,
-    tags: ["khiếu nại", "cskh", "quy trình"],
-    url: "#"
-  }
-];
-
-const STATUS_META = {
-  active: { label: "Đang dùng", className: "doc-status-active" },
-  draft: { label: "Bản nháp", className: "doc-status-draft" },
-  archived: { label: "Lưu trữ", className: "doc-status-archived" }
-};
-
-const normalizeArrayResponse = (payload) => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.results)) return payload.results;
-  return [];
-};
-
-const formatDate = (dateValue) => {
-  if (!dateValue) return "—";
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
-
-const getSafeId = (item) => String(item?._id || item?.id || item?.documentId || "");
-
-export const DocumentSearchPage = ({ currentUser }) => {
-  const [documents, setDocuments] = useState([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [apiMode, setApiMode] = useState("mock");
-  const [error, setError] = useState("");
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [fileTypeFilter, setFileTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("updatedAt_desc");
-  const [currentPageIndex, setCurrentPageIndex] = useState(1);
-
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/documents`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-
-      if (!response.ok) {
-        throw new Error("API tài liệu chưa sẵn sàng hoặc tài khoản hiện tại chưa có quyền truy cập.");
-      }
-
-      const payload = await response.json();
-      const data = normalizeArrayResponse(payload);
-
-      setDocuments(data);
-      setSelectedId((currentId) => currentId || getSafeId(data[0]));
-      setApiMode("real");
-    } catch (err) {
-      if (!USE_MOCK_WHEN_API_FAIL) {
-        setError(err.message || "Không thể tải danh sách tài liệu.");
-        setDocuments([]);
-      } else {
-        setDocuments(MOCK_DOCUMENTS);
-        setSelectedId((currentId) => currentId || MOCK_DOCUMENTS[0]?.id || "");
-        setApiMode("mock");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
-
-  useEffect(() => {
-    setCurrentPageIndex(1);
-  }, [searchTerm, categoryFilter, departmentFilter, fileTypeFilter, statusFilter, sortBy]);
-
-  const categories = useMemo(() => Array.from(new Set(documents.map((item) => item.category).filter(Boolean))), [documents]);
-  const departments = useMemo(() => Array.from(new Set(documents.map((item) => item.department).filter(Boolean))), [documents]);
-  const fileTypes = useMemo(() => Array.from(new Set(documents.map((item) => item.fileType).filter(Boolean))), [documents]);
-
-  const filteredDocuments = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-
-    const result = documents.filter((item) => {
-      const matchSearch =
-        !term ||
-        String(item.title || "").toLowerCase().includes(term) ||
-        String(item.description || "").toLowerCase().includes(term) ||
-        String(item.ownerName || "").toLowerCase().includes(term) ||
-        (item.tags || []).some((tag) => String(tag).toLowerCase().includes(term));
-
-      return (
-        matchSearch &&
-        (categoryFilter === "all" || item.category === categoryFilter) &&
-        (departmentFilter === "all" || item.department === departmentFilter) &&
-        (fileTypeFilter === "all" || item.fileType === fileTypeFilter) &&
-        (statusFilter === "all" || item.status === statusFilter)
-      );
-    });
-
-    return result.sort((a, b) => {
-      if (sortBy === "updatedAt_desc") return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      if (sortBy === "updatedAt_asc") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-      if (sortBy === "title_asc") return String(a.title || "").localeCompare(String(b.title || ""), "vi");
-      if (sortBy === "download_desc") return Number(b.downloadCount || 0) - Number(a.downloadCount || 0);
-      return 0;
-    });
-  }, [documents, searchTerm, categoryFilter, departmentFilter, fileTypeFilter, statusFilter, sortBy]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
-
-  const paginatedDocuments = useMemo(() => {
-    const startIndex = (currentPageIndex - 1) * PAGE_SIZE;
-    return filteredDocuments.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [filteredDocuments, currentPageIndex]);
-
-  const selectedDocument = useMemo(() => {
-    return documents.find((item) => getSafeId(item) === selectedId) || paginatedDocuments[0] || documents[0] || null;
-  }, [documents, selectedId, paginatedDocuments]);
-
-  const resetFilters = () => {
-    setSearchTerm("");
-    setCategoryFilter("all");
-    setDepartmentFilter("all");
-    setFileTypeFilter("all");
-    setStatusFilter("all");
-    setSortBy("updatedAt_desc");
-  };
-
-  const hasActiveFilters =
-    searchTerm ||
-    categoryFilter !== "all" ||
-    departmentFilter !== "all" ||
-    fileTypeFilter !== "all" ||
-    statusFilter !== "all" ||
-    sortBy !== "updatedAt_desc";
-
-  const handleOpenDocument = (documentItem) => {
-    if (!documentItem?.url || documentItem.url === "#") {
-      alert("Đây là dữ liệu giả. Khi có API thật, hãy truyền link file vào field url.");
-      return;
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
     }
-
-    window.open(documentItem.url, "_blank", "noopener,noreferrer");
-  };
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isOpen]);
 
   return (
-    <div className="document-search-page container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
-      <div className="document-search-hero mb-4">
-        <div>
-          <span className="document-search-eyebrow">Document center</span>
-          <h4 className="fw-bold text-body-emphasis mb-1">Tìm kiếm & lọc tài liệu</h4>
-          <p className="text-body-secondary mb-0">
-            Tìm nhanh tài liệu theo từ khóa, nhóm tài liệu, phòng ban, loại file, trạng thái và sắp xếp theo nhu cầu sử dụng.
-          </p>
+    <div className={`doc-custom-dropdown-container ${isOpen ? 'dropdown-active-portal' : ''}`} ref={dropdownRef}>
+      <button
+        type="button"
+        className={`doc-dropdown-trigger-btn ${isOpen ? 'is-active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="d-flex align-items-center gap-2 text-truncate">
+          {icon && <i className={`${icon} doc-dropdown-icon`}></i>}
+          <span className="doc-dropdown-selected-label text-truncate">{selectedOption.label}</span>
         </div>
+        <i className={`fa fa-chevron-down doc-dropdown-chevron ${isOpen ? 'is-rotated' : ''}`}></i>
+      </button>
 
-        <div className="d-flex flex-wrap align-items-center justify-content-end gap-2">
-          <span className={`document-api-badge ${apiMode === "real" ? "real" : "mock"}`}>
-            {apiMode === "real" ? "Đang dùng API thật" : "Đang dùng dữ liệu giả"}
-          </span>
-
-          <button className="btn btn-outline-primary btn-sm" onClick={fetchDocuments} disabled={loading}>
-            Đồng bộ lại
-          </button>
-        </div>
-      </div>
-
-      <div className="document-filter-panel mb-4">
-        <div className="document-search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-
-          <input
-            className="form-control form-control-sm bg-body"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Tìm theo tên tài liệu, mô tả, tag hoặc người phụ trách..."
-          />
-        </div>
-
-        <div className="document-filter-select">
-          <TailwindDropdown
-            onChange={setCategoryFilter}
-            options={[{ label: "Tất cả nhóm", value: "all" }, ...categories.map((category) => ({ label: category, value: category }))]}
-            placeholder="Tất cả nhóm"
-            value={categoryFilter}
-          />
-        </div>
-
-        <div className="document-filter-select">
-          <TailwindDropdown
-            onChange={setDepartmentFilter}
-            options={[{ label: "Tất cả phòng ban", value: "all" }, ...departments.map((department) => ({ label: department, value: department }))]}
-            placeholder="Tất cả phòng ban"
-            value={departmentFilter}
-          />
-        </div>
-
-        <div className="document-filter-select">
-          <TailwindDropdown
-            onChange={setFileTypeFilter}
-            options={[{ label: "Tất cả loại file", value: "all" }, ...fileTypes.map((fileType) => ({ label: fileType, value: fileType }))]}
-            placeholder="Tất cả loại file"
-            value={fileTypeFilter}
-          />
-        </div>
-
-        <div className="document-filter-select">
-          <TailwindDropdown
-            onChange={setStatusFilter}
-            options={[
-              { label: "Tất cả trạng thái", value: "all" },
-              { label: "Đang dùng", value: "active" },
-              { label: "Bản nháp", value: "draft" },
-              { label: "Lưu trữ", value: "archived" },
-            ]}
-            placeholder="Tất cả trạng thái"
-            value={statusFilter}
-          />
-        </div>
-
-        <div className="document-filter-select">
-          <TailwindDropdown
-            onChange={setSortBy}
-            options={[
-              { label: "Mới cập nhật nhất", value: "updatedAt_desc" },
-              { label: "Cũ nhất trước", value: "updatedAt_asc" },
-              { label: "Tên A-Z", value: "title_asc" },
-              { label: "Tải nhiều nhất", value: "download_desc" },
-            ]}
-            placeholder="Sắp xếp"
-            value={sortBy}
-          />
-        </div>
-
-        {hasActiveFilters && (
-          <button className="btn btn-outline-secondary btn-sm document-reset-btn" onClick={resetFilters}>
-            Xóa lọc
-          </button>
-        )}
-      </div>
-
-      {error && <div className="alert alert-danger py-2">{error}</div>}
-
-      <div className="row g-3 align-items-start">
-        <div className="col-12 col-xl-8">
-          <div className="document-table-card">
-            <div className="d-flex justify-content-between align-items-center gap-3 p-3 border-bottom">
-              <div>
-                <h6 className="fw-bold mb-0">Danh sách tài liệu</h6>
-                <span className="text-body-secondary small">{filteredDocuments.length} kết quả phù hợp</span>
+      {isOpen && (
+        <div className="doc-dropdown-menu-list animate-dropdown-pop">
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <div
+                key={opt.value}
+                className={`doc-dropdown-item ${isSelected ? 'is-selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                <span className="doc-item-text">{opt.label}</span>
+                {isSelected && <i className="fa fa-check text-cyan-500 doc-check-icon"></i>}
               </div>
-            </div>
-
-            <div className="table-responsive">
-              <table className="table document-table table-hover mb-0 align-middle">
-                <thead>
-                  <tr>
-                    <th style={{ width: "34%" }}>Tài liệu</th>
-                    <th style={{ width: "14%" }}>Nhóm</th>
-                    <th style={{ width: "14%" }}>Phòng ban</th>
-                    <th style={{ width: "10%" }}>Loại</th>
-                    <th style={{ width: "12%" }}>Trạng thái</th>
-                    <th style={{ width: "16%" }}>Cập nhật</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
-                      </td>
-                    </tr>
-                  ) : paginatedDocuments.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-5 text-body-secondary">Không tìm thấy tài liệu phù hợp.</td>
-                    </tr>
-                  ) : (
-                    paginatedDocuments.map((item) => {
-                      const itemId = getSafeId(item);
-                      const statusMeta = STATUS_META[item.status] || STATUS_META.draft;
-
-                      return (
-                        <tr
-                          key={itemId}
-                          className={selectedDocument && getSafeId(selectedDocument) === itemId ? "selected-row" : ""}
-                          onClick={() => setSelectedId(itemId)}
-                        >
-                          <td>
-                            <div className="fw-bold text-body-emphasis">{item.title}</div>
-                            <div className="text-body-secondary small document-line-clamp">{item.description}</div>
-                          </td>
-                          <td>{item.category || "—"}</td>
-                          <td>{item.department || "—"}</td>
-                          <td><span className="document-file-pill">{item.fileType || "FILE"}</span></td>
-                          <td><span className={`document-status-pill ${statusMeta.className}`}>{statusMeta.label}</span></td>
-                          <td>
-                            <div className="fw-semibold">{formatDate(item.updatedAt)}</div>
-                            <div className="text-body-secondary small">{item.downloadCount || 0} lượt tải</div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="document-pagination-bar">
-              <span className="text-body-secondary small">Trang {currentPageIndex}/{totalPages}</span>
-
-              <div className="d-flex gap-2">
-                <button className="btn btn-outline-secondary btn-sm" disabled={currentPageIndex <= 1} onClick={() => setCurrentPageIndex((page) => Math.max(1, page - 1))}>
-                  Trước
-                </button>
-
-                <button className="btn btn-outline-secondary btn-sm" disabled={currentPageIndex >= totalPages} onClick={() => setCurrentPageIndex((page) => Math.min(totalPages, page + 1))}>
-                  Sau
-                </button>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
-
-        <div className="col-12 col-xl-4">
-          <div className="document-detail-panel">
-            {selectedDocument ? (
-              <>
-                <span className="document-search-eyebrow">Chi tiết tài liệu</span>
-                <h5 className="fw-bold text-body-emphasis mb-2">{selectedDocument.title}</h5>
-                <p className="text-body-secondary">{selectedDocument.description}</p>
-
-                <div className="document-meta-grid mb-4">
-                  <div><span>Phiên bản</span><strong>{selectedDocument.version || "—"}</strong></div>
-                  <div><span>Loại file</span><strong>{selectedDocument.fileType || "—"}</strong></div>
-                  <div><span>Phòng ban</span><strong>{selectedDocument.department || "—"}</strong></div>
-                  <div><span>Người phụ trách</span><strong>{selectedDocument.ownerName || "—"}</strong></div>
-                </div>
-
-                <div className="mb-4">
-                  <div className="small text-body-secondary mb-2">Tag tìm kiếm</div>
-                  <div className="d-flex flex-wrap gap-2">
-                    {(selectedDocument.tags || []).map((tag) => <span key={tag} className="document-tag-pill">{tag}</span>)}
-                  </div>
-                </div>
-
-                <button className="btn btn-primary w-100" onClick={() => handleOpenDocument(selectedDocument)}>
-                  Mở tài liệu
-                </button>
-              </>
-            ) : (
-              <div className="text-center py-5 text-body-secondary">Chọn một tài liệu để xem chi tiết.</div>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
+
+export const DocumentSearchPage = React.memo(() => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [warningMsg, setWarningMsg] = useState('');
+  
+  const [allItems, setAllItems] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // Bộ lọc & Tìm kiếm
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterSource, setFilterSource] = useState('ALL');
+  const [filterType, setFilterType] = useState('ALL');
+  const [sortBy, setSortBy] = useState('newest');
+
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  const sourceOptions = [
+    { value: 'ALL', label: 'Tất cả nguồn (2 Nguồn)' },
+    { value: 'DOCUMENT', label: 'Tài liệu & Biểu mẫu' },
+    { value: 'MEDIA', label: 'Media Repository' }
+  ];
+
+  const typeOptions = [
+    { value: 'ALL', label: 'Tất cả định dạng' },
+    { value: 'PDF', label: 'PDF' },
+    { value: 'DOCX', label: 'DOCX / Word' },
+    { value: 'PPTX', label: 'PPTX / Slide' },
+    { value: 'MP4', label: 'MP4 / Video' },
+    { value: 'JPG', label: 'JPG / PNG Ảnh' }
+  ];
+
+  const sortOptions = [
+    { value: 'newest', label: 'Mới cập nhật nhất' },
+    { value: 'oldest', label: 'Cũ nhất' },
+    { value: 'title', label: 'Theo tên A - Z' }
+  ];
+
+  // Hệ thống màu Prism Gradient cho định dạng file
+  const renderFileTypeBadge = (type) => {
+    const ext = (type || 'DOC').toUpperCase();
+
+    const badgeConfigs = {
+      DOCX: { gradient: "linear-gradient(135deg, #38bdf8 0%, #2563eb 50%, #1d4ed8 100%)", shadow: "rgba(37, 99, 235, 0.4)", border: "rgba(56, 189, 248, 0.4)" },
+      DOC:  { gradient: "linear-gradient(135deg, #38bdf8 0%, #2563eb 50%, #1d4ed8 100%)", shadow: "rgba(37, 99, 235, 0.4)", border: "rgba(56, 189, 248, 0.4)" },
+      PDF:  { gradient: "linear-gradient(135deg, #fb7185 0%, #e11d48 50%, #be123c 100%)", shadow: "rgba(225, 29, 72, 0.4)", border: "rgba(251, 113, 133, 0.4)" },
+      MP4:  { gradient: "linear-gradient(135deg, #22d3ee 0%, #0284c7 50%, #0369a1 100%)", shadow: "rgba(6, 182, 212, 0.4)", border: "rgba(34, 211, 238, 0.4)" },
+      VIDEO:{ gradient: "linear-gradient(135deg, #22d3ee 0%, #0284c7 50%, #0369a1 100%)", shadow: "rgba(6, 182, 212, 0.4)", border: "rgba(34, 211, 238, 0.4)" },
+      PNG:  { gradient: "linear-gradient(135deg, #34d399 0%, #059669 50%, #047857 100%)", shadow: "rgba(5, 150, 105, 0.4)", border: "rgba(52, 211, 153, 0.4)" },
+      JPG:  { gradient: "linear-gradient(135deg, #34d399 0%, #059669 50%, #047857 100%)", shadow: "rgba(5, 150, 105, 0.4)", border: "rgba(52, 211, 153, 0.4)" },
+      IMG:  { gradient: "linear-gradient(135deg, #34d399 0%, #059669 50%, #047857 100%)", shadow: "rgba(5, 150, 105, 0.4)", border: "rgba(52, 211, 153, 0.4)" },
+      PPTX: { gradient: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)", shadow: "rgba(245, 158, 11, 0.4)", border: "rgba(251, 191, 36, 0.4)" },
+      PPT:  { gradient: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)", shadow: "rgba(245, 158, 11, 0.4)", border: "rgba(251, 191, 36, 0.4)" },
+      XLSX: { gradient: "linear-gradient(135deg, #2dd4bf 0%, #0d9488 50%, #115e59 100%)", shadow: "rgba(13, 148, 136, 0.4)", border: "rgba(45, 212, 191, 0.4)" },
+      TXT:  { gradient: "linear-gradient(135deg, #c084fc 0%, #7c3aed 50%, #6d28d9 100%)", shadow: "rgba(124, 58, 237, 0.4)", border: "rgba(192, 132, 252, 0.4)" },
+    };
+
+    const config = badgeConfigs[ext] || {
+      gradient: "linear-gradient(135deg, #94a3b8 0%, #64748b 50%, #475569 100%)",
+      shadow: "rgba(100, 116, 139, 0.3)",
+      border: "rgba(148, 163, 184, 0.35)",
+    };
+
+    return (
+      <span
+        className="doc-format-badge select-none"
+        style={{
+          background: config.gradient,
+          boxShadow: `0 2px 8px ${config.shadow}`,
+          border: `1px solid ${config.border}`,
+        }}
+      >
+        {ext}
+      </span>
+    );
+  };
+
+  const normalizeDocItem = (doc) => ({
+    id: doc._id || doc.id,
+    title: doc.title || doc.name || 'Tài liệu không tên',
+    description: doc.description || doc.notes || '',
+    source: 'DOCUMENT',
+    sourceLabel: 'Tài liệu & Biểu mẫu',
+    category: doc.category?.name || doc.categoryName || (typeof doc.category === 'string' ? doc.category : '') || 'Kho lưu trữ nội bộ',
+    department: doc.department?.name || doc.departmentName || (typeof doc.department === 'string' ? doc.department : '') || 'Toàn công ty',
+    fileType: (doc.fileType || getFileExtension(doc.fileName || doc.title) || 'DOC').toUpperCase(),
+    status: doc.status || 'Đang dùng',
+    date: doc.updatedAt || doc.createdAt || new Date().toISOString(),
+    downloadCount: doc.downloadCount || 0,
+    author: doc.uploadedBy?.name || doc.ownerName || 'Hệ thống',
+    version: doc.version || 'v1.0',
+    fileSize: doc.fileSize || 0,
+    raw: doc
+  });
+
+  const normalizeMediaItem = (media) => {
+    let catLabel = 'Ấn phẩm & Tài liệu';
+    if (media.category === 'video_library') catLabel = 'Thư viện Video';
+    if (media.category === 'visa_result') catLabel = 'Kết quả Visa';
+
+    let ext = getFileExtension(media.fileName || media.title);
+    if (!ext) {
+      ext = media.category === 'video_library' ? 'MP4' : (media.category === 'visa_result' ? 'JPG' : 'DOCX');
+    }
+
+    return {
+      id: media._id || media.id,
+      title: media.title || media.fileName || 'Media không tên',
+      description: media.notes || (media.customer_name ? `Khách hàng: ${media.customer_name}` : ''),
+      source: 'MEDIA',
+      sourceLabel: 'Media Repository',
+      category: catLabel,
+      department: media.customer_country && media.customer_country !== 'ALL' ? `Thị trường ${media.customer_country}` : 'Truyền thông & Media',
+      fileType: ext.toUpperCase(),
+      status: media.visa_result_status || 'Đang lưu hành',
+      date: media.updatedAt || media.createdAt || new Date().toISOString(),
+      downloadCount: media.views || 0,
+      author: media.customer_name || media.storageProvider || 'Media Team',
+      version: media.storageProvider || 'Cloud',
+      fileSize: media.fileSize || 0,
+      raw: media
+    };
+  };
+
+  const fetchUnifiedData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setWarningMsg('');
+
+      const [docsResult, mediaResult] = await Promise.allSettled([
+        authFetch(`${API_BASE_URL}/documents?limit=100`),
+        authFetch(`${API_BASE_URL}/media?limit=100`)
+      ]);
+
+      let docsList = [];
+      let mediaList = [];
+      let failCount = 0;
+
+      if (docsResult.status === 'fulfilled' && docsResult.value.ok) {
+        const dJson = await docsResult.value.json();
+        const rawDocs = dJson?.data?.documents || dJson?.data?.items || dJson?.data || dJson?.documents || [];
+        docsList = Array.isArray(rawDocs) ? rawDocs.map(normalizeDocItem) : [];
+      } else {
+        failCount++;
+      }
+
+      if (mediaResult.status === 'fulfilled' && mediaResult.value.ok) {
+        const mJson = await mediaResult.value.json();
+        const rawMedia = mJson?.data?.medias || mJson?.data?.items || mJson?.data || mJson?.medias || [];
+        mediaList = Array.isArray(rawMedia) ? rawMedia.map(normalizeMediaItem) : [];
+      } else {
+        failCount++;
+      }
+
+      if (failCount === 2) {
+        throw new Error('Không thể kết nối đến cả 2 nguồn dữ liệu (Documents & Media Repository).');
+      } else if (failCount === 1) {
+        setWarningMsg('Một nguồn dữ liệu đang gián đoạn, hệ thống đang hiển thị nguồn khả dụng.');
+      }
+
+      const combined = [...docsList, ...mediaList];
+      setAllItems(combined);
+      if (combined.length > 0 && !selectedItem) {
+        setSelectedItem(combined[0]);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnifiedData();
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    return allItems
+      .filter(item => {
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          const matchTitle = item.title.toLowerCase().includes(term);
+          const matchDesc = item.description.toLowerCase().includes(term);
+          const matchDept = item.department.toLowerCase().includes(term);
+          const matchCat = item.category.toLowerCase().includes(term);
+          if (!matchTitle && !matchDesc && !matchDept && !matchCat) return false;
+        }
+        if (filterSource !== 'ALL' && item.source !== filterSource) return false;
+        if (filterType !== 'ALL' && item.fileType !== filterType) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'newest') return new Date(b.date) - new Date(a.date);
+        if (sortBy === 'oldest') return new Date(a.date) - new Date(b.date);
+        if (sortBy === 'title') return a.title.localeCompare(b.title);
+        return 0;
+      });
+  }, [allItems, searchTerm, filterSource, filterType, sortBy]);
+
+  const handlePreview = async (item) => {
+    if (!item) return;
+    setIsActionLoading(true);
+    try {
+      if (item.source === 'DOCUMENT') {
+        const directUrl = item.raw?.fileUrl || item.raw?.driveUrl || item.raw?.url;
+        if (directUrl) {
+          const driveMatch = directUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (driveMatch && driveMatch[1]) {
+            window.open(`https://drive.google.com/file/d/${driveMatch[1]}/preview`, '_blank', 'noopener,noreferrer');
+          } else {
+            window.open(directUrl, '_blank', 'noopener,noreferrer');
+          }
+        } else {
+          alert('Không tìm thấy đường dẫn xem trước tài liệu này.');
+        }
+      } else {
+        const mediaUrl = await fetchMediaAccessUrl(item.id, 'preview');
+        window.open(mediaUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      alert('Lỗi truy cập xem trước: ' + err.message);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleDownload = async (item) => {
+    if (!item) return;
+    setIsActionLoading(true);
+    try {
+      if (item.source === 'DOCUMENT') {
+        const downloadUrl = item.raw?.downloadUrl || item.raw?.fileUrl || item.raw?.url;
+        if (downloadUrl) {
+          const driveMatch = downloadUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (driveMatch && driveMatch[1]) {
+            window.open(`https://drive.google.com/uc?export=download&id=${driveMatch[1]}`, '_blank', 'noopener,noreferrer');
+          } else {
+            window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+          }
+        } else {
+          alert('Không tìm thấy đường dẫn tải về tài liệu.');
+        }
+      } else {
+        const mediaDownloadUrl = await fetchMediaAccessUrl(item.id, 'download');
+        const a = document.createElement('a');
+        a.href = mediaDownloadUrl;
+        a.download = item.title || 'downloaded-file';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      alert('Lỗi tải tài liệu: ' + err.message);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  return (
+    <div className="doc-search-page-container">
+      
+      {/* 1. HERO HEADER CARD */}
+      <div className="doc-search-hero-card">
+        <div className="doc-hero-top-row">
+          
+          <div className="doc-hero-text-block">
+            {/* Tag nhỏ tiêu đề (Aurora Multi-Gradient Pill) */}
+            <div className="doc-category-tag">
+              <i className="fa fa-layer-group"></i>
+              <span>Trung tâm tra cứu thông tin & tài liệu</span>
+            </div>
+
+            {/* Tiêu đề chính Multi-Color Gradient */}
+            <h4 className="doc-hero-main-title">
+              Tìm kiếm & Lọc dữ liệu hợp nhất
+            </h4>
+            
+            <p className="doc-hero-subtitle">
+              Tra cứu dữ liệu thời gian thực đồng thời từ 2 nguồn: <strong>Tài liệu & Biểu mẫu</strong> và <strong>Media Repository</strong>.
+            </p>
+          </div>
+
+          <div className="doc-hero-actions-block">
+            {/* Live Indicator Multi-Color Gradient Badge */}
+            <div className="doc-live-indicator-badge">
+              <span className="live-dot-ping"></span>
+              <span className="live-dot-core"></span>
+              <span className="live-badge-text">Dữ liệu thật từ 2 APIs</span>
+            </div>
+
+            {/* Nút Đồng bộ Radiant Multi-Gradient */}
+            <button
+              type="button"
+              onClick={fetchUnifiedData}
+              disabled={loading}
+              className="doc-sync-btn"
+              title="Đồng bộ lại toàn bộ dữ liệu mới nhất"
+            >
+              <i className={`fa fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+              <span>Đồng bộ</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. UNIFIED SEARCH & FILTER CONSOLE DECK */}
+        <div className="doc-filter-console-wrapper">
+          <div className="doc-filter-console-grid">
+            
+            {/* Ô Tìm kiếm */}
+            <div className="doc-search-input-box">
+              <i className="fa fa-search doc-search-icon"></i>
+              <input
+                type="text"
+                className="doc-search-input"
+                placeholder="Tìm theo tên tài liệu, mô tả, phòng ban..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm ? (
+                <button
+                  type="button"
+                  className="doc-search-clear-btn"
+                  onClick={() => setSearchTerm("")}
+                  title="Xóa từ khóa"
+                >
+                  <i className="fa fa-times-circle"></i>
+                </button>
+              ) : (
+                <span className="doc-search-shortcut-hint">⌘K</span>
+              )}
+            </div>
+
+            {/* Dropdown Nguồn Dữ Liệu */}
+            <CustomSelect 
+              value={filterSource}
+              onChange={setFilterSource}
+              options={sourceOptions}
+              icon="fa fa-database"
+            />
+
+            {/* Dropdown Định Dạng File */}
+            <CustomSelect 
+              value={filterType}
+              onChange={setFilterType}
+              options={typeOptions}
+              icon="fa fa-file-code"
+            />
+
+            {/* Dropdown Sắp Xếp */}
+            <CustomSelect 
+              value={sortBy}
+              onChange={setSortBy}
+              options={sortOptions}
+              icon="fa fa-sort-amount-down"
+            />
+
+            {/* Thống kê số lượng kết quả */}
+            <div className="doc-result-counter-box">
+              <span className="counter-label">Khả dụng:</span>
+              <span className="counter-value">{filteredItems.length}</span>
+              <span className="counter-unit">mục</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {warningMsg && (
+        <div className="doc-warning-banner">
+          <i className="fa fa-exclamation-triangle"></i>
+          <span>{warningMsg}</span>
+        </div>
+      )}
+
+      {/* 3. KHU VỰC BẢNG DỮ LIỆU & CHI TIẾT */}
+      <div className="doc-main-content-layout">
+        <div className="row g-3 h-100 m-0">
+          
+          {/* CỘT TRÁI: BẢNG DỮ LIỆU */}
+          <div className="col-lg-8 h-100 p-0 pe-lg-2">
+            <div className="doc-table-card-container">
+              
+              <div className="doc-table-scroll-wrapper">
+                <table className="doc-data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '36%' }}>Tài liệu</th>
+                      <th style={{ width: '16%' }}>Nguồn</th>
+                      <th style={{ width: '22%' }}>Phân loại / Nơi lưu</th>
+                      <th style={{ width: '12%' }} className="text-center">Định dạng</th>
+                      <th style={{ width: '14%' }} className="text-end">Cập nhật</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="5" className="doc-table-state-cell">
+                          <div className="doc-loading-spinner"></div>
+                          <span>Đang đồng bộ dữ liệu thời gian thực từ 2 APIs...</span>
+                        </td>
+                      </tr>
+                    ) : filteredItems.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="doc-table-state-cell">
+                          <div className="doc-empty-icon-wrap">
+                            <i className="fa fa-folder-open"></i>
+                          </div>
+                          <div className="doc-empty-title">Không tìm thấy tài liệu phù hợp</div>
+                          <div className="doc-empty-desc">Thử thay đổi từ khóa hoặc đặt lại bộ lọc tìm kiếm</div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredItems.map(item => {
+                        const isSelected = selectedItem?.id === item.id;
+                        return (
+                          <tr 
+                            key={`${item.source}-${item.id}`} 
+                            onClick={() => setSelectedItem(item)}
+                            className={`doc-table-row ${isSelected ? 'row-active-selected' : ''}`}
+                          >
+                            <td>
+                              <div className="doc-row-title-wrap">
+                                <span className={`doc-row-title ${isSelected ? 'text-cyan-accent' : ''}`}>
+                                  {item.title}
+                                </span>
+                                <span className="doc-row-desc">
+                                  {item.description || 'Không có mô tả chi tiết'}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td>
+                              {item.source === 'DOCUMENT' ? (
+                                <span className="doc-source-badge doc-badge-document">
+                                  <i className="fa fa-folder"></i>
+                                  <span>Document</span>
+                                </span>
+                              ) : (
+                                <span className="doc-source-badge doc-badge-media">
+                                  <i className="fa fa-photo-video"></i>
+                                  <span>Media Repo</span>
+                                </span>
+                              )}
+                            </td>
+
+                            <td>
+                              <div className="doc-row-dept-text">{item.department}</div>
+                              <div className="doc-row-cat-text">{item.category}</div>
+                            </td>
+
+                            <td className="text-center">
+                              {renderFileTypeBadge(item.fileType)}
+                            </td>
+
+                            <td className="text-end">
+                              <span className="doc-row-date-text">{formatDate(item.date)}</span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+
+          {/* CỘT PHẢI: KHUNG CHI TIẾT */}
+          <div className="col-lg-4 h-100 p-0 ps-lg-2">
+            <div className="doc-detail-sidebar-card">
+              
+              {selectedItem ? (
+                <div className="doc-detail-content-wrapper">
+                  <div className="doc-detail-scroll-area">
+                    
+                    <div className="doc-detail-header-row">
+                      <span className="doc-detail-section-title">
+                        <i className="fa fa-info-circle me-1.5"></i>Chi tiết tài liệu
+                      </span>
+                      <span className="doc-detail-origin-chip">
+                        {selectedItem.sourceLabel}
+                      </span>
+                    </div>
+
+                    <h5 className="doc-detail-document-title">
+                      {selectedItem.title}
+                    </h5>
+                    
+                    <p className="doc-detail-document-description">
+                      {selectedItem.description || 'Tài liệu chưa có ghi chú hoặc mô tả bổ sung.'}
+                    </p>
+
+                    <div className="doc-metadata-grid">
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Nguồn gốc</span>
+                        <span className="meta-val">{selectedItem.sourceLabel}</span>
+                      </div>
+
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Định dạng</span>
+                        <span className="meta-val font-mono">{selectedItem.fileType}</span>
+                      </div>
+
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Danh mục</span>
+                        <span className="meta-val">{selectedItem.category}</span>
+                      </div>
+
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Phòng ban / Nhóm</span>
+                        <span className="meta-val">{selectedItem.department}</span>
+                      </div>
+
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Phiên bản / Lưu trữ</span>
+                        <span className="meta-val font-mono">{selectedItem.version}</span>
+                      </div>
+
+                      <div className="doc-meta-chip">
+                        <span className="meta-label">Người tạo / Khách</span>
+                        <span className="meta-val">{selectedItem.author}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="doc-detail-actions-footer">
+                    <button
+                      type="button"
+                      className="doc-action-preview-btn"
+                      onClick={() => handlePreview(selectedItem)}
+                      disabled={isActionLoading}
+                    >
+                      <i className="fa fa-eye"></i>
+                      <span>Xem trước</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="doc-action-download-btn"
+                      onClick={() => handleDownload(selectedItem)}
+                      disabled={isActionLoading}
+                    >
+                      <i className="fa fa-download"></i>
+                      <span>Tải về</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="doc-detail-empty-placeholder">
+                  <div className="placeholder-icon-ring">
+                    <i className="fa fa-mouse-pointer"></i>
+                  </div>
+                  <span className="placeholder-title">Chưa chọn tài liệu</span>
+                  <span className="placeholder-sub">Nhấp vào một dòng trên bảng để xem chi tiết và tải xuống</span>
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  );
+});

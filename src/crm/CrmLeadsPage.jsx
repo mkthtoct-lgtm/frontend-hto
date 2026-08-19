@@ -5,7 +5,7 @@ import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadDetailModal } from './LeadDetailModal';
 import Swal from 'sweetalert2';
 
-export const CrmLeadsPage = ({ currentUser, theme }) => {
+export const CrmLeadsPage = React.memo(({ currentUser, theme }) => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
@@ -416,4 +416,4 @@ export const CrmLeadsPage = ({ currentUser, theme }) => {
       )}
     </div>
   );
-};
+});

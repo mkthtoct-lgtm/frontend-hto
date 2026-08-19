@@ -1,5 +1,4 @@
-// src/UserList/UserList.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
@@ -302,7 +301,7 @@ async function rolesRequest(path = "", options = {}) {
   return payload;
 }
 
-export const UserList = ({ currentUser }) => {
+export const UserList = memo(({ currentUser }) => {
    // States quản lý Data
   const [users, setUsers] = useState([]);
   const [apiRoles, setApiRoles] = useState([]);
@@ -1251,7 +1250,7 @@ export const UserList = ({ currentUser }) => {
       )}
     </div>
   );
-};
+});
 
 function DetailItem({ isLink = false, label, value }) {
   const displayValue = value || "Chưa cập nhật";

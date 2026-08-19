@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 
@@ -119,7 +119,7 @@ const normalizeApiCategoryList = (payload) => {
     .filter((cat) => cat.id && cat.name);
 };
 
-export const Sidebar = ({
+export const Sidebar = memo(({
   currentUser,
   onNavigate,
   currentPage,
@@ -153,11 +153,21 @@ export const Sidebar = ({
       "daotaongonngu",
       "nophosoonline",
       "sanpham",
+      "schoolSearch",
     ].includes(currentPage) ||
     (currentPage === "productOverview" && (selectedCategoryId !== null || selectedRegionName !== null)) ||
     currentPage.startsWith("product:");
   const isNewsPage = ["tintuc", "newsEventsManage"].includes(currentPage);
   const canManageNews = canManageNewsEvents(currentUser);
+
+  // Tự động mở menu Tổng sản phẩm và Tuyển Sinh Du Học khi ở trang tra cứu trường du học
+  useEffect(() => {
+    if (currentPage === "schoolSearch") {
+      setOpenMenu("sanpham");
+      setIsTuyensinhExpanded(true);
+    }
+  }, [currentPage]);
+
   const handleGoHome = () => {
     onNavigate?.("dashboard");
   };
@@ -963,6 +973,29 @@ export const Sidebar = ({
                           listStyleType: "none"
                         }}
                       >
+                        {/* 0. Tra cứu Trường Du Học */}
+                        <li className="menu-item mb-1.5" style={{ listStyleType: "none" }}>
+                          <a
+                            className={`menu-link d-flex align-items-center gap-2 px-3 py-1.5 rounded-2 ${
+                              currentPage === "schoolSearch"
+                                ? "bg-primary text-white fw-bold shadow-sm"
+                                : "text-body-secondary hover-bg-light"
+                            }`}
+                            style={{ textDecoration: "none", fontSize: "13px", cursor: "pointer" }}
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              onNavigate?.("schoolSearch");
+                            }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={currentPage === "schoolSearch" ? "text-white" : "text-primary"}>
+                              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                            </svg>
+                            <span>Tra cứu Trường Du Học</span>
+                          </a>
+                        </li>
+
                         {/* 1. TTS Quốc Tế (Du học nghề) */}
                         {categorizedMenu.tuyenSinh.ttsQuocTe && (() => {
                           const cat = categorizedMenu.tuyenSinh.ttsQuocTe;
@@ -1669,21 +1702,6 @@ export const Sidebar = ({
                   );
                 });
               })()}
-
-              {/* Tra cứu trường du học */}
-              <li className="menu-item mb-1 border-top pt-1 mt-1" style={{ listStyleType: "none" }}>
-                <a
-                  className={`menu-link d-block px-3 py-2 rounded-2 ${currentPage === "schoolSearch" ? "bg-primary-subtle text-primary fw-medium" : "text-body-secondary"}`}
-                  style={{ textDecoration: "none", fontSize: "13px" }}
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onNavigate?.("schoolSearch");
-                  }}
-                >
-                  Tra cứu trường du học
-                </a>
-              </li>
 
               {/* Vẫn giữ trang Đối soát Deal cho kế toán và quản trị nếu cần */}
               {(["admin", "bangiamdoc", "truongbophan", "congtacvien", "daily", "staff"].includes(getUserRoleKey(currentUser)) ||
@@ -2695,4 +2713,4 @@ export const Sidebar = ({
       </div>
     </aside>
   );
-};
+});

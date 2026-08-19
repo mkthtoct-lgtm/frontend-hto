@@ -876,7 +876,92 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
       {/* 2A. STEAM CAROUSEL (NỔI BẬT & ĐỀ XUẤT) */}
       <SteamCarousel onNavigate={onNavigate} theme={theme} />
 
-      {/* 2B. GIỚI THIỆU HTO GROUP */}
+      {/* 2B. THÔNG BÁO SỰ KIỆN */}
+      <div className="row mb-5 g-3 text-start section-events animate-entrance">
+        <div className="col-12 col-md-4 col-lg-4">
+          <div className="relative overflow-hidden bg-[#111827] text-white p-4 rounded-xl flex flex-col justify-between h-full min-h-[220px]">
+            {/* Background Image Overlay */}
+            <img
+              src="assets/images/banner-second.jpg"
+              alt="Event background"
+              className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
+            />
+
+            <div className="relative z-10">
+              <h4 className="font-extrabold mb-3 text-white uppercase text-[1.2rem] tracking-[0.5px]">
+                THÔNG BÁO SỰ KIỆN
+              </h4>
+              <p className="text-white/70 mb-4 text-[13px] leading-relaxed">
+                Cập nhật những hoạt động mới nhất và các buổi Workshop độc quyền từ HT Ocean Group.
+              </p>
+            </div>
+
+            <div className="relative z-10">
+              <button
+                className="w-full bg-transparent font-bold py-2 text-white border border-white hover:bg-white/10 rounded-lg text-xs tracking-wider transition-colors cursor-pointer"
+                onClick={(e) => handleNavigatePage(e, "tintuc")}
+              >
+                XEM TOÀN BỘ LỊCH
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-8 col-lg-8">
+          <div className="d-flex flex-column gap-3 h-100 justify-content-between">
+            {loadingEvents ? (
+              <div className="text-center py-5 w-100 d-flex justify-content-center align-items-center" style={{ minHeight: "200px" }}>
+                <div className="spinner-border" style={{ color: brandColor }} role="status">
+                  <span className="visually-hidden">Đang tải sự kiện...</span>
+                </div>
+              </div>
+            ) : (
+              events.map((evt) => {
+                const { day, month } = parseArticleDate(evt.date);
+                const eventBadgeStyle = getEventBadgeStyle(evt.status);
+
+                return (
+                  <div
+                    className={`border p-3 shadow-sm flex flex-row items-center justify-between flex-wrap gap-3 interactive-card rounded-xl flex-1 cursor-pointer transition-all duration-300 ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}
+                    key={evt.id || evt.title}
+                    onClick={(e) => handleOpenEventModal(e, evt.title)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+
+                      {/* Thumbnail Image */}
+                      <div className={`rounded-lg overflow-hidden flex-shrink-0 hidden sm:block w-[90px] h-[60px] border ${isDark ? "border-[#334155]" : "border-[#e2e8f0]"}`}>
+                        <img
+                          src={evt.image || "assets/images/banner-second.jpg"}
+                          alt={evt.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h6 className={`font-bold mb-1 text-sm truncate w-[200px] sm:w-[280px] md:w-[320px] lg:w-[400px] ${isDark ? "text-[#f8fafc]" : "text-[#1e293b]"}`}>
+                          {evt.title}
+                        </h6>
+                        <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mb-0 truncate w-[200px] sm:w-[280px] md:w-[320px] lg:w-[400px]">
+                          {evt.location || evt.summary || "HT Ocean Group"}
+                          {formatDateSlash(evt.date) && ` | ${formatDateSlash(evt.date)}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="ml-auto sm:ml-0">
+                      <span className="badge px-3 py-2 font-bold text-center align-self-center" style={eventBadgeStyle}>
+                        {evt.status || "ĐĂNG KÝ NGAY"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 2C. GIỚI THIỆU HTO GROUP */}
       <div className="row mb-5 g-4 text-start section-about animate-entrance">
         <div className="col-12 col-lg-6">
           <div className="h-100 d-flex flex-column justify-content-between gap-4">
@@ -1079,93 +1164,7 @@ export const HomePage = ({ theme, onNavigate, currentUser }) => {
         </div>
       </div>
 
-      {/* 4. THÔNG BÁO SỰ KIỆN */}
-      <div className="row mb-5 g-3 text-start section-events animate-entrance">
-        <div className="col-12 col-md-4 col-lg-4">
-          <div className="relative overflow-hidden bg-[#111827] text-white p-4 rounded-xl flex flex-col justify-between h-full min-h-[220px]">
-            {/* Background Image Overlay */}
-            <img
-              src="assets/images/banner-second.jpg"
-              alt="Event background"
-              className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
-            />
-
-            <div className="relative z-10">
-              <h4 className="font-extrabold mb-3 text-white uppercase text-[1.2rem] tracking-[0.5px]">
-                THÔNG BÁO SỰ KIỆN
-              </h4>
-              <p className="text-white/70 mb-4 text-[13px] leading-relaxed">
-                Cập nhật những hoạt động mới nhất và các buổi Workshop độc quyền từ HT Ocean Group.
-              </p>
-            </div>
-
-            <div className="relative z-10">
-              <button
-                className="w-full bg-transparent font-bold py-2 text-white border border-white hover:bg-white/10 rounded-lg text-xs tracking-wider transition-colors cursor-pointer"
-                onClick={(e) => handleNavigatePage(e, "tintuc")}
-              >
-                XEM TOÀN BỘ LỊCH
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-12 col-md-8 col-lg-8">
-          <div className="d-flex flex-column gap-3 h-100 justify-content-between">
-            {loadingEvents ? (
-              <div className="text-center py-5 w-100 d-flex justify-content-center align-items-center" style={{ minHeight: "200px" }}>
-                <div className="spinner-border" style={{ color: brandColor }} role="status">
-                  <span className="visually-hidden">Đang tải sự kiện...</span>
-                </div>
-              </div>
-            ) : (
-              events.map((evt) => {
-                const { day, month } = parseArticleDate(evt.date);
-                const eventBadgeStyle = getEventBadgeStyle(evt.status);
-
-                return (
-                  <div
-                    className={`border p-3 shadow-sm flex flex-row items-center justify-between flex-wrap gap-3 interactive-card rounded-xl flex-1 cursor-pointer transition-all duration-300 ${isDark ? "bg-[#111827] border-[#334155]" : "bg-white border-[#e2e8f0]"}`}
-                    key={evt.id || evt.title}
-                    onClick={(e) => handleOpenEventModal(e, evt.title)}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-
-
-                      {/* Thumbnail Image */}
-                      <div className={`rounded-lg overflow-hidden flex-shrink-0 hidden sm:block w-[90px] h-[60px] border ${isDark ? "border-[#334155]" : "border-[#e2e8f0]"}`}>
-                        <img
-                          src={evt.image || "assets/images/banner-second.jpg"}
-                          alt={evt.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="min-w-0">
-                        <h6 className={`font-bold mb-1 text-sm truncate w-[200px] sm:w-[280px] md:w-[320px] lg:w-[400px] ${isDark ? "text-[#f8fafc]" : "text-[#1e293b]"}`}>
-                          {evt.title}
-                        </h6>
-                        <p className="text-xs text-[#64748b] dark:text-[#94a3b8] mb-0 truncate w-[200px] sm:w-[280px] md:w-[320px] lg:w-[400px]">
-                          {evt.location || evt.summary || "HT Ocean Group"}
-                          {formatDateSlash(evt.date) && ` | ${formatDateSlash(evt.date)}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="ml-auto sm:ml-0">
-                      <span className="badge px-3 py-2 font-bold text-center align-self-center" style={eventBadgeStyle}>
-                        {evt.status || "ĐĂNG KÝ NGAY"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 5. QUY TRÌNH ĐỒNG HÀNH */}
+      {/* 4. QUY TRÌNH ĐỒNG HÀNH */}
       <div id="home-process-section" className="mb-4 text-center section-process animate-entrance">
         <h3 className="fw-bold mb-2 text-uppercase" style={{ fontSize: "1.35rem", letterSpacing: "0.5px", color: headingTextColor }}>
           QUY TRÌNH ĐỒNG HÀNH

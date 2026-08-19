@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
@@ -290,7 +290,7 @@ const updateJobDescription = async (id, payload) =>
 const deleteJobDescription = async (id) =>
   await apiRequest(`/job-descriptions/${id}`, { method: "DELETE" });
 
-export const JobDescriptionsPage = ({ currentUser, filterDepartmentId }) => {
+export const JobDescriptionsPage = memo(({ currentUser, filterDepartmentId }) => {
   const [jds, setJds] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [totalJds, setTotalJds] = useState(0);
@@ -1175,7 +1175,7 @@ export const JobDescriptionsPage = ({ currentUser, filterDepartmentId }) => {
       )}
     </div>
   );
-};
+});
 
 function Field({ children, label, required = false, wide = false }) {
   return (
