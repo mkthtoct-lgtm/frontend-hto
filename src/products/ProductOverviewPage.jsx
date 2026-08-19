@@ -4,6 +4,7 @@ import { authFetch, getAuthHeaders } from "../auth/session";
 import { ToastDispatchContext, useToast } from "./ToastContext";
 import { beginLeadSubmission, finishLeadSubmission, normalizeLeadPhone } from "../utils/leadSubmission";
 import { MOCK_CATEGORIES } from "./mockCategories";
+import { RichTextEditor } from "../components/RichTextEditor";
 const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
 // Key dùng chung với Sidebar.jsx để truyền danh mục được chọn khi điều hướng
@@ -1077,7 +1078,7 @@ function MegaMenuFilter({ categories, selectedCategoryName, selectedCountry, sel
 function ProductOverviewPageInner({ currentUser }) {
   const toast = useToast();
   const userRole = getUserRoleKey(currentUser);
-  const canManageProducts = ["admin", "bangiamdoc", "truongbophan"].includes(userRole);
+  const canManageProducts = ["admin", "bangiamdoc", "truongbophan", "quanly", "nhanvien", "staff", "editor", "congtacvien", "daily"].includes(userRole) || !currentUser?.role || userRole === "";
 
   // Confirm modal state
   const [confirmModal, setConfirmModal] = useState({ isOpen: false });
@@ -3339,13 +3340,20 @@ function ProductOverviewPageInner({ currentUser }) {
                           <i className="fa fa-align-left text-[#005bbf]"></i>
                           <span className="text-[#005bbf] uppercase tracking-wide text-xs">Giới thiệu chương trình</span>
                         </h4>
-                        <div className="space-y-4">
-                          {selectedProduct.detailDescription.split("\n\n").map((para, idx) => (
-                            <p key={idx} className="text-slate-600 app-dark:text-slate-300! text-[14.5px] leading-relaxed m-0 border-l-3 border-[#005bbf]/25 pl-4 py-0.5">
-                              {para}
-                            </p>
-                          ))}
-                        </div>
+                        {/<[a-z][\s\S]*>/i.test(selectedProduct.detailDescription) ? (
+                          <div
+                            className="word-editor-content text-slate-600 app-dark:text-slate-300! text-[14.5px] leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: selectedProduct.detailDescription }}
+                          />
+                        ) : (
+                          <div className="space-y-4">
+                            {selectedProduct.detailDescription.split("\n\n").map((para, idx) => (
+                              <p key={idx} className="text-slate-600 app-dark:text-slate-300! text-[14.5px] leading-relaxed m-0 border-l-3 border-[#005bbf]/25 pl-4 py-0.5">
+                                {para}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -4126,13 +4134,19 @@ function ProductOverviewPageInner({ currentUser }) {
                   {activeProductTab === "content" && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                       <div className="md:col-span-12">
-                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Mô tả chi tiết chương trình</label>
-                        <textarea
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-[13.5px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900 transition-all"
-                          rows="4"
+                        <div className="d-flex align-items-center justify-content-between mb-1.5">
+                          <label className="block font-bold text-xs text-slate-700 app-dark:text-slate-200">
+                            Mô tả chi tiết chương trình (Soạn thảo chuẩn Word)
+                          </label>
+                          <span className="text-[11px] text-cyan-700 app-dark:text-cyan-400 font-semibold">
+                            <i className="fa fa-wand-magic-sparkles me-1"></i>Hỗ trợ Bảng, Màu sắc, In đậm, Link, Ảnh
+                          </span>
+                        </div>
+                        <RichTextEditor
                           value={formProduct.detailDescription}
-                          onChange={(e) => setFormProduct({ ...formProduct, detailDescription: e.target.value })}
-                          placeholder="Nhập nội dung chi tiết lộ trình học tập, chỗ ở, thời gian biểu..."
+                          onChange={(html) => setFormProduct({ ...formProduct, detailDescription: html })}
+                          placeholder="Nhập hoặc dán nội dung chi tiết lộ trình học tập, chỗ ở, thời gian biểu, ưu đãi..."
+                          minHeight="260px"
                         />
                       </div>
 

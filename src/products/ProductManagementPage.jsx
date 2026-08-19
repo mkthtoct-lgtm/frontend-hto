@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { API_BASE_URL } from "../config/api";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { ToastDispatchContext, useToast } from "./ToastContext";
+import { RichTextEditor } from "../components/RichTextEditor";
 
 const STATIC_BASE_URL = API_BASE_URL.replace("/api/v1", "");
 
@@ -1387,13 +1388,19 @@ export function ProductManagementPageContent({ currentUser }) {
                       </div>
 
                       <div>
-                        <label className="block font-semibold text-xs text-slate-500 mb-1.5">Giới thiệu chương trình chi tiết</label>
-                        <textarea
-                          rows={4}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[13.5px] text-slate-700 placeholder-slate-455 focus:outline-none"
+                        <div className="d-flex align-items-center justify-content-between mb-1.5">
+                          <label className="block font-bold text-xs text-slate-700 app-dark:text-slate-200">
+                            Giới thiệu chương trình chi tiết (Soạn thảo chuẩn Word)
+                          </label>
+                          <span className="text-[11px] text-cyan-700 app-dark:text-cyan-400 font-semibold">
+                            <i className="fa fa-wand-magic-sparkles me-1"></i>Hỗ trợ Bảng, Màu sắc, In đậm, Link
+                          </span>
+                        </div>
+                        <RichTextEditor
                           value={formProduct.detailDescription}
-                          onChange={(e) => setFormProduct({ ...formProduct, detailDescription: e.target.value })}
-                          placeholder="Mô tả cụ thể về chương trình, ưu thế..."
+                          onChange={(html) => setFormProduct({ ...formProduct, detailDescription: html })}
+                          placeholder="Nhập hoặc dán nội dung chi tiết lộ trình học tập, điều kiện tuyển sinh, chỗ ở, ưu thế chương trình..."
+                          minHeight="260px"
                         />
                       </div>
 
