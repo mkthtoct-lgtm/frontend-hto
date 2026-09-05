@@ -5,7 +5,7 @@ import { LeadStatusBadge } from './LeadStatusBadge';
 import { LeadDetailModal } from './LeadDetailModal';
 import Swal from 'sweetalert2';
 
-export const CrmLeadsPage = React.memo(({ currentUser, theme }) => {
+export const CrmLeadsPage = ({ currentUser, theme }) => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
@@ -237,7 +237,7 @@ export const CrmLeadsPage = React.memo(({ currentUser, theme }) => {
       </div>
 
       {/* KPI Cards */}
-      <div className="row g-3 mb-4">
+      <div className="row g-3 mb-4" id="crm-leads-kpi-grid">
         <div className="col-12 col-sm-6 col-lg-3">
           <div className="card border-0 bg-primary-subtle text-primary-emphasis h-100 rounded-3">
             <div className="card-body">
@@ -273,9 +273,9 @@ export const CrmLeadsPage = React.memo(({ currentUser, theme }) => {
       </div>
 
       {/* Filters & Table */}
-      <div className="card border-0 shadow-sm rounded-3">
+      <div className="card border-0 shadow-sm rounded-3" id="crm-leads-table-card">
         <div className="card-header bg-transparent border-bottom p-3">
-          <form className="row g-2 align-items-center" onSubmit={handleSearch}>
+          <form className="row g-2 align-items-center" id="crm-leads-filter-form" onSubmit={handleSearch}>
             <div className="col-12 col-md-4">
               <input 
                 type="text" 
@@ -416,4 +416,4 @@ export const CrmLeadsPage = React.memo(({ currentUser, theme }) => {
       )}
     </div>
   );
-});
+};

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, memo } from "react";
+// src/UserList/UserList.jsx
+import { useState, useEffect, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import Swal from "sweetalert2";
 import { authFetch, getAuthHeaders } from "../auth/session";
 import { API_BASE_URL } from "../config/api";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
@@ -235,9 +235,8 @@ const normalizeUsersPayload = (payload) => {
   const users = normalizeApiData(payload);
   const total = Number(data?.total ?? users.length) || users.length;
   const pages = Number(data?.pages ?? data?.totalPages ?? 1) || 1;
-  const trashCount = Number(data?.trashCount ?? 0) || 0;
 
-  return { users, total, pages, trashCount };
+  return { users, total, pages };
 };
 
 const getApiErrorMessage = (payload, fallback) => {
@@ -303,7 +302,7 @@ async function rolesRequest(path = "", options = {}) {
   return payload;
 }
 
-export const UserList = memo(({ currentUser }) => {
+export const UserList = ({ currentUser }) => {
    // States quản lý Data
   const [users, setUsers] = useState([]);
   const [apiRoles, setApiRoles] = useState([]);
@@ -313,32 +312,19 @@ export const UserList = memo(({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // States quản lý Filter, Search & Tabs
-  const [activeTab, setActiveTab] = useState("active"); // 'active' | 'trash'
-  const [trashCount, setTrashCount] = useState(0);
+  // States quản lý Filter & Search
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const [featurePermissionsByUserId, setFeaturePermissionsByUserId] = useState(() => readUserFeaturePermissions());
-  
-  // Chỉ Admin hoặc Ban Giám Đốc mới có quyền cao nhất quản trị toàn bộ tài khoản
-  const roleSlug = String(
-    currentUser?.role?.slug || 
-    currentUser?.role?.name || 
-    currentUser?.role || 
-    currentUser?.roleId || 
-    ""
-  ).trim().toLowerCase();
-
-  const isCurrentUserAdmin = 
-    roleSlug === "admin" ||
-    currentUser?.roleId === ADMIN_ROLE_ID ||
-    roleSlug === "bangiamdoc" ||
-    roleSlug === "ban-giam-doc" ||
-    roleSlug === "ban giam doc" ||
-    (Array.isArray(currentUser?.permissions) && currentUser.permissions.includes("*"));
+  const isCurrentUserAdmin = currentUser?.role === "admin" || 
+                             currentUser?.roleId === ADMIN_ROLE_ID ||
+                             (Array.isArray(currentUser?.permissions) && (
+                               currentUser.permissions.includes("users:write") ||
+                               currentUser.permissions.includes("*")
+                             ));
 
   // States quản lý Modal (Create/Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -399,20 +385,18 @@ export const UserList = memo(({ currentUser }) => {
     }
   }, []);
 
-  const fetchUsers = useCallback(async (currentRoles = [], isTrash = false) => {
+  const fetchUsers = useCallback(async (currentRoles = []) => {
     setLoading(true);
     setError("");
     try {
-      const trashQuery = isTrash ? "?isDeleted=true" : "?page=1";
-      const firstPayload = await usersRequest(trashQuery);
+      const firstPayload = await usersRequest("?page=1");
       const firstPage = normalizeUsersPayload(firstPayload);
       let allUsers = firstPage.users;
-      setTrashCount(firstPage.trashCount);
 
       if (firstPage.pages > 1 && firstPage.total > firstPage.users.length) {
         const nextPages = await Promise.all(
           Array.from({ length: firstPage.pages - 1 }, (_, index) =>
-            usersRequest(`?page=${index + 2}${isTrash ? "&isDeleted=true" : ""}`),
+            usersRequest(`?page=${index + 2}`),
           ),
         );
 
@@ -444,10 +428,10 @@ export const UserList = memo(({ currentUser }) => {
   useEffect(() => {
     const initData = async () => {
       const rolesData = await fetchRoles();
-      await fetchUsers(rolesData, activeTab === "trash");
+      await fetchUsers(rolesData);
     };
     void initData();
-  }, [fetchRoles, fetchUsers, activeTab]);
+  }, [fetchRoles, fetchUsers]);
 
   const fetchDepartments = useCallback(async () => {
     setDepartmentsLoading(true);
@@ -470,26 +454,20 @@ export const UserList = memo(({ currentUser }) => {
   const openCreateModal = () => {
     setModalMode("create");
     setSelectedUser(null);
-    reset({
-      name: "",
-      email: "",
-      password: "",
-      role: "daily",
-      departmentId: "",
-      departmentIds: [],
-    });
+    reset({ name: "", email: "", password: "", role: "", departmentId: "", departmentIds: [], phone: "" });
     setIsModalOpen(true);
   };
 
   const openEditModal = (user) => {
     setModalMode("edit");
     setSelectedUser(user);
+    // Fill data vào form
     reset({
       name: user.name,
       email: user.email,
-      password: "",
+      phone: user.phone,
       role: user.role,
-      departmentId: user.departmentId || "",
+      departmentId: user.departmentId,
       departmentIds: user.departmentIds || [],
     });
     setIsModalOpen(true);
@@ -603,97 +581,6 @@ export const UserList = memo(({ currentUser }) => {
     }
   };
 
-  // 6. Xử lý Xóa tạm tài khoản (Chuyển vào thùng rác)
-  const handleSoftDelete = async (user) => {
-    if (currentUser?.email === user.email) {
-      Swal.fire("Không hợp lệ", "Bạn không thể tự chuyển tài khoản đang đăng nhập vào thùng rác.", "warning");
-      return;
-    }
-
-    const result = await Swal.fire({
-      title: "Chuyển vào thùng rác?",
-      html: `Bạn có chắc muốn chuyển tài khoản <b>${user.name}</b> (${user.email}) vào Thùng rác không?<br/><small class="text-muted">Tài khoản sẽ bị ngừng hoạt động và có thể khôi phục lại bất kỳ lúc nào.</small>`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Đồng ý xóa tạm",
-      cancelButtonText: "Hủy"
-    });
-
-    if (!result.isConfirmed) return;
-
-    setActionLoading(true);
-    try {
-      await usersRequest(`/${user.id}`, { method: "DELETE" });
-      Swal.fire("Thành công", `Đã chuyển tài khoản ${user.name} vào thùng rác.`, "success");
-      await fetchUsers(apiRoles, activeTab === "trash");
-    } catch (err) {
-      Swal.fire("Lỗi", err instanceof Error ? err.message : "Không thể xóa tạm tài khoản", "error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // 7. Xử lý Khôi phục tài khoản từ thùng rác
-  const handleRestore = async (user) => {
-    const result = await Swal.fire({
-      title: "Khôi phục tài khoản?",
-      html: `Khôi phục tài khoản <b>${user.name}</b> (${user.email}) về trạng thái hoạt động bình thường?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#198754",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Khôi phục ngay",
-      cancelButtonText: "Hủy"
-    });
-
-    if (!result.isConfirmed) return;
-
-    setActionLoading(true);
-    try {
-      await usersRequest(`/${user.id}/restore`, { method: "POST" });
-      Swal.fire("Thành công", `Đã khôi phục tài khoản ${user.name} thành công.`, "success");
-      await fetchUsers(apiRoles, activeTab === "trash");
-    } catch (err) {
-      Swal.fire("Lỗi", err instanceof Error ? err.message : "Không thể khôi phục tài khoản", "error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // 8. Xử lý Xóa vĩnh viễn tài khoản (Hard delete)
-  const handlePermanentDelete = async (user) => {
-    if (currentUser?.email === user.email) {
-      Swal.fire("Không hợp lệ", "Bạn không thể xóa vĩnh viễn tài khoản đang đăng nhập.", "warning");
-      return;
-    }
-
-    const step1 = await Swal.fire({
-      title: "XÓA VĨNH VIỄN?",
-      html: `<div class="text-danger fw-bold mb-2">⚠️ CẢNH BÁO NGUY HIỂM</div>Hành động này sẽ xóa <b>VĨNH VIỄN</b> tài khoản <b>${user.name}</b> (${user.email}) khỏi hệ thống và <b>KHÔNG THỂ HOÀN TÁC</b>.<br/>Bạn có chắc chắn 100% muốn tiếp tục?`,
-      icon: "error",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
-      confirmButtonText: "Tôi chắc chắn, xóa vĩnh viễn",
-      cancelButtonText: "Hủy"
-    });
-
-    if (!step1.isConfirmed) return;
-
-    setActionLoading(true);
-    try {
-      await usersRequest(`/${user.id}/permanent`, { method: "DELETE" });
-      Swal.fire("Đã xóa vĩnh viễn", `Tài khoản ${user.name} đã được xóa hoàn toàn khỏi cơ sở dữ liệu.`, "success");
-      await fetchUsers(apiRoles, activeTab === "trash");
-    } catch (err) {
-      Swal.fire("Lỗi", err instanceof Error ? err.message : "Không thể xóa vĩnh viễn tài khoản", "error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   // 6. Lọc dữ liệu hiển thị (Derived State)
   const filteredUsers = users.filter(user => {
     const matchSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -755,6 +642,9 @@ export const UserList = memo(({ currentUser }) => {
     return Array.from(permissions);
   };
 
+  // Tự động đồng bộ quyền chức năng từ server khi load trang đã được giải quyết tại fetchUsers.
+  // Loại bỏ cơ chế auto-patch ghi đè từ localStorage lên database để tránh lỗi đồng bộ dữ liệu.
+
   const getFeaturePermissionCount = (user) =>
     getUserFeaturePermissions(user).filter((permission) => permission !== "*").length;
 
@@ -766,103 +656,88 @@ export const UserList = memo(({ currentUser }) => {
     setPermissionUser(null);
   };
 
-  const toggleFeaturePermission = async (permissionId) => {
-    if (!permissionUser || !isCurrentUserAdmin) return;
+  const toggleFeaturePermission = async (userId, permissionId) => {
+    if (!isCurrentUserAdmin) return;
 
-    const currentPermissions = new Set(getUserGrantedFeaturePermissions(permissionUser));
-    if (currentPermissions.has(permissionId)) {
-      currentPermissions.delete(permissionId);
-    } else {
-      currentPermissions.add(permissionId);
+    const user = users.find((item) => item.id === userId) || permissionUser;
+    const inheritedPermissions = getRoleFeaturePermissions(user);
+    if (inheritedPermissions.includes("*") || inheritedPermissions.includes(permissionId)) {
+      return;
     }
 
-    const updatedPermissions = Array.from(currentPermissions);
+    const currentPermissions = getUserGrantedFeaturePermissions(user).filter((item) => item !== "*");
+    const nextPermissions = currentPermissions.includes(permissionId)
+      ? currentPermissions.filter((item) => item !== permissionId)
+      : [...currentPermissions, permissionId];
 
-    // Đồng bộ lên backend để dữ liệu không bị mất sau khi refresh trang
-    setActionLoading(true);
+    const previousPermissionsByUserId = featurePermissionsByUserId;
+    setFeaturePermissionsByUserId((current) => {
+      const next = {
+        ...current,
+        [userId]: nextPermissions,
+      };
+      writeUserFeaturePermissions(next);
+      return next;
+    });
+
+    setUsers((current) =>
+      current.map((item) =>
+        item.id === userId ? { ...item, grantedPermissions: nextPermissions } : item,
+      ),
+    );
+    if (permissionUser?.id === userId) {
+      setPermissionUser((current) =>
+        current ? { ...current, grantedPermissions: nextPermissions } : current,
+      );
+    }
+
     try {
-      await usersRequest(`/${permissionUser.id}/permissions`, {
+      await usersRequest(`/${userId}`, {
         method: "PATCH",
-        body: { grantedPermissions: updatedPermissions },
+        body: { grantedPermissions: nextPermissions },
       });
-
-      setFeaturePermissionsByUserId((prev) => {
-        const next = {
-          ...prev,
-          [permissionUser.id]: updatedPermissions,
-        };
-        writeUserFeaturePermissions(next);
-        return next;
-      });
-
-      // Cập nhật state người dùng hiện tại
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === permissionUser.id
-            ? { ...u, grantedPermissions: updatedPermissions }
-            : u
-        )
+    } catch (error) {
+      setFeaturePermissionsByUserId(previousPermissionsByUserId);
+      writeUserFeaturePermissions(previousPermissionsByUserId);
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === userId ? { ...item, grantedPermissions: currentPermissions } : item,
+        ),
       );
-
-      setPermissionUser((prev) =>
-        prev ? { ...prev, grantedPermissions: updatedPermissions } : null
-      );
-    } catch (err) {
-      alert("Lỗi khi lưu phân quyền: " + (err instanceof Error ? err.message : "Thất bại"));
-    } finally {
-      setActionLoading(false);
+      if (permissionUser?.id === userId) {
+        setPermissionUser((current) =>
+          current ? { ...current, grantedPermissions: currentPermissions } : current,
+        );
+      }
+      alert(error instanceof Error ? error.message : "Không thể lưu quyền chức năng.");
     }
   };
 
-  const openUserDetail = (user) => {
+  const openUserDetail = async (user) => {
     setDetailUser(user);
+
+    try {
+      const payload = await usersRequest(`/${user.id}`);
+      setDetailUser(normalizeUser(payload?.data ?? payload, apiRoles));
+    } catch {
+      setDetailUser(user);
+    }
   };
 
   const closeUserDetail = () => {
     setDetailUser(null);
   };
 
-  const resetFilters = () => {
-    setSearchTerm("");
-    setFilterRole("");
-    setFilterDepartment("");
-    setCurrentPage(1);
-  };
+  const userPermissions = Array.isArray(currentUser?.permissions) ? currentUser.permissions : [];
+  const hasAccess = ["admin", "bangiamdoc"].includes(currentUser?.role) ||
+                    userPermissions.includes("users:read") ||
+                    userPermissions.includes("*");
 
-  const roleListTab = (
-    <div className="card table-card p-4">
-      <h6 className="fw-bold mb-3 text-body-emphasis">Danh mục vai trò &amp; Quyền hạn mặc định</h6>
-      <div className="row g-3">
-        {Object.entries(ROLE_MAP).map(([key, value]) => (
-          <div className="col-md-6 col-lg-4" key={key}>
-            <div className="dict-role-card">
-              <div className="dict-role-header">
-                <span className={`badge ${value.color}`}>{value.label}</span>
-                <span className="text-secondary small">({key})</span>
-              </div>
-              <div className="dict-role-body">
-                <p className="text-secondary small mb-2">Quyền hạn hệ thống mặc định:</p>
-                <div className="d-flex flex-wrap gap-1">
-                  {(DEFAULT_FEATURE_PERMISSIONS_BY_ROLE[key] || []).map((perm) => (
-                    <span key={perm} className="badge bg-light text-dark border" style={{ fontSize: "11px" }}>
-                      {perm}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  if (currentUser && currentUser.role === "guest") {
+  if (!hasAccess) {
     return (
-      <div className="container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
-        <div className="alert alert-warning">
-          Tài khoản của bạn chưa được kích hoạt quyền truy cập danh sách người dùng.
-        </div>
+      <div className="container-fluid pt-5 text-center">
+        <h2 className="text-danger">Từ chối truy cập</h2>
+        <p className="text-body-secondary">Bạn không có quyền truy cập trang Quản lý tài khoản.</p>
       </div>
     );
   }
@@ -870,74 +745,16 @@ export const UserList = memo(({ currentUser }) => {
   return (
     <div className="user-list-wrapper container-fluid pt-3 pb-4" style={{ maxWidth: "1600px" }}>
       {/* Header & Title */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="fw-bold text-body-emphasis mb-1">Quản lý tài khoản</h4>
-          <p className="text-body-secondary mb-0" style={{ fontSize: "13px" }}>
-            Quản lý thông tin, phân quyền chức năng và trạng thái hoạt động của nhân sự / đối tác.
-          </p>
         </div>
-        {activeTab === "active" && isCurrentUserAdmin && (
-          <button id="users-add-btn" className="btn btn-primary d-flex align-items-center gap-2 px-3.5 py-2 rounded-3 shadow-sm hover:shadow transition-all fw-semibold" style={{ fontSize: "13px" }} onClick={openCreateModal}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Thêm tài khoản
-          </button>
-        )}
-      </div>
-
-      {/* Tab Switcher: Danh sách tài khoản vs Thùng rác */}
-      <div className="d-flex align-items-center gap-2 mb-4 border-bottom pb-2">
-        <button
-          type="button"
-          className={`d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-semibold transition-all border ${
-            activeTab === "active"
-              ? "btn btn-primary text-white border-primary shadow-xs"
-              : "btn btn-light text-body-secondary border-secondary-subtle hover:bg-body-secondary"
-          }`}
-          style={{ fontSize: "13px" }}
-          onClick={() => {
-            setActiveTab("active");
-            setCurrentPage(1);
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        <button id="users-add-btn" className="btn btn-primary d-flex align-items-center gap-2" onClick={openCreateModal}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Danh sách tài khoản
-          <span className={`badge rounded-pill ms-1 ${activeTab === "active" ? "bg-white text-primary" : "bg-secondary-subtle text-secondary"}`}>
-            {activeTab === "active" ? filteredUsers.length : (users.length)}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          className={`d-flex align-items-center gap-2 px-3 py-2 rounded-3 fw-semibold transition-all border ${
-            activeTab === "trash"
-              ? "btn btn-danger text-white border-danger shadow-xs"
-              : "btn btn-light text-body-secondary border-secondary-subtle hover:bg-body-secondary"
-          }`}
-          style={{ fontSize: "13px" }}
-          onClick={() => {
-            setActiveTab("trash");
-            setCurrentPage(1);
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-          Thùng rác
-          {trashCount > 0 && (
-            <span className={`badge rounded-pill ms-1 ${activeTab === "trash" ? "bg-white text-danger" : "bg-danger text-white"}`}>
-              {trashCount}
-            </span>
-          )}
+          Thêm tài khoản
         </button>
       </div>
 
@@ -1001,13 +818,13 @@ export const UserList = memo(({ currentUser }) => {
           <table className="table custom-table">
             <thead>
               <tr>
-                <th style={{ width: "4%" }}>#</th>
-                <th style={{ width: "23%" }}>Thông tin nhân viên</th>
-                <th style={{ width: "16%" }}>Vai trò</th>
+                <th style={{ width: "5%" }}>#</th>
+                <th style={{ width: "24%" }}>Thông tin nhân viên</th>
+                <th style={{ width: "20%" }}>Vai trò</th>
                 <th style={{ width: "14%" }}>Phòng ban</th>
-                <th style={{ width: "13%" }}>Trạng thái</th>
-                <th style={{ width: "12%" }}>Quyền chức năng</th>
-                <th style={{ width: activeTab === "trash" ? "18%" : "14%", textAlign: "center" }}>Thao tác</th>
+                <th style={{ width: "14%" }}>Trạng thái</th>
+                <th style={{ width: "14%" }}>Quyền chức năng</th>
+                <th style={{ width: "9%", textAlign: "center" }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -1026,7 +843,7 @@ export const UserList = memo(({ currentUser }) => {
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="text-center py-5 text-body-secondary">
-                    {activeTab === "trash" ? "Thùng rác trống. Không có tài khoản nào bị xóa tạm." : "Không tìm thấy tài khoản nào phù hợp."}
+                    Không tìm thấy tài khoản nào phù hợp.
                   </td>
                 </tr>
               ) : (
@@ -1062,132 +879,62 @@ export const UserList = memo(({ currentUser }) => {
                         })()}
                       </td>
                       <td>
-                        {activeTab === "trash" ? (
-                          <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5 font-semibold" style={{ fontSize: "12px" }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            Đã xóa tạm
-                          </span>
-                        ) : (
-                          <span className={`status-badge ${user.status === 'active' ? 'status-active' : 'status-locked'}`}>
-                            {user.status === 'active' ? (
-                              <><span className="spinner-grow spinner-grow-sm bg-success" style={{width: '6px', height: '6px'}}></span> Hoạt động</>
-                            ) : (
-                              <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {user.status === "inactive" ? "Ngừng hoạt động" : "Đã khóa"}</>
-                            )}
-                          </span>
-                        )}
+                        <span className={`status-badge ${user.status === 'active' ? 'status-active' : 'status-locked'}`}>
+                          {user.status === 'active' ? (
+                            <><span className="spinner-grow spinner-grow-sm bg-success" style={{width: '6px', height: '6px'}}></span> Hoạt động</>
+                          ) : (
+                            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {user.status === "inactive" ? "Ngừng hoạt động" : "Đã khóa"}</>
+                          )}
+                        </span>
                       </td>
                       <td id="users-permission-col" className="text-center" onClick={(event) => event.stopPropagation()}>
                         <button
                           type="button"
                           className={`btn btn-sm ${featurePermissionCount > 0 ? "btn-outline-primary" : "btn-light border"}`}
                           onClick={() => openPermissionModal(user)}
-                          disabled={actionLoading || !isCurrentUserAdmin}
+                          disabled={actionLoading}
                           title={isCurrentUserAdmin ? "Xem và phân quyền chức năng" : "Xem quyền chức năng"}
                         >
                           {featurePermissionCount} quyền
                         </button>
                       </td>
                       <td id="users-action-col" className="text-center">
-                        <div className="d-inline-flex align-items-center justify-content-center gap-1.5" style={{ minWidth: activeTab === "trash" ? "170px" : "100px" }} onClick={(event) => event.stopPropagation()}>
-                        {activeTab === "active" ? (
-                          <>
-                            <button
-                              className="action-btn btn-view"
-                              title="Xem chi tiết"
-                              onClick={() => openUserDetail(user)}
-                              disabled={actionLoading}
-                            >
-                              <EyeIcon />
-                            </button>
-                            
-                            {isCurrentUserAdmin && (
-                              <>
-                                <button 
-                                  className="action-btn btn-edit" 
-                                  title="Chỉnh sửa thông tin"
-                                  onClick={() => openEditModal(user)}
-                                  disabled={actionLoading}
-                                >
-                                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                </button>
-                                
-                                <button 
-                                  className={`action-btn ${user.status === 'active' ? 'btn-lock' : 'btn-unlock'}`}
-                                  title={
-                                    currentUser?.email === user.email
-                                      ? "Không thể tự khóa tài khoản đang đăng nhập"
-                                      : user.status === 'active'
-                                        ? 'Khóa tài khoản'
-                                        : 'Mở khóa tài khoản'
-                                  }
-                                  onClick={() => toggleUserStatus(user.id, user.status)}
-                                  disabled={actionLoading || currentUser?.email === user.email}
-                                >
-                                  {user.status === 'active' ? (
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                  ) : (
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-                                  )}
-                                </button>
-
-                                <button
-                                  className="action-btn btn-delete text-danger"
-                                  title={
-                                    currentUser?.email === user.email
-                                      ? "Không thể tự xóa tài khoản đang đăng nhập"
-                                      : "Chuyển vào thùng rác (Xóa tạm)"
-                                  }
-                                  onClick={() => handleSoftDelete(user)}
-                                  disabled={actionLoading || currentUser?.email === user.email}
-                                >
-                                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                  </svg>
-                                </button>
-                              </>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {isCurrentUserAdmin ? (
-                              <div className="d-flex align-items-center gap-2 flex-nowrap">
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1.5 px-2.5 py-1.5 rounded-3 fw-semibold text-nowrap shadow-xs"
-                                  style={{ fontSize: "12px" }}
-                                  title="Khôi phục tài khoản về trạng thái hoạt động"
-                                  onClick={() => handleRestore(user)}
-                                  disabled={actionLoading}
-                                >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="1 4 1 10 7 10"></polyline>
-                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                                  </svg>
-                                  Khôi phục
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1.5 px-2.5 py-1.5 rounded-3 fw-semibold text-nowrap shadow-xs"
-                                  style={{ fontSize: "12px" }}
-                                  title="Xóa vĩnh viễn khỏi cơ sở dữ liệu MongoDB"
-                                  onClick={() => handlePermanentDelete(user)}
-                                  disabled={actionLoading || currentUser?.email === user.email}
-                                >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                  </svg>
-                                  Xóa vĩnh viễn
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-secondary small fst-italic">Chỉ Admin mới có quyền thao tác</span>
-                            )}
-                          </>
-                        )}
+                        <div className="d-inline-flex align-items-center justify-content-center gap-2" style={{ minWidth: "76px" }} onClick={(event) => event.stopPropagation()}>
+                        <button
+                          className="action-btn btn-view"
+                          title="Xem chi tiết"
+                          onClick={() => openUserDetail(user)}
+                          disabled={actionLoading}
+                        >
+                          <EyeIcon />
+                        </button>
+                        <button 
+                          className="action-btn btn-edit" 
+                          title="Chỉnh sửa"
+                          onClick={() => openEditModal(user)}
+                          disabled={actionLoading}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        
+                        <button 
+                          className={`action-btn ${user.status === 'active' ? 'btn-lock' : 'btn-unlock'}`}
+                          title={
+                            currentUser?.email === user.email
+                              ? "Không thể tự khóa tài khoản đang đăng nhập"
+                              : user.status === 'active'
+                                ? 'Khóa tài khoản'
+                                : 'Mở khóa tài khoản'
+                          }
+                          onClick={() => toggleUserStatus(user.id, user.status)}
+                          disabled={actionLoading || currentUser?.email === user.email}
+                        >
+                          {user.status === 'active' ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                          )}
+                        </button>
                         </div>
                       </td>
                     </tr>
@@ -1504,7 +1251,7 @@ export const UserList = memo(({ currentUser }) => {
       )}
     </div>
   );
-});
+};
 
 function DetailItem({ isLink = false, label, value }) {
   const displayValue = value || "Chưa cập nhật";

@@ -794,6 +794,164 @@ export const PAGE_TOURS = {
       },
     ],
   },
+  // [Bổ sung] Trước đây bị trỏ nhầm vào tour "nghiepvu" (nội dung đối soát
+  // hoa hồng, không có phần tử nào khớp trên trang Checklist) nên nút "Xem
+  // hướng dẫn cho trang này" không hoạt động. Nay có tour riêng.
+  checklist: {
+    anchorId: "checklist-stats-grid",
+    steps: [
+      {
+        element: "#checklist-stats-grid",
+        popover: {
+          title: "Tổng Quan Checklist",
+          description: "Theo dõi nhanh số lượng checklist tổng, đã hoàn thành, đang xử lý và quá hạn để nắm tiến độ công việc của phòng ban.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#checklist-filter-bar",
+        popover: {
+          title: "Tìm Kiếm & Lọc",
+          description: "Tìm theo tên, mô tả hoặc người phụ trách; lọc theo trạng thái, nhóm việc hoặc mức ưu tiên để nhanh chóng khoanh vùng đầu việc cần xem.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#checklist-table-card",
+        popover: {
+          title: "Danh Sách Checklist",
+          description: "Bấm vào một dòng để xem chi tiết công việc, đầu mục con và cập nhật tiến độ ở khung bên phải.",
+          side: "top", align: "center",
+        },
+      },
+      {
+        element: "#checklist-detail-panel",
+        popover: {
+          title: "Chi Tiết & Cập Nhật",
+          description: "Xem đầy đủ thông tin, đánh dấu hoàn thành từng đầu việc con và theo dõi hạn chót ngay tại đây.",
+          side: "left", align: "center",
+        },
+      },
+    ],
+  },
+  // [Bổ sung] Tương tự Checklist - trang SOP trước đây cũng không có tour
+  // hoạt động thật sự dù đã được "gắn" vào MAP.
+  sop: {
+    anchorId: "sop-stats-grid",
+    steps: [
+      {
+        element: "#sop-stats-grid",
+        popover: {
+          title: "Tổng Quan SOP",
+          description: "Số liệu nhanh về tổng số SOP, số đã phát hành, đang chờ duyệt và tài liệu liên kết đi kèm.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#sop-filter-bar",
+        popover: {
+          title: "Tìm Kiếm & Lọc SOP",
+          description: "Tìm theo mã SOP, tên quy trình, tag hoặc mô tả; lọc theo nhóm SOP hoặc phòng ban phụ trách.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#sop-list-panel",
+        popover: {
+          title: "Danh Sách Quy Trình",
+          description: "Chọn một SOP trong danh sách để xem toàn bộ nội dung chi tiết ở khung bên phải.",
+          side: "right", align: "center",
+        },
+      },
+      {
+        element: "#sop-detail-panel",
+        popover: {
+          title: "Nội Dung SOP",
+          description: "Đọc quy trình chuẩn từng bước, các lưu ý quan trọng và tài liệu/biểu mẫu liên quan đi kèm.",
+          side: "left", align: "center",
+        },
+      },
+    ],
+  },
+  // [Bổ sung] Trang "Quản lý Course Leads" (CRM) trước đây được ánh xạ tới
+  // key "crmLeads" nhưng chưa có nội dung tour tương ứng nên không hoạt động.
+  crmLeads: {
+    anchorId: "crm-leads-kpi-grid",
+    steps: [
+      {
+        element: "#crm-leads-kpi-grid",
+        popover: {
+          title: "Tổng Quan Course Leads",
+          description: "Nắm nhanh tổng số Leads, Lead mới chưa nhận, đang tư vấn và số KPI đã thành công (đã duyệt minh chứng).",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#crm-leads-filter-form",
+        popover: {
+          title: "Tìm Kiếm & Lọc Lead",
+          description: "Tìm theo số điện thoại/tên khách hàng, lọc theo trạng thái xử lý, hoặc bật \"Hiện lưu trữ\" để xem cả các Lead đã lưu trữ.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#crm-leads-table-card",
+        popover: {
+          title: "Danh Sách & Xử Lý Lead",
+          description: "Chọn nhiều dòng để thao tác hàng loạt, hoặc bấm vào 1 Lead để xem chi tiết, cập nhật trạng thái và ghi chú chăm sóc.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
+  // [Bổ sung] Trang "Dashboard thống kê" (dashboardStats) trước đây hoàn
+  // toàn không có trong danh sách tour, dù đây là trang tổng quan số liệu
+  // quan trọng cho Ban giám đốc/Trưởng bộ phận/Cộng tác viên.
+  dashboardStats: {
+    anchorId: "dashboard-stats-header",
+    steps: [
+      {
+        element: "#dashboard-stats-header",
+        popover: {
+          title: "Dashboard Thống Kê",
+          description: "Trang tổng quan số liệu - nội dung sẽ tự thay đổi phù hợp theo vai trò của bạn (Ban giám đốc, Trưởng bộ phận hoặc Cộng tác viên).",
+          side: "bottom", align: "start",
+        },
+      },
+      {
+        element: "#dashboard-stats-kpi-grid",
+        popover: {
+          title: "Chỉ Số Tổng Quan (KPI)",
+          description: "Các con số quan trọng nhất được cập nhật theo thời gian thực, giúp bạn nắm tình hình chỉ trong vài giây.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#dashboard-stats-refresh-btn",
+        popover: {
+          title: "Làm Mới Dữ Liệu",
+          description: "Bấm để tải lại số liệu mới nhất bất cứ lúc nào mà không cần tải lại cả trang.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#dashboard-stats-export-btn",
+        popover: {
+          title: "Xuất Báo Cáo Excel (Mới)",
+          description: "Xuất toàn bộ số liệu đang hiển thị (KPI, xu hướng theo thời gian, phòng ban/nhân sự, hoạt động, tài liệu...) ra 1 file Excel nhiều sheet để lưu trữ hoặc báo cáo.",
+          side: "bottom", align: "center",
+        },
+      },
+      {
+        element: "#dashboard-stats-overview-chart",
+        popover: {
+          title: "Biểu Đồ Tổng Quan Tất Cả Các Mốc (Mới)",
+          description: "Thay vì chỉ xem 1 mốc tại 1 thời điểm, biểu đồ này hiển thị TẤT CẢ các mốc (vd: cả 4 tuần trong tháng) trên cùng 1 biểu đồ để thấy rõ xu hướng. Di chuột vào từng mốc để xem chi tiết.",
+          side: "top", align: "center",
+        },
+      },
+    ],
+  },
 };
 
 // Map currentPage sang key trong PAGE_TOURS
@@ -802,8 +960,12 @@ export const getPageTourKey = (page) => {
     products: "products",
     productOverview: "products",
     nghiepvu: "nghiepvu",
-    checklist: "nghiepvu",
-    sop: "nghiepvu",
+    // [Sửa lỗi] "checklist" và "sop" trước đây bị trỏ nhầm vào tour "nghiepvu"
+    // (nội dung về đối soát hoa hồng, hoàn toàn không liên quan và không có
+    // phần tử nào khớp trên 2 trang này) khiến nút "Xem hướng dẫn cho trang
+    // này" không làm gì cả. Nay đã có tour riêng cho từng trang.
+    checklist: "checklist",
+    sop: "sop",
     doisoatdeal: "nghiepvu",
     hotro: "hotro",
     // [Sửa lỗi] Khoá cũ "news"/"newsManagement" không khớp với currentPage
@@ -834,6 +996,9 @@ export const getPageTourKey = (page) => {
     daotao: "trainingAndOnline",
     nophosoonline: "trainingAndOnline",
     crmLeads: "crmLeads",
+    // [Bổ sung] "dashboardStats" (trang "Dashboard thống kê") trước đây
+    // không có trong danh sách ánh xạ này nên hoàn toàn chưa có hướng dẫn.
+    dashboardStats: "dashboardStats",
   };
   return MAP[page] || null;
 };
@@ -1102,11 +1267,7 @@ function App() {
     void syncUserProfile();
   }, [handleUserUpdate]);
   const [theme, setTheme] = useState(() => {
-    const getCookie = (name) => {
-      const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-      return match ? match[2] : null;
-    };
-    const storedTheme = window.localStorage.getItem("app-theme") || window.localStorage.getItem("theme") || getCookie("theme");
+    const storedTheme = window.localStorage.getItem("app-theme");
 
     if (storedTheme === "light" || storedTheme === "dark") {
       return storedTheme;
@@ -1130,9 +1291,6 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-bs-theme", theme);
     window.localStorage.setItem("app-theme", theme);
-    window.localStorage.setItem("theme", theme);
-    const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-    document.cookie = `theme=${theme}; expires=${expires}; path=/`;
   }, [theme]);
 
   useEffect(() => {
@@ -1557,6 +1715,11 @@ function App() {
     document.documentElement.classList.remove("mobile-sidebar-open");
   }, []);
 
+  const handleToggleTheme = (e) => {
+    e?.preventDefault?.();
+    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
+  };
+
   const handleNavigate = useCallback((page, options = {}) => {
     if (page === "qna") {
       setIsAiChatOpen(true);
@@ -1640,46 +1803,6 @@ function App() {
 
     window.addEventListener("hto:replay-tour", handleReplayTourEvent);
     return () => window.removeEventListener("hto:replay-tour", handleReplayTourEvent);
-  }, []);
-
-  const handleToggleTheme = useCallback((e) => {
-    if (e?.preventDefault) e.preventDefault();
-
-    // 1. Chèn style tạm thời để chặn mọi CSS transition khi đang đổi theme
-    const css = document.createElement("style");
-    css.appendChild(
-      document.createTextNode(
-        `*, *::before, *::after {
-           -webkit-transition: none !important;
-           -moz-transition: none !important;
-           -o-transition: none !important;
-           -ms-transition: none !important;
-           transition: none !important;
-        }`
-      )
-    );
-    document.head.appendChild(css);
-
-    // 2. Đổi theme và đồng bộ dữ liệu
-    setTheme((prevTheme) => {
-      const nextTheme = prevTheme === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-bs-theme", nextTheme);
-      window.localStorage.setItem("app-theme", nextTheme);
-      window.localStorage.setItem("theme", nextTheme);
-      const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
-      document.cookie = `theme=${nextTheme}; expires=${expires}; path=/`;
-      return nextTheme;
-    });
-
-    // Force computed style calculation (flush reflow)
-    window.getComputedStyle(css).opacity;
-
-    // 3. Kích hoạt lại transition sau khi DOM đã đổi màu xong
-    setTimeout(() => {
-      if (document.head.contains(css)) {
-        document.head.removeChild(css);
-      }
-    }, 50);
   }, []);
 
   // [Icon Hướng dẫn trên Header] Chạy THẲNG tour pop-up của đúng trang đang
@@ -1952,7 +2075,6 @@ function App() {
     >
       <Header
         user={user}
-        currentTheme={theme}
         onNavigate={handleNavigate}
         onToggleSidebar={handleToggleSidebar} 
         onToggleTheme={handleToggleTheme} 

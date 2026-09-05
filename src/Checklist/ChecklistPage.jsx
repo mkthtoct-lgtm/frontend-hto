@@ -419,7 +419,7 @@ export const ChecklistPage = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="row g-3 mb-4">
+      <div className="row g-3 mb-4" id="checklist-stats-grid">
         <div className="col-6 col-xl-3">
           <div className="checklist-stat-card">
             <span>Tổng checklist</span>
@@ -449,7 +449,7 @@ export const ChecklistPage = ({ currentUser }) => {
         </div>
       </div>
 
-      <div className="checklist-filter-bar mb-4">
+      <div className="checklist-filter-bar mb-4" id="checklist-filter-bar">
         <div className="checklist-search-box">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"></circle>
@@ -479,7 +479,7 @@ export const ChecklistPage = ({ currentUser }) => {
 
       <div className="row g-3 align-items-start">
         <div className="col-12 col-xl-8">
-          <div className="card checklist-card border-0">
+          <div className="card checklist-card border-0" id="checklist-table-card">
             <div className="table-responsive">
               <table className="table checklist-table table-hover align-middle mb-0">
                 <thead>
@@ -582,7 +582,7 @@ export const ChecklistPage = ({ currentUser }) => {
         </div>
 
         <div className="col-12 col-xl-4">
-          <div className="checklist-detail-panel">
+          <div className="checklist-detail-panel" id="checklist-detail-panel">
             {selectedItem ? (
               <>
                 <div className="d-flex justify-content-between gap-3 align-items-start mb-3">

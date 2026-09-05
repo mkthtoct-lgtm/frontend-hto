@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, memo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TailwindDropdown } from "../components/ui/TailwindDropdown";
 import "./SOPPage.css";
 
@@ -203,7 +203,7 @@ const STATUS_META = {
   archived: { label: "Lưu trữ", className: "sop-status-archived" }
 };
 
-export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
+export const SOPPage = ({ currentUser, filterDepartmentId }) => {
   const [sops, setSops] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -372,7 +372,7 @@ export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
         </div>
       </div>
 
-      <div className="row g-3 mb-4">
+      <div className="row g-3 mb-4" id="sop-stats-grid">
         <div className="col-6 col-xl-3">
           <div className="sop-stat-card">
             <span>Tổng SOP được xem</span>
@@ -402,7 +402,7 @@ export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
         </div>
       </div>
 
-      <div className="sop-filter-bar mb-4">
+      <div className="sop-filter-bar mb-4" id="sop-filter-bar">
         <div className="sop-search-box">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"></circle>
@@ -444,7 +444,7 @@ export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
 
       <div className="row g-3 align-items-start">
         <div className="col-12 col-xl-5">
-          <div className="sop-list-panel">
+          <div className="sop-list-panel" id="sop-list-panel">
             <div className="sop-list-header">
               <div>
                 <h6 className="fw-bold mb-0">Danh sách SOP</h6>
@@ -500,7 +500,7 @@ export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
         </div>
 
         <div className="col-12 col-xl-7">
-          <div className="sop-detail-panel">
+          <div className="sop-detail-panel" id="sop-detail-panel">
             {selectedSop ? (
               <>
                 <div className="sop-detail-heading">
@@ -589,4 +589,4 @@ export const SOPPage = memo(({ currentUser, filterDepartmentId }) => {
       </div>
     </div>
   );
-});
+};

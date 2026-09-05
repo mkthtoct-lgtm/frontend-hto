@@ -58,6 +58,7 @@ const DEFAULT_MARKETING_CONFIG = {
   winBackDays: 45,
   newsletterBroadcastEnabled: false,
   newsletterMaxRecipients: 500,
+  minGapBetweenEmailsDays: 3,
 };
 
 const DEFAULT_MARKETING_STATS = {
@@ -96,6 +97,14 @@ export function SystemSettingsPage({ currentUser }) {
   const [marketingLoading, setMarketingLoading] = useState(false);
   const [savingMarketing, setSavingMarketing] = useState(false);
   const [runningMarketingNow, setRunningMarketingNow] = useState(false);
+
+  // Xem trước & gửi thử email mẫu (CRM + Marketing Automation)
+  const [emailTemplates, setEmailTemplates] = useState([]);
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState("");
+  const [templatePreview, setTemplatePreview] = useState(null); // { subject, html }
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   // Success/Error Message Toast emulation
   const [toast, setToast] = useState(null);
@@ -216,6 +225,69 @@ export function SystemSettingsPage({ currentUser }) {
     void loadMarketingOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
+
+  // Tải danh sách các loại email hỗ trợ xem trước/gửi thử
+  const loadEmailTemplates = async () => {
+    try {
+      const response = await authFetch(`${API_BASE_URL}/marketing/templates`, {
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.message || "Không thể tải danh sách mẫu email.");
+
+      const list = Array.isArray(payload?.data) ? payload.data : [];
+      setEmailTemplates(list);
+      if (list.length && !selectedTemplateKey) {
+        setSelectedTemplateKey(list[0].key);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Không thể tải danh sách mẫu email.", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    void loadEmailTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
+  const handleLoadPreview = async (templateKeyParam) => {
+    const templateKey = templateKeyParam || selectedTemplateKey;
+    if (!templateKey) return;
+    setPreviewLoading(true);
+    setTemplatePreview(null);
+    try {
+      const response = await authFetch(`${API_BASE_URL}/marketing/preview/${templateKey}`, {
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.message || "Không thể tải bản xem trước.");
+      setTemplatePreview(payload?.data || null);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Không thể tải bản xem trước.", "error");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!selectedTemplateKey) return;
+    setSendingTestEmail(true);
+    try {
+      const response = await authFetch(`${API_BASE_URL}/marketing/send-test`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ template: selectedTemplateKey, email: testEmailAddress || undefined }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.message || "Gửi email thử thất bại.");
+      showToast(payload?.message || "Đã gửi email thử thành công!", "success");
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Gửi email thử thất bại.", "error");
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
 
   // Handle changes
   const handleChatChange = (field, value) => {
@@ -1219,6 +1291,24 @@ export function SystemSettingsPage({ currentUser }) {
                 </label>
               </div>
 
+              {/* Chống làm phiền khách hàng - áp dụng chung cho mọi loại email marketing bên dưới */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex-1 pr-3">
+                  <label className="block font-bold text-xs text-slate-700 mr-2">Khoảng cách tối thiểu giữa các email marketing</label>
+                  <span className="text-[11px] text-slate-500">Nếu 1 khách hàng vừa nhận email marketing (chăm sóc/tái kết nối/bản tin) nào đó, hệ thống sẽ chờ đủ số ngày này trước khi gửi email marketing tiếp theo cho cùng khách - tránh gửi dồn dập gây khó chịu.</span>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 text-center focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                    value={marketingConfig.minGapBetweenEmailsDays}
+                    onChange={(e) => handleMarketingNumberChange("minGapBetweenEmailsDays", e.target.value)}
+                  />
+                  <span className="text-[11px] text-slate-500">ngày</span>
+                </div>
+              </div>
+
               {/* Chăm sóc (nurture) */}
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="flex items-center justify-between">
@@ -1351,6 +1441,86 @@ export function SystemSettingsPage({ currentUser }) {
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* Xem trước & Gửi thử Email mẫu */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-cyan-900 rounded"></span> Xem trước & Gửi thử Email mẫu
+              </h4>
+              <span className="text-[10px] font-bold text-white bg-cyan-900 rounded-full px-2 py-0.5">MỚI</span>
+            </div>
+            <p className="text-slate-500 text-xs mb-4">
+              Xem trước đúng giao diện thật (kèm linh vật thương hiệu) trước khi để hệ thống tự động gửi, hoặc gửi thử tới hộp thư thật để kiểm tra hiển thị trên Gmail/Outlook.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-2 md:items-end mb-4">
+              <div className="flex-1">
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Chọn mẫu email</label>
+                <select
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                  value={selectedTemplateKey}
+                  onChange={(e) => { setSelectedTemplateKey(e.target.value); setTemplatePreview(null); }}
+                >
+                  <optgroup label="Email khách hàng (Marketing Automation)">
+                    {emailTemplates.filter((t) => t.group === "marketing").map((t) => (
+                      <option key={t.key} value={t.key}>{t.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Email nội bộ (CRM Automation)">
+                    {emailTemplates.filter((t) => t.group === "crm").map((t) => (
+                      <option key={t.key} value={t.key}>{t.label}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleLoadPreview()}
+                disabled={!selectedTemplateKey || previewLoading}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 px-4 rounded-xl transition-all disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
+              >
+                {previewLoading ? "Đang tải..." : "Xem trước"}
+              </button>
+            </div>
+
+            {templatePreview && (
+              <div className="mb-4">
+                <div className="text-[11px] text-slate-500 mb-2">
+                  Tiêu đề email: <strong className="text-slate-700">{templatePreview.subject}</strong>
+                </div>
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 flex justify-center p-3">
+                  <iframe
+                    title="email-preview"
+                    srcDoc={templatePreview.html}
+                    className="bg-white rounded-lg shadow-sm border border-slate-100"
+                    style={{ width: "100%", maxWidth: 620, height: 520 }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col md:flex-row gap-2 md:items-end pt-3 border-t border-slate-100">
+              <div className="flex-1">
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Gửi thử tới email (để trống = gửi tới email của bạn)</label>
+                <input
+                  type="email"
+                  placeholder="ban@congty.com"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-900/10 focus:border-cyan-900"
+                  value={testEmailAddress}
+                  onChange={(e) => setTestEmailAddress(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={!selectedTemplateKey || sendingTestEmail}
+                className="bg-cyan-900 hover:bg-cyan-950 text-white text-xs font-bold py-2 px-5 rounded-xl transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap"
+              >
+                {sendingTestEmail ? "Đang gửi..." : "Gửi email thử"}
+              </button>
+            </div>
           </div>
         </div>
       )}
